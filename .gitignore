@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Frontend build artifacts
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# Go build artifacts
+/apps/api/bin/
+*.test
+coverage.out
+
+# Test and coverage caches
+coverage/
+htmlcov/
+junit.xml
+test-results/
+playwright-report/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!apps/**/.env.example
+!deploy/env/
+deploy/env/*.env
+!deploy/env/*.env.example
+deploy/ansible/group_vars/*.yml
+!deploy/ansible/group_vars/*.yml.example
+deploy/ansible/inventory.ini
+deploy/runbooks/*.local.md
+
+# Local runtime data
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local AI tooling
+.claude/
