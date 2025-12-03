@@ -1,0 +1,54 @@
+{
+  "name": "arkiwatch",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "scripts/dev-live.sh",
+    "demo": "NEXT_PUBLIC_DEMO_MODE=true pnpm run dev:web",
+    "dev:api": "scripts/go-command.sh ./cmd/server",
+    "dev:collector": "scripts/go-command.sh ./cmd/collector",
+    "dev:normalize": "scripts/go-command.sh ./cmd/normalize",
+    "dev:scheduler": "scripts/go-command.sh ./cmd/scheduler",
+    "migrate:api": "scripts/go-command.sh ./cmd/migrate",
+    "bootstrap:api": "scripts/go-command.sh ./cmd/bootstrap",
+    "dev:web": "pnpm --filter @arkiwatch/web dev",
+    "build": "pnpm run build:web",
+    "build:web": "pnpm --filter @arkiwatch/web run build",
+    "contracts:generate": "pnpm --filter @arkiwatch/web run generate:api-types",
+    "contracts:check": "node scripts/check-contracts.mjs",
+    "version:check": "node scripts/check-version.mjs",
+    "architecture:check": "node scripts/check-go-only.mjs",
+    "config:check": "pnpm run architecture:check && node scripts/check-env-examples.mjs",
+    "start": "pnpm run start:web",
+    "start:web": "pnpm --filter @arkiwatch/web run start",
+    "lint": "pnpm run lint:api && pnpm run lint:web",
+    "lint:api": "pnpm run fmt:api && go -C apps/api vet ./...",
+    "lint:web": "pnpm --filter @arkiwatch/web run lint",
+    "typecheck": "pnpm run typecheck:web",
+    "typecheck:web": "pnpm --filter @arkiwatch/web run typecheck",
+    "test": "pnpm run test:api && pnpm run test:web",
+    "test:api": "go -C apps/api test ./...",
+    "test:web": "pnpm --filter @arkiwatch/web run test",
+    "test:e2e": "NEXT_PUBLIC_DEMO_MODE=true pnpm run build:web && pnpm --filter @arkiwatch/web run e2e",
+    "check": "pnpm run check:api && pnpm run check:web",
+    "check:api": "pnpm run lint:api && pnpm run test:api",
+    "check:web": "pnpm --filter @arkiwatch/web run check",
+    "ops:bootstrap": "deploy/scripts/bootstrap-vps.sh",
+    "ops:deploy": "deploy/scripts/deploy.sh",
+    "ops:health": "deploy/scripts/healthcheck.sh",
+    "audit:api": "go -C apps/api run golang.org/x/vuln/cmd/govulncheck@latest ./...",
+    "fmt:api": "test -z \"$(gofmt -l apps/api)\" || (gofmt -l apps/api && echo \"Run gofmt -w apps/api\" && exit 1)",
+    "contracts:check:live": "scripts/check-live-contract.sh"
+  },
+  "pnpm": {
+    "overrides": {
+      "nanoid": "3.3.18",
+      "postcss": "8.5.26",
+      "sharp": "0.35.3"
+    }
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}
