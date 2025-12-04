@@ -1,0 +1,13 @@
+brew "git"
+brew "gh"
+brew "jq"
+brew "ripgrep"
+brew "btop"
+brew "ansible"
+brew "rsync"
+brew "restic"
+brew "direnv"
+brew "tmux"
+
+cask "orbstack"
+cask "tailscale"
