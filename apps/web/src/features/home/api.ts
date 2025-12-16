@@ -1,10 +1,12 @@
 import { PublicDashboardResponse } from "@/features/home/types";
+import { appEnv } from "@/lib/env";
 
 
 type DashboardFetchResult = {
   apiBaseUrl: string;
   dashboard: PublicDashboardResponse | null;
   error: string | null;
+  defaultUserId: string;
 };
 
 
@@ -29,17 +31,19 @@ export async function fetchDashboard(): Promise<DashboardFetchResult> {
       return {
         apiBaseUrl,
         dashboard: null,
-        error: `Dashboard request failed with ${response.status}.`
+        error: `Dashboard request failed with ${response.status}.`,
+        defaultUserId: appEnv.defaultUserId
       };
     }
 
     const dashboard = (await response.json()) as PublicDashboardResponse;
-    return { apiBaseUrl, dashboard, error: null };
+    return { apiBaseUrl, dashboard, error: null, defaultUserId: appEnv.defaultUserId };
   } catch (error) {
     return {
       apiBaseUrl,
       dashboard: null,
-      error: error instanceof Error ? error.message : "Unknown dashboard fetch failure."
+      error: error instanceof Error ? error.message : "Unknown dashboard fetch failure.",
+      defaultUserId: appEnv.defaultUserId
     };
   }
 }

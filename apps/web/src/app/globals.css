@@ -1,9 +1,9 @@
 :root {
   color-scheme: light;
   --bg: #eff4ee;
-  --bg-accent: #dbe9d7;
-  --panel: rgba(255, 253, 248, 0.82);
-  --panel-strong: rgba(255, 250, 242, 0.92);
+  --bg-accent: #f7f4ec;
+  --panel: transparent;
+  --panel-strong: rgba(255, 253, 248, 0.88);
   --panel-border: rgba(37, 50, 35, 0.14);
   --text: #1d271c;
   --muted: #5d6a5d;
@@ -26,8 +26,6 @@ body {
   padding: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 34%),
-    radial-gradient(circle at top right, rgba(206, 224, 204, 0.64), transparent 28%),
     linear-gradient(150deg, var(--bg) 0%, var(--bg-accent) 100%);
   color: var(--text);
   font-family: "Avenir Next", "Gill Sans", sans-serif;
@@ -60,18 +58,19 @@ button {
 
 .hero,
 .panel {
-  border: 1px solid var(--panel-border);
-  border-radius: 28px;
+  border: 0;
+  border-radius: 0;
   background: var(--panel);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(16px);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .hero {
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
-  padding: 28px;
+  padding: 0 0 28px;
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .hero-copy {
@@ -82,10 +81,10 @@ button {
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(2.4rem, 5vw, 4.8rem);
-  line-height: 0.93;
-  letter-spacing: -0.06em;
-  max-width: 10ch;
+  font-size: 4.2rem;
+  line-height: 0.98;
+  letter-spacing: 0;
+  max-width: 12ch;
 }
 
 .hero p {
@@ -158,7 +157,7 @@ button {
   gap: 12px;
   padding: 18px;
   border: 1px solid rgba(37, 50, 35, 0.08);
-  border-radius: 22px;
+  border-radius: 8px;
   background: var(--panel-strong);
 }
 
@@ -209,7 +208,7 @@ button {
 
 .inline-alert {
   padding: 14px 16px;
-  border-radius: 16px;
+  border-radius: 8px;
   border: 1px solid transparent;
   font-size: 0.95rem;
   line-height: 1.5;
@@ -242,7 +241,7 @@ button {
 .metric {
   padding: 16px 18px;
   border: 1px solid rgba(37, 50, 35, 0.08);
-  border-radius: 20px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.44);
 }
 
@@ -251,7 +250,7 @@ button {
   margin-top: 10px;
   font-size: 1.7rem;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .meta-text {
@@ -262,7 +261,7 @@ button {
 
 .content-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 20px;
+  margin-top: 28px;
 }
 
 .scenario-grid {
@@ -274,7 +273,7 @@ button {
 }
 
 .panel {
-  padding: 24px;
+  padding: 28px 0 0;
 }
 
 .section-header,
@@ -305,7 +304,7 @@ button {
 .section-header h2 {
   margin-top: 6px;
   font-size: 1.5rem;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .workflow-list,
@@ -331,7 +330,7 @@ button {
 .scenario-advice {
   padding: 18px;
   border: 1px solid rgba(37, 50, 35, 0.08);
-  border-radius: 20px;
+  border-radius: 8px;
   background: var(--panel-strong);
 }
 
@@ -393,7 +392,7 @@ button {
 
 .empty-state-compact {
   padding: 16px;
-  border-radius: 18px;
+  border-radius: 8px;
 }
 
 .list-card strong {
@@ -438,7 +437,7 @@ button {
 .timeline-item {
   padding: 18px;
   border: 1px solid rgba(37, 50, 35, 0.08);
-  border-radius: 20px;
+  border-radius: 8px;
   background: var(--panel-strong);
 }
 
@@ -457,6 +456,51 @@ button {
   color: #f7faf7;
   min-height: 40px;
   padding: 0 16px;
+}
+
+.channel-button:disabled {
+  cursor: default;
+  opacity: 0.68;
+}
+
+.channel-button-subscribed {
+  background: var(--good);
+}
+
+.channel-button-setup_required,
+.channel-button-error {
+  background: var(--warn);
+}
+
+.channel-state {
+  font-size: 0.88rem;
+}
+
+.ops-panel {
+  margin-top: 20px;
+}
+
+.ops-panel summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ops-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.ops-panel summary strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.25rem;
+}
+
+.ops-panel .source-grid {
+  margin-top: 18px;
 }
 
 .evidence-list {
@@ -489,8 +533,7 @@ code {
 
   .hero,
   .panel {
-    border-radius: 22px;
-    padding: 20px;
+    padding-top: 20px;
   }
 
   .status-strip {
@@ -504,5 +547,9 @@ code {
   .button-row button,
   .button-row a {
     width: 100%;
+  }
+
+  .hero h1 {
+    font-size: 2.7rem;
   }
 }

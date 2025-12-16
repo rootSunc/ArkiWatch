@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
 import {
   DashboardSource,
   PublicAction,
@@ -10,7 +14,22 @@ import {
 type HomePageProps = {
   apiBaseUrl: string;
   dashboard: PublicDashboardResponse | null;
+  defaultUserId: string;
   error: string | null;
+};
+
+type SubscriptionStatus = "idle" | "loading" | "subscribed" | "setup_required" | "error";
+
+type SubscriptionState = Record<
+  string,
+  {
+    status: SubscriptionStatus;
+    message: string;
+  }
+>;
+
+type ScenarioSubscriptionResponse = {
+  scenario_key: string;
 };
 
 function formatTimestamp(value: string | null, mode: "dateTime" | "date" = "dateTime"): string {
@@ -90,6 +109,38 @@ function cardTone(severity: string): string {
   }
 }
 
+function buttonLabel(status: SubscriptionStatus, canSubscribe: boolean): string {
+  if (!canSubscribe) {
+    return "Unavailable";
+  }
+
+  switch (status) {
+    case "loading":
+      return "Subscribing";
+    case "subscribed":
+      return "Subscribed";
+    case "setup_required":
+      return "Connect Telegram";
+    case "error":
+      return "Retry";
+    default:
+      return "Subscribe";
+  }
+}
+
+async function readApiError(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === "string") {
+      return body.detail;
+    }
+  } catch {
+    // Response bodies are optional for failed API calls.
+  }
+
+  return `Request failed with ${response.status}.`;
+}
+
 function renderTopAction(action: PublicAction) {
   return (
     <article className="action-card" key={action.id}>
@@ -105,7 +156,15 @@ function renderTopAction(action: PublicAction) {
   );
 }
 
-function renderScenarioChannel(channel: ScenarioChannel) {
+function renderScenarioChannel(
+  channel: ScenarioChannel,
+  state: SubscriptionState[string] | undefined,
+  canSubscribe: boolean,
+  onSubscribe: (scenarioKey: string) => void
+) {
+  const status = state?.status ?? "idle";
+  const message = state?.message;
+
   return (
     <article className="channel-card" key={channel.scenario_key}>
       <div className="list-card-header">
@@ -113,9 +172,15 @@ function renderScenarioChannel(channel: ScenarioChannel) {
         <span className="pill pill-neutral">{channel.scenario_key}</span>
       </div>
       <p>{channel.description}</p>
-      <button className="channel-button" type="button">
-        Subscribe
+      <button
+        className={`channel-button channel-button-${status}`}
+        disabled={!canSubscribe || status === "loading" || status === "subscribed"}
+        onClick={() => onSubscribe(channel.scenario_key)}
+        type="button"
+      >
+        {buttonLabel(status, canSubscribe)}
       </button>
+      {message ? <p className="channel-state">{message}</p> : null}
     </article>
   );
 }
@@ -182,27 +247,129 @@ function renderSource(source: DashboardSource) {
   );
 }
 
-export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
+export function HomePage({ apiBaseUrl, dashboard, defaultUserId, error }: HomePageProps) {
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState>({});
+  const canSubscribe = Boolean(defaultUserId);
+  const scenarioKeys = useMemo(
+    () => dashboard?.scenario_channels.map((channel) => channel.scenario_key).join(",") ?? "",
+    [dashboard]
+  );
+
+  useEffect(() => {
+    if (!dashboard || !defaultUserId) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const loadSubscriptions = async () => {
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/public/subscriptions?user_id=${encodeURIComponent(defaultUserId)}`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) {
+          return;
+        }
+        const subscriptions = (await response.json()) as ScenarioSubscriptionResponse[];
+        const subscribed = new Set(subscriptions.map((item) => item.scenario_key));
+        setSubscriptionState((currentState) => {
+          const nextState = { ...currentState };
+          for (const scenarioKey of subscribed) {
+            nextState[scenarioKey] = {
+              status: "subscribed",
+              message: "Telegram broadcast is active."
+            };
+          }
+          return nextState;
+        });
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") {
+          return;
+        }
+      }
+    };
+
+    void loadSubscriptions();
+
+    return () => controller.abort();
+  }, [apiBaseUrl, dashboard, defaultUserId, scenarioKeys]);
+
+  const subscribeToScenario = async (scenarioKey: string) => {
+    if (!defaultUserId) {
+      setSubscriptionState((currentState) => ({
+        ...currentState,
+        [scenarioKey]: {
+          status: "setup_required",
+          message: "Telegram subscription is not configured for this dashboard."
+        }
+      }));
+      return;
+    }
+
+    setSubscriptionState((currentState) => ({
+      ...currentState,
+      [scenarioKey]: { status: "loading", message: "" }
+    }));
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/public/subscriptions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_id: defaultUserId,
+          scenario_key: scenarioKey
+        })
+      });
+
+      if (!response.ok) {
+        const message = await readApiError(response);
+        setSubscriptionState((currentState) => ({
+          ...currentState,
+          [scenarioKey]: {
+            status: response.status === 400 ? "setup_required" : "error",
+            message
+          }
+        }));
+        return;
+      }
+
+      setSubscriptionState((currentState) => ({
+        ...currentState,
+        [scenarioKey]: {
+          status: "subscribed",
+          message: "Telegram broadcast is active."
+        }
+      }));
+    } catch (requestError) {
+      setSubscriptionState((currentState) => ({
+        ...currentState,
+        [scenarioKey]: {
+          status: "error",
+          message:
+            requestError instanceof Error ? requestError.message : "Subscription request failed."
+        }
+      }));
+    }
+  };
+
   if (!dashboard) {
     return (
       <main className="shell">
         <section className="hero">
           <div className="hero-copy">
             <span className="eyebrow">ArkiWatch public dashboard</span>
-            <h1>Regional guidance is unavailable.</h1>
+            <h1>Regional guidance is unavailable</h1>
             <p>
-              The web app could not reach the public dashboard endpoint, so there is no live Helsinki/Uusimaa payload
-              to render yet.
+              The live Helsinki/Uusimaa guidance feed could not be reached. Public actions will
+              appear here once the backend is available again.
             </p>
           </div>
           <div className="hero-actions">
             <div className="inline-alert inline-alert-bad">
               <strong>Dashboard unavailable</strong>
               <p>{error ?? "Unknown dashboard error."}</p>
-            </div>
-            <div className="control-panel">
-              <span className="field-label">Dashboard API</span>
-              <code>{apiBaseUrl}/dashboard</code>
             </div>
           </div>
         </section>
@@ -220,10 +387,10 @@ export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">{dashboard.coverage_area}</span>
-          <h1>Today&apos;s 3 actions</h1>
+          <h1>Today&apos;s public actions</h1>
           <p>
-            Public guidance for Helsinki/Uusimaa. The page leads with actions, then shows supporting evidence across
-            commute, outdoor conditions, home air, and energy timing.
+            A short regional brief for commute, outdoor conditions, home air, and flexible
+            electricity timing.
           </p>
           <div className="action-grid">
             {dashboard.top_actions.length > 0 ? (
@@ -237,10 +404,6 @@ export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
           </div>
         </div>
         <div className="hero-actions">
-          <div className="control-panel">
-            <span className="field-label">Dashboard API</span>
-            <code>{apiBaseUrl}/dashboard</code>
-          </div>
           <div className="status-strip compact-strip">
             <article className="metric">
               <span className="metric-label">Checked</span>
@@ -251,7 +414,7 @@ export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
               <strong>{sourceCounts.healthy}</strong>
             </article>
             <article className="metric">
-              <span className="metric-label">Watched sources</span>
+              <span className="metric-label">Sources to watch</span>
               <strong>{sourceCounts.watch}</strong>
             </article>
           </div>
@@ -266,7 +429,14 @@ export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
           </div>
         </div>
         <div className="channel-grid">
-          {dashboard.scenario_channels.map(renderScenarioChannel)}
+          {dashboard.scenario_channels.map((channel) =>
+            renderScenarioChannel(
+              channel,
+              subscriptionState[channel.scenario_key],
+              canSubscribe,
+              subscribeToScenario
+            )
+          )}
         </div>
       </section>
 
@@ -315,17 +485,18 @@ export function HomePage({ apiBaseUrl, dashboard, error }: HomePageProps) {
         </section>
       </div>
 
-      <section className="panel">
-        <div className="section-header">
-          <div>
-            <span className="section-kicker">Source health</span>
-            <h2>Freshness and collection status</h2>
-          </div>
-        </div>
+      <details className="panel ops-panel">
+        <summary>
+          <span>
+            <span className="section-kicker">Data freshness</span>
+            <strong>Source collection status</strong>
+          </span>
+          <span className="pill pill-neutral">{dashboard.sources.length} sources</span>
+        </summary>
         <div className="source-grid">
           {dashboard.sources.map(renderSource)}
         </div>
-      </section>
+      </details>
     </main>
   );
 }
