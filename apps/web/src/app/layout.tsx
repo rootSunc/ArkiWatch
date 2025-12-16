@@ -6,9 +6,9 @@ import { appEnv } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: `${appEnv.appName} | Helsinki/Uusimaa Daily Guidance`,
+  title: `${appEnv.appName} | Unified Data Platform`,
   description:
-    "Public daily guidance for commute, outdoor conditions, home air, and flexible electricity timing."
+    "A unified data platform for weather, air quality, transit, energy, source health, and AI-assisted data exploration."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

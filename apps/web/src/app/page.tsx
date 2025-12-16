@@ -1,17 +1,17 @@
-import { fetchDashboard } from "@/features/home/api";
-import { HomePage } from "@/features/home/home-page";
+import { DataPlatformHome } from "@/features/data-platform/data-platform-home";
+import { fetchPlatformHome } from "@/features/data-platform/api";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const { apiBaseUrl, dashboard, error, defaultUserId } = await fetchDashboard();
+  const { apiBaseUrl, defaultUserId, overview, error } = await fetchPlatformHome();
 
   return (
-    <HomePage
+    <DataPlatformHome
       apiBaseUrl={apiBaseUrl}
-      dashboard={dashboard}
       defaultUserId={defaultUserId}
       error={error}
+      overview={overview}
     />
   );
 }
