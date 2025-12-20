@@ -3,10 +3,13 @@ import type { CSSProperties } from "react";
 import { formatRelativeAge } from "@/features/shared/format";
 
 import {
+  WeatherDataStage,
   PlatformCategory,
   WeatherForecastPoint,
   WeatherForecastResponse,
+  WeatherQuality,
   WeatherRainWindow,
+  WeatherSourceRequest,
   WeatherSourceLayer,
   WeatherWarning
 } from "./types";
@@ -682,8 +685,90 @@ function warningTone(warning: WeatherWarning): string {
   return "neutral";
 }
 
+function stageTone(stage: Pick<WeatherDataStage | WeatherSourceRequest, "status">): string {
+  if (stage.status === "ready" || stage.status === "fetched") {
+    return "good";
+  }
+  if (stage.status === "empty" || stage.status === "missing") {
+    return "warn";
+  }
+  return "neutral";
+}
+
+function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "n/a";
+  }
+
+  return `${formatNumber(value, 0)}%`;
+}
+
+function defaultQuality(): WeatherQuality {
+  return {
+    point_count: 0,
+    forecast_hours: 0,
+    field_coverage_pct: 0,
+    rain_window_count: 0,
+    missing_fields: [],
+    notes: []
+  };
+}
+
+function endpointLabel(request: WeatherSourceRequest): string {
+  if (!request.endpoint) {
+    return "endpoint not recorded";
+  }
+
+  try {
+    const url = new URL(request.endpoint);
+    const storedQuery = url.searchParams.get("storedquery_id");
+    return storedQuery ? `${url.host} · ${storedQuery}` : url.host;
+  } catch {
+    return request.endpoint;
+  }
+}
+
+function renderForecastRibbon(
+  points: WeatherForecastPoint[],
+  maxRain: number,
+  maxWind: number
+) {
+  if (points.length === 0) {
+    return <p>No hourly rows are available for the selected range.</p>;
+  }
+
+  const sampledPoints = points.length > 36 ? points.filter((_, index) => index % 2 === 0) : points;
+  return (
+    <div className="weather-ribbon-track" aria-label="Forecast condition ribbon">
+      {sampledPoints.map((point) => {
+        const label = conditionLabel(point);
+        const rainPct = Math.min(100, ((point.precipitation_mm ?? 0) / maxRain) * 100);
+        const windPct = Math.min(100, ((point.wind_speed_ms ?? 0) / maxWind) * 100);
+        return (
+          <div
+            className={`weather-ribbon-cell weather-ribbon-${conditionClass(label)}`}
+            key={point.timestamp}
+            style={
+              {
+                "--rain": `${rainPct}%`,
+                "--wind": `${windPct}%`
+              } as CSSProperties
+            }
+            title={`${formatTableTime(point.timestamp)} · ${label} · rain ${formatNumber(
+              point.precipitation_mm
+            )} mm · wind ${formatNumber(point.wind_speed_ms)} m/s`}
+          >
+            <span>{formatCompactTime(point.timestamp)}</span>
+            <i aria-hidden="true" />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorkspaceProps) {
-  if (!weather || weather.status === "empty" || weather.points.length === 0) {
+  if (!weather) {
     return (
       <section className="weather-empty" aria-label="Weather data unavailable">
         <span className="label-text">Weather</span>
@@ -693,13 +778,15 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
     );
   }
 
-  const current = latestPoint(weather.points);
-  const visiblePoints = forecastPointsForRange(weather.points, timeRange);
+  const forecastPoints = weather.points ?? [];
+  const rainWindows = weather.rain_windows ?? [];
+  const current = latestPoint(forecastPoints);
+  const visiblePoints = forecastPointsForRange(forecastPoints, timeRange);
   const maxRain = maxValue(visiblePoints, (point) => point.precipitation_mm);
   const maxWind = maxValue(visiblePoints, (point) => point.wind_gust_ms ?? point.wind_speed_ms);
   const selectedWindowStart = visiblePoints[0]?.timestamp ?? weather.valid_from;
   const selectedWindowEnd = visiblePoints[visiblePoints.length - 1]?.timestamp ?? weather.valid_to;
-  const relevantRainWindows = weather.rain_windows.filter(
+  const relevantRainWindows = rainWindows.filter(
     (window) =>
       new Date(window.ends_at).getTime() >= new Date(selectedWindowStart ?? 0).getTime() &&
       new Date(window.starts_at).getTime() <= new Date(selectedWindowEnd ?? Date.now()).getTime()
@@ -713,6 +800,11 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
   const currentWind = current?.wind_gust_ms ?? current?.wind_speed_ms;
   const warnings = weather.warnings ?? [];
   const sourceLayers = weather.source_layers ?? [];
+  const sourceRequests = weather.source_requests ?? [];
+  const dataPipeline = weather.data_pipeline ?? [];
+  const quality = weather.quality ?? defaultQuality();
+  const missingFields =
+    quality.missing_fields.length > 0 ? quality.missing_fields : ["no full-series gaps"];
 
   return (
     <section className="weather-workspace" aria-label="Weather workspace">
@@ -783,6 +875,59 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
         </article>
       </div>
 
+      <div className="weather-data-grid">
+        <section className="weather-pipeline-panel" aria-label="Weather data pipeline">
+          <header>
+            <div>
+              <span className="label-text">Data pipeline</span>
+              <h3>Fetch, clean, visualize</h3>
+            </div>
+            <strong>{dataPipeline.filter((stage) => stage.status === "ready").length}/3</strong>
+          </header>
+          <div className="weather-stage-list">
+            {dataPipeline.length > 0 ? (
+              dataPipeline.map((stage) => (
+                <article className={`weather-stage weather-stage-${stageTone(stage)}`} key={stage.key}>
+                  <div>
+                    <strong>{stage.label}</strong>
+                    <span>{stage.status.replaceAll("_", " ")}</span>
+                  </div>
+                  <small>
+                    {stage.detail}
+                    {stage.record_count !== null ? ` · records ${stage.record_count}` : ""}
+                  </small>
+                </article>
+              ))
+            ) : (
+              <p>No pipeline metadata was returned with this weather response.</p>
+            )}
+          </div>
+        </section>
+
+        <section className="weather-quality-panel" aria-label="Weather data quality">
+          <header>
+            <div>
+              <span className="label-text">Cleaned data</span>
+              <h3>{quality.point_count} hourly rows</h3>
+            </div>
+            <strong>{formatPercent(quality.field_coverage_pct)}</strong>
+          </header>
+          <div className="weather-quality-meter">
+            <i style={{ "--quality": `${quality.field_coverage_pct}%` } as CSSProperties} />
+          </div>
+          <div className="weather-quality-grid">
+            <span>{quality.forecast_hours} h horizon</span>
+            <span>{quality.rain_window_count} rain windows</span>
+            <span>{missingFields.join(", ")}</span>
+          </div>
+          <div className="weather-quality-notes">
+            {(quality.notes.length > 0 ? quality.notes : ["No quality notes returned."]).map((note) => (
+              <small key={note}>{note}</small>
+            ))}
+          </div>
+        </section>
+      </div>
+
       <div className="weather-main-grid">
         <section className="weather-chart-panel" aria-label="Hourly weather signals">
           <header>
@@ -792,6 +937,13 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
             </div>
             <small>{formatTimeRange(selectedWindowStart, selectedWindowEnd)}</small>
           </header>
+          <div className="weather-ribbon-panel">
+            <div>
+              <span className="label-text">Visualization layer</span>
+              <strong>Condition, rain, and wind density</strong>
+            </div>
+            {renderForecastRibbon(visiblePoints, maxRain, maxWind)}
+          </div>
           <div className="weather-chart-grid">
             {weatherSeries.map((series) => (
               <article className={`weather-chart-card weather-chart-card-${series.tone}`} key={series.key}>
@@ -846,6 +998,25 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
                 ))
               ) : (
                 <p>No source layer metadata was returned with this forecast.</p>
+              )}
+            </div>
+            <div className="weather-request-list">
+              <span className="label-text">Acquisition requests</span>
+              {sourceRequests.length > 0 ? (
+                sourceRequests.map((request) => (
+                  <article className={`weather-request weather-request-${stageTone(request)}`} key={request.key}>
+                    <div>
+                      <strong>{request.label}</strong>
+                      <span>{request.status}</span>
+                    </div>
+                    <small>
+                      {endpointLabel(request)}
+                      {request.fetched_at ? ` · fetched ${formatRelativeAge(request.fetched_at)}` : ""}
+                    </small>
+                  </article>
+                ))
+              ) : (
+                <p>No acquisition request metadata was returned with this forecast.</p>
               )}
             </div>
             <div className="weather-warning-list">

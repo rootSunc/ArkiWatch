@@ -140,6 +140,33 @@ export type WeatherSourceLayer = {
   updated_at: string | null;
 };
 
+export type WeatherSourceRequest = {
+  key: string;
+  label: string;
+  status: string;
+  endpoint: string | null;
+  content_type: string | null;
+  fetched_at: string | null;
+};
+
+export type WeatherDataStage = {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  record_count: number | null;
+  updated_at: string | null;
+};
+
+export type WeatherQuality = {
+  point_count: number;
+  forecast_hours: number;
+  field_coverage_pct: number;
+  rain_window_count: number;
+  missing_fields: string[];
+  notes: string[];
+};
+
 export type WeatherWarning = {
   title: string;
   description: string | null;
@@ -161,5 +188,8 @@ export type WeatherForecastResponse = {
   points: WeatherForecastPoint[];
   rain_windows: WeatherRainWindow[];
   source_layers: WeatherSourceLayer[];
+  source_requests: WeatherSourceRequest[];
+  data_pipeline: WeatherDataStage[];
+  quality: WeatherQuality;
   warnings: WeatherWarning[];
 };
