@@ -18,8 +18,8 @@ type ChatMessage = {
 const DEFAULT_QUESTIONS = [
   "解释当前页面的数据",
   "哪个数据源最近异常？",
-  "交通和天气有什么值得注意？",
-  "能源数据现在怎么看？"
+  "哪些扩展方向还在规划？",
+  "交通和天气有什么值得注意？"
 ];
 
 function categorySummary(category: PlatformCategory): string {
@@ -64,6 +64,14 @@ function buildAssistantReply(question: string, overview: PlatformOverviewRespons
     return `当前数据源状态是：${sourceSummary || "暂无数据源状态"}。更新时间：${formatTimestamp(overview.checked_at)}。`;
   }
 
+  if (normalizedQuestion.includes("扩展") || normalizedQuestion.includes("规划")) {
+    const plannedCategories = overview.categories
+      .filter((category) => (category.stage ?? "connected") !== "connected")
+      .map((category) => `${category.title}: ${category.stage ?? "connected"}`)
+      .join("; ");
+    return `当前扩展目录是：${plannedCategories || "暂无规划分类"}。这些分类已经进入平台目录，但采集器和规则可以按优先级逐步接入。`;
+  }
+
   if (matchedCategory) {
     const metrics = matchedCategory.summary_metrics
       .slice(0, 4)
@@ -100,7 +108,7 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
       "解释当前页面的数据",
       `分析 ${overview.categories[0]?.title ?? "Weather"} 数据`,
       "哪个数据源最近异常？",
-      "有哪些活跃事件？"
+      "哪些扩展方向还在规划？"
     ];
   }, [overview]);
 

@@ -4,7 +4,7 @@ import { fetchPlatformHome } from "@/features/data-platform/api";
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const { apiBaseUrl, defaultUserId, overview, error } = await fetchPlatformHome();
+  const { apiBaseUrl, defaultUserId, overview, weather, error } = await fetchPlatformHome();
 
   return (
     <DataPlatformHome
@@ -12,6 +12,7 @@ export default async function Page() {
       defaultUserId={defaultUserId}
       error={error}
       overview={overview}
+      weather={weather}
     />
   );
 }

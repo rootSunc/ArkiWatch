@@ -3,20 +3,27 @@
 import { useMemo, useState } from "react";
 
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
-import { formatTimestamp } from "@/features/shared/format";
 
 import { CategoryNav } from "./category-nav";
+import { categoryKeyDataItems, formatDataItemLabel } from "./category-metadata";
 import { CategoryOverviewGrid } from "./category-overview-grid";
 import { EventStream } from "./event-stream";
 import { MetricCard } from "./metric-card";
 import { SourceHealthStrip } from "./source-health-strip";
-import { PlatformCategory, PlatformOverviewResponse, PlatformVisualization } from "./types";
+import {
+  PlatformCategory,
+  PlatformOverviewResponse,
+  PlatformVisualization,
+  WeatherForecastResponse
+} from "./types";
 import { VisualizationPanel } from "./visualization-panel";
+import { WeatherWorkspace } from "./weather-workspace";
 
 type DataPlatformHomeProps = {
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
+  weather: WeatherForecastResponse | null;
   error: string | null;
 };
 
@@ -37,6 +44,7 @@ function matchesSearch(category: PlatformCategory, searchValue: string): boolean
     category.title,
     category.description,
     ...category.source_codes,
+    ...categoryKeyDataItems(category),
     ...category.summary_metrics.map((metric) => `${metric.label} ${metric.value}`),
     ...category.events.map((event) => `${event.title} ${event.body}`)
   ]
@@ -57,18 +65,52 @@ function selectedVisualizations(
   return categories.flatMap((category) => category.visualizations.slice(0, 2));
 }
 
+function platformSignalStats(categories: PlatformCategory[]) {
+  const connected = categories.filter((category) => category.stage === "connected").length;
+  const planned = categories.filter((category) => category.stage === "planned").length;
+  const keyMetrics = categories.reduce(
+    (total, category) => total + category.summary_metrics.length,
+    0
+  );
+  const keyFields = categories.reduce(
+    (total, category) => total + categoryKeyDataItems(category).length,
+    0
+  );
+  const activeEvents = categories.reduce((total, category) => total + category.events.length, 0);
+
+  return {
+    connected,
+    planned,
+    keyMetrics,
+    keyFields,
+    activeEvents
+  };
+}
+
+function sourceStatusText(category: PlatformCategory): string {
+  return (
+    category.summary_metrics
+      .find((metric) => metric.key === "source_status")
+      ?.value.toLowerCase() ?? category.status.replaceAll("_", " ")
+  );
+}
+
 export function DataPlatformHome({
   apiBaseUrl,
   defaultUserId,
   overview,
+  weather,
   error
 }: DataPlatformHomeProps) {
-  const [selectedKey, setSelectedKey] = useState("overview");
+  const [selectedKey, setSelectedKey] = useState("weather");
   const [timeRange, setTimeRange] = useState("24h");
   const [searchValue, setSearchValue] = useState("");
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
+  const signalStats = useMemo(() => platformSignalStats(categories), [categories]);
   const selectedCategory = categories.find((category) => category.key === selectedKey) ?? null;
+  const isWeatherSelected = selectedCategory?.key === "weather";
+  const selectedKeyDataItems = selectedCategory ? categoryKeyDataItems(selectedCategory) : [];
   const visibleCategories = useMemo(
     () => categories.filter((category) => matchesSearch(category, searchValue)),
     [categories, searchValue]
@@ -107,7 +149,7 @@ export function DataPlatformHome({
             <span>Search</span>
             <input
               onChange={(event) => setSearchValue(event.target.value)}
-              placeholder="weather, air, transit, energy"
+              placeholder="weather, water, transit, services"
               value={searchValue}
             />
           </label>
@@ -131,28 +173,40 @@ export function DataPlatformHome({
           <section className="platform-hero" aria-label="Platform summary">
             <div>
               <span className="label-text">Data platform</span>
-              <h1>Multi-source operational data</h1>
+              <h1>Operational data by signal type</h1>
               <p>
-                Helsinki/Uusimaa weather, air quality, transit, and energy signals with source
-                health, event timelines, and visualization blocks.
+                Helsinki/Uusimaa source coverage, key fields, active events, and category-level
+                metrics grouped so each data type shows what matters first.
               </p>
             </div>
             <div className="hero-status-grid">
               <article>
-                <span>Platform</span>
-                <strong>{statusText(overview.health_status)}</strong>
+                <span>Data types</span>
+                <strong>
+                  {categories.length}
+                  <small>{signalStats.connected} live</small>
+                </strong>
               </article>
               <article>
-                <span>Coverage</span>
-                <strong>{overview.coverage_area}</strong>
+                <span>Key metrics</span>
+                <strong>
+                  {signalStats.keyMetrics}
+                  <small>{signalStats.keyFields} fields</small>
+                </strong>
               </article>
               <article>
-                <span>Updated</span>
-                <strong>{formatTimestamp(overview.checked_at)}</strong>
+                <span>Active events</span>
+                <strong>
+                  {signalStats.activeEvents}
+                  <small>{statusText(overview.health_status)}</small>
+                </strong>
               </article>
               <article>
-                <span>API</span>
-                <strong>{apiBaseUrl.replace(/^https?:\/\//, "")}</strong>
+                <span>Sources</span>
+                <strong>
+                  {overview.sources.length}
+                  <small>{signalStats.planned} planned areas</small>
+                </strong>
               </article>
             </div>
           </section>
@@ -175,36 +229,69 @@ export function DataPlatformHome({
                   <p>
                     {selectedCategory
                       ? selectedCategory.description
-                      : "Weather, air quality, transit, and energy grouped by source, metric, event, and visualization."}
+                      : "Operational and background categories grouped by source, metric, event, and visualization."}
                   </p>
                 </div>
                 <div className="workspace-meta">
                   <span>{timeRange}</span>
                   <span>{defaultUserId ? "personal context" : "regional context"}</span>
+                  {selectedCategory ? (
+                    <span>{sourceStatusText(selectedCategory)}</span>
+                  ) : (
+                    <span>{apiBaseUrl.replace(/^https?:\/\//, "")}</span>
+                  )}
                 </div>
               </div>
 
-              {selectedCategory ? (
-                <section className="metric-grid" aria-label="Category metrics">
-                  {selectedCategory.summary_metrics.map((metric) => (
-                    <MetricCard key={metric.key} metric={metric} />
-                  ))}
-                </section>
+              {isWeatherSelected ? (
+                <WeatherWorkspace category={selectedCategory} weather={weather} timeRange={timeRange} />
+              ) : selectedCategory ? (
+                <>
+                  <section className="category-focus-strip" aria-label="Selected category signals">
+                    <article>
+                      <span className="label-text">Key data items</span>
+                      <div className="key-data-tags">
+                        {selectedKeyDataItems.map((item) => (
+                          <span key={item}>{formatDataItemLabel(item)}</span>
+                        ))}
+                      </div>
+                    </article>
+                    <article>
+                      <span className="label-text">Metric coverage</span>
+                      <strong>{selectedCategory.summary_metrics.length}</strong>
+                      <p>Category indicators available for the current platform window.</p>
+                    </article>
+                    <article>
+                      <span className="label-text">Sources</span>
+                      <strong>{selectedCategory.sources.length}</strong>
+                      <p>{selectedCategory.source_codes.join(", ") || "Catalog only"}</p>
+                    </article>
+                  </section>
+                  <section className="metric-grid" aria-label="Category metrics">
+                    {selectedCategory.summary_metrics.map((metric) => (
+                      <MetricCard key={metric.key} metric={metric} />
+                    ))}
+                  </section>
+                </>
               ) : (
                 <CategoryOverviewGrid categories={activeCategories} onSelect={setSelectedKey} />
               )}
 
-              <section className="visualization-grid" aria-label="Visualizations">
-                {visualizations.length > 0 ? (
-                  visualizations.map((visualization) => (
-                    <VisualizationPanel key={visualization.id} visualization={visualization} />
-                  ))
-                ) : (
-                  <div className="empty-visual">No visualizations match the current search.</div>
-                )}
-              </section>
+              {!isWeatherSelected ? (
+                <>
+                  <section className="visualization-grid" aria-label="Visualizations">
+                    {visualizations.length > 0 ? (
+                      visualizations.map((visualization) => (
+                        <VisualizationPanel key={visualization.id} visualization={visualization} />
+                      ))
+                    ) : (
+                      <div className="empty-visual">No visualizations match the current search.</div>
+                    )}
+                  </section>
 
-              <EventStream events={visibleEvents} />
+                  <EventStream events={visibleEvents} />
+                </>
+              ) : null}
             </section>
           </div>
         </>

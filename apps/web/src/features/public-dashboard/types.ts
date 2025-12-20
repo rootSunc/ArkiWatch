@@ -1,3 +1,31 @@
+export type SourceDataField = {
+  key: string;
+  label: string;
+  value_type: string;
+  description: string;
+  required: boolean;
+  unit: string | null;
+};
+
+export type SourceDatasetStructure = {
+  dataset: string;
+  label: string;
+  shape: string;
+  cadence: string;
+  spatial_grain: string;
+  temporal_field: string | null;
+  primary_keys: string[];
+  fields: SourceDataField[];
+};
+
+export type SourceNormalizedEventStructure = {
+  event_type: string;
+  description: string;
+  location_type: string;
+  validity_window: string;
+  attributes: SourceDataField[];
+};
+
 export type DashboardSource = {
   id: string;
   source_code: string;
@@ -5,6 +33,14 @@ export type DashboardSource = {
   auth_type: string;
   poll_interval_seconds: number;
   operational_status: string;
+  stage?: string;
+  categories?: string[];
+  datasets?: string[];
+  key_data_items?: string[];
+  data_structures?: SourceDatasetStructure[];
+  normalized_event_structures?: SourceNormalizedEventStructure[];
+  license_label?: string | null;
+  documentation_url?: string | null;
   last_run_status: string | null;
   last_run_started_at: string | null;
   last_run_finished_at: string | null;
