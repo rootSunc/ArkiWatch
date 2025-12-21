@@ -1279,6 +1279,319 @@ dd {
   line-height: 1.5;
 }
 
+.air-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.air-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 0.35fr);
+  gap: 18px;
+  align-items: stretch;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f2fbf6 52%, #f6f8ff 100%);
+  box-shadow: var(--shadow);
+}
+
+.air-hero-warn {
+  border-color: var(--amber);
+  background: linear-gradient(135deg, #ffffff 0%, #fff7e5 50%, #f8fbff 100%);
+}
+
+.air-hero-bad {
+  border-color: var(--red);
+  background: linear-gradient(135deg, #ffffff 0%, #fde8e5 48%, #f9fafb 100%);
+}
+
+.air-hero h2 {
+  margin-top: 7px;
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+
+.air-hero p {
+  max-width: 780px;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.air-current {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 5px;
+  min-width: 0;
+  text-align: right;
+}
+
+.air-current span,
+.air-current small {
+  color: var(--muted);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.air-current strong {
+  font-size: 2.15rem;
+  line-height: 1;
+}
+
+.air-kpi-grid,
+.air-data-grid,
+.air-main-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.air-kpi-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.air-data-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+}
+
+.air-main-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.55fr);
+}
+
+.air-kpi-grid article,
+.air-pipeline-panel,
+.air-quality-panel,
+.air-station-panel,
+.air-source-panel,
+.air-empty {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.air-kpi-grid article,
+.air-pipeline-panel,
+.air-quality-panel,
+.air-station-panel,
+.air-source-panel,
+.air-empty {
+  padding: 18px;
+}
+
+.air-kpi-grid span,
+.air-pipeline-panel span,
+.air-quality-panel span,
+.air-station-panel span,
+.air-source-panel span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.air-kpi-grid strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 1.28rem;
+  line-height: 1.1;
+}
+
+.air-kpi-grid small {
+  display: block;
+  margin-top: 6px;
+  color: var(--faint);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.air-pipeline-panel header,
+.air-quality-panel header,
+.air-station-panel header,
+.air-source-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.air-pipeline-panel h3,
+.air-quality-panel h3,
+.air-station-panel h3 {
+  margin-top: 5px;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.air-pipeline-panel header strong,
+.air-quality-panel header strong,
+.air-source-panel header strong {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.air-stage-list,
+.air-quality-notes,
+.air-station-list,
+.air-request-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.air-stage,
+.air-request,
+.air-station {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.air-stage div,
+.air-request div,
+.air-station div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.air-stage strong,
+.air-stage small,
+.air-request strong,
+.air-request small,
+.air-station strong,
+.air-station small,
+.air-station-list p,
+.air-quality-notes small {
+  overflow-wrap: anywhere;
+}
+
+.air-stage small,
+.air-request small,
+.air-station small,
+.air-station-list p,
+.air-quality-notes small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.air-stage span,
+.air-request span,
+.air-station span {
+  border-radius: 8px;
+  padding: 4px 7px;
+  background: var(--neutral-soft);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.air-stage-good,
+.air-request-good,
+.air-station-good {
+  border-color: #acd6bd;
+  background: var(--green-soft);
+}
+
+.air-stage-good span,
+.air-request-good span,
+.air-station-good span {
+  background: var(--surface);
+  color: var(--green);
+}
+
+.air-stage-warn,
+.air-request-warn,
+.air-station-warn {
+  border-color: #e5c46e;
+  background: var(--amber-soft);
+}
+
+.air-stage-warn span,
+.air-request-warn span,
+.air-station-warn span {
+  background: var(--surface);
+  color: var(--amber);
+}
+
+.air-station-bad {
+  border-color: #f0a8a1;
+  background: var(--red-soft);
+}
+
+.air-station-bad span {
+  background: var(--surface);
+  color: var(--red);
+}
+
+.air-quality-meter,
+.air-score-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--neutral-soft);
+}
+
+.air-quality-meter {
+  margin-top: 16px;
+}
+
+.air-quality-meter i,
+.air-score-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.air-quality-meter i {
+  width: max(4px, var(--quality, 0%));
+  background: var(--green);
+}
+
+.air-score-track i {
+  width: max(4px, var(--score, 0%));
+  background: var(--blue);
+}
+
+.air-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.air-quality-grid span {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.air-empty {
+  display: grid;
+  gap: 8px;
+}
+
+.air-empty h2 {
+  font-size: 1.35rem;
+}
+
+.air-empty p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .metric-card {
   padding: 16px;
 }
@@ -1949,11 +2262,15 @@ dd {
   .weather-hero,
   .weather-data-grid,
   .weather-kpi-grid,
-  .weather-main-grid {
+  .weather-main-grid,
+  .air-hero,
+  .air-data-grid,
+  .air-main-grid {
     grid-template-columns: 1fr;
   }
 
-  .weather-current {
+  .weather-current,
+  .air-current {
     justify-items: start;
     text-align: left;
   }
@@ -1994,6 +2311,8 @@ dd {
   .category-card-stats,
   .category-metric-preview,
   .weather-chart-grid,
+  .weather-quality-grid,
+  .air-quality-grid,
   .visual-summary-grid {
     grid-template-columns: 1fr;
   }

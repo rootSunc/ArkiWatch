@@ -193,3 +193,65 @@ export type WeatherForecastResponse = {
   quality: WeatherQuality;
   warnings: WeatherWarning[];
 };
+
+export type AirQualityStation = {
+  station: string;
+  label: string;
+  score: number | null;
+  pm2_5: number | null;
+  pm10: number | null;
+  no2: number | null;
+  lat: number | null;
+  lon: number | null;
+};
+
+export type AirQualityMetric = {
+  key: string;
+  label: string;
+  value: string;
+  unit: string | null;
+};
+
+export type AirQualitySourceRequest = {
+  key: string;
+  label: string;
+  status: string;
+  endpoint: string | null;
+  content_type: string | null;
+  fetched_at: string | null;
+};
+
+export type AirQualityDataStage = {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  record_count: number | null;
+  updated_at: string | null;
+};
+
+export type AirQualityQuality = {
+  station_count: number;
+  reporting_station_count: number;
+  field_coverage_pct: number;
+  missing_fields: string[];
+  notes: string[];
+};
+
+export type AirQualityCurrentResponse = {
+  checked_at: string;
+  status: string;
+  location: string | null;
+  source_code: string;
+  observed_at: string | null;
+  valid_to: string | null;
+  summary: string | null;
+  worst_station: string | null;
+  worst_label: string | null;
+  worst_score: number | null;
+  metrics: AirQualityMetric[];
+  stations: AirQualityStation[];
+  source_requests: AirQualitySourceRequest[];
+  data_pipeline: AirQualityDataStage[];
+  quality: AirQualityQuality;
+};

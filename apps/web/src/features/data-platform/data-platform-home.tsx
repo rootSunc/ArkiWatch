@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
+import { AirQualityWorkspace } from "./air-quality-workspace";
 import { CategoryNav } from "./category-nav";
 import { categoryKeyDataItems, formatDataItemLabel } from "./category-metadata";
 import { CategoryOverviewGrid } from "./category-overview-grid";
@@ -11,6 +12,7 @@ import { EventStream } from "./event-stream";
 import { MetricCard } from "./metric-card";
 import { SourceHealthStrip } from "./source-health-strip";
 import {
+  AirQualityCurrentResponse,
   PlatformCategory,
   PlatformOverviewResponse,
   PlatformVisualization,
@@ -20,6 +22,7 @@ import { VisualizationPanel } from "./visualization-panel";
 import { WeatherWorkspace } from "./weather-workspace";
 
 type DataPlatformHomeProps = {
+  airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
@@ -96,6 +99,7 @@ function sourceStatusText(category: PlatformCategory): string {
 }
 
 export function DataPlatformHome({
+  airQuality,
   apiBaseUrl,
   defaultUserId,
   overview,
@@ -110,6 +114,7 @@ export function DataPlatformHome({
   const signalStats = useMemo(() => platformSignalStats(categories), [categories]);
   const selectedCategory = categories.find((category) => category.key === selectedKey) ?? null;
   const isWeatherSelected = selectedCategory?.key === "weather";
+  const isAirSelected = selectedCategory?.key === "air";
   const selectedKeyDataItems = selectedCategory ? categoryKeyDataItems(selectedCategory) : [];
   const visibleCategories = useMemo(
     () => categories.filter((category) => matchesSearch(category, searchValue)),
@@ -245,6 +250,8 @@ export function DataPlatformHome({
 
               {isWeatherSelected ? (
                 <WeatherWorkspace category={selectedCategory} weather={weather} timeRange={timeRange} />
+              ) : isAirSelected ? (
+                <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
               ) : selectedCategory ? (
                 <>
                   <section className="category-focus-strip" aria-label="Selected category signals">
@@ -277,7 +284,7 @@ export function DataPlatformHome({
                 <CategoryOverviewGrid categories={activeCategories} onSelect={setSelectedKey} />
               )}
 
-              {!isWeatherSelected ? (
+              {!isWeatherSelected && !isAirSelected ? (
                 <>
                   <section className="visualization-grid" aria-label="Visualizations">
                     {visualizations.length > 0 ? (

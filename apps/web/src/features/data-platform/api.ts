@@ -1,12 +1,13 @@
 import { appEnv } from "@/lib/env";
 
-import { PlatformOverviewResponse, WeatherForecastResponse } from "./types";
+import { AirQualityCurrentResponse, PlatformOverviewResponse, WeatherForecastResponse } from "./types";
 
 type PlatformFetchResult = {
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
   weather: WeatherForecastResponse | null;
+  airQuality: AirQualityCurrentResponse | null;
   error: string | null;
 };
 
@@ -47,14 +48,16 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
   const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const overviewUrl = new URL(`${apiBaseUrl}/platform/overview`);
   const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
+  const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
 
   if (appEnv.defaultUserId) {
     overviewUrl.searchParams.set("user_id", appEnv.defaultUserId);
   }
 
-  const [overviewResult, weatherResult] = await Promise.all([
+  const [overviewResult, weatherResult, airQualityResult] = await Promise.all([
     fetchJson<PlatformOverviewResponse>(overviewUrl),
-    fetchJson<WeatherForecastResponse>(weatherUrl)
+    fetchJson<WeatherForecastResponse>(weatherUrl),
+    fetchJson<AirQualityCurrentResponse>(airQualityUrl)
   ]);
 
   return {
@@ -62,6 +65,7 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
     defaultUserId: appEnv.defaultUserId,
     overview: overviewResult.data,
     weather: weatherResult.data,
-    error: overviewResult.error ?? weatherResult.error
+    airQuality: airQualityResult.data,
+    error: overviewResult.error ?? weatherResult.error ?? airQualityResult.error
   };
 }
