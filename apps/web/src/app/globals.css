@@ -134,7 +134,29 @@ dd {
   font-weight: 800;
 }
 
-.search-box input {
+.date-picker {
+  display: grid;
+  gap: 5px;
+  min-width: 230px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.date-picker-row {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.date-picker small {
+  color: var(--faint);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.search-box input,
+.date-picker input {
   width: 100%;
   height: 38px;
   border: 1px solid var(--border);
@@ -145,7 +167,21 @@ dd {
   outline: none;
 }
 
-.search-box input:focus {
+.date-picker button {
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--ink);
+  color: var(--surface);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.search-box input:focus,
+.date-picker input:focus,
+.date-picker button:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
 }

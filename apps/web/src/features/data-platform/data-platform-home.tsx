@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
@@ -31,6 +31,16 @@ type DataPlatformHomeProps = {
 };
 
 const TIME_RANGES = ["Today", "24h", "7d", "Custom"];
+const HELSINKI_TIME_ZONE = "Europe/Helsinki";
+
+function localDateInputValue(value: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: HELSINKI_TIME_ZONE
+  }).format(value);
+}
 
 function statusText(status: string): string {
   return status.replaceAll("_", " ");
@@ -109,6 +119,11 @@ export function DataPlatformHome({
   const [selectedKey, setSelectedKey] = useState("weather");
   const [timeRange, setTimeRange] = useState("24h");
   const [searchValue, setSearchValue] = useState("");
+  const [selectedDate, setSelectedDate] = useState(() => localDateInputValue(new Date()));
+  const [weatherCard, setWeatherCard] = useState(weather);
+  const [airQualityCard, setAirQualityCard] = useState(airQuality);
+  const [dataCardStatus, setDataCardStatus] = useState("Showing latest data");
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const signalStats = useMemo(() => platformSignalStats(categories), [categories]);
@@ -136,6 +151,51 @@ export function DataPlatformHome({
         .includes(searchValue.trim().toLowerCase())
     )
     .slice(0, 12);
+  const todayDate = localDateInputValue(new Date());
+
+  async function fetchDataCardsForDate(dateValue: string): Promise<void> {
+    if (!dateValue) {
+      return;
+    }
+
+    setSelectedDate(dateValue);
+    setDataCardStatus("Loading selected date");
+
+    const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
+    const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
+    if (dateValue !== todayDate) {
+      weatherUrl.searchParams.set("date", dateValue);
+      airQualityUrl.searchParams.set("date", dateValue);
+    }
+
+    try {
+      const [weatherResponse, airQualityResponse] = await Promise.all([
+        fetch(weatherUrl, { cache: "no-store" }),
+        fetch(airQualityUrl, { cache: "no-store" })
+      ]);
+
+      if (!weatherResponse.ok || !airQualityResponse.ok) {
+        throw new Error("Data card request failed.");
+      }
+
+      const [nextWeather, nextAirQuality] = (await Promise.all([
+        weatherResponse.json(),
+        airQualityResponse.json()
+      ])) as [WeatherForecastResponse, AirQualityCurrentResponse];
+
+      setWeatherCard(nextWeather);
+      setAirQualityCard(nextAirQuality);
+      setDataCardStatus(dateValue === todayDate ? "Showing latest data" : `Showing ${dateValue}`);
+    } catch (dateError) {
+      setDataCardStatus(
+        dateError instanceof Error ? dateError.message : "Selected date could not load."
+      );
+    }
+  }
+
+  function applySelectedDate(): void {
+    void fetchDataCardsForDate(dateInputRef.current?.value ?? selectedDate);
+  }
 
   return (
     <main className="platform-shell">
@@ -158,6 +218,24 @@ export function DataPlatformHome({
               value={searchValue}
             />
           </label>
+          <div className="date-picker">
+            <label htmlFor="data-card-date">Data date</label>
+            <div className="date-picker-row">
+              <input
+                id="data-card-date"
+                onChange={(event) => {
+                  void fetchDataCardsForDate(event.currentTarget.value);
+                }}
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+              />
+              <button onClick={applySelectedDate} type="button">
+                Apply
+              </button>
+            </div>
+            <small>{dataCardStatus}</small>
+          </div>
           <div className="segmented-control" aria-label="Time range">
             {TIME_RANGES.map((range) => (
               <button
@@ -249,9 +327,13 @@ export function DataPlatformHome({
               </div>
 
               {isWeatherSelected ? (
-                <WeatherWorkspace category={selectedCategory} weather={weather} timeRange={timeRange} />
+                <WeatherWorkspace
+                  category={selectedCategory}
+                  weather={weatherCard}
+                  timeRange={timeRange}
+                />
               ) : isAirSelected ? (
-                <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
+                <AirQualityWorkspace airQuality={airQualityCard} category={selectedCategory} />
               ) : selectedCategory ? (
                 <>
                   <section className="category-focus-strip" aria-label="Selected category signals">
