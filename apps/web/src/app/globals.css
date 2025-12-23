@@ -85,6 +85,7 @@ dd {
 }
 
 .brand-lockup {
+  flex: 0 0 auto;
   gap: 12px;
   min-width: 0;
 }
@@ -134,29 +135,57 @@ dd {
   font-weight: 800;
 }
 
-.date-picker {
+.time-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.source-day-control,
+.weather-window-control,
+.custom-window-control {
   display: grid;
   gap: 5px;
-  min-width: 230px;
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 800;
 }
 
-.date-picker-row {
+.source-day-control {
+  min-width: 230px;
+}
+
+.weather-window-control {
+  min-width: 330px;
+}
+
+.source-day-row {
   display: grid;
   gap: 6px;
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.date-picker small {
+.custom-window-control {
+  grid-template-columns: auto minmax(160px, 1fr) auto minmax(160px, 1fr);
+  align-items: center;
+  max-width: 100%;
+  min-height: 61px;
+  padding: 0 0 0 2px;
+}
+
+.source-day-control small,
+.weather-window-control small {
   color: var(--faint);
   font-size: 0.72rem;
   font-weight: 800;
 }
 
 .search-box input,
-.date-picker input {
+.source-day-control input,
+.custom-window-control input {
   width: 100%;
   height: 38px;
   border: 1px solid var(--border);
@@ -167,7 +196,7 @@ dd {
   outline: none;
 }
 
-.date-picker button {
+.source-day-control button {
   height: 38px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -179,9 +208,15 @@ dd {
   font-weight: 900;
 }
 
+.source-day-control button:disabled {
+  opacity: 0.58;
+  cursor: progress;
+}
+
 .search-box input:focus,
-.date-picker input:focus,
-.date-picker button:focus {
+.source-day-control input:focus,
+.source-day-control button:focus,
+.custom-window-control input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-soft);
 }
@@ -2335,6 +2370,27 @@ dd {
   .topbar-controls,
   .workspace-meta {
     justify-content: flex-start;
+  }
+
+  .time-controls,
+  .source-day-control,
+  .weather-window-control,
+  .custom-window-control {
+    width: 100%;
+  }
+
+  .time-controls {
+    justify-content: flex-start;
+  }
+
+  .source-day-control,
+  .weather-window-control {
+    min-width: 0;
+  }
+
+  .custom-window-control {
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .platform-hero h1,

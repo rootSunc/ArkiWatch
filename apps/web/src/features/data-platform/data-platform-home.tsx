@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
@@ -16,8 +16,16 @@ import {
   PlatformCategory,
   PlatformOverviewResponse,
   PlatformVisualization,
-  WeatherForecastResponse
+  WeatherForecastResponse,
+  WeatherTimePreset
 } from "./types";
+import {
+  buildWeatherTimeWindow,
+  defaultCustomWindowForDate,
+  isValidSourceDate,
+  localDateInputValue,
+  TIME_PRESETS
+} from "./time-window";
 import { VisualizationPanel } from "./visualization-panel";
 import { WeatherWorkspace } from "./weather-workspace";
 
@@ -29,18 +37,6 @@ type DataPlatformHomeProps = {
   weather: WeatherForecastResponse | null;
   error: string | null;
 };
-
-const TIME_RANGES = ["Today", "24h", "7d", "Custom"];
-const HELSINKI_TIME_ZONE = "Europe/Helsinki";
-
-function localDateInputValue(value: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    timeZone: HELSINKI_TIME_ZONE
-  }).format(value);
-}
 
 function statusText(status: string): string {
   return status.replaceAll("_", " ");
@@ -117,13 +113,21 @@ export function DataPlatformHome({
   error
 }: DataPlatformHomeProps) {
   const [selectedKey, setSelectedKey] = useState("weather");
-  const [timeRange, setTimeRange] = useState("24h");
+  const [timePreset, setTimePreset] = useState<WeatherTimePreset>("next24h");
   const [searchValue, setSearchValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => localDateInputValue(new Date()));
+  const [customStart, setCustomStart] = useState(() => {
+    const customWindow = defaultCustomWindowForDate(localDateInputValue(new Date()));
+    return customWindow.startsAt;
+  });
+  const [customEnd, setCustomEnd] = useState(() => {
+    const customWindow = defaultCustomWindowForDate(localDateInputValue(new Date()));
+    return customWindow.endsAt;
+  });
   const [weatherCard, setWeatherCard] = useState(weather);
   const [airQualityCard, setAirQualityCard] = useState(airQuality);
-  const [dataCardStatus, setDataCardStatus] = useState("Showing latest data");
-  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const [dataCardStatus, setDataCardStatus] = useState("Showing latest source day");
+  const [isDateLoading, setIsDateLoading] = useState(false);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const signalStats = useMemo(() => platformSignalStats(categories), [categories]);
@@ -152,18 +156,26 @@ export function DataPlatformHome({
     )
     .slice(0, 12);
   const todayDate = localDateInputValue(new Date());
+  const sourceDayLabel = selectedDate === todayDate ? "Latest source day" : `Source day ${selectedDate}`;
+  const weatherTimeWindow = useMemo(
+    () => buildWeatherTimeWindow(timePreset, selectedDate, customStart, customEnd),
+    [customEnd, customStart, selectedDate, timePreset]
+  );
 
   async function fetchDataCardsForDate(dateValue: string): Promise<void> {
-    if (!dateValue) {
+    if (!isValidSourceDate(dateValue)) {
+      setDataCardStatus("Choose a valid source day");
       return;
     }
 
+    const latestDate = localDateInputValue(new Date());
     setSelectedDate(dateValue);
-    setDataCardStatus("Loading selected date");
+    setDataCardStatus("Loading source day");
+    setIsDateLoading(true);
 
     const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
     const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
-    if (dateValue !== todayDate) {
+    if (dateValue !== latestDate) {
       weatherUrl.searchParams.set("date", dateValue);
       airQualityUrl.searchParams.set("date", dateValue);
     }
@@ -185,16 +197,42 @@ export function DataPlatformHome({
 
       setWeatherCard(nextWeather);
       setAirQualityCard(nextAirQuality);
-      setDataCardStatus(dateValue === todayDate ? "Showing latest data" : `Showing ${dateValue}`);
+      setDataCardStatus(dateValue === latestDate ? "Showing latest source day" : `Showing ${dateValue}`);
     } catch (dateError) {
       setDataCardStatus(
         dateError instanceof Error ? dateError.message : "Selected date could not load."
       );
+    } finally {
+      setIsDateLoading(false);
     }
   }
 
-  function applySelectedDate(): void {
-    void fetchDataCardsForDate(dateInputRef.current?.value ?? selectedDate);
+  function handleSourceDateChange(dateValue: string): void {
+    if (timePreset === "custom") {
+      const customWindow = defaultCustomWindowForDate(dateValue);
+      setCustomStart(customWindow.startsAt);
+      setCustomEnd(customWindow.endsAt);
+    }
+    void fetchDataCardsForDate(dateValue);
+  }
+
+  function handleTimePresetChange(nextPreset: WeatherTimePreset): void {
+    if (nextPreset === "custom" && timePreset !== "custom") {
+      const customWindow = defaultCustomWindowForDate(selectedDate);
+      setCustomStart(customWindow.startsAt);
+      setCustomEnd(customWindow.endsAt);
+    }
+    setTimePreset(nextPreset);
+  }
+
+  function showLatestSourceDay(): void {
+    const latestDate = localDateInputValue(new Date());
+    if (timePreset === "custom") {
+      const customWindow = defaultCustomWindowForDate(latestDate);
+      setCustomStart(customWindow.startsAt);
+      setCustomEnd(customWindow.endsAt);
+    }
+    void fetchDataCardsForDate(latestDate);
   }
 
   return (
@@ -218,36 +256,59 @@ export function DataPlatformHome({
               value={searchValue}
             />
           </label>
-          <div className="date-picker">
-            <label htmlFor="data-card-date">Data date</label>
-            <div className="date-picker-row">
-              <input
-                id="data-card-date"
-                onChange={(event) => {
-                  void fetchDataCardsForDate(event.currentTarget.value);
-                }}
-                ref={dateInputRef}
-                type="date"
-                value={selectedDate}
-              />
-              <button onClick={applySelectedDate} type="button">
-                Apply
-              </button>
+          <section className="time-controls" aria-label="Time controls">
+            <div className="source-day-control">
+              <label htmlFor="data-card-date">Weather/Air day</label>
+              <div className="source-day-row">
+                <input
+                  id="data-card-date"
+                  onChange={(event) => handleSourceDateChange(event.currentTarget.value)}
+                  type="date"
+                  value={selectedDate}
+                />
+                <button disabled={isDateLoading} onClick={showLatestSourceDay} type="button">
+                  Today
+                </button>
+              </div>
+              <small>{dataCardStatus}</small>
             </div>
-            <small>{dataCardStatus}</small>
-          </div>
-          <div className="segmented-control" aria-label="Time range">
-            {TIME_RANGES.map((range) => (
-              <button
-                className={timeRange === range ? "active" : ""}
-                key={range}
-                onClick={() => setTimeRange(range)}
-                type="button"
-              >
-                {range}
-              </button>
-            ))}
-          </div>
+            {isWeatherSelected ? (
+              <div className="weather-window-control">
+                <span>Weather window</span>
+                <div className="segmented-control" aria-label="Weather time window">
+                  {TIME_PRESETS.map((preset) => (
+                    <button
+                      className={timePreset === preset.key ? "active" : ""}
+                      key={preset.key}
+                      onClick={() => handleTimePresetChange(preset.key)}
+                      type="button"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <small>{weatherTimeWindow.status}</small>
+              </div>
+            ) : null}
+            {isWeatherSelected && timePreset === "custom" ? (
+              <div className="custom-window-control">
+                <label htmlFor="weather-window-start">Start</label>
+                <input
+                  id="weather-window-start"
+                  onChange={(event) => setCustomStart(event.currentTarget.value)}
+                  type="datetime-local"
+                  value={customStart}
+                />
+                <label htmlFor="weather-window-end">End</label>
+                <input
+                  id="weather-window-end"
+                  onChange={(event) => setCustomEnd(event.currentTarget.value)}
+                  type="datetime-local"
+                  value={customEnd}
+                />
+              </div>
+            ) : null}
+          </section>
         </div>
       </header>
 
@@ -316,7 +377,8 @@ export function DataPlatformHome({
                   </p>
                 </div>
                 <div className="workspace-meta">
-                  <span>{timeRange}</span>
+                  {isWeatherSelected ? <span>{weatherTimeWindow.shortLabel}</span> : null}
+                  {isWeatherSelected || isAirSelected ? <span>{sourceDayLabel}</span> : null}
                   <span>{defaultUserId ? "personal context" : "regional context"}</span>
                   {selectedCategory ? (
                     <span>{sourceStatusText(selectedCategory)}</span>
@@ -330,7 +392,7 @@ export function DataPlatformHome({
                 <WeatherWorkspace
                   category={selectedCategory}
                   weather={weatherCard}
-                  timeRange={timeRange}
+                  timeWindow={weatherTimeWindow}
                 />
               ) : isAirSelected ? (
                 <AirQualityWorkspace airQuality={airQualityCard} category={selectedCategory} />

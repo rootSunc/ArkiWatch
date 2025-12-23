@@ -175,6 +175,18 @@ export type WeatherWarning = {
   severity: string | null;
 };
 
+export type WeatherTimePreset = "day" | "next24h" | "next7d" | "custom";
+
+export type WeatherTimeWindow = {
+  preset: WeatherTimePreset;
+  label: string;
+  shortLabel: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  status: string;
+  isValid: boolean;
+};
+
 export type WeatherForecastResponse = {
   checked_at: string;
   status: string;

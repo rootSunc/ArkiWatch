@@ -11,13 +11,14 @@ import {
   WeatherRainWindow,
   WeatherSourceRequest,
   WeatherSourceLayer,
+  WeatherTimeWindow,
   WeatherWarning
 } from "./types";
 
 type WeatherWorkspaceProps = {
   category: PlatformCategory | null;
   weather: WeatherForecastResponse | null;
-  timeRange: string;
+  timeWindow: WeatherTimeWindow;
 };
 
 type WeatherChartPoint = {
@@ -152,27 +153,55 @@ function latestPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | nul
   );
 }
 
-function forecastPointsForRange(points: WeatherForecastPoint[], timeRange: string): WeatherForecastPoint[] {
-  const now = Date.now();
+type ForecastPointSelection = {
+  points: WeatherForecastPoint[];
+  fallbackLabel: string | null;
+};
+
+function fallbackPointLimit(timeWindow: WeatherTimeWindow): number {
+  if (timeWindow.preset === "next24h") {
+    return 24;
+  }
+  if (timeWindow.preset === "next7d") {
+    return 168;
+  }
+  if (timeWindow.preset === "day") {
+    return 18;
+  }
+  return 0;
+}
+
+function forecastPointsForWindow(
+  points: WeatherForecastPoint[],
+  timeWindow: WeatherTimeWindow
+): ForecastPointSelection {
   const ordered = orderedPoints(points);
-  const futurePoints = ordered.filter((point) => pointTime(point) >= now);
-  const sourcePoints = futurePoints.length > 0 ? futurePoints : ordered;
-  const currentDateKey = localDateKey(new Date(now));
-
-  if (timeRange === "Today") {
-    const todayPoints = sourcePoints.filter((point) => localDateKey(new Date(point.timestamp)) === currentDateKey);
-    return todayPoints.length > 0 ? todayPoints : sourcePoints.slice(0, 18);
+  if (!timeWindow.isValid || !timeWindow.startsAt || !timeWindow.endsAt) {
+    return { points: [], fallbackLabel: null };
   }
 
-  if (timeRange === "24h") {
-    return sourcePoints.filter((point) => pointTime(point) < now + 24 * 60 * 60 * 1000).slice(0, 24);
+  const startsAt = new Date(timeWindow.startsAt).getTime();
+  const endsAt = new Date(timeWindow.endsAt).getTime();
+  if (Number.isNaN(startsAt) || Number.isNaN(endsAt) || endsAt <= startsAt) {
+    return { points: [], fallbackLabel: null };
   }
 
-  if (timeRange === "7d") {
-    return sourcePoints.filter((point) => pointTime(point) < now + 7 * 24 * 60 * 60 * 1000).slice(0, 168);
+  const windowPoints = ordered.filter((point) => {
+    const timestamp = pointTime(point);
+    return timestamp >= startsAt && timestamp < endsAt;
+  });
+  if (windowPoints.length > 0 || timeWindow.preset === "custom") {
+    return { points: windowPoints, fallbackLabel: null };
   }
 
-  return sourcePoints;
+  const fallbackPoints = ordered.slice(0, fallbackPointLimit(timeWindow));
+  return {
+    points: fallbackPoints,
+    fallbackLabel:
+      fallbackPoints.length > 0
+        ? `Available data ${formatTimeRange(fallbackPoints[0].timestamp, fallbackPoints[fallbackPoints.length - 1].timestamp)}`
+        : null
+  };
 }
 
 function weatherSignalText(point: WeatherForecastPoint | null): string {
@@ -767,7 +796,7 @@ function renderForecastRibbon(
   );
 }
 
-export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorkspaceProps) {
+export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorkspaceProps) {
   if (!weather) {
     return (
       <section className="weather-empty" aria-label="Weather data unavailable">
@@ -781,11 +810,13 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
   const forecastPoints = weather.points ?? [];
   const rainWindows = weather.rain_windows ?? [];
   const current = latestPoint(forecastPoints);
-  const visiblePoints = forecastPointsForRange(forecastPoints, timeRange);
+  const visibleSelection = forecastPointsForWindow(forecastPoints, timeWindow);
+  const visiblePoints = visibleSelection.points;
   const maxRain = maxValue(visiblePoints, (point) => point.precipitation_mm);
   const maxWind = maxValue(visiblePoints, (point) => point.wind_gust_ms ?? point.wind_speed_ms);
-  const selectedWindowStart = visiblePoints[0]?.timestamp ?? weather.valid_from;
-  const selectedWindowEnd = visiblePoints[visiblePoints.length - 1]?.timestamp ?? weather.valid_to;
+  const selectedWindowStart = visiblePoints[0]?.timestamp ?? timeWindow.startsAt ?? weather.valid_from;
+  const selectedWindowEnd =
+    visiblePoints[visiblePoints.length - 1]?.timestamp ?? timeWindow.endsAt ?? weather.valid_to;
   const relevantRainWindows = rainWindows.filter(
     (window) =>
       new Date(window.ends_at).getTime() >= new Date(selectedWindowStart ?? 0).getTime() &&
@@ -933,9 +964,9 @@ export function WeatherWorkspace({ category, weather, timeRange }: WeatherWorksp
           <header>
             <div>
               <span className="label-text">Hourly signals</span>
-              <h3>{timeRange} · {visiblePoints.length} forecast points</h3>
+              <h3>{timeWindow.label} · {visiblePoints.length} forecast points</h3>
             </div>
-            <small>{formatTimeRange(selectedWindowStart, selectedWindowEnd)}</small>
+            <small>{visibleSelection.fallbackLabel ?? timeWindow.status}</small>
           </header>
           <div className="weather-ribbon-panel">
             <div>
