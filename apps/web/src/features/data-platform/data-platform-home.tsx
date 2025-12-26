@@ -2,32 +2,19 @@
 
 import { useMemo, useState } from "react";
 
-import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
+import { formatRelativeAge, formatTimestamp, severityTone, statusTone } from "@/features/shared/format";
 
-import { AirQualityWorkspace } from "./air-quality-workspace";
-import { CategoryNav } from "./category-nav";
-import { categoryKeyDataItems, formatDataItemLabel } from "./category-metadata";
-import { CategoryOverviewGrid } from "./category-overview-grid";
-import { EventStream } from "./event-stream";
-import { MetricCard } from "./metric-card";
-import { SourceHealthStrip } from "./source-health-strip";
+import { categoryKeyDataItems } from "./category-metadata";
 import {
   AirQualityCurrentResponse,
   PlatformCategory,
+  PlatformEvent,
+  PlatformMetric,
   PlatformOverviewResponse,
-  PlatformVisualization,
-  WeatherForecastResponse,
-  WeatherTimePreset
+  PlatformTone,
+  WeatherForecastResponse
 } from "./types";
-import {
-  buildWeatherTimeWindow,
-  defaultCustomWindowForDate,
-  isValidSourceDate,
-  localDateInputValue,
-  TIME_PRESETS
-} from "./time-window";
-import { VisualizationPanel } from "./visualization-panel";
-import { WeatherWorkspace } from "./weather-workspace";
+import { WeatherDetailView } from "./weather-detail-view";
 
 type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
@@ -38,8 +25,161 @@ type DataPlatformHomeProps = {
   error: string | null;
 };
 
-function statusText(status: string): string {
-  return status.replaceAll("_", " ");
+type DashboardTone = PlatformTone | "warn" | "bad" | "good" | "neutral";
+
+type NavItem = {
+  key: string;
+  label: string;
+  icon: string;
+  categoryKey?: string;
+};
+
+const PRIMARY_NAV_ITEMS: NavItem[] = [
+  { key: "overview", label: "Overview", icon: "dashboard" },
+  { key: "weather", label: "Weather", icon: "cloud", categoryKey: "weather" },
+  { key: "air", label: "Air Quality", icon: "air", categoryKey: "air" },
+  { key: "energy", label: "Energy", icon: "bolt", categoryKey: "energy" },
+  { key: "transit", label: "Transit", icon: "directions_bus", categoryKey: "transit" },
+  { key: "traffic", label: "Road and Rail", icon: "traffic", categoryKey: "traffic" },
+  { key: "water", label: "Water and Snow", icon: "water_drop", categoryKey: "water" },
+  { key: "city_services", label: "City Services", icon: "location_city", categoryKey: "city_services" }
+];
+
+const SECONDARY_NAV_ITEMS: NavItem[] = [
+  { key: "geospatial", label: "Regional Context", icon: "map", categoryKey: "geospatial" },
+  { key: "system", label: "System Version", icon: "info" }
+];
+
+const CATEGORY_ICONS: Record<string, string> = {
+  air: "air",
+  city_services: "location_city",
+  energy: "bolt",
+  geospatial: "map",
+  regional_profile: "public",
+  traffic: "traffic",
+  transit: "directions_bus",
+  water: "water_drop",
+  weather: "cloud"
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  alert: "Alert",
+  background: "Catalog",
+  connected: "Active",
+  failing: "Alert",
+  healthy: "Healthy",
+  inactive: "Inactive",
+  pending: "Pending",
+  planned: "Planned",
+  stale: "Stale",
+  watch: "Watch"
+};
+
+function titleCase(value: string): string {
+  return value
+    .replaceAll("_", " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function statusLabel(category: PlatformCategory): string {
+  if (category.status in STATUS_LABELS) {
+    return STATUS_LABELS[category.status];
+  }
+
+  if (category.stage && category.stage !== "connected" && category.stage in STATUS_LABELS) {
+    return STATUS_LABELS[category.stage];
+  }
+
+  return titleCase(category.status);
+}
+
+function categoryTone(category: PlatformCategory): DashboardTone {
+  const tone = statusTone(category.status) as DashboardTone;
+  if (tone !== "neutral") {
+    return tone;
+  }
+
+  if (category.stage === "planned" || category.stage === "background") {
+    return "neutral";
+  }
+
+  return "good";
+}
+
+function metricByKey(category: PlatformCategory, key: string): PlatformMetric | null {
+  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
+}
+
+function fallbackMetric(category: PlatformCategory): PlatformMetric | null {
+  return (
+    category.summary_metrics.find(
+      (metric) =>
+        !["catalog_stage", "source_status", "active_events", "records_ingested"].includes(metric.key)
+    ) ??
+    metricByKey(category, "records_ingested") ??
+    metricByKey(category, "source_status")
+  );
+}
+
+function numericPercent(value: string, fallback: number): number {
+  const match = value.replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!match) {
+    return fallback;
+  }
+
+  const numericValue = Number.parseFloat(match[0]);
+  if (!Number.isFinite(numericValue)) {
+    return fallback;
+  }
+
+  return Math.max(8, Math.min(100, numericValue));
+}
+
+function toneProgress(tone: DashboardTone): number {
+  if (tone === "bad") {
+    return 94;
+  }
+  if (tone === "warn") {
+    return 42;
+  }
+  if (tone === "good") {
+    return 78;
+  }
+  return 56;
+}
+
+function formatMetricValue(metric: PlatformMetric | null): string {
+  if (!metric) {
+    return "n/a";
+  }
+
+  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+}
+
+function scoreLabel(score: number | null | undefined, fallback?: string | null): string {
+  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
+  if (score === null || score === undefined) {
+    return fallback ?? "n/a";
+  }
+
+  return labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
+}
+
+function displayTitle(category: PlatformCategory): string {
+  if (category.key === "air") {
+    return "Air Quality";
+  }
+  if (category.key === "traffic") {
+    return "Road & Rail";
+  }
+  if (category.key === "water") {
+    return "Water & Snow";
+  }
+
+  return category.title;
 }
 
 function matchesSearch(category: PlatformCategory, searchValue: string): boolean {
@@ -52,9 +192,11 @@ function matchesSearch(category: PlatformCategory, searchValue: string): boolean
     category.key,
     category.title,
     category.description,
+    category.status,
+    category.stage ?? "",
     ...category.source_codes,
     ...categoryKeyDataItems(category),
-    ...category.summary_metrics.map((metric) => `${metric.label} ${metric.value}`),
+    ...category.summary_metrics.map((metric) => `${metric.label} ${metric.value} ${metric.detail ?? ""}`),
     ...category.events.map((event) => `${event.title} ${event.body}`)
   ]
     .join(" ")
@@ -63,24 +205,100 @@ function matchesSearch(category: PlatformCategory, searchValue: string): boolean
   return haystack.includes(query);
 }
 
-function selectedVisualizations(
-  selectedCategory: PlatformCategory | null,
-  categories: PlatformCategory[]
-): PlatformVisualization[] {
-  if (selectedCategory) {
-    return selectedCategory.visualizations;
+function eventMatchesSearch(event: PlatformEvent, searchValue: string): boolean {
+  const query = searchValue.trim().toLowerCase();
+  if (!query) {
+    return true;
   }
 
-  return categories.flatMap((category) => category.visualizations.slice(0, 2));
+  return `${event.title} ${event.body} ${event.category_key} ${event.severity} ${event.source_codes.join(" ")}`
+    .toLowerCase()
+    .includes(query);
 }
 
-function platformSignalStats(categories: PlatformCategory[]) {
-  const connected = categories.filter((category) => category.stage === "connected").length;
-  const planned = categories.filter((category) => category.stage === "planned").length;
-  const keyMetrics = categories.reduce(
-    (total, category) => total + category.summary_metrics.length,
-    0
-  );
+function signalReadout(
+  category: PlatformCategory,
+  weather: WeatherForecastResponse | null,
+  airQuality: AirQualityCurrentResponse | null
+) {
+  const tone = categoryTone(category);
+
+  if (category.key === "weather") {
+    const generatedAt = weather?.generated_at ?? weather?.checked_at ?? metricByKey(category, "source_status")?.updated_at;
+    return {
+      label: "Last Sync",
+      value: generatedAt ? formatRelativeAge(generatedAt) : formatMetricValue(metricByKey(category, "source_status")),
+      progress: tone === "warn" ? 40 : toneProgress(tone),
+      tone
+    };
+  }
+
+  if (category.key === "air") {
+    const score = airQuality?.worst_score;
+    return {
+      label: "AQI Avg",
+      value:
+        score === null || score === undefined
+          ? formatMetricValue(fallbackMetric(category))
+          : `${scoreLabel(score, airQuality?.worst_label)} (${Math.round(score)}/5)`,
+      progress: score === null || score === undefined ? toneProgress(tone) : Math.max(12, (score / 5) * 100),
+      tone: score !== null && score !== undefined && score >= 4 ? "bad" : tone
+    };
+  }
+
+  if (category.key === "transit") {
+    return {
+      label: "Active Events",
+      value: category.events.length > 0 ? `${category.events.length}` : "Nominal",
+      progress: category.events.length > 0 ? Math.min(100, 28 + category.events.length * 14) : 85,
+      tone
+    };
+  }
+
+  const metric = fallbackMetric(category);
+  return {
+    label: metric?.label ?? "Signal Level",
+    value: formatMetricValue(metric),
+    progress: metric ? numericPercent(metric.value, toneProgress(tone)) : toneProgress(tone),
+    tone
+  };
+}
+
+function categoryByKey(categories: PlatformCategory[], key: string | undefined): PlatformCategory | null {
+  if (!key) {
+    return null;
+  }
+
+  return categories.find((category) => category.key === key) ?? null;
+}
+
+function eventCategoryLabel(categories: PlatformCategory[], event: PlatformEvent): string {
+  return displayTitle(categories.find((category) => category.key === event.category_key) ?? {
+    key: event.category_key,
+    title: titleCase(event.category_key),
+    description: "",
+    status: "neutral",
+    source_codes: [],
+    summary_metrics: [],
+    visualizations: [],
+    events: [],
+    sources: []
+  });
+}
+
+function eventTimeLabel(categories: PlatformCategory[], event: PlatformEvent): string {
+  return `${formatTimestamp(event.starts_at)} - ${eventCategoryLabel(categories, event)}`;
+}
+
+function navItemAvailable(item: NavItem, categories: PlatformCategory[]): boolean {
+  if (!item.categoryKey) {
+    return true;
+  }
+
+  return categories.some((category) => category.key === item.categoryKey);
+}
+
+function platformSignalStats(categories: PlatformCategory[], overview: PlatformOverviewResponse | null) {
   const keyFields = categories.reduce(
     (total, category) => total + categoryKeyDataItems(category).length,
     0
@@ -88,20 +306,11 @@ function platformSignalStats(categories: PlatformCategory[]) {
   const activeEvents = categories.reduce((total, category) => total + category.events.length, 0);
 
   return {
-    connected,
-    planned,
-    keyMetrics,
-    keyFields,
-    activeEvents
+    dataStreams: categories.length,
+    activeEvents,
+    dataSources: overview?.sources.length ?? 0,
+    keyFields
   };
-}
-
-function sourceStatusText(category: PlatformCategory): string {
-  return (
-    category.summary_metrics
-      .find((metric) => metric.key === "source_status")
-      ?.value.toLowerCase() ?? category.status.replaceAll("_", " ")
-  );
 }
 
 export function DataPlatformHome({
@@ -112,349 +321,343 @@ export function DataPlatformHome({
   weather,
   error
 }: DataPlatformHomeProps) {
-  const [selectedKey, setSelectedKey] = useState("weather");
-  const [timePreset, setTimePreset] = useState<WeatherTimePreset>("next24h");
+  const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
-  const [selectedDate, setSelectedDate] = useState(() => localDateInputValue(new Date()));
-  const [customStart, setCustomStart] = useState(() => {
-    const customWindow = defaultCustomWindowForDate(localDateInputValue(new Date()));
-    return customWindow.startsAt;
-  });
-  const [customEnd, setCustomEnd] = useState(() => {
-    const customWindow = defaultCustomWindowForDate(localDateInputValue(new Date()));
-    return customWindow.endsAt;
-  });
-  const [weatherCard, setWeatherCard] = useState(weather);
-  const [airQualityCard, setAirQualityCard] = useState(airQuality);
-  const [dataCardStatus, setDataCardStatus] = useState("Showing latest source day");
-  const [isDateLoading, setIsDateLoading] = useState(false);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
-  const signalStats = useMemo(() => platformSignalStats(categories), [categories]);
-  const selectedCategory = categories.find((category) => category.key === selectedKey) ?? null;
-  const isWeatherSelected = selectedCategory?.key === "weather";
-  const isAirSelected = selectedCategory?.key === "air";
-  const selectedKeyDataItems = selectedCategory ? categoryKeyDataItems(selectedCategory) : [];
-  const visibleCategories = useMemo(
-    () => categories.filter((category) => matchesSearch(category, searchValue)),
-    [categories, searchValue]
-  );
-  const activeCategories = visibleCategories.length > 0 ? visibleCategories : categories;
-  const visualizations = selectedVisualizations(
-    selectedCategory,
-    activeCategories
-  ).filter((visualization) =>
-    `${visualization.title} ${visualization.description} ${visualization.source_codes.join(" ")}`
-      .toLowerCase()
-      .includes(searchValue.trim().toLowerCase())
-  );
+  const selectedCategory =
+    selectedNavKey === "overview"
+      ? null
+      : categoryByKey(categories, selectedNavKey) ??
+        categoryByKey(categories, SECONDARY_NAV_ITEMS.find((item) => item.key === selectedNavKey)?.categoryKey);
+  const signalStats = useMemo(() => platformSignalStats(categories, overview), [categories, overview]);
+  const selectedCategories = selectedCategory ? [selectedCategory] : categories;
+  const visibleCategories = selectedCategories.filter((category) => matchesSearch(category, searchValue));
   const visibleEvents = (selectedCategory ? selectedCategory.events : overview?.recent_events ?? [])
-    .filter((event) =>
-      `${event.title} ${event.body} ${event.category_key} ${event.source_codes.join(" ")}`
-        .toLowerCase()
-        .includes(searchValue.trim().toLowerCase())
-    )
+    .filter((event) => eventMatchesSearch(event, searchValue))
+    .sort((left, right) => new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime())
     .slice(0, 12);
-  const todayDate = localDateInputValue(new Date());
-  const sourceDayLabel = selectedDate === todayDate ? "Latest source day" : `Source day ${selectedDate}`;
-  const weatherTimeWindow = useMemo(
-    () => buildWeatherTimeWindow(timePreset, selectedDate, customStart, customEnd),
-    [customEnd, customStart, selectedDate, timePreset]
-  );
+  const isWeatherDetail = selectedCategory?.key === "weather";
 
-  async function fetchDataCardsForDate(dateValue: string): Promise<void> {
-    if (!isValidSourceDate(dateValue)) {
-      setDataCardStatus("Choose a valid source day");
-      return;
-    }
-
-    const latestDate = localDateInputValue(new Date());
-    setSelectedDate(dateValue);
-    setDataCardStatus("Loading source day");
-    setIsDateLoading(true);
-
-    const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
-    const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
-    if (dateValue !== latestDate) {
-      weatherUrl.searchParams.set("date", dateValue);
-      airQualityUrl.searchParams.set("date", dateValue);
-    }
-
-    try {
-      const [weatherResponse, airQualityResponse] = await Promise.all([
-        fetch(weatherUrl, { cache: "no-store" }),
-        fetch(airQualityUrl, { cache: "no-store" })
-      ]);
-
-      if (!weatherResponse.ok || !airQualityResponse.ok) {
-        throw new Error("Data card request failed.");
-      }
-
-      const [nextWeather, nextAirQuality] = (await Promise.all([
-        weatherResponse.json(),
-        airQualityResponse.json()
-      ])) as [WeatherForecastResponse, AirQualityCurrentResponse];
-
-      setWeatherCard(nextWeather);
-      setAirQualityCard(nextAirQuality);
-      setDataCardStatus(dateValue === latestDate ? "Showing latest source day" : `Showing ${dateValue}`);
-    } catch (dateError) {
-      setDataCardStatus(
-        dateError instanceof Error ? dateError.message : "Selected date could not load."
-      );
-    } finally {
-      setIsDateLoading(false);
-    }
-  }
-
-  function handleSourceDateChange(dateValue: string): void {
-    if (timePreset === "custom") {
-      const customWindow = defaultCustomWindowForDate(dateValue);
-      setCustomStart(customWindow.startsAt);
-      setCustomEnd(customWindow.endsAt);
-    }
-    void fetchDataCardsForDate(dateValue);
-  }
-
-  function handleTimePresetChange(nextPreset: WeatherTimePreset): void {
-    if (nextPreset === "custom" && timePreset !== "custom") {
-      const customWindow = defaultCustomWindowForDate(selectedDate);
-      setCustomStart(customWindow.startsAt);
-      setCustomEnd(customWindow.endsAt);
-    }
-    setTimePreset(nextPreset);
-  }
-
-  function showLatestSourceDay(): void {
-    const latestDate = localDateInputValue(new Date());
-    if (timePreset === "custom") {
-      const customWindow = defaultCustomWindowForDate(latestDate);
-      setCustomStart(customWindow.startsAt);
-      setCustomEnd(customWindow.endsAt);
-    }
-    void fetchDataCardsForDate(latestDate);
+  function selectNavItem(item: NavItem): void {
+    setSelectedNavKey(item.categoryKey ?? item.key);
   }
 
   return (
-    <main className="platform-shell">
-      <header className="platform-topbar">
-        <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">
-            A
-          </span>
+    <div className="dashboard-shell">
+      <aside
+        className={isWeatherDetail ? "dashboard-side-nav weather-detail-side-nav" : "dashboard-side-nav"}
+        aria-label="Primary navigation"
+      >
+        <div className="brand-panel">
+          <div className="brand-icon" aria-hidden="true">
+            <span className="material-symbols-outlined">
+              {isWeatherDetail ? "monitor_heart" : "monitoring"}
+            </span>
+          </div>
           <div>
-            <strong>ArkiWatch</strong>
-            <span>Unified data platform</span>
+            <h1>Data Platform</h1>
+            <p>Operational Monitoring</p>
           </div>
         </div>
-        <div className="topbar-controls">
-          <label className="search-box">
-            <span>Search</span>
-            <input
-              onChange={(event) => setSearchValue(event.target.value)}
-              placeholder="weather, water, transit, services"
-              value={searchValue}
-            />
-          </label>
-          <section className="time-controls" aria-label="Time controls">
-            <div className="source-day-control">
-              <label htmlFor="data-card-date">Weather/Air day</label>
-              <div className="source-day-row">
-                <input
-                  id="data-card-date"
-                  onChange={(event) => handleSourceDateChange(event.currentTarget.value)}
-                  type="date"
-                  value={selectedDate}
-                />
-                <button disabled={isDateLoading} onClick={showLatestSourceDay} type="button">
-                  Today
-                </button>
-              </div>
-              <small>{dataCardStatus}</small>
-            </div>
-            {isWeatherSelected ? (
-              <div className="weather-window-control">
-                <span>Weather window</span>
-                <div className="segmented-control" aria-label="Weather time window">
-                  {TIME_PRESETS.map((preset) => (
-                    <button
-                      className={timePreset === preset.key ? "active" : ""}
-                      key={preset.key}
-                      onClick={() => handleTimePresetChange(preset.key)}
-                      type="button"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-                <small>{weatherTimeWindow.status}</small>
-              </div>
-            ) : null}
-            {isWeatherSelected && timePreset === "custom" ? (
-              <div className="custom-window-control">
-                <label htmlFor="weather-window-start">Start</label>
-                <input
-                  id="weather-window-start"
-                  onChange={(event) => setCustomStart(event.currentTarget.value)}
-                  type="datetime-local"
-                  value={customStart}
-                />
-                <label htmlFor="weather-window-end">End</label>
-                <input
-                  id="weather-window-end"
-                  onChange={(event) => setCustomEnd(event.currentTarget.value)}
-                  type="datetime-local"
-                  value={customEnd}
-                />
-              </div>
-            ) : null}
-          </section>
-        </div>
-      </header>
 
-      {overview ? (
-        <>
-          <section className="platform-hero" aria-label="Platform summary">
+        <nav className="side-nav-list" aria-label="Signal navigation">
+          {PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
+            const isActive =
+              selectedNavKey === item.key ||
+              selectedNavKey === item.categoryKey ||
+              (item.key === "overview" && !selectedCategory);
+            return (
+              <button
+                className={isActive ? "nav-row nav-row-active" : "nav-row"}
+                key={item.key}
+                onClick={() => selectNavItem(item)}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <nav className="side-nav-footer" aria-label="Secondary navigation">
+          {SECONDARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => (
+            <button
+              className={selectedNavKey === (item.categoryKey ?? item.key) ? "nav-row nav-row-active" : "nav-row"}
+              key={item.key}
+              onClick={() => selectNavItem(item)}
+              type="button"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {item.icon}
+              </span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="dashboard-app">
+        <header className="mobile-dashboard-header">
+          <div className="mobile-brand">
+            <button className="icon-button" aria-label="Open navigation" type="button">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                menu
+              </span>
+            </button>
+            <strong>ArkiWatch</strong>
+          </div>
+          <div className="top-actions">
+            <button className="icon-button" aria-label="Notifications" type="button">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                notifications
+              </span>
+            </button>
+            <button className="icon-button" aria-label="Settings" type="button">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                settings
+              </span>
+            </button>
+            <span className="profile-avatar" aria-label="User profile">
+              AW
+            </span>
+          </div>
+        </header>
+
+        {isWeatherDetail ? (
+          <header className="weather-topbar">
+            <div className="weather-topbar-brand">
+              <strong>ArkiWatch</strong>
+            </div>
+            <nav aria-label="Weather workspace navigation">
+              <button onClick={() => setSelectedNavKey("overview")} type="button">
+                Overview
+              </button>
+              <button className="active" type="button">
+                Dashboard
+              </button>
+              <button type="button">Analytics</button>
+            </nav>
+            <div className="weather-topbar-actions">
+              <button className="icon-button" aria-label="Notifications" type="button">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  notifications
+                </span>
+              </button>
+              <button className="icon-button" aria-label="Settings" type="button">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  settings
+                </span>
+              </button>
+              <span className="profile-avatar" aria-label="User profile">
+                AW
+              </span>
+            </div>
+          </header>
+        ) : null}
+
+        <main className={isWeatherDetail ? "dashboard-content weather-content-shell" : "dashboard-content"}>
+          {!isWeatherDetail ? (
+          <div className="desktop-dashboard-header">
             <div>
-              <span className="label-text">Data platform</span>
-              <h1>Operational data by signal type</h1>
+              <h2>{selectedCategory ? `${displayTitle(selectedCategory)} Dashboard` : "Overview Dashboard"}</h2>
               <p>
-                Helsinki/Uusimaa source coverage, key fields, active events, and category-level
-                metrics grouped so each data type shows what matters first.
+                {selectedCategory
+                  ? selectedCategory.description
+                  : "Real-time system telemetry and signal status."}
               </p>
             </div>
-            <div className="hero-status-grid">
-              <article>
-                <span>Data types</span>
-                <strong>
-                  {categories.length}
-                  <small>{signalStats.connected} live</small>
-                </strong>
-              </article>
-              <article>
-                <span>Key metrics</span>
-                <strong>
-                  {signalStats.keyMetrics}
-                  <small>{signalStats.keyFields} fields</small>
-                </strong>
-              </article>
-              <article>
-                <span>Active events</span>
-                <strong>
-                  {signalStats.activeEvents}
-                  <small>{statusText(overview.health_status)}</small>
-                </strong>
-              </article>
-              <article>
-                <span>Sources</span>
-                <strong>
-                  {overview.sources.length}
-                  <small>{signalStats.planned} planned areas</small>
-                </strong>
-              </article>
-            </div>
-          </section>
-
-          <SourceHealthStrip overview={overview} />
-
-          <div className="platform-layout">
-            <CategoryNav
-              categories={categories}
-              onSelect={setSelectedKey}
-              selectedKey={selectedKey}
-            />
-            <section className="platform-workspace">
-              <div className="workspace-heading">
-                <div>
-                  <span className="label-text">
-                    {selectedCategory ? selectedCategory.source_codes.join(", ") : "All sources"}
-                  </span>
-                  <h2>{selectedCategory ? selectedCategory.title : "Overview"}</h2>
-                  <p>
-                    {selectedCategory
-                      ? selectedCategory.description
-                      : "Operational and background categories grouped by source, metric, event, and visualization."}
-                  </p>
-                </div>
-                <div className="workspace-meta">
-                  {isWeatherSelected ? <span>{weatherTimeWindow.shortLabel}</span> : null}
-                  {isWeatherSelected || isAirSelected ? <span>{sourceDayLabel}</span> : null}
-                  <span>{defaultUserId ? "personal context" : "regional context"}</span>
-                  {selectedCategory ? (
-                    <span>{sourceStatusText(selectedCategory)}</span>
-                  ) : (
-                    <span>{apiBaseUrl.replace(/^https?:\/\//, "")}</span>
-                  )}
-                </div>
-              </div>
-
-              {isWeatherSelected ? (
-                <WeatherWorkspace
-                  category={selectedCategory}
-                  weather={weatherCard}
-                  timeWindow={weatherTimeWindow}
+            <div className="desktop-controls">
+              <label className="dashboard-search">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  search
+                </span>
+                <input
+                  onChange={(event) => setSearchValue(event.currentTarget.value)}
+                  placeholder="Search signals, events..."
+                  value={searchValue}
                 />
-              ) : isAirSelected ? (
-                <AirQualityWorkspace airQuality={airQualityCard} category={selectedCategory} />
-              ) : selectedCategory ? (
-                <>
-                  <section className="category-focus-strip" aria-label="Selected category signals">
-                    <article>
-                      <span className="label-text">Key data items</span>
-                      <div className="key-data-tags">
-                        {selectedKeyDataItems.map((item) => (
-                          <span key={item}>{formatDataItemLabel(item)}</span>
-                        ))}
-                      </div>
-                    </article>
-                    <article>
-                      <span className="label-text">Metric coverage</span>
-                      <strong>{selectedCategory.summary_metrics.length}</strong>
-                      <p>Category indicators available for the current platform window.</p>
-                    </article>
-                    <article>
-                      <span className="label-text">Sources</span>
-                      <strong>{selectedCategory.sources.length}</strong>
-                      <p>{selectedCategory.source_codes.join(", ") || "Catalog only"}</p>
-                    </article>
-                  </section>
-                  <section className="metric-grid" aria-label="Category metrics">
-                    {selectedCategory.summary_metrics.map((metric) => (
-                      <MetricCard key={metric.key} metric={metric} />
-                    ))}
-                  </section>
-                </>
-              ) : (
-                <CategoryOverviewGrid categories={activeCategories} onSelect={setSelectedKey} />
-              )}
-
-              {!isWeatherSelected && !isAirSelected ? (
-                <>
-                  <section className="visualization-grid" aria-label="Visualizations">
-                    {visualizations.length > 0 ? (
-                      visualizations.map((visualization) => (
-                        <VisualizationPanel key={visualization.id} visualization={visualization} />
-                      ))
-                    ) : (
-                      <div className="empty-visual">No visualizations match the current search.</div>
-                    )}
-                  </section>
-
-                  <EventStream events={visibleEvents} />
-                </>
-              ) : null}
-            </section>
+              </label>
+              <button className="icon-button" aria-label="Notifications" type="button">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  notifications
+                </span>
+              </button>
+              <span className="profile-avatar" aria-label="User profile">
+                AW
+              </span>
+            </div>
           </div>
-        </>
-      ) : (
-        <section className="platform-error">
-          <span className="label-text">Platform unavailable</span>
-          <h1>Data platform could not load</h1>
-          <p>{error ?? "Unknown platform error."}</p>
-        </section>
-      )}
+          ) : null}
 
-      <AssistantWidget overview={overview} />
-    </main>
+          {overview ? (
+            isWeatherDetail ? (
+              <WeatherDetailView category={selectedCategory} weather={weather} />
+            ) : (
+            <>
+              <section className="summary-grid" aria-label="Platform summary">
+                <article className="metric-tile metric-tile-live">
+                  <div>
+                    <span>Live Data Streams</span>
+                    <i aria-hidden="true" />
+                  </div>
+                  <strong>
+                    {signalStats.dataStreams}
+                    <small>active</small>
+                  </strong>
+                </article>
+                <article className="metric-tile">
+                  <div>
+                    <span>Active Fields</span>
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      data_array
+                    </span>
+                  </div>
+                  <strong>
+                    {signalStats.keyFields}
+                    <small>monitored</small>
+                  </strong>
+                </article>
+                <article className="metric-tile metric-tile-events">
+                  <div>
+                    <span>Active Events</span>
+                    <i aria-hidden="true" />
+                  </div>
+                  <strong>
+                    {signalStats.activeEvents}
+                    <small>unresolved</small>
+                  </strong>
+                </article>
+                <article className="metric-tile">
+                  <div>
+                    <span>Data Sources</span>
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      hub
+                    </span>
+                  </div>
+                  <strong>
+                    {signalStats.dataSources}
+                    <small>connected</small>
+                  </strong>
+                </article>
+              </section>
+
+              <div className="dashboard-main-grid">
+                <section className="signal-section" aria-label="Signal status array">
+                  <h3>
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      sensors
+                    </span>
+                    Signal Status Array
+                  </h3>
+
+                  <div className="signal-grid">
+                    {visibleCategories.length > 0 ? (
+                      visibleCategories.map((category) => {
+                        const readout = signalReadout(category, weather, airQuality);
+                        const tone = readout.tone;
+                        return (
+                          <button
+                            className={`signal-card signal-card-${tone}`}
+                            key={category.key}
+                            onClick={() => setSelectedNavKey(category.key)}
+                            type="button"
+                          >
+                            <span className="signal-card-top">
+                              <span className="signal-title">
+                                <span className="material-symbols-outlined" aria-hidden="true">
+                                  {CATEGORY_ICONS[category.key] ?? "database"}
+                                </span>
+                                <strong>{displayTitle(category)}</strong>
+                              </span>
+                              <span className={`status-badge status-badge-${tone}`}>{statusLabel(category)}</span>
+                            </span>
+                            <span className="signal-card-bottom">
+                              <span className="signal-readout">
+                                <span>{readout.label}</span>
+                                <strong>{readout.value}</strong>
+                              </span>
+                              <span className="signal-meter" aria-hidden="true">
+                                <span style={{ width: `${readout.progress}%` }} />
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="dashboard-empty-state">No signal cards match the current search.</div>
+                    )}
+                  </div>
+                </section>
+
+                <aside className="events-panel" aria-label="Recent events">
+                  <header>
+                    <h3>Recent Events</h3>
+                    <button onClick={() => setSelectedNavKey("overview")} type="button">
+                      View All
+                    </button>
+                  </header>
+                  <div className="event-timeline">
+                    {visibleEvents.length > 0 ? (
+                      visibleEvents.map((event) => {
+                        const tone = severityTone(event.severity) as DashboardTone;
+                        return (
+                          <article className="timeline-item" key={event.id}>
+                            <span className={`timeline-dot timeline-dot-${tone}`} aria-hidden="true" />
+                            <time>{eventTimeLabel(categories, event)}</time>
+                            <h4>{event.title}</h4>
+                            <p>{event.body}</p>
+                            {event.evidence.length > 0 ? (
+                              <div className="event-tags">
+                                <span>{event.evidence[0]}</span>
+                              </div>
+                            ) : null}
+                          </article>
+                        );
+                      })
+                    ) : (
+                      <div className="dashboard-empty-state">No recent events match the current view.</div>
+                    )}
+                  </div>
+                </aside>
+              </div>
+            </>
+            )
+          ) : (
+            <section className="platform-error" aria-label="Platform unavailable">
+              <span>Platform unavailable</span>
+              <h1>Data platform could not load</h1>
+              <p>{error ?? "Unknown platform error."}</p>
+              <small>
+                API endpoint: {apiBaseUrl}
+                {defaultUserId ? ` · User context: ${defaultUserId}` : ""}
+              </small>
+            </section>
+          )}
+        </main>
+
+        {isWeatherDetail ? (
+          <footer className="weather-footer">
+            <span>ArkiWatch v1.2.0-8010/API</span>
+            <div>
+              <a href="/privacy">Privacy Policy</a>
+              <a href="/regional-settings">Regional Settings</a>
+              <a href="/api">API Docs</a>
+            </div>
+          </footer>
+        ) : (
+          <footer className="mobile-dashboard-footer">
+            <span>ArkiWatch v1.2.0-8010/API</span>
+            <div>
+              <a href="/privacy">Privacy Policy</a>
+              <a href="/api">API Docs</a>
+            </div>
+          </footer>
+        )}
+      </div>
+    </div>
   );
 }
