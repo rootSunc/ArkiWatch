@@ -14,6 +14,7 @@ import {
   PlatformTone,
   WeatherForecastResponse
 } from "./types";
+import { AirQualityWorkspace } from "./air-quality-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 
 type DataPlatformHomeProps = {
@@ -338,6 +339,8 @@ export function DataPlatformHome({
     .sort((left, right) => new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime())
     .slice(0, 12);
   const isWeatherDetail = selectedCategory?.key === "weather";
+  const isAirDetail = selectedCategory?.key === "air";
+  const isDetailPage = isWeatherDetail || isAirDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
@@ -346,13 +349,13 @@ export function DataPlatformHome({
   return (
     <div className="dashboard-shell">
       <aside
-        className={isWeatherDetail ? "dashboard-side-nav weather-detail-side-nav" : "dashboard-side-nav"}
+        className={isDetailPage ? "dashboard-side-nav detail-side-nav" : "dashboard-side-nav"}
         aria-label="Primary navigation"
       >
         <div className="brand-panel">
           <div className="brand-icon" aria-hidden="true">
             <span className="material-symbols-outlined">
-              {isWeatherDetail ? "monitor_heart" : "monitoring"}
+              {isDetailPage ? "monitor_heart" : "monitoring"}
             </span>
           </div>
           <div>
@@ -427,12 +430,12 @@ export function DataPlatformHome({
           </div>
         </header>
 
-        {isWeatherDetail ? (
-          <header className="weather-topbar">
-            <div className="weather-topbar-brand">
+        {isDetailPage ? (
+          <header className="detail-topbar">
+            <div className="detail-topbar-brand">
               <strong>ArkiWatch</strong>
             </div>
-            <nav aria-label="Weather workspace navigation">
+            <nav aria-label="Detail workspace navigation">
               <button onClick={() => setSelectedNavKey("overview")} type="button">
                 Overview
               </button>
@@ -441,7 +444,7 @@ export function DataPlatformHome({
               </button>
               <button type="button">Analytics</button>
             </nav>
-            <div className="weather-topbar-actions">
+            <div className="detail-topbar-actions">
               <button className="icon-button" aria-label="Notifications" type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   notifications
@@ -459,8 +462,8 @@ export function DataPlatformHome({
           </header>
         ) : null}
 
-        <main className={isWeatherDetail ? "dashboard-content weather-content-shell" : "dashboard-content"}>
-          {!isWeatherDetail ? (
+        <main className={isDetailPage ? "dashboard-content detail-content-shell" : "dashboard-content"}>
+          {!isDetailPage ? (
           <div className="desktop-dashboard-header">
             <div>
               <h2>{selectedCategory ? `${displayTitle(selectedCategory)} Dashboard` : "Overview Dashboard"}</h2>
@@ -496,6 +499,8 @@ export function DataPlatformHome({
           {overview ? (
             isWeatherDetail ? (
               <WeatherDetailView category={selectedCategory} weather={weather} />
+            ) : isAirDetail ? (
+              <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
             ) : (
             <>
               <section className="summary-grid" aria-label="Platform summary">
@@ -639,8 +644,8 @@ export function DataPlatformHome({
           )}
         </main>
 
-        {isWeatherDetail ? (
-          <footer className="weather-footer">
+        {isDetailPage ? (
+          <footer className="detail-footer">
             <span>ArkiWatch v1.2.0-8010/API</span>
             <div>
               <a href="/privacy">Privacy Policy</a>
