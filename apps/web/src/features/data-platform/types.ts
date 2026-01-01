@@ -267,3 +267,69 @@ export type AirQualityCurrentResponse = {
   data_pipeline: AirQualityDataStage[];
   quality: AirQualityQuality;
 };
+
+export type TransitAlert = {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  event_type: string;
+  starts_at: string;
+  ends_at: string;
+  active: boolean;
+  cause: string | null;
+  effect: string | null;
+  route_ids: string[];
+  stop_ids: string[];
+  trip_ids: string[];
+};
+
+export type TransitMetric = {
+  key: string;
+  label: string;
+  value: string;
+  unit: string | null;
+};
+
+export type TransitSourceRequest = {
+  key: string;
+  label: string;
+  status: string;
+  endpoint: string | null;
+  content_type: string | null;
+  fetched_at: string | null;
+};
+
+export type TransitDataStage = {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  record_count: number | null;
+  updated_at: string | null;
+};
+
+export type TransitQuality = {
+  raw_alert_count: number;
+  normalized_event_count: number;
+  active_alert_count: number;
+  route_alert_count: number;
+  stop_alert_count: number;
+  field_coverage_pct: number;
+  missing_fields: string[];
+  notes: string[];
+};
+
+export type TransitCurrentResponse = {
+  checked_at: string;
+  status: string;
+  location: string | null;
+  source_code: string;
+  observed_at: string | null;
+  summary: string | null;
+  metrics: TransitMetric[];
+  alerts: TransitAlert[];
+  source_requests: TransitSourceRequest[];
+  data_pipeline: TransitDataStage[];
+  quality: TransitQuality;
+};

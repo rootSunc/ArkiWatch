@@ -1,6 +1,11 @@
 import { appEnv } from "@/lib/env";
 
-import { AirQualityCurrentResponse, PlatformOverviewResponse, WeatherForecastResponse } from "./types";
+import {
+  AirQualityCurrentResponse,
+  PlatformOverviewResponse,
+  TransitCurrentResponse,
+  WeatherForecastResponse
+} from "./types";
 
 type PlatformFetchResult = {
   apiBaseUrl: string;
@@ -8,6 +13,7 @@ type PlatformFetchResult = {
   overview: PlatformOverviewResponse | null;
   weather: WeatherForecastResponse | null;
   airQuality: AirQualityCurrentResponse | null;
+  transit: TransitCurrentResponse | null;
   error: string | null;
 };
 
@@ -49,15 +55,17 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
   const overviewUrl = new URL(`${apiBaseUrl}/platform/overview`);
   const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
   const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
+  const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
 
   if (appEnv.defaultUserId) {
     overviewUrl.searchParams.set("user_id", appEnv.defaultUserId);
   }
 
-  const [overviewResult, weatherResult, airQualityResult] = await Promise.all([
+  const [overviewResult, weatherResult, airQualityResult, transitResult] = await Promise.all([
     fetchJson<PlatformOverviewResponse>(overviewUrl),
     fetchJson<WeatherForecastResponse>(weatherUrl),
-    fetchJson<AirQualityCurrentResponse>(airQualityUrl)
+    fetchJson<AirQualityCurrentResponse>(airQualityUrl),
+    fetchJson<TransitCurrentResponse>(transitUrl)
   ]);
 
   return {
@@ -66,6 +74,7 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
     overview: overviewResult.data,
     weather: weatherResult.data,
     airQuality: airQualityResult.data,
-    error: overviewResult.error ?? weatherResult.error ?? airQualityResult.error
+    transit: transitResult.data,
+    error: overviewResult.error ?? weatherResult.error ?? airQualityResult.error ?? transitResult.error
   };
 }

@@ -12,9 +12,11 @@ import {
   PlatformMetric,
   PlatformOverviewResponse,
   PlatformTone,
+  TransitCurrentResponse,
   WeatherForecastResponse
 } from "./types";
 import { AirQualityWorkspace } from "./air-quality-workspace";
+import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 
 type DataPlatformHomeProps = {
@@ -22,6 +24,7 @@ type DataPlatformHomeProps = {
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
+  transit: TransitCurrentResponse | null;
   weather: WeatherForecastResponse | null;
   error: string | null;
 };
@@ -220,7 +223,8 @@ function eventMatchesSearch(event: PlatformEvent, searchValue: string): boolean 
 function signalReadout(
   category: PlatformCategory,
   weather: WeatherForecastResponse | null,
-  airQuality: AirQualityCurrentResponse | null
+  airQuality: AirQualityCurrentResponse | null,
+  transit: TransitCurrentResponse | null
 ) {
   const tone = categoryTone(category);
 
@@ -250,9 +254,19 @@ function signalReadout(
   if (category.key === "transit") {
     return {
       label: "Active Events",
-      value: category.events.length > 0 ? `${category.events.length}` : "Nominal",
-      progress: category.events.length > 0 ? Math.min(100, 28 + category.events.length * 14) : 85,
-      tone
+      value:
+        transit?.quality.active_alert_count !== undefined
+          ? `${transit.quality.active_alert_count}`
+          : category.events.length > 0
+            ? `${category.events.length}`
+            : "Nominal",
+      progress:
+        transit?.quality.raw_alert_count !== undefined
+          ? Math.max(12, Math.min(100, (transit.quality.active_alert_count / Math.max(1, transit.quality.raw_alert_count)) * 100))
+          : category.events.length > 0
+            ? Math.min(100, 28 + category.events.length * 14)
+            : 85,
+      tone: transit && transit.quality.active_alert_count > 0 ? "warn" : tone
     };
   }
 
@@ -319,6 +333,7 @@ export function DataPlatformHome({
   apiBaseUrl,
   defaultUserId,
   overview,
+  transit,
   weather,
   error
 }: DataPlatformHomeProps) {
@@ -343,7 +358,8 @@ export function DataPlatformHome({
   const latestEventTone = latestVisibleEvent ? (severityTone(latestVisibleEvent.severity) as DashboardTone) : "neutral";
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
-  const isDetailPage = isWeatherDetail || isAirDetail;
+  const isTransitDetail = selectedCategory?.key === "transit";
+  const isDetailPage = isWeatherDetail || isAirDetail || isTransitDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
@@ -504,6 +520,8 @@ export function DataPlatformHome({
               <WeatherDetailView category={selectedCategory} weather={weather} />
             ) : isAirDetail ? (
               <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
+            ) : isTransitDetail ? (
+              <TransitWorkspace category={selectedCategory} transit={transit} />
             ) : (
             <>
               <section className="summary-grid" aria-label="Platform summary">
@@ -571,7 +589,7 @@ export function DataPlatformHome({
                   <div className="signal-grid">
                     {visibleCategories.length > 0 ? (
                       visibleCategories.map((category) => {
-                        const readout = signalReadout(category, weather, airQuality);
+                        const readout = signalReadout(category, weather, airQuality, transit);
                         const tone = readout.tone;
                         return (
                           <button
