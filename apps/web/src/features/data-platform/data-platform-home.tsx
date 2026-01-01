@@ -324,6 +324,7 @@ export function DataPlatformHome({
 }: DataPlatformHomeProps) {
   const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
+  const [isEventsExpanded, setIsEventsExpanded] = useState(false);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const selectedCategory =
@@ -338,6 +339,8 @@ export function DataPlatformHome({
     .filter((event) => eventMatchesSearch(event, searchValue))
     .sort((left, right) => new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime())
     .slice(0, 12);
+  const latestVisibleEvent = visibleEvents[0] ?? null;
+  const latestEventTone = latestVisibleEvent ? (severityTone(latestVisibleEvent.severity) as DashboardTone) : "neutral";
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
   const isDetailPage = isWeatherDetail || isAirDetail;
@@ -550,7 +553,13 @@ export function DataPlatformHome({
                 </article>
               </section>
 
-              <div className="dashboard-main-grid">
+              <div
+                className={
+                  isEventsExpanded
+                    ? "dashboard-main-grid"
+                    : "dashboard-main-grid dashboard-main-grid-events-collapsed"
+                }
+              >
                 <section className="signal-section" aria-label="Signal status array">
                   <h3>
                     <span className="material-symbols-outlined" aria-hidden="true">
@@ -598,14 +607,39 @@ export function DataPlatformHome({
                   </div>
                 </section>
 
-                <aside className="events-panel" aria-label="Recent events">
+                <aside
+                  className={isEventsExpanded ? "events-panel events-panel-expanded" : "events-panel events-panel-collapsed"}
+                  aria-label="Recent events"
+                >
                   <header>
-                    <h3>Recent Events</h3>
-                    <button onClick={() => setSelectedNavKey("overview")} type="button">
-                      View All
+                    <button
+                      aria-controls="recent-events-timeline"
+                      aria-expanded={isEventsExpanded}
+                      aria-label={isEventsExpanded ? "Collapse recent events" : "Expand recent events"}
+                      className="events-panel-toggle"
+                      onClick={() => setIsEventsExpanded((isExpanded) => !isExpanded)}
+                      type="button"
+                    >
+                      <span className={`events-panel-icon events-panel-icon-${latestEventTone}`} aria-hidden="true">
+                        <span className="material-symbols-outlined">notifications</span>
+                      </span>
+                      <span className="events-panel-copy">
+                        <span className="events-panel-title">
+                          <span className="events-panel-heading">Recent Events</span>
+                          <span className="events-count-badge">{visibleEvents.length}</span>
+                        </span>
+                        <span className="events-panel-summary">
+                          {latestVisibleEvent
+                            ? `${eventTimeLabel(categories, latestVisibleEvent)} · ${latestVisibleEvent.title}`
+                            : "No recent events match the current view."}
+                        </span>
+                      </span>
+                      <span className="material-symbols-outlined events-panel-chevron" aria-hidden="true">
+                        expand_more
+                      </span>
                     </button>
                   </header>
-                  <div className="event-timeline">
+                  <div className="event-timeline" hidden={!isEventsExpanded} id="recent-events-timeline">
                     {visibleEvents.length > 0 ? (
                       visibleEvents.map((event) => {
                         const tone = severityTone(event.severity) as DashboardTone;
