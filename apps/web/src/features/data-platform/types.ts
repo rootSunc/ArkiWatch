@@ -333,3 +333,75 @@ export type TransitCurrentResponse = {
   data_pipeline: TransitDataStage[];
   quality: TransitQuality;
 };
+
+export type EnergyPoint = {
+  starts_at: string;
+  ends_at: string;
+  value: number;
+};
+
+export type EnergyWindow = {
+  starts_at: string;
+  ends_at: string;
+  average_value: number;
+  minimum_value: number;
+  maximum_value: number;
+  unit: string | null;
+  point_count: number;
+  severity: string;
+  source: string;
+};
+
+export type EnergyMetric = {
+  key: string;
+  label: string;
+  value: string;
+  unit: string | null;
+};
+
+export type EnergySourceRequest = {
+  key: string;
+  label: string;
+  status: string;
+  endpoint: string | null;
+  content_type: string | null;
+  fetched_at: string | null;
+};
+
+export type EnergyDataStage = {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  record_count: number | null;
+  updated_at: string | null;
+};
+
+export type EnergyQuality = {
+  point_count: number;
+  window_point_count: number;
+  field_coverage_pct: number;
+  minimum_value: number | null;
+  maximum_value: number | null;
+  average_value: number | null;
+  missing_fields: string[];
+  notes: string[];
+};
+
+export type EnergyCurrentResponse = {
+  checked_at: string;
+  status: string;
+  location: string | null;
+  source_code: string;
+  observed_at: string | null;
+  valid_from: string | null;
+  valid_to: string | null;
+  summary: string | null;
+  unit: string | null;
+  current_window: EnergyWindow | null;
+  metrics: EnergyMetric[];
+  points: EnergyPoint[];
+  source_requests: EnergySourceRequest[];
+  data_pipeline: EnergyDataStage[];
+  quality: EnergyQuality;
+};

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { formatRelativeAge, formatTimestamp, severityTone, statusTone } from "@/features/shared/format";
+import { formatTimestamp, severityTone, statusTone } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
 import {
   AirQualityCurrentResponse,
+  EnergyCurrentResponse,
   PlatformCategory,
   PlatformEvent,
   PlatformMetric,
@@ -16,6 +17,7 @@ import {
   WeatherForecastResponse
 } from "./types";
 import { AirQualityWorkspace } from "./air-quality-workspace";
+import { EnergyWorkspace } from "./energy-workspace";
 import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 
@@ -23,6 +25,7 @@ type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
   defaultUserId: string;
+  energy: EnergyCurrentResponse | null;
   overview: PlatformOverviewResponse | null;
   transit: TransitCurrentResponse | null;
   weather: WeatherForecastResponse | null;
@@ -30,6 +33,8 @@ type DataPlatformHomeProps = {
 };
 
 type DashboardTone = PlatformTone | "warn" | "bad" | "good" | "neutral";
+
+type ThemeMode = "dark" | "light";
 
 type NavItem = {
   key: string;
@@ -78,6 +83,76 @@ const STATUS_LABELS: Record<string, string> = {
   stale: "Stale",
   watch: "Watch"
 };
+
+const THEME_STORAGE_KEY = "arkiwatch-theme";
+
+function isThemeMode(value: string | null): value is ThemeMode {
+  return value === "dark" || value === "light";
+}
+
+function preferredThemeMode(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+function storedThemeMode(): ThemeMode | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const value = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isThemeMode(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveThemeMode(themeMode: ThemeMode): void {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  } catch {
+    // Theme switching should continue even when persistent storage is unavailable.
+  }
+}
+
+function applyThemeMode(themeMode: ThemeMode): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.documentElement.dataset.theme = themeMode;
+  document.documentElement.classList.toggle("dark", themeMode === "dark");
+  document.documentElement.classList.toggle("light", themeMode === "light");
+}
+
+function ThemeToggleButton({
+  themeMode,
+  onToggle
+}: {
+  themeMode: ThemeMode;
+  onToggle: () => void;
+}) {
+  const isLightTheme = themeMode === "light";
+  const label = isLightTheme ? "Switch to night theme" : "Switch to day theme";
+
+  return (
+    <button
+      className="icon-button theme-toggle-button"
+      aria-label={label}
+      onClick={onToggle}
+      title={label}
+      type="button"
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        {isLightTheme ? "dark_mode" : "light_mode"}
+      </span>
+    </button>
+  );
+}
 
 function titleCase(value: string): string {
   return value
@@ -224,6 +299,7 @@ function signalReadout(
   category: PlatformCategory,
   weather: WeatherForecastResponse | null,
   airQuality: AirQualityCurrentResponse | null,
+  energy: EnergyCurrentResponse | null,
   transit: TransitCurrentResponse | null
 ) {
   const tone = categoryTone(category);
@@ -232,7 +308,7 @@ function signalReadout(
     const generatedAt = weather?.generated_at ?? weather?.checked_at ?? metricByKey(category, "source_status")?.updated_at;
     return {
       label: "Last Sync",
-      value: generatedAt ? formatRelativeAge(generatedAt) : formatMetricValue(metricByKey(category, "source_status")),
+      value: generatedAt ? formatTimestamp(generatedAt) : formatMetricValue(metricByKey(category, "source_status")),
       progress: tone === "warn" ? 40 : toneProgress(tone),
       tone
     };
@@ -267,6 +343,22 @@ function signalReadout(
             ? Math.min(100, 28 + category.events.length * 14)
             : 85,
       tone: transit && transit.quality.active_alert_count > 0 ? "warn" : tone
+    };
+  }
+
+  if (category.key === "energy") {
+    const window = energy?.current_window;
+    return {
+      label: "Best Window",
+      value:
+        window !== null && window !== undefined
+          ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
+          : formatMetricValue(metricByKey(category, "low_energy_window")),
+      progress:
+        energy?.quality.field_coverage_pct !== undefined
+          ? Math.max(8, Math.min(100, energy.quality.field_coverage_pct))
+          : toneProgress(tone),
+      tone: window ? "good" : tone
     };
   }
 
@@ -332,6 +424,7 @@ export function DataPlatformHome({
   airQuality,
   apiBaseUrl,
   defaultUserId,
+  energy,
   overview,
   transit,
   weather,
@@ -340,6 +433,7 @@ export function DataPlatformHome({
   const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const selectedCategory =
@@ -358,11 +452,30 @@ export function DataPlatformHome({
   const latestEventTone = latestVisibleEvent ? (severityTone(latestVisibleEvent.severity) as DashboardTone) : "neutral";
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
+  const isEnergyDetail = selectedCategory?.key === "energy";
   const isTransitDetail = selectedCategory?.key === "transit";
-  const isDetailPage = isWeatherDetail || isAirDetail || isTransitDetail;
+  const isDetailPage = isWeatherDetail || isAirDetail || isEnergyDetail || isTransitDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
+  }
+
+  useEffect(() => {
+    const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
+
+    setThemeMode(nextThemeMode);
+    applyThemeMode(nextThemeMode);
+  }, []);
+
+  function toggleThemeMode(): void {
+    setThemeMode((currentThemeMode) => {
+      const nextThemeMode = currentThemeMode === "dark" ? "light" : "dark";
+
+      applyThemeMode(nextThemeMode);
+      saveThemeMode(nextThemeMode);
+
+      return nextThemeMode;
+    });
   }
 
   return (
@@ -433,6 +546,7 @@ export function DataPlatformHome({
             <strong>ArkiWatch</strong>
           </div>
           <div className="top-actions">
+            <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
             <button className="icon-button" aria-label="Notifications" type="button">
               <span className="material-symbols-outlined" aria-hidden="true">
                 notifications
@@ -464,6 +578,7 @@ export function DataPlatformHome({
               <button type="button">Analytics</button>
             </nav>
             <div className="detail-topbar-actions">
+              <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
               <button className="icon-button" aria-label="Notifications" type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   notifications
@@ -503,6 +618,7 @@ export function DataPlatformHome({
                   value={searchValue}
                 />
               </label>
+              <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
               <button className="icon-button" aria-label="Notifications" type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   notifications
@@ -520,6 +636,8 @@ export function DataPlatformHome({
               <WeatherDetailView category={selectedCategory} weather={weather} />
             ) : isAirDetail ? (
               <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
+            ) : isEnergyDetail ? (
+              <EnergyWorkspace category={selectedCategory} energy={energy} />
             ) : isTransitDetail ? (
               <TransitWorkspace category={selectedCategory} transit={transit} />
             ) : (
@@ -589,7 +707,7 @@ export function DataPlatformHome({
                   <div className="signal-grid">
                     {visibleCategories.length > 0 ? (
                       visibleCategories.map((category) => {
-                        const readout = signalReadout(category, weather, airQuality, transit);
+                        const readout = signalReadout(category, weather, airQuality, energy, transit);
                         const tone = readout.tone;
                         return (
                           <button
