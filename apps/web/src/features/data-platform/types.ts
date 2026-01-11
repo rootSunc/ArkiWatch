@@ -23,6 +23,7 @@ export type PlatformEvent = {
   ends_at: string;
   source_codes: string[];
   evidence: string[];
+  attributes?: Record<string, unknown>;
 };
 
 export type PlatformVisualizationPoint = {

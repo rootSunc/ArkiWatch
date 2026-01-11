@@ -15,7 +15,7 @@ export const CITY_OPTIONS: CityScopeOption[] = [
   { value: "oulu", label: "Oulu" }
 ];
 
-const CITY_SCOPED_CATEGORY_KEYS = new Set(["weather", "air", "transit", "water", "city_services"]);
+const CITY_SCOPED_CATEGORY_KEYS = new Set(["weather", "air", "transit", "water", "city_services", "events"]);
 
 export function normalizeCityValue(value: string | null | undefined): string {
   const normalizedValue = (value ?? "").trim().toLowerCase().replaceAll(" ", "_");

@@ -20,9 +20,9 @@ const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
     "service_location",
     "opening_hours",
     "temporary_closure",
-    "event_time",
     "accessibility"
   ],
+  events: ["event_id", "event_time", "event_location", "keywords", "ticketing", "event_language"],
   geospatial: ["address", "building", "district", "parcel", "geometry"],
   regional_profile: ["population", "age_structure", "income", "employment", "health_indicator"]
 };

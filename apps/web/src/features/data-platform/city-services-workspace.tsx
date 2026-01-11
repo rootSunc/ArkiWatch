@@ -54,12 +54,6 @@ const CITY_SERVICE_FIELDS: ServiceField[] = [
     detail: "Closure windows and facility availability"
   },
   {
-    key: "event_time",
-    label: "Public events",
-    owner: "Linked Events",
-    detail: "Event windows, places, keywords, and language"
-  },
-  {
     key: "accessibility",
     label: "Accessibility",
     owner: "Service Map",
@@ -213,7 +207,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
       <section className="city-detail-empty" aria-label={t("City services data unavailable")}>
         <span>{t("City Services")}</span>
         <h2>{t("City service signals are not available yet")}</h2>
-        <p>{t("Service Map, Linked Events, and HRI metadata are not present in this platform view.")}</p>
+        <p>{t("Service Map and HRI metadata are not present in this platform view.")}</p>
       </section>
     );
   }
@@ -264,7 +258,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
               <strong>{category.sources.length}</strong>
               <p>
                 {latest?.body ??
-                  t("Service Map, Linked Events, and HRI are staged for public-service context.")}
+                  t("Service Map and HRI are staged for public-service context.")}
               </p>
             </div>
           </div>
@@ -333,7 +327,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
           <header>
             <div>
               <span>{t("Service Operations")}</span>
-              <h3>{t("Public facilities, events, and availability signals")}</h3>
+              <h3>{t("Public facilities and availability signals")}</h3>
             </div>
             <strong>{category.events.length || category.sources.length} {t("rows")}</strong>
           </header>

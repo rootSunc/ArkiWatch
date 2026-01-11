@@ -42,10 +42,12 @@ import {
 import { AirQualityWorkspace } from "./air-quality-workspace";
 import { CityServicesWorkspace } from "./city-services-workspace";
 import { EnergyWorkspace } from "./energy-workspace";
+import { LinkedEventsWorkspace } from "./linked-events-workspace";
 import { RoadRailWorkspace } from "./road-rail-workspace";
 import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 import { WaterSnowWorkspace } from "./water-snow-workspace";
+import { GeospatialWorkspace } from "./geospatial-workspace";
 
 type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
@@ -81,7 +83,8 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
   { key: "transit", label: "Transit", icon: "directions_bus", categoryKey: "transit" },
   { key: "traffic", label: "Road and Rail", icon: "traffic", categoryKey: "traffic" },
   { key: "water", label: "Water and Snow", icon: "water_drop", categoryKey: "water" },
-  { key: "city_services", label: "City Services", icon: "location_city", categoryKey: "city_services" }
+  { key: "city_services", label: "City Services", icon: "location_city", categoryKey: "city_services" },
+  { key: "events", label: "Linked Events", icon: "event", categoryKey: "events" }
 ];
 
 const SECONDARY_NAV_ITEMS: NavItem[] = [
@@ -93,6 +96,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   air: "air",
   city_services: "location_city",
   energy: "bolt",
+  events: "event",
   geospatial: "map",
   regional_profile: "public",
   traffic: "traffic",
@@ -389,6 +393,9 @@ function displayTitle(category: PlatformCategory, language: LanguageMode): strin
   if (category.key === "water") {
     return translateText(language, "Water & Snow");
   }
+  if (category.key === "events") {
+    return translateText(language, "Linked Events");
+  }
 
   return translateText(language, category.title);
 }
@@ -523,6 +530,19 @@ function signalReadout(
           ? Math.max(8, Math.min(100, energy.quality.field_coverage_pct))
           : toneProgress(tone),
       tone: window ? "good" : tone
+    };
+  }
+
+  if (category.key === "events") {
+    const freeMetric = metricByKey(category, "free_events");
+    return {
+      label: translateText(language, "Upcoming Events"),
+      value:
+        category.events.length > 0
+          ? `${category.events.length}`
+          : formatMetricValue(metricByKey(category, "active_events")),
+      progress: category.events.length > 0 ? Math.min(100, 22 + category.events.length * 10) : toneProgress(tone),
+      tone: freeMetric && freeMetric.value !== "0" ? "good" : tone
     };
   }
 
@@ -686,6 +706,8 @@ export function DataPlatformHome({
   const isRoadRailDetail = selectedCategory?.key === "traffic";
   const isWaterDetail = selectedCategory?.key === "water";
   const isCityServicesDetail = selectedCategory?.key === "city_services";
+  const isLinkedEventsDetail = selectedCategory?.key === "events";
+  const isGeospatialDetail = selectedCategory?.key === "geospatial";
   const isDetailPage =
     isWeatherDetail ||
     isAirDetail ||
@@ -693,7 +715,9 @@ export function DataPlatformHome({
     isTransitDetail ||
     isRoadRailDetail ||
     isWaterDetail ||
-    isCityServicesDetail;
+    isCityServicesDetail ||
+    isLinkedEventsDetail ||
+    isGeospatialDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
@@ -981,6 +1005,10 @@ export function DataPlatformHome({
               <WaterSnowWorkspace category={selectedCategory} />
             ) : isCityServicesDetail ? (
               <CityServicesWorkspace category={selectedCategory} />
+            ) : isLinkedEventsDetail ? (
+              <LinkedEventsWorkspace category={selectedCategory} />
+            ) : isGeospatialDetail ? (
+              <GeospatialWorkspace category={selectedCategory} />
             ) : (
             <>
               <section className="summary-grid" aria-label={t("Platform summary")}>
