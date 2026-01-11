@@ -1,0 +1,597 @@
+"use client";
+
+import { createContext, ReactNode, useContext, useMemo } from "react";
+
+export type LanguageMode = "en" | "zh";
+
+export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
+
+type I18nContextValue = {
+  language: LanguageMode;
+  t: (value: string) => string;
+  enumLabel: (value: string | null | undefined) => string;
+  dataLabel: (value: string | null | undefined) => string;
+};
+
+const TRANSLATIONS: Record<LanguageMode, Record<string, string>> = {
+  en: {},
+  zh: {
+    "24h": "24 小时",
+    "7d": "7 天",
+    "7-day horizon": "7 天趋势",
+    "ACTIVE NOW": "当前活跃",
+    "Active corridor events": "活跃走廊事件",
+    "Cheapest household price window": "最低家庭电价窗口",
+    "City services data unavailable": "城市服务数据不可用",
+    "City services detail": "城市服务详情",
+    "Daily Alert Event Trend": "每日提醒事件趋势",
+    "Daily Average Price Trend": "每日平均价格趋势",
+    "Daily Average Temperature": "每日平均温度",
+    "Daily Road and Rail Event Trend": "每日道路与铁路事件趋势",
+    "Dew point": "露点",
+    "Dew point unavailable": "露点不可用",
+    "Digitransit/HSL service alert data has not arrived for the current platform window.": "当前平台窗口尚未收到 Digitransit/HSL 服务提醒数据。",
+    "Dir": "方向",
+    "Fingrid data has not produced a low-value energy window for the current platform view.": "Fingrid 数据尚未为当前平台视图生成低价用电窗口。",
+    "Flexible electricity use window is ready.": "灵活用电窗口已就绪。",
+    "GTFS-RT alert entities": "GTFS-RT 提醒实体",
+    "Gusts near": "阵风接近",
+    "HISTORY": "历史",
+    "HSY air-quality station snapshots have not arrived for the current platform window.": "当前平台窗口尚未收到 HSY 空气质量站点快照。",
+    "Helsinki Meteorological Region": "赫尔辛基气象区域",
+    "Helsinki Transit Service Alerts": "赫尔辛基公交服务提醒",
+    "High Wind Advisory": "大风提醒",
+    "High impact active": "高影响活跃",
+    "High impact upcoming": "高影响即将发生",
+    "History": "历史",
+    "Household electricity price forecast": "家庭电价预报",
+    "Key fields": "关键字段",
+    "Missing fields": "缺失字段",
+    "Missing full station fields": "缺失完整站点字段",
+    "Network clear": "网络正常",
+    "No active alerts right now; monitor upcoming feed items.": "当前没有活跃提醒，请继续关注即将发生的 Feed 项。",
+    "No active warning or disruption event is present in the current weather feed.": "当前天气 Feed 中没有活跃预警或中断事件。",
+    "No active window": "无活跃窗口",
+    "No daily air-quality history is available.": "没有可用的每日空气质量历史。",
+    "No daily energy history is available.": "没有可用的每日能源历史。",
+    "No daily road and rail history is available.": "没有可用的每日道路与铁路历史。",
+    "No daily transit alert history is available.": "没有可用的每日公交提醒历史。",
+    "No daily weather history is available.": "没有可用的每日天气历史。",
+    "No high-severity transit alerts were normalized from the latest feed.": "最新 Feed 中没有标准化高严重度公交提醒。",
+    "Overcast": "阴天",
+    "Peak": "峰值",
+    "Peak Index": "峰值指数",
+    "Public facilities, events, and availability signals": "公共设施、事件和可用性信号",
+    "Quality Notes": "质量备注",
+    "Rail": "铁路",
+    "Rail events": "铁路事件",
+    "Raw decoded": "原始解码",
+    "Raw messages": "原始消息",
+    "Real-time system telemetry and signal status.": "实时系统遥测和信号状态。",
+    "Recent events": "近期事件",
+    "Road events": "道路事件",
+    "Route scoped": "路线范围",
+    "SYKE Source": "SYKE 来源",
+    "SYKE and Flood Centre source metadata has not arrived for the current platform view.": "当前平台视图尚未收到 SYKE 和洪水中心来源元数据。",
+    "Sea-level pressure signal": "海平面气压信号",
+    "Service Map, Linked Events, and HRI are staged for public-service context.": "Service Map、Linked Events 和 HRI 已为公共服务上下文暂存。",
+    "Service Map, Linked Events, and HRI metadata are not present in this platform view.": "当前平台视图中没有 Service Map、Linked Events 和 HRI 元数据。",
+    "Signal status array": "信号状态矩阵",
+    "Slow movement windows may need extra margin.": "缓慢移动窗口可能需要额外余量。",
+    "Source schema, event readiness, and collection state": "来源结构、事件就绪度和采集状态",
+    "Station data is not available yet": "站点数据暂不可用",
+    "Station, catchment, flood-context, and snow-water fields are mapped in the catalog.": "站点、流域、洪水上下文和雪水字段已映射到目录中。",
+    "Stop scoped": "站点范围",
+    "System Clearance": "系统清除",
+    "The FMI forecast endpoint did not return current weather data for this platform window.": "FMI 预报端点没有返回当前平台窗口的天气数据。",
+    "Trend 3H": "过去 3 小时趋势",
+    "Visibility is": "能见度为",
+    "Water level, discharge, groundwater, snow-water equivalent, and flood context are ready for ingestion.": "水位、流量、地下水、雪水当量和洪水上下文已准备好接入。",
+    "Weather warning from the provider feed.": "来自提供方 Feed 的天气预警。",
+    "Worst Station Score Trend": "最差站点评分趋势",
+    "Worst station unavailable": "最差站点不可用",
+    "across the forecast window.": "覆盖预报窗口。",
+    "at": "于",
+    "cause unavailable": "原因不可用",
+    "cost n/a": "成本不可用",
+    "coverage": "覆盖率",
+    "effect unavailable": "影响不可用",
+    "grouped locations": "分组位置",
+    "messages": "消息",
+    "missing fields": "缺失字段",
+    "monitored": "已监控",
+    "no active window": "无活跃窗口",
+    "normalized event schema(s) mapped for water guidance.": "个标准化事件结构已映射用于水文指导。",
+    "normalized events": "标准化事件",
+    "rain windows": "降雨窗口",
+    "range": "范围",
+    "raw": "原始",
+    "raw alerts": "原始提醒",
+    "raw messages": "原始消息",
+    "request metadata unavailable": "请求元数据不可用",
+    "score": "分数",
+    "sources": "来源",
+    "stages": "阶段",
+    "stations": "站点",
+    "symbol": "符号",
+    "to": "至",
+    "total": "总计",
+    "traffic message features": "交通消息要素",
+    "unresolved": "未解决",
+    "until": "直到",
+    "window points": "窗口点",
+    "Accessibility": "无障碍",
+    "Active": "活跃",
+    "Active Events": "活跃事件",
+    "Active Fields": "活跃字段",
+    "Active Load": "当前负载",
+    "Active Now": "当前活跃",
+    "Active and upcoming road events": "当前和即将发生的道路事件",
+    "Active and upcoming service alerts": "当前和即将发生的服务提醒",
+    "Air Quality": "空气质量",
+    "Air Quality Network": "空气质量网络",
+    "Air-quality current condition": "空气质量当前状况",
+    "Air-quality data unavailable": "空气质量数据不可用",
+    "Air-quality detail": "空气质量详情",
+    "Air-quality provider status": "空气质量提供方状态",
+    "Air-quality station analytics": "空气质量站点分析",
+    "Air-quality summary metrics": "空气质量摘要指标",
+    "Alert": "告警",
+    "Alert Scope": "提醒范围",
+    "Alert Timeline": "提醒时间线",
+    "All": "全部",
+    "All tracked raw alert fields are present.": "所有跟踪的原始提醒字段均已存在。",
+    "All tracked raw message fields are present.": "所有跟踪的原始消息字段均已存在。",
+    "All tracked station fields are present.": "所有跟踪的站点字段均已存在。",
+    "All tracked fields present": "所有跟踪字段均已存在",
+    "Analytics": "分析",
+    "API Docs": "API 文档",
+    "API endpoint": "API 端点",
+    "AQ index label": "空气质量指数标签",
+    "AQI Avg": "AQI 平均值",
+    "Available Fields": "可用字段",
+    "Awaiting Forecast": "等待预报",
+    "bbox unavailable": "边界框不可用",
+    "Best Price": "最佳价格",
+    "Best Window": "最佳窗口",
+    "Cadence": "频率",
+    "cadence missing": "频率缺失",
+    "Catalog": "目录",
+    "Catalog Coverage": "目录覆盖",
+    "Catalog Sources": "目录源",
+    "Chart rows": "图表行",
+    "Cheapest Flexible Use Window": "最低价灵活用电窗口",
+    "Chinese": "中文",
+    "City Services": "城市服务",
+    "City service analytics": "城市服务分析",
+    "City service data visualizations": "城市服务数据可视化",
+    "City service operating condition": "城市服务运行状态",
+    "City service provider status": "城市服务提供方状态",
+    "City service signals are not available yet": "城市服务信号暂不可用",
+    "City service summary metrics": "城市服务摘要指标",
+    "City Services Dashboard": "城市服务仪表盘",
+    "Clear Spell": "短时晴朗",
+    "Cloud Cover": "云量",
+    "Collection Volume": "采集量",
+    "Collapse recent events": "收起近期事件",
+    "Connected": "已连接",
+    "content type unavailable": "内容类型不可用",
+    "Corridors": "走廊",
+    "Coverage": "覆盖率",
+    "Coverage Lattice": "覆盖网格",
+    "Current Condition": "当前状况",
+    "Current Network Condition": "当前网络状况",
+    "Current Transit Risk": "当前公交风险",
+    "Custom": "自定义",
+    "Custom window": "自定义窗口",
+    "Dashboard": "仪表盘",
+    "Data Platform": "数据平台",
+    "Data Quality": "数据质量",
+    "Data Sources": "数据源",
+    "Data platform could not load": "数据平台无法加载",
+    "Datasets": "数据集",
+    "Day": "日",
+    "Delayed": "延迟",
+    "Detected energy timing window": "检测到的用电时间窗口",
+    "Detail workspace navigation": "详情工作区导航",
+    "Diagnostics": "诊断",
+    "Digitraffic Active": "Digitraffic 已激活",
+    "Digitraffic road and rail signals are not available yet": "Digitraffic 道路和铁路信号暂不可用",
+    "Display language": "显示语言",
+    "Documentation": "文档",
+    "Effect unavailable": "影响不可用",
+    "English": "English",
+    "Ends": "结束",
+    "Energy": "能源",
+    "Energy data unavailable": "能源数据不可用",
+    "Energy detail": "能源详情",
+    "Energy operating condition": "能源运行状态",
+    "Energy platform analytics": "能源平台分析",
+    "Energy provider status": "能源提供方状态",
+    "Energy signals are not available yet": "能源信号暂不可用",
+    "Energy summary metrics": "能源摘要指标",
+    "Endpoint not recorded": "端点未记录",
+    "Event Model": "事件模型",
+    "Event Readiness": "事件就绪度",
+    "Event Timeline": "事件时间线",
+    "Events": "事件",
+    "Expand recent events": "展开近期事件",
+    "Fair": "一般",
+    "Feed Coverage": "Feed 覆盖率",
+    "Feed Delayed": "Feed 延迟",
+    "Feels Like": "体感",
+    "Field Coverage": "字段覆盖率",
+    "Forecast chart mode": "预报图表模式",
+    "Forecast feed checked": "预报 Feed 检查于",
+    "Forecast Trajectory": "预报轨迹",
+    "Fingrid electricity-system metadata has not arrived for the current platform view.": "当前平台视图尚未收到 Fingrid 电力系统元数据。",
+    "Flood, drought, snow-load, and algae event types are reserved for the SYKE integration.": "洪水、干旱、雪负荷和藻类事件类型已为 SYKE 集成预留。",
+    "Good": "良好",
+    "Grouped locations": "分组位置",
+    "High": "高",
+    "HIGH": "高",
+    "High Severity": "高严重度",
+    "Highest HSY index values": "最高 HSY 指数值",
+    "Highest Severity": "最高严重度",
+    "Hourly Points": "小时点位",
+    "Household Energy Price": "家庭电价",
+    "Household Price Forecast": "家庭价格预报",
+    "HSL Feed Active": "HSL Feed 已激活",
+    "HSY Sync Active": "HSY 同步活跃",
+    "Humidity": "湿度",
+    "Hydrology feed active": "水文 Feed 已激活",
+    "Hydrology schema": "水文结构",
+    "Hydrology Signal Stack": "水文信号栈",
+    "Hydrology Signal State": "水文信号状态",
+    "Hydrology signals are not available yet": "水文信号暂不可用",
+    "Hydrology source mapped": "水文源已映射",
+    "Inactive": "未激活",
+    "Incident Timeline": "事件时间线",
+    "Index Range": "指数范围",
+    "Language": "语言",
+    "Last Sync": "最后同步",
+    "Latest normalized Digitraffic road and rail signals.": "最新标准化 Digitraffic 道路和铁路信号。",
+    "Latest normalized HSL transit service alert signals.": "最新标准化 HSL 公交服务提醒信号。",
+    "Latest normalized HSY air-quality station signals.": "最新标准化 HSY 空气质量站点信号。",
+    "Light Snow & Overcast": "小雪转阴",
+    "Live": "实时",
+    "Live Data Streams": "实时数据流",
+    "Live Sync Active": "实时同步活跃",
+    "Low": "低",
+    "LOW": "低",
+    "Mapped": "已映射",
+    "Max Gust": "最大阵风",
+    "Medium": "中",
+    "MEDIUM": "中",
+    "Metric unavailable": "指标不可用",
+    "Missing": "缺失",
+    "Moderate": "中等",
+    "Network Scope": "网络范围",
+    "Next 24h": "未来 24 小时",
+    "Next 3H": "未来 3 小时",
+    "Next Clear": "下次解除",
+    "NEXT WINDOW": "下一窗口",
+    "No active road events": "无活跃道路事件",
+    "No active service alerts in the latest HSL feed.": "最新 HSL Feed 中没有活跃服务提醒。",
+    "No chart rows have been produced for this city service signal.": "该城市服务信号尚未生成图表行。",
+    "No corridor groups are active in this window.": "此窗口内没有活跃走廊组。",
+    "No forecast points available": "没有可用预报点",
+    "No household price window is available from the latest energy payload.": "最新能源载荷中没有可用的家庭价格窗口。",
+    "No priority transit alerts are active or upcoming.": "没有当前或即将发生的优先公交提醒。",
+    "No rain windows in the current forecast horizon.": "当前预报范围内没有降雨窗口。",
+    "No recent events match the current view.": "没有符合当前视图的近期事件。",
+    "No recent events match the current search.": "没有符合当前搜索的近期事件。",
+    "No route, stop, or trip-scoped transit alerts were normalized.": "没有标准化的路线、站点或行程范围公交提醒。",
+    "No road or rail events were normalized from the latest Digitraffic payload.": "最新 Digitraffic 载荷中没有标准化道路或铁路事件。",
+    "No signal cards match the current search.": "没有符合当前搜索的信号卡片。",
+    "No station rows were normalized from the latest HSY payload.": "最新 HSY 载荷中没有标准化站点行。",
+    "No transit alerts are active right now.": "当前没有活跃公交提醒。",
+    "No transit alerts were normalized from the latest HSL feed.": "最新 HSL Feed 中没有标准化公交提醒。",
+    "No upcoming transit alerts were normalized from the latest feed.": "最新 Feed 中没有标准化即将发生的公交提醒。",
+    "No values": "无数值",
+    "Nominal": "正常",
+    "Normalized": "已标准化",
+    "Notifications": "通知",
+    "Offline": "离线",
+    "Open data": "开放数据",
+    "Open data documentation": "开放数据文档",
+    "Open navigation": "打开导航",
+    "Operational": "运行正常",
+    "Operational Monitoring": "运行监控",
+    "Overview": "概览",
+    "Overview Dashboard": "概览仪表盘",
+    "Partly Cloudy": "局部多云",
+    "Pending": "待处理",
+    "Pipeline": "管道",
+    "Planned": "已规划",
+    "Platform summary": "平台摘要",
+    "Platform unavailable": "平台不可用",
+    "Pollutant Fields": "污染物字段",
+    "Poor": "差",
+    "Pressure": "气压",
+    "Preview energy timing window": "预览用电时间窗口",
+    "Price Source": "价格来源",
+    "Primary navigation": "主导航",
+    "Priority": "优先",
+    "Privacy Policy": "隐私政策",
+    "Provider Status": "提供方状态",
+    "Rain & Low Cloud": "降雨低云",
+    "Rain Total": "总降雨",
+    "Rain Windows": "降雨窗口",
+    "Ready": "就绪",
+    "Recent Events": "近期事件",
+    "Records": "记录",
+    "Reduced": "降低",
+    "Reduced Visibility": "能见度降低",
+    "Regional Context": "区域上下文",
+    "Regional Settings": "区域设置",
+    "Reporting": "上报",
+    "Road": "道路",
+    "Road & Rail": "道路与铁路",
+    "Road and Rail": "道路与铁路",
+    "Road and rail analytics": "道路与铁路分析",
+    "Road and rail condition": "道路与铁路状态",
+    "Road and rail data unavailable": "道路与铁路数据不可用",
+    "Road and rail detail": "道路与铁路详情",
+    "Road and rail provider status": "道路与铁路提供方状态",
+    "Road and rail summary metrics": "道路与铁路摘要指标",
+    "Road & Rail Operations": "道路与铁路运营",
+    "Score Distribution": "分数分布",
+    "Score Fields": "评分字段",
+    "Scoped": "有范围",
+    "Scoped Impact": "范围影响",
+    "Search signals, events...": "搜索信号、事件...",
+    "Secondary navigation": "次级导航",
+    "Selected day": "所选日期",
+    "Service Coverage": "服务覆盖",
+    "Service Map": "服务地图",
+    "Service Model": "服务模型",
+    "Service Operations": "服务运营",
+    "Service alerts active": "服务提醒活跃",
+    "Settings": "设置",
+    "Severity Mix": "严重度构成",
+    "Signal Level": "信号级别",
+    "Signal navigation": "信号导航",
+    "Signal Status Array": "信号状态矩阵",
+    "Source Layers": "来源层",
+    "Source Readiness": "来源就绪度",
+    "Source Request": "来源请求",
+    "Source Requests": "来源请求",
+    "Source state": "来源状态",
+    "Spot price by time and estimated flexible-use cost": "按时间展示现货价格和预估灵活用电成本",
+    "Stale": "过期",
+    "Starts": "开始",
+    "Station Ranking": "站点排名",
+    "Station score": "站点评分",
+    "Success": "成功",
+    "Summary": "摘要",
+    "Switch display language": "切换显示语言",
+    "Switch to day theme": "切换到日间主题",
+    "Switch to night theme": "切换到夜间主题",
+    "Sync Delayed": "同步延迟",
+    "System Version": "系统版本",
+    "Thermal Range": "温度范围",
+    "This signal has not produced a platform metric yet.": "该信号尚未生成平台指标。",
+    "Today": "今天",
+    "Tracked Fields": "跟踪字段",
+    "Traffic message data has not arrived for the current platform window.": "当前平台窗口尚未收到交通消息数据。",
+    "Transit": "公交",
+    "Transit alert analytics": "公交提醒分析",
+    "Transit alert condition": "公交提醒状态",
+    "Transit alert filters": "公交提醒过滤器",
+    "Transit data unavailable": "公交数据不可用",
+    "Transit detail": "公交详情",
+    "Transit provider status": "公交提供方状态",
+    "Transit service alerts are not available yet": "公交服务提醒暂不可用",
+    "Transit summary metrics": "公交摘要指标",
+    "Upcoming": "即将发生",
+    "Unknown platform error.": "未知平台错误。",
+    "User context": "用户上下文",
+    "User profile": "用户资料",
+    "Very poor": "很差",
+    "Visibility": "能见度",
+    "Watch": "观察",
+    "Water & Snow": "水与雪",
+    "Water and Snow": "水与雪",
+    "Water and snow data unavailable": "水与雪数据不可用",
+    "Water and snow detail": "水与雪详情",
+    "Water and snow operating condition": "水与雪运行状态",
+    "Water and snow platform analytics": "水与雪平台分析",
+    "Water and snow provider status": "水与雪提供方状态",
+    "Water and snow summary metrics": "水与雪摘要指标",
+    "Water & Snow Hydrology": "水与雪水文",
+    "Weather": "天气",
+    "Weather conditions": "天气状况",
+    "Weather data is not available yet": "天气数据暂不可用",
+    "Weather Detail": "天气详情",
+    "Weather forecast and events": "天气预报和事件",
+    "Weather operations data": "天气运营数据",
+    "Weather provider status": "天气提供方状态",
+    "Weather summary metrics": "天气摘要指标",
+    "Wind": "风速",
+    "Wind Advisory Conditions": "大风提醒条件",
+    "Window State": "窗口状态",
+    "Window detected": "检测到窗口",
+    "Window pending": "窗口待定",
+    "Worst Score": "最差分数",
+    "active": "活跃",
+    "alerts include route ids": "提醒包含路线 ID",
+    "alerts include stop ids": "提醒包含站点 ID",
+    "building": "建筑",
+    "catalog": "目录",
+    "city_services": "城市服务",
+    "connected": "已连接",
+    "dataset catalog pending": "数据集目录待定",
+    "datasets": "数据集",
+    "endpoint not recorded": "端点未记录",
+    "events": "事件",
+    "fetched": "已获取",
+    "field groups": "字段组",
+    "fields": "字段",
+    "forecast_points": "预报点",
+    "geospatial": "地理空间",
+    "healthy": "健康",
+    "horizon": "范围",
+    "index missing": "指数缺失",
+    "items": "项",
+    "just now": "刚刚",
+    "license unavailable": "许可不可用",
+    "live": "实时",
+    "mapped": "已映射",
+    "message type unavailable": "消息类型不可用",
+    "metrics": "指标",
+    "missing": "缺失",
+    "network-wide": "全网络",
+    "network-wide alert": "全网络提醒",
+    "not collected": "未采集",
+    "not observed": "未观测",
+    "not scheduled": "未计划",
+    "planned": "已规划",
+    "points": "点",
+    "poll": "轮询",
+    "populated": "已填充",
+    "records": "记录",
+    "routes": "路线",
+    "rows": "行",
+    "scored stations": "有评分站点",
+    "source": "来源",
+    "station features": "站点要素",
+    "stops": "站点",
+    "stored event rows": "已存事件行",
+    "traffic": "交通",
+    "trips": "行程",
+    "unknown content": "未知内容",
+    "window pending": "窗口待定",
+    "waiting for event": "等待事件",
+    "weather": "天气"
+  }
+};
+
+const DEFAULT_CONTEXT: I18nContextValue = {
+  language: "en",
+  t: (value) => value,
+  enumLabel: (value) => humanizeValue(value),
+  dataLabel: (value) => humanizeValue(value)
+};
+
+const I18nContext = createContext<I18nContextValue>(DEFAULT_CONTEXT);
+
+function humanizeValue(value: string | null | undefined): string {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .replaceAll("_", " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+export function isLanguageMode(value: string | null): value is LanguageMode {
+  return value === "en" || value === "zh";
+}
+
+export function preferredLanguageMode(): LanguageMode {
+  if (typeof navigator === "undefined") {
+    return "en";
+  }
+
+  return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+}
+
+export function storedLanguageMode(): LanguageMode | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const value = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return isLanguageMode(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLanguageMode(language: LanguageMode): void {
+  try {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch {
+    // Language switching should keep working even when persistent storage is unavailable.
+  }
+}
+
+export function applyLanguageMode(language: LanguageMode): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+  document.documentElement.dataset.language = language;
+}
+
+export function translateText(language: LanguageMode, value: string): string {
+  if (language === "en") {
+    return value;
+  }
+
+  return TRANSLATIONS.zh[value] ?? value;
+}
+
+export function translateEnumLabel(language: LanguageMode, value: string | null | undefined): string {
+  const label = humanizeValue(value);
+  return label ? translateText(language, label) : "";
+}
+
+export function translateDataLabel(language: LanguageMode, value: string | null | undefined): string {
+  const label = value?.replaceAll("_", " ") ?? "";
+  return label ? translateText(language, label) : "";
+}
+
+export function I18nProvider({ children, language }: { children: ReactNode; language: LanguageMode }) {
+  const value = useMemo<I18nContextValue>(
+    () => ({
+      language,
+      t: (text) => translateText(language, text),
+      enumLabel: (text) => translateEnumLabel(language, text),
+      dataLabel: (text) => translateDataLabel(language, text)
+    }),
+    [language]
+  );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n(): I18nContextValue {
+  return useContext(I18nContext);
+}
+
+export function LanguageSwitchButton({
+  language,
+  onLanguageChange
+}: {
+  language: LanguageMode;
+  onLanguageChange: (language: LanguageMode) => void;
+}) {
+  const label = translateText(language, "Display language");
+
+  return (
+    <div className="language-switcher" aria-label={label} role="group" title={label}>
+      <span className="material-symbols-outlined" aria-hidden="true">
+        translate
+      </span>
+      {(["en", "zh"] as const).map((option) => (
+        <button
+          aria-pressed={language === option}
+          className={language === option ? "language-option language-option-active" : "language-option"}
+          key={option}
+          onClick={() => onLanguageChange(option)}
+          type="button"
+        >
+          {option === "en" ? "EN" : "中文"}
+        </button>
+      ))}
+    </div>
+  );
+}

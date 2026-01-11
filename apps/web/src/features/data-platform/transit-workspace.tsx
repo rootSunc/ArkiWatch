@@ -1,22 +1,39 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 import { formatRelativeAge } from "@/features/shared/format";
 
+import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
+  PlatformHistoricalSnapshot,
   TransitAlert,
   TransitCurrentResponse,
   TransitDataStage,
   TransitSourceRequest
 } from "./types";
+import { TrendChart, TrendChartPoint } from "./trend-chart";
 
 type TransitWorkspaceProps = {
   category: PlatformCategory | null;
+  history: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
   transit: TransitCurrentResponse | null;
 };
 
 type TransitTone = "good" | "warn" | "bad" | "neutral";
+type TransitAlertFilter = "priority" | "active" | "upcoming" | "high" | "scoped" | "all";
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
+const ALERT_FILTERS: Array<{ icon: string; key: TransitAlertFilter; label: string }> = [
+  { icon: "priority_high", key: "priority", label: "Priority" },
+  { icon: "radio_button_checked", key: "active", label: "Active" },
+  { icon: "schedule", key: "upcoming", label: "Upcoming" },
+  { icon: "warning", key: "high", label: "High" },
+  { icon: "route", key: "scoped", label: "Scoped" },
+  { icon: "view_list", key: "all", label: "All" }
+];
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -26,12 +43,12 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
 }
 
-function formatCompactTime(value: string | null | undefined): string {
+function formatCompactTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
   if (!value) {
-    return "not observed";
+    return t("not observed");
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
@@ -41,6 +58,10 @@ function formatCompactTime(value: string | null | undefined): string {
   })
     .format(new Date(value))
     .toUpperCase();
+}
+
+function clampPercent(value: number): number {
+  return Math.max(6, Math.min(100, value));
 }
 
 function statusTone(status: string): TransitTone {
@@ -57,13 +78,13 @@ function statusTone(status: string): TransitTone {
 }
 
 function severityTone(severity: string): TransitTone {
-  if (severity === "HIGH") {
+  if (severity.toUpperCase() === "HIGH") {
     return "bad";
   }
-  if (severity === "MEDIUM") {
+  if (severity.toUpperCase() === "MEDIUM") {
     return "warn";
   }
-  if (severity === "LOW") {
+  if (severity.toUpperCase() === "LOW") {
     return "good";
   }
   return "neutral";
@@ -90,9 +111,9 @@ function severityDistribution(alerts: TransitAlert[]) {
   });
 }
 
-function sourceRequestHost(endpoint: string | null): string {
+function sourceRequestHost(endpoint: string | null, t: (value: string) => string): string {
   if (!endpoint) {
-    return "endpoint not recorded";
+    return t("endpoint not recorded");
   }
 
   try {
@@ -102,23 +123,42 @@ function sourceRequestHost(endpoint: string | null): string {
   }
 }
 
-function effectLabel(value: string | null): string {
-  return value ? value.replaceAll("_", " ") : "effect unavailable";
+function effectLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+  return value ? translateEnumLabel(language, value) : t("effect unavailable");
 }
 
-function scopeLabel(alert: TransitAlert): string {
+function causeLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+  return value ? translateEnumLabel(language, value) : t("cause unavailable");
+}
+
+function scopeLabel(alert: TransitAlert, t: (value: string) => string): string {
   const scopes = [];
   if (alert.route_ids.length > 0) {
-    scopes.push(`${alert.route_ids.length} routes`);
+    scopes.push(`${alert.route_ids.length} ${t("routes")}`);
   }
   if (alert.stop_ids.length > 0) {
-    scopes.push(`${alert.stop_ids.length} stops`);
+    scopes.push(`${alert.stop_ids.length} ${t("stops")}`);
   }
   if (alert.trip_ids.length > 0) {
-    scopes.push(`${alert.trip_ids.length} trips`);
+    scopes.push(`${alert.trip_ids.length} ${t("trips")}`);
   }
 
-  return scopes.length > 0 ? scopes.join(" / ") : "network-wide";
+  return scopes.length > 0 ? scopes.join(" / ") : t("network-wide");
+}
+
+function scopePreview(alert: TransitAlert, t: (value: string) => string): string {
+  const scopes = [];
+  if (alert.route_ids.length > 0) {
+    scopes.push(`${t("routes")} ${alert.route_ids.slice(0, 4).join(", ")}${alert.route_ids.length > 4 ? " +" : ""}`);
+  }
+  if (alert.stop_ids.length > 0) {
+    scopes.push(`${t("stops")} ${alert.stop_ids.slice(0, 3).join(", ")}${alert.stop_ids.length > 3 ? " +" : ""}`);
+  }
+  if (alert.trip_ids.length > 0) {
+    scopes.push(`${alert.trip_ids.length} ${t("trips")}`);
+  }
+
+  return scopes.length > 0 ? scopes.join(" / ") : t("network-wide alert");
 }
 
 function stageProgress(stage: TransitDataStage): number {
@@ -131,81 +171,250 @@ function stageProgress(stage: TransitDataStage): number {
   return 55;
 }
 
-function activeAlertTone(transit: TransitCurrentResponse): TransitTone {
-  if (Number(metricValue(transit, "high_severity")) > 0) {
+function isHighSeverity(alert: TransitAlert): boolean {
+  return alert.severity.toUpperCase() === "HIGH";
+}
+
+function isScopedAlert(alert: TransitAlert): boolean {
+  return alert.route_ids.length > 0 || alert.stop_ids.length > 0 || alert.trip_ids.length > 0;
+}
+
+function filterAlerts(alerts: TransitAlert[], filter: TransitAlertFilter): TransitAlert[] {
+  if (filter === "priority") {
+    return alerts.filter((alert) => alert.active || isHighSeverity(alert));
+  }
+  if (filter === "active") {
+    return alerts.filter((alert) => alert.active);
+  }
+  if (filter === "upcoming") {
+    return alerts.filter((alert) => !alert.active);
+  }
+  if (filter === "high") {
+    return alerts.filter(isHighSeverity);
+  }
+  if (filter === "scoped") {
+    return alerts.filter(isScopedAlert);
+  }
+
+  return alerts;
+}
+
+function filterEmptyMessage(filter: TransitAlertFilter, t: (value: string) => string): string {
+  if (filter === "priority") {
+    return t("No priority transit alerts are active or upcoming.");
+  }
+  if (filter === "active") {
+    return t("No transit alerts are active right now.");
+  }
+  if (filter === "upcoming") {
+    return t("No upcoming transit alerts were normalized from the latest feed.");
+  }
+  if (filter === "high") {
+    return t("No high-severity transit alerts were normalized from the latest feed.");
+  }
+  if (filter === "scoped") {
+    return t("No route, stop, or trip-scoped transit alerts were normalized.");
+  }
+
+  return t("No transit alerts were normalized from the latest HSL feed.");
+}
+
+function activeAlertTone(activeAlerts: TransitAlert[], allAlerts: TransitAlert[]): TransitTone {
+  if (activeAlerts.some(isHighSeverity)) {
     return "bad";
   }
-  if (transit.quality.active_alert_count > 0) {
+  if (activeAlerts.length > 0 || allAlerts.some(isHighSeverity)) {
     return "warn";
   }
   return "good";
 }
 
-export function TransitWorkspace({ category, transit }: TransitWorkspaceProps) {
+function highestSeverityLabel(alerts: TransitAlert[]): string {
+  return SEVERITY_LABELS.find((severity) => alerts.some((alert) => alert.severity.toUpperCase() === severity)) ?? "NONE";
+}
+
+function nextActiveEndLabel(activeAlerts: TransitAlert[], language: LanguageMode, t: (value: string) => string): string {
+  if (activeAlerts.length === 0) {
+    return t("no active window");
+  }
+
+  const nextEndingAlert = [...activeAlerts].sort(
+    (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
+  )[0];
+
+  return `${t("until")} ${formatCompactTime(nextEndingAlert.ends_at, language, t)}`;
+}
+
+function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[], t: (value: string) => string) {
+  const highActive = activeAlerts.filter(isHighSeverity).length;
+  const highUpcoming = allAlerts.filter((alert) => !alert.active && isHighSeverity(alert)).length;
+
+  if (highActive > 0) {
+    return {
+      detail: `${highActive} high-severity alert${highActive === 1 ? "" : "s"} active now across the HSL feed.`,
+      icon: "warning",
+      title: t("High impact active")
+    };
+  }
+
+  if (activeAlerts.length > 0) {
+    return {
+      detail: `${activeAlerts.length} active alert${activeAlerts.length === 1 ? "" : "s"} may affect route choice or timing.`,
+      icon: "directions_bus",
+      title: t("Service alerts active")
+    };
+  }
+
+  if (highUpcoming > 0) {
+    return {
+      detail: `${highUpcoming} high-severity alert${highUpcoming === 1 ? "" : "s"} are scheduled or pending in the feed.`,
+      icon: "schedule",
+      title: t("High impact upcoming")
+    };
+  }
+
+  return {
+    detail: allAlerts.length > 0 ? t("No active alerts right now; monitor upcoming feed items.") : t("No active service alerts in the latest HSL feed."),
+    icon: "check_circle",
+    title: t("Network clear")
+  };
+}
+
+function alertWindowProgress(alert: TransitAlert, nowTimestamp: number): number {
+  const startsAt = new Date(alert.starts_at).getTime();
+  const endsAt = new Date(alert.ends_at).getTime();
+
+  if (!Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
+    return alert.active ? 100 : 8;
+  }
+
+  if (nowTimestamp < startsAt) {
+    return 8;
+  }
+
+  if (nowTimestamp >= endsAt) {
+    return 100;
+  }
+
+  return clampPercent(((nowTimestamp - startsAt) / (endsAt - startsAt)) * 100);
+}
+
+function formatHistoryDate(value: string): string {
+  const parsed = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: HELSINKI_TIME_ZONE
+  })
+    .format(parsed)
+    .toUpperCase();
+}
+
+function transitHistoryPoints(
+  history: PlatformHistoricalSnapshot<TransitCurrentResponse>[]
+): TrendChartPoint[] {
+  return history.flatMap((snapshot) => {
+    const data = snapshot.data;
+    if (!data) {
+      return [];
+    }
+
+    return [
+      {
+        label: formatHistoryDate(snapshot.date),
+        value: data.quality.normalized_event_count,
+        detail: `${data.quality.active_alert_count} active · ${data.quality.route_alert_count} route scoped`
+      }
+    ];
+  });
+}
+
+export function TransitWorkspace({ category, history, transit }: TransitWorkspaceProps) {
+  const { language, t } = useI18n();
+  const [alertFilter, setAlertFilter] = useState<TransitAlertFilter>("priority");
+  const activeAlerts = useMemo(() => transit?.alerts.filter((alert) => alert.active) ?? [], [transit]);
+  const filteredAlerts = useMemo(
+    () => filterAlerts(transit?.alerts ?? [], alertFilter),
+    [alertFilter, transit]
+  );
+
   if (!transit) {
     return (
-      <section className="transit-detail-empty" aria-label="Transit data unavailable">
-        <span>Transit</span>
-        <h2>Transit service alerts are not available yet</h2>
-        <p>Digitransit/HSL service alert data has not arrived for the current platform window.</p>
+      <section className="transit-detail-empty" aria-label={t("Transit data unavailable")}>
+        <span>{t("Transit")}</span>
+        <h2>{t("Transit service alerts are not available yet")}</h2>
+        <p>{t("Digitransit/HSL service alert data has not arrived for the current platform window.")}</p>
       </section>
     );
   }
 
-  const activeTone = activeAlertTone(transit);
-  const activeAlerts = transit.alerts.filter((alert) => alert.active);
-  const topAlerts = transit.alerts.slice(0, 8);
+  const nowTimestamp = Date.now();
+  const activeTone = activeAlertTone(activeAlerts, transit.alerts);
+  const riskState = transitRiskState(activeAlerts, transit.alerts, t);
+  const topAlerts = filteredAlerts.slice(0, 8);
   const severityRows = severityDistribution(transit.alerts);
+  const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
+  const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
+  const historyPoints = transitHistoryPoints(history);
 
   return (
-    <section className="transit-detail-page" aria-label="Transit detail">
+    <section className="transit-detail-page" aria-label={t("Transit detail")}>
       <div className="transit-detail-header">
         <div>
-          <h2>Helsinki Transit Service Alerts</h2>
+          <h2>{t("Helsinki Transit Service Alerts")}</h2>
           <div className="transit-live-status">
             <span aria-hidden="true" />
-            <strong>{transit.status === "ready" ? "HSL Feed Active" : "Feed Delayed"}</strong>
+            <strong>{transit.status === "ready" ? t("HSL Feed Active") : t("Feed Delayed")}</strong>
           </div>
         </div>
-        <div>{transit.source_code.toUpperCase()} / {transit.observed_at ? formatRelativeAge(transit.observed_at) : "not observed"}</div>
+        <div>{transit.source_code.toUpperCase()} / {transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}</div>
       </div>
 
-      <section className="transit-bento-grid" aria-label="Transit alert condition">
+      <section className="transit-bento-grid" aria-label={t("Transit alert condition")}>
         <article className={`transit-glass-panel transit-hero transit-hero-${activeTone}`}>
           <div className="transit-card-kicker">
-            <span>Current Alert Load</span>
-            <time>{transit.observed_at ? formatRelativeAge(transit.observed_at) : "not observed"}</time>
+            <span>{t("Current Transit Risk")}</span>
+            <time>{transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}</time>
           </div>
           <div className="transit-current-cluster">
             <span className="material-symbols-outlined transit-condition-icon" aria-hidden="true">
-              {activeTone === "bad" ? "warning" : "directions_bus"}
+              {riskState.icon}
             </span>
             <div>
+              <span className="transit-risk-label">{riskState.title}</span>
               <strong>{transit.quality.active_alert_count}</strong>
-              <p>{activeAlerts.length > 0 ? "Active alerts in HSL service feed" : "No active service alerts"}</p>
+              <p>{riskState.detail}</p>
             </div>
           </div>
           <div className="transit-hero-footer">
             <div>
-              <span>Disruptions</span>
-              <strong>{metricValue(transit, "disruptions")}</strong>
+              <span>{t("Highest Severity")}</span>
+              <strong>{t(highestSeverityLabel(transit.alerts))}</strong>
             </div>
             <div>
-              <span>Delays</span>
-              <strong>{metricValue(transit, "delays")}</strong>
+              <span>{t("Next Clear")}</span>
+              <strong>{nextActiveEndLabel(activeAlerts, language, t)}</strong>
+            </div>
+            <div>
+              <span>{t("Scoped Impact")}</span>
+              <strong>{metricValue(transit, "route_scoped")} {t("routes")} / {metricValue(transit, "stop_scoped")} {t("stops")}</strong>
             </div>
           </div>
         </article>
 
         <article className="transit-glass-panel transit-severity-panel">
           <header>
-            <span>Severity Mix</span>
+            <span>{t("Severity Mix")}</span>
             <strong>{transit.alerts.length}</strong>
           </header>
           <div className="transit-severity-bars">
             {severityRows.map((row) => (
               <div className={`transit-severity-row transit-severity-row-${severityTone(row.severity)}`} key={row.severity}>
-                <span>{row.severity}</span>
+                <span>{t(row.severity)}</span>
                 <i aria-hidden="true">
                   <span style={{ width: `${row.width}%` }} />
                 </i>
@@ -217,58 +426,86 @@ export function TransitWorkspace({ category, transit }: TransitWorkspaceProps) {
 
         <article className="transit-glass-panel transit-scope-panel">
           <header>
-            <span>Alert Scope</span>
+            <span>{t("Alert Scope")}</span>
             <strong>{transit.quality.field_coverage_pct.toFixed(0)}%</strong>
           </header>
           <div className="transit-scope-grid">
             <article>
-              <span>Route scoped</span>
+              <span>{t("Route scoped")}</span>
               <strong>{transit.quality.route_alert_count}</strong>
-              <small>alerts include route ids</small>
+              <small>{t("alerts include route ids")}</small>
             </article>
             <article>
-              <span>Stop scoped</span>
+              <span>{t("Stop scoped")}</span>
               <strong>{transit.quality.stop_alert_count}</strong>
-              <small>alerts include stop ids</small>
+              <small>{t("alerts include stop ids")}</small>
             </article>
             <article>
-              <span>Raw decoded</span>
+              <span>{t("Raw decoded")}</span>
               <strong>{transit.quality.raw_alert_count}</strong>
-              <small>GTFS-RT alert entities</small>
+              <small>{t("GTFS-RT alert entities")}</small>
             </article>
             <article>
-              <span>Normalized</span>
+              <span>{t("Normalized")}</span>
               <strong>{transit.quality.normalized_event_count}</strong>
-              <small>stored event rows</small>
+              <small>{t("stored event rows")}</small>
             </article>
           </div>
         </article>
       </section>
 
-      <section className="transit-summary-strip" aria-label="Transit summary metrics">
+      <section className="transit-summary-strip" aria-label={t("Transit summary metrics")}>
         {[
-          ["raw_alerts", "Raw Alerts"],
           ["active_alerts", "Active Now"],
           ["high_severity", "High Severity"],
+          ["disruptions", "Disruptions"],
+          ["delays", "Delays"],
           ["route_scoped", "Route Scoped"],
-          ["stop_scoped", "Stop Scoped"]
+          ["raw_alerts", "Raw Feed"]
         ].map(([key, label]) => (
           <article className="transit-glass-panel" key={key}>
-            <span>{label}</span>
+            <span>{t(label)}</span>
             <strong>{metricValue(transit, key)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="transit-main-grid" aria-label="Transit alert analytics">
+      <TrendChart
+        className="transit-glass-panel"
+        emptyMessage={t("No daily transit alert history is available.")}
+        eyebrow={`${historyPoints.length}D ${t("HISTORY")}`}
+        maximumFractionDigits={0}
+        points={historyPoints}
+        title={t("Daily Alert Event Trend")}
+        tone={activeTone}
+        unit={t("events")}
+      />
+
+      <section className="transit-main-grid" aria-label={t("Transit alert analytics")}>
         <article className="transit-glass-panel transit-alert-panel">
           <header>
             <div>
-              <span>Alert Timeline</span>
-              <h3>Active and upcoming service alerts</h3>
+              <span>{t("Alert Timeline")}</span>
+              <h3>{t("Active and upcoming service alerts")}</h3>
             </div>
-            <strong>{topAlerts.length} rows</strong>
+            <strong>{topAlerts.length}/{filteredAlerts.length}</strong>
           </header>
+          <div className="transit-alert-filters" aria-label={t("Transit alert filters")}>
+            {ALERT_FILTERS.map((filter) => (
+              <button
+                aria-pressed={alertFilter === filter.key}
+                className={alertFilter === filter.key ? "transit-filter-chip transit-filter-chip-active" : "transit-filter-chip"}
+                key={filter.key}
+                onClick={() => setAlertFilter(filter.key)}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {filter.icon}
+                </span>
+                <span>{t(filter.label)}</span>
+              </button>
+            ))}
+          </div>
           <div className="transit-alert-list">
             {topAlerts.length > 0 ? (
               topAlerts.map((alert) => (
@@ -276,104 +513,131 @@ export function TransitWorkspace({ category, transit }: TransitWorkspaceProps) {
                   <span className="transit-alert-dot" aria-hidden="true" />
                   <div className="transit-alert-main">
                     <div>
-                      <time>{alert.active ? "ACTIVE NOW" : formatCompactTime(alert.starts_at)}</time>
+                      <div className="transit-alert-time-row">
+                        <time>{alert.active ? t("ACTIVE NOW") : formatCompactTime(alert.starts_at, language, t)}</time>
+                        <span>{t(alert.severity)}</span>
+                      </div>
                       <strong>{alert.title}</strong>
                       <p>{alert.description}</p>
+                      <small className="transit-alert-scope-preview">{scopePreview(alert, t)}</small>
                     </div>
                     <em>{eventTypeLabel(alert.event_type)}</em>
                   </div>
+                  <span className="transit-alert-window" aria-hidden="true">
+                    <span style={{ width: `${alertWindowProgress(alert, nowTimestamp)}%` }} />
+                  </span>
                   <div className="transit-alert-meta">
-                    <span>{effectLabel(alert.effect)}</span>
-                    <span>{scopeLabel(alert)}</span>
-                    <span>until {formatCompactTime(alert.ends_at)}</span>
+                    <span>{causeLabel(alert.cause, language, t)}</span>
+                    <span>{effectLabel(alert.effect, language, t)}</span>
+                    <span>{scopeLabel(alert, t)}</span>
+                    <span>{t("until")} {formatCompactTime(alert.ends_at, language, t)}</span>
                   </div>
                 </article>
               ))
             ) : (
-              <p>No transit alerts were normalized from the latest HSL feed.</p>
+              <p>{filterEmptyMessage(alertFilter, t)}</p>
             )}
           </div>
         </article>
 
         <div className="transit-side-grid">
-          <article className="transit-glass-panel transit-quality-panel">
+          <article className="transit-glass-panel transit-quality-panel transit-quality-summary">
             <header>
-              <span>Data Quality</span>
+              <span>{t("Feed Coverage")}</span>
               <strong>{formatNumber(transit.quality.field_coverage_pct)}%</strong>
             </header>
             <span className="transit-quality-meter" aria-hidden="true">
               <span style={{ width: `${transit.quality.field_coverage_pct}%` }} />
             </span>
             <div className="transit-quality-facts">
-              <span>{transit.quality.raw_alert_count} raw alerts</span>
-              <span>{transit.quality.normalized_event_count} events</span>
-              <span>{transit.quality.missing_fields.length} missing fields</span>
+              <span>{transit.quality.raw_alert_count} {t("raw alerts")}</span>
+              <span>{transit.quality.normalized_event_count} {t("events")}</span>
+              <span>{transit.quality.missing_fields.length} {t("missing fields")}</span>
             </div>
             <p>
               {transit.quality.missing_fields.length > 0
-                ? `Missing fields: ${transit.quality.missing_fields.join(", ")}.`
-                : "All tracked raw alert fields are present."}
+                ? `${t("Missing fields")}: ${transit.quality.missing_fields.join(", ")}.`
+                : t("All tracked raw alert fields are present.")}
             </p>
-            {transit.quality.notes.map((note) => (
-              <small key={note}>{note}</small>
-            ))}
           </article>
 
-          <article className="transit-glass-panel transit-pipeline-panel">
-            <header>
-              <span>Pipeline</span>
-              <strong>
-                {transit.data_pipeline.filter((stage) => stage.status === "ready").length}/
-                {transit.data_pipeline.length}
-              </strong>
-            </header>
-            <div>
-              {transit.data_pipeline.map((stage) => (
-                <article className={`transit-stage transit-stage-${statusTone(stage.status)}`} key={stage.key}>
-                  <div>
-                    <strong>{stage.label}</strong>
-                    <span>{stage.status.replaceAll("_", " ")}</span>
-                  </div>
-                  <p>
-                    {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} records` : ""}
-                  </p>
-                  <span className="transit-stage-meter" aria-hidden="true">
-                    <span style={{ width: `${stageProgress(stage)}%` }} />
-                  </span>
-                </article>
-              ))}
-            </div>
-          </article>
+          <details className="transit-glass-panel transit-diagnostics-panel">
+            <summary>
+              <div>
+                <span>{t("Diagnostics")}</span>
+                <strong>{readyPipelineCount}/{transit.data_pipeline.length} {t("stages")} · {fetchedSourceCount}/{transit.source_requests.length} {t("sources")}</strong>
+              </div>
+              <span className="material-symbols-outlined" aria-hidden="true">
+                expand_more
+              </span>
+            </summary>
+            <div className="transit-diagnostics-body">
+              <section className="transit-diagnostic-section transit-pipeline-panel">
+                <header>
+                  <span>{t("Pipeline")}</span>
+                  <strong>{readyPipelineCount}/{transit.data_pipeline.length}</strong>
+                </header>
+                <div>
+                  {transit.data_pipeline.map((stage) => (
+                    <article className={`transit-stage transit-stage-${statusTone(stage.status)}`} key={stage.key}>
+                      <div>
+                        <strong>{stage.label}</strong>
+                        <span>{t(stage.status.replaceAll("_", " "))}</span>
+                      </div>
+                      <p>
+                        {stage.detail}
+                        {stage.record_count !== null ? ` · ${stage.record_count} ${t("records")}` : ""}
+                      </p>
+                      <span className="transit-stage-meter" aria-hidden="true">
+                        <span style={{ width: `${stageProgress(stage)}%` }} />
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
-          <article className="transit-glass-panel transit-source-panel">
-            <header>
-              <span>Source Request</span>
-              <strong>{transit.source_requests.filter((request) => request.status === "fetched").length}/{transit.source_requests.length}</strong>
-            </header>
-            <div>
-              {transit.source_requests.map((request: TransitSourceRequest) => (
-                <article className={`transit-request transit-request-${statusTone(request.status)}`} key={request.key}>
-                  <div>
-                    <strong>{request.label}</strong>
-                    <span>{request.status.replaceAll("_", " ")}</span>
-                  </div>
-                  <p>
-                    {sourceRequestHost(request.endpoint)}
-                    {request.fetched_at ? ` · fetched ${formatRelativeAge(request.fetched_at)}` : ""}
-                  </p>
-                  <small>{request.content_type ?? "content type unavailable"}</small>
-                </article>
-              ))}
+              <section className="transit-diagnostic-section transit-source-panel">
+                <header>
+                  <span>{t("Source Request")}</span>
+                  <strong>{fetchedSourceCount}/{transit.source_requests.length}</strong>
+                </header>
+                <div>
+                  {transit.source_requests.map((request: TransitSourceRequest) => (
+                    <article className={`transit-request transit-request-${statusTone(request.status)}`} key={request.key}>
+                      <div>
+                        <strong>{request.label}</strong>
+                        <span>{t(request.status.replaceAll("_", " "))}</span>
+                      </div>
+                      <p>
+                        {sourceRequestHost(request.endpoint, t)}
+                        {request.fetched_at ? ` · ${t("fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
+                      </p>
+                      <small>{request.content_type ?? t("content type unavailable")}</small>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="transit-diagnostic-section transit-quality-notes">
+                <header>
+                  <span>{t("Quality Notes")}</span>
+                  <strong>{transit.quality.notes.length}</strong>
+                </header>
+                <div>
+                  {transit.quality.notes.map((note) => (
+                    <p key={note}>{note}</p>
+                  ))}
+                </div>
+              </section>
             </div>
-          </article>
+          </details>
         </div>
       </section>
 
-      <section className="transit-provider-status" aria-label="Transit provider status">
+      <section className="transit-provider-status" aria-label={t("Transit provider status")}>
         <div>
           <span aria-hidden="true" />
-          <strong>Provider Status</strong>
+          <strong>{t("Provider Status")}</strong>
         </div>
         <div>
           <span>
@@ -387,15 +651,15 @@ export function TransitWorkspace({ category, transit }: TransitWorkspaceProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            Last Sync: {transit.observed_at ? formatRelativeAge(transit.observed_at) : "not observed"}
+            {t("Last Sync")}: {transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}
           </span>
           <i aria-hidden="true" />
-          <span className="transit-provider-coverage">Coverage: {formatNumber(transit.quality.field_coverage_pct)}%</span>
+          <span className="transit-provider-coverage">{t("Coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>
         </div>
       </section>
 
       <p className="transit-detail-freshness">
-        {transit.summary ?? category?.description ?? "Latest normalized HSL transit service alert signals."}
+        {transit.summary ?? category?.description ?? t("Latest normalized HSL transit service alert signals.")}
       </p>
     </section>
   );

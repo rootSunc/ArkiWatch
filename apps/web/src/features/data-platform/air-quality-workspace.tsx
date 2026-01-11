@@ -1,18 +1,24 @@
+ "use client";
+
 import type { CSSProperties } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
+import { LanguageMode, useI18n } from "./i18n";
 import {
   AirQualityCurrentResponse,
   AirQualityDataStage,
   AirQualitySourceRequest,
   AirQualityStation,
-  PlatformCategory
+  PlatformCategory,
+  PlatformHistoricalSnapshot
 } from "./types";
+import { TrendChart, TrendChartPoint } from "./trend-chart";
 
 type AirQualityWorkspaceProps = {
   airQuality: AirQualityCurrentResponse | null;
   category: PlatformCategory | null;
+  history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
 };
 
 type AirTone = "good" | "warn" | "bad" | "neutral";
@@ -37,12 +43,17 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
 }
 
-function scoreLabel(score: number | null | undefined, fallback?: string | null): string {
+function scoreLabel(
+  score: number | null | undefined,
+  fallback: string | null | undefined,
+  language: LanguageMode,
+  t: (value: string) => string
+): string {
   if (score === null || score === undefined) {
-    return fallback ?? "n/a";
+    return fallback ? t(fallback) : "n/a";
   }
 
-  return SCORE_LABELS[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
+  return t(SCORE_LABELS[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a");
 }
 
 function scoreTone(score: number | null | undefined): AirTone {
@@ -88,9 +99,9 @@ function stationIndex(station: AirQualityStation): number | null {
   return parseStationIndex(station.label);
 }
 
-function endpointLabel(request: AirQualitySourceRequest): string {
+function endpointLabel(request: AirQualitySourceRequest, t: (value: string) => string): string {
   if (!request.endpoint) {
-    return "endpoint not recorded";
+    return t("endpoint not recorded");
   }
 
   try {
@@ -113,37 +124,37 @@ function fieldCoverage(stations: AirQualityStation[], field: keyof AirQualitySta
   return Math.round((present / stations.length) * 100);
 }
 
-function fieldSignals(stations: AirQualityStation[]): FieldSignal[] {
+function fieldSignals(stations: AirQualityStation[], t: (value: string) => string): FieldSignal[] {
   return [
     {
       key: "score",
-      label: "Station score",
+      label: t("Station score"),
       ready: fieldCoverage(stations, "score") > 0,
-      detail: `${fieldCoverage(stations, "score")}% populated`
+      detail: `${fieldCoverage(stations, "score")}% ${t("populated")}`
     },
     {
       key: "index",
-      label: "AQ index label",
+      label: t("AQ index label"),
       ready: fieldCoverage(stations, "label") > 0,
-      detail: `${fieldCoverage(stations, "label")}% populated`
+      detail: `${fieldCoverage(stations, "label")}% ${t("populated")}`
     },
     {
       key: "pm2_5",
       label: "PM2.5",
       ready: fieldCoverage(stations, "pm2_5") > 0,
-      detail: `${fieldCoverage(stations, "pm2_5")}% populated`
+      detail: `${fieldCoverage(stations, "pm2_5")}% ${t("populated")}`
     },
     {
       key: "pm10",
       label: "PM10",
       ready: fieldCoverage(stations, "pm10") > 0,
-      detail: `${fieldCoverage(stations, "pm10")}% populated`
+      detail: `${fieldCoverage(stations, "pm10")}% ${t("populated")}`
     },
     {
       key: "no2",
       label: "NO2",
       ready: fieldCoverage(stations, "no2") > 0,
-      detail: `${fieldCoverage(stations, "no2")}% populated`
+      detail: `${fieldCoverage(stations, "no2")}% ${t("populated")}`
     }
   ];
 }
@@ -159,21 +170,21 @@ function rankedStations(stations: AirQualityStation[]): AirQualityStation[] {
   });
 }
 
-function scoreDistribution(stations: AirQualityStation[]) {
+function scoreDistribution(stations: AirQualityStation[], language: LanguageMode, t: (value: string) => string) {
   const max = Math.max(1, ...SCORE_BUCKETS.map((score) => stations.filter((station) => station.score === score).length));
   return SCORE_BUCKETS.map((score) => {
     const count = stations.filter((station) => station.score === score).length;
     return {
       count,
-      label: scoreLabel(score),
+      label: scoreLabel(score, null, language, t),
       score,
       width: Math.max(8, (count / max) * 100)
     };
   });
 }
 
-function observedLabel(value: string | null): string {
-  return value ? formatRelativeAge(value) : "not observed";
+function observedLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+  return value ? formatRelativeAge(value, language) : t("not observed");
 }
 
 function scorePercent(score: number | null | undefined): number {
@@ -193,13 +204,67 @@ function readyFieldCount(fields: FieldSignal[]): string {
   return `${fields.filter((field) => field.ready).length}/${fields.length}`;
 }
 
-export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspaceProps) {
+function formatHistoryDate(value: string): string {
+  const parsed = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "Europe/Helsinki"
+  })
+    .format(parsed)
+    .toUpperCase();
+}
+
+function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | null {
+  const stationScores = airQuality.stations
+    .map((station) => station.score)
+    .filter(hasNumber);
+
+  if (airQuality.worst_score !== null && airQuality.worst_score !== undefined) {
+    return airQuality.worst_score;
+  }
+
+  return stationScores.length > 0 ? Math.max(...stationScores) : null;
+}
+
+function airHistoryPoints(
+  history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[],
+  t: (value: string) => string
+): TrendChartPoint[] {
+  return history.flatMap((snapshot) => {
+    const data = snapshot.data;
+    if (!data) {
+      return [];
+    }
+
+    const worstScore = fallbackWorstScore(data);
+    if (worstScore === null) {
+      return [];
+    }
+
+    return [
+      {
+        label: formatHistoryDate(snapshot.date),
+        value: worstScore,
+        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${t("stations")} · ${formatNumber(data.quality.field_coverage_pct, 0)}% ${t("coverage")}`
+      }
+    ];
+  });
+}
+
+export function AirQualityWorkspace({ airQuality, category, history }: AirQualityWorkspaceProps) {
+  const { language, t } = useI18n();
+
   if (!airQuality) {
     return (
-      <section className="air-detail-empty" aria-label="Air-quality data unavailable">
-        <span>Air Quality</span>
-        <h2>Station data is not available yet</h2>
-        <p>HSY air-quality station snapshots have not arrived for the current platform window.</p>
+      <section className="air-detail-empty" aria-label={t("Air-quality data unavailable")}>
+        <span>{t("Air Quality")}</span>
+        <h2>{t("Station data is not available yet")}</h2>
+        <p>{t("HSY air-quality station snapshots have not arrived for the current platform window.")}</p>
       </section>
     );
   }
@@ -207,7 +272,7 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
   const stations = airQuality.stations ?? [];
   const ranked = rankedStations(stations);
   const topStations = ranked.slice(0, 8);
-  const fields = fieldSignals(stations);
+  const fields = fieldSignals(stations, t);
   const currentScore = airQuality.worst_score;
   const currentTone = scoreTone(currentScore);
   const indexValues = stations.map(stationIndex).filter(hasNumber);
@@ -215,25 +280,26 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
   const lowIndex = indexValues.length > 0 ? Math.min(...indexValues) : null;
   const pollutantFieldsReady = POLLUTANT_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
+  const historyPoints = airHistoryPoints(history, t);
 
   return (
-    <section className="air-detail-page" aria-label="Air-quality detail">
+    <section className="air-detail-page" aria-label={t("Air-quality detail")}>
       <div className="air-detail-header">
         <div>
-          <h2>{airQuality.location ? `${airQuality.location} Air Quality Network` : "Air Quality Network"}</h2>
+          <h2>{airQuality.location ? `${airQuality.location} ${t("Air Quality Network")}` : t("Air Quality Network")}</h2>
           <div className="air-live-status">
             <span aria-hidden="true" />
-            <strong>{airQuality.status === "ready" ? "HSY Sync Active" : "Sync Delayed"}</strong>
+            <strong>{airQuality.status === "ready" ? t("HSY Sync Active") : t("Sync Delayed")}</strong>
           </div>
         </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedLabel(airQuality.observed_at)}</div>
+        <div>{airQuality.source_code.toUpperCase()} / {observedLabel(airQuality.observed_at, language, t)}</div>
       </div>
 
-      <section className="air-bento-grid" aria-label="Air-quality current condition">
+      <section className="air-bento-grid" aria-label={t("Air-quality current condition")}>
         <article className={`air-glass-panel air-hero air-hero-${currentTone}`}>
           <div className="air-card-kicker">
-            <span>Current Network Condition</span>
-            <time>{airQuality.observed_at ? observedLabel(airQuality.observed_at) : "not observed"}</time>
+            <span>{t("Current Network Condition")}</span>
+            <time>{airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}</time>
           </div>
           <div className="air-current-score">
             <div
@@ -245,21 +311,21 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
               <span>/5</span>
             </div>
             <div>
-              <strong>{scoreLabel(currentScore, airQuality.worst_label)}</strong>
-              <p>{airQuality.worst_station ?? "Worst station unavailable"}</p>
+              <strong>{scoreLabel(currentScore, airQuality.worst_label, language, t)}</strong>
+              <p>{airQuality.worst_station ?? t("Worst station unavailable")}</p>
             </div>
           </div>
           <div className="air-hero-footer">
             <div>
-              <span>Reporting</span>
-              <strong>{airQuality.quality.reporting_station_count}/{airQuality.quality.station_count} stations</strong>
+              <span>{t("Reporting")}</span>
+              <strong>{airQuality.quality.reporting_station_count}/{airQuality.quality.station_count} {t("stations")}</strong>
             </div>
             <div>
-              <span>Index Range</span>
+              <span>{t("Index Range")}</span>
               <strong>
                 {hasNumber(lowIndex) && hasNumber(peakIndex)
                   ? `${formatNumber(lowIndex, 0)}-${formatNumber(peakIndex, 0)}`
-                  : "index missing"}
+                  : t("index missing")}
               </strong>
             </div>
           </div>
@@ -267,11 +333,11 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
 
         <article className="air-glass-panel air-distribution-panel">
           <header>
-            <span>Score Distribution</span>
+            <span>{t("Score Distribution")}</span>
             <strong>{stations.length}</strong>
           </header>
           <div className="air-score-bars">
-            {scoreDistribution(stations).map((bucket) => (
+            {scoreDistribution(stations, language, t).map((bucket) => (
               <div className={`air-score-row air-score-row-${scoreTone(bucket.score)}`} key={bucket.score}>
                 <span>{bucket.label}</span>
                 <i aria-hidden="true">
@@ -285,14 +351,14 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
 
         <article className="air-glass-panel air-field-panel">
           <header>
-            <span>Available Fields</span>
+            <span>{t("Available Fields")}</span>
             <strong>{readyFieldCount(fields)}</strong>
           </header>
           <div className="air-field-grid">
             {fields.map((field) => (
               <article className={field.ready ? "air-field-ready" : "air-field-missing"} key={field.key}>
                 <span>{field.label}</span>
-                <strong>{field.ready ? "Ready" : "Missing"}</strong>
+                <strong>{field.ready ? t("Ready") : t("Missing")}</strong>
                 <small>{field.detail}</small>
               </article>
             ))}
@@ -300,37 +366,48 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
         </article>
       </section>
 
-      <section className="air-summary-strip" aria-label="Air-quality summary metrics">
+      <section className="air-summary-strip" aria-label={t("Air-quality summary metrics")}>
         <article className="air-glass-panel">
-          <span>Worst Score</span>
+          <span>{t("Worst Score")}</span>
           <strong>{formatNumber(currentScore, 0)}/5</strong>
         </article>
         <article className="air-glass-panel">
-          <span>Peak Index</span>
-          <strong>{hasNumber(peakIndex) ? formatNumber(peakIndex, 0) : "missing"}</strong>
+          <span>{t("Peak Index")}</span>
+          <strong>{hasNumber(peakIndex) ? formatNumber(peakIndex, 0) : t("missing")}</strong>
         </article>
         <article className="air-glass-panel">
-          <span>Field Coverage</span>
+          <span>{t("Field Coverage")}</span>
           <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
         </article>
         <article className="air-glass-panel">
-          <span>Pollutant Fields</span>
+          <span>{t("Pollutant Fields")}</span>
           <strong>{pollutantFieldsReady}/3</strong>
         </article>
         <article className="air-glass-panel">
-          <span>Score Fields</span>
+          <span>{t("Score Fields")}</span>
           <strong>{scoreFieldsReady}/2</strong>
         </article>
       </section>
 
-      <section className="air-main-grid" aria-label="Air-quality station analytics">
+      <TrendChart
+        className="air-glass-panel"
+        emptyMessage={t("No daily air-quality history is available.")}
+        eyebrow={`${historyPoints.length}D ${t("History")}`}
+        maximumFractionDigits={0}
+        points={historyPoints}
+        title={t("Worst Station Score Trend")}
+        tone={scoreTone(currentScore)}
+        unit="/5"
+      />
+
+      <section className="air-main-grid" aria-label={t("Air-quality station analytics")}>
         <article className="air-glass-panel air-station-panel">
           <header>
             <div>
-              <span>Station Ranking</span>
-              <h3>Highest HSY index values</h3>
+              <span>{t("Station Ranking")}</span>
+              <h3>{t("Highest HSY index values")}</h3>
             </div>
-            <strong>{topStations.length} rows</strong>
+            <strong>{topStations.length} {t("rows")}</strong>
           </header>
           <div className="air-station-list">
             {topStations.length > 0 ? (
@@ -342,9 +419,9 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
                     <div className="air-station-main">
                       <div>
                         <strong>{station.station}</strong>
-                        <span>{scoreLabel(station.score, station.label)} · score {formatNumber(station.score, 0)}/5</span>
+                        <span>{scoreLabel(station.score, station.label, language, t)} · {t("score")} {formatNumber(station.score, 0)}/5</span>
                       </div>
-                      <em>{hasNumber(index) ? formatNumber(index, 0) : "index missing"}</em>
+                      <em>{hasNumber(index) ? formatNumber(index, 0) : t("index missing")}</em>
                     </div>
                     <span className="air-index-track" aria-hidden="true">
                       <span style={{ width: `${indexPercent(index)}%` }} />
@@ -353,7 +430,7 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
                 );
               })
             ) : (
-              <p>No station rows were normalized from the latest HSY payload.</p>
+              <p>{t("No station rows were normalized from the latest HSY payload.")}</p>
             )}
           </div>
         </article>
@@ -361,21 +438,21 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
         <div className="air-side-grid">
           <article className="air-glass-panel air-quality-panel">
             <header>
-              <span>Data Quality</span>
+              <span>{t("Data Quality")}</span>
               <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
             </header>
             <span className="air-quality-meter" aria-hidden="true">
               <span style={{ width: `${airQuality.quality.field_coverage_pct}%` }} />
             </span>
             <div className="air-quality-facts">
-              <span>{airQuality.quality.station_count} station features</span>
-              <span>{airQuality.quality.reporting_station_count} scored stations</span>
-              <span>{airQuality.quality.missing_fields.length} missing field groups</span>
+              <span>{airQuality.quality.station_count} {t("station features")}</span>
+              <span>{airQuality.quality.reporting_station_count} {t("scored stations")}</span>
+              <span>{airQuality.quality.missing_fields.length} {t("missing")} {t("field groups")}</span>
             </div>
             <p>
               {airQuality.quality.missing_fields.length > 0
-                ? `Missing full station fields: ${airQuality.quality.missing_fields.join(", ")}.`
-                : "All tracked station fields are present."}
+                ? `${t("Missing full station fields")}: ${airQuality.quality.missing_fields.join(", ")}.`
+                : t("All tracked station fields are present.")}
             </p>
             {airQuality.quality.notes.map((note) => (
               <small key={note}>{note}</small>
@@ -384,7 +461,7 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
 
           <article className="air-glass-panel air-pipeline-panel">
             <header>
-              <span>Pipeline</span>
+              <span>{t("Pipeline")}</span>
               <strong>
                 {airQuality.data_pipeline.filter((stage) => stage.status === "ready").length}/
                 {airQuality.data_pipeline.length}
@@ -395,11 +472,11 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
                 <article className={`air-stage air-stage-${stageTone(stage)}`} key={stage.key}>
                   <div>
                     <strong>{stage.label}</strong>
-                    <span>{stage.status.replaceAll("_", " ")}</span>
+                    <span>{t(stage.status.replaceAll("_", " "))}</span>
                   </div>
                   <p>
                     {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} records` : ""}
+                    {stage.record_count !== null ? ` · ${stage.record_count} ${t("records")}` : ""}
                   </p>
                 </article>
               ))}
@@ -408,7 +485,7 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
 
           <article className="air-glass-panel air-source-panel">
             <header>
-              <span>Source Request</span>
+              <span>{t("Source Request")}</span>
               <strong>{sourceRequestCount(airQuality)}</strong>
             </header>
             <div>
@@ -416,13 +493,13 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
                 <article className={`air-request air-request-${stageTone(request)}`} key={request.key}>
                   <div>
                     <strong>{request.label}</strong>
-                    <span>{request.status.replaceAll("_", " ")}</span>
+                    <span>{t(request.status.replaceAll("_", " "))}</span>
                   </div>
                   <p>
-                    {endpointLabel(request)}
-                    {request.fetched_at ? ` · fetched ${formatRelativeAge(request.fetched_at)}` : ""}
+                    {endpointLabel(request, t)}
+                    {request.fetched_at ? ` · ${t("fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
                   </p>
-                  <small>{request.content_type ?? "content type unavailable"}</small>
+                  <small>{request.content_type ?? t("content type unavailable")}</small>
                 </article>
               ))}
             </div>
@@ -430,10 +507,10 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
         </div>
       </section>
 
-      <section className="air-provider-status" aria-label="Air-quality provider status">
+      <section className="air-provider-status" aria-label={t("Air-quality provider status")}>
         <div>
           <span aria-hidden="true" />
-          <strong>Provider Status</strong>
+          <strong>{t("Provider Status")}</strong>
         </div>
         <div>
           <span>
@@ -447,15 +524,15 @@ export function AirQualityWorkspace({ airQuality, category }: AirQualityWorkspac
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            Last Sync: {airQuality.observed_at ? observedLabel(airQuality.observed_at) : "not observed"}
+            {t("Last Sync")}: {airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}
           </span>
           <i aria-hidden="true" />
-          <span className="air-provider-coverage">Coverage: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>
+          <span className="air-provider-coverage">{t("Coverage")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>
         </div>
       </section>
 
       <p className="air-detail-freshness">
-        {airQuality.summary ?? category?.description ?? "Latest normalized HSY air-quality station signals."}
+        {airQuality.summary ?? category?.description ?? t("Latest normalized HSY air-quality station signals.")}
       </p>
     </section>
   );

@@ -334,10 +334,95 @@ export type TransitCurrentResponse = {
   quality: TransitQuality;
 };
 
+export type RoadRailIncident = {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  event_type: string;
+  starts_at: string;
+  ends_at: string;
+  active: boolean;
+  location_ref: string;
+  message_type: string | null;
+  situation_type: string | null;
+  location_description: string | null;
+  feature_names: string[];
+  geometry_bbox: number[] | null;
+};
+
+export type RoadRailCorridor = {
+  key: string;
+  label: string;
+  event_count: number;
+  active_event_count: number;
+  weather_risk_count: number;
+  severity: string;
+  latest_title: string;
+  latest_valid_to: string;
+  geometry_bbox: number[] | null;
+};
+
+export type RoadRailMetric = {
+  key: string;
+  label: string;
+  value: string;
+  unit: string | null;
+};
+
+export type RoadRailSourceRequest = {
+  key: string;
+  label: string;
+  status: string;
+  endpoint: string | null;
+  content_type: string | null;
+  fetched_at: string | null;
+  message_count: number;
+};
+
+export type RoadRailDataStage = {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  record_count: number | null;
+  updated_at: string | null;
+};
+
+export type RoadRailQuality = {
+  raw_message_count: number;
+  normalized_event_count: number;
+  active_event_count: number;
+  road_event_count: number;
+  rail_event_count: number;
+  weather_risk_count: number;
+  corridor_count: number;
+  field_coverage_pct: number;
+  missing_fields: string[];
+  notes: string[];
+};
+
+export type RoadRailCurrentResponse = {
+  checked_at: string;
+  status: string;
+  location: string | null;
+  source_code: string;
+  observed_at: string | null;
+  summary: string | null;
+  metrics: RoadRailMetric[];
+  incidents: RoadRailIncident[];
+  corridors: RoadRailCorridor[];
+  source_requests: RoadRailSourceRequest[];
+  data_pipeline: RoadRailDataStage[];
+  quality: RoadRailQuality;
+};
+
 export type EnergyPoint = {
   starts_at: string;
   ends_at: string;
   value: number;
+  unit: string | null;
+  estimated_cost_eur: number | null;
 };
 
 export type EnergyWindow = {
@@ -350,6 +435,8 @@ export type EnergyWindow = {
   point_count: number;
   severity: string;
   source: string;
+  estimated_cost_eur: number | null;
+  usage_kwh: number | null;
 };
 
 export type EnergyMetric = {
@@ -404,4 +491,18 @@ export type EnergyCurrentResponse = {
   source_requests: EnergySourceRequest[];
   data_pipeline: EnergyDataStage[];
   quality: EnergyQuality;
+};
+
+export type PlatformHistoricalSnapshot<T> = {
+  date: string;
+  data: T | null;
+  error: string | null;
+};
+
+export type PlatformHistoryResponse = {
+  weather: PlatformHistoricalSnapshot<WeatherForecastResponse>[];
+  airQuality: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
+  energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
+  roadRail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
+  transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
 };

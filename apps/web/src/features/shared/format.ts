@@ -1,12 +1,13 @@
 export function formatTimestamp(
   value: string | null,
-  mode: "dateTime" | "date" = "dateTime"
+  mode: "dateTime" | "date" = "dateTime",
+  language: "en" | "zh" = "en"
 ): string {
   if (!value) {
-    return "Not available";
+    return language === "zh" ? "暂无数据" : "Not available";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
     ...(mode === "dateTime"
@@ -18,26 +19,26 @@ export function formatTimestamp(
   }).format(new Date(value));
 }
 
-export function formatRelativeAge(value: string | null): string {
+export function formatRelativeAge(value: string | null, language: "en" | "zh" = "en"): string {
   if (!value) {
-    return "Never";
+    return language === "zh" ? "从未" : "Never";
   }
 
   const diffInMinutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
   if (diffInMinutes < 1) {
-    return "just now";
+    return language === "zh" ? "刚刚" : "just now";
   }
 
   if (diffInMinutes < 60) {
-    return `${diffInMinutes} min ago`;
+    return language === "zh" ? `${diffInMinutes} 分钟前` : `${diffInMinutes} min ago`;
   }
 
   const diffInHours = Math.round(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours} h ago`;
+    return language === "zh" ? `${diffInHours} 小时前` : `${diffInHours} h ago`;
   }
 
-  return `${Math.round(diffInHours / 24)} d ago`;
+  return language === "zh" ? `${Math.round(diffInHours / 24)} 天前` : `${Math.round(diffInHours / 24)} d ago`;
 }
 
 export function formatLabel(value: string): string {

@@ -13,7 +13,7 @@ const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
   ],
   air: ["air_quality_index", "pm2_5", "pm10", "no2", "station_location"],
   transit: ["route_id", "trip_id", "stop_id", "arrival_prediction", "service_alert"],
-  energy: ["consumption", "generation", "generation_forecast", "wind_power", "low_value_window"],
+  energy: ["spot_price", "price_forecast", "consumption", "generation_forecast", "low_value_window"],
   traffic: ["traffic_message", "road_weather", "traffic_volume", "average_speed", "train_status"],
   water: ["water_level", "discharge", "groundwater", "snow_water_equivalent", "flood_warning"],
   city_services: [

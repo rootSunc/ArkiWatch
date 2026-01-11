@@ -6,27 +6,46 @@ import { formatTimestamp, severityTone, statusTone } from "@/features/shared/for
 
 import { categoryKeyDataItems } from "./category-metadata";
 import {
+  I18nProvider,
+  LanguageMode,
+  LanguageSwitchButton,
+  applyLanguageMode,
+  preferredLanguageMode,
+  saveLanguageMode,
+  storedLanguageMode,
+  translateDataLabel,
+  translateEnumLabel,
+  translateText
+} from "./i18n";
+import {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
   PlatformCategory,
   PlatformEvent,
+  PlatformHistoryResponse,
   PlatformMetric,
   PlatformOverviewResponse,
   PlatformTone,
+  RoadRailCurrentResponse,
   TransitCurrentResponse,
   WeatherForecastResponse
 } from "./types";
 import { AirQualityWorkspace } from "./air-quality-workspace";
+import { CityServicesWorkspace } from "./city-services-workspace";
 import { EnergyWorkspace } from "./energy-workspace";
+import { RoadRailWorkspace } from "./road-rail-workspace";
 import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
+import { WaterSnowWorkspace } from "./water-snow-workspace";
 
 type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
   defaultUserId: string;
   energy: EnergyCurrentResponse | null;
+  history: PlatformHistoryResponse;
   overview: PlatformOverviewResponse | null;
+  roadRail: RoadRailCurrentResponse | null;
   transit: TransitCurrentResponse | null;
   weather: WeatherForecastResponse | null;
   error: string | null;
@@ -130,14 +149,16 @@ function applyThemeMode(themeMode: ThemeMode): void {
 }
 
 function ThemeToggleButton({
+  language,
   themeMode,
   onToggle
 }: {
+  language: LanguageMode;
   themeMode: ThemeMode;
   onToggle: () => void;
 }) {
   const isLightTheme = themeMode === "light";
-  const label = isLightTheme ? "Switch to night theme" : "Switch to day theme";
+  const label = translateText(language, isLightTheme ? "Switch to night theme" : "Switch to day theme");
 
   return (
     <button
@@ -163,16 +184,16 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
-function statusLabel(category: PlatformCategory): string {
+function statusLabel(category: PlatformCategory, language: LanguageMode): string {
   if (category.status in STATUS_LABELS) {
-    return STATUS_LABELS[category.status];
+    return translateText(language, STATUS_LABELS[category.status]);
   }
 
   if (category.stage && category.stage !== "connected" && category.stage in STATUS_LABELS) {
-    return STATUS_LABELS[category.stage];
+    return translateText(language, STATUS_LABELS[category.stage]);
   }
 
-  return titleCase(category.status);
+  return translateEnumLabel(language, category.status);
 }
 
 function categoryTone(category: PlatformCategory): DashboardTone {
@@ -238,30 +259,31 @@ function formatMetricValue(metric: PlatformMetric | null): string {
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
-function scoreLabel(score: number | null | undefined, fallback?: string | null): string {
+function scoreLabel(score: number | null | undefined, fallback: string | null | undefined, language: LanguageMode): string {
   const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
   if (score === null || score === undefined) {
-    return fallback ?? "n/a";
+    return fallback ? translateText(language, fallback) : "n/a";
   }
 
-  return labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
+  const label = labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
+  return translateText(language, label);
 }
 
-function displayTitle(category: PlatformCategory): string {
+function displayTitle(category: PlatformCategory, language: LanguageMode): string {
   if (category.key === "air") {
-    return "Air Quality";
+    return translateText(language, "Air Quality");
   }
   if (category.key === "traffic") {
-    return "Road & Rail";
+    return translateText(language, "Road & Rail");
   }
   if (category.key === "water") {
-    return "Water & Snow";
+    return translateText(language, "Water & Snow");
   }
 
-  return category.title;
+  return translateText(language, category.title);
 }
 
-function matchesSearch(category: PlatformCategory, searchValue: string): boolean {
+function matchesSearch(category: PlatformCategory, searchValue: string, language: LanguageMode): boolean {
   const query = searchValue.trim().toLowerCase();
   if (!query) {
     return true;
@@ -270,11 +292,14 @@ function matchesSearch(category: PlatformCategory, searchValue: string): boolean
   const haystack = [
     category.key,
     category.title,
+    displayTitle(category, language),
     category.description,
     category.status,
+    translateEnumLabel(language, category.status),
     category.stage ?? "",
     ...category.source_codes,
     ...categoryKeyDataItems(category),
+    ...categoryKeyDataItems(category).map((item) => translateDataLabel(language, item)),
     ...category.summary_metrics.map((metric) => `${metric.label} ${metric.value} ${metric.detail ?? ""}`),
     ...category.events.map((event) => `${event.title} ${event.body}`)
   ]
@@ -284,13 +309,13 @@ function matchesSearch(category: PlatformCategory, searchValue: string): boolean
   return haystack.includes(query);
 }
 
-function eventMatchesSearch(event: PlatformEvent, searchValue: string): boolean {
+function eventMatchesSearch(event: PlatformEvent, searchValue: string, language: LanguageMode): boolean {
   const query = searchValue.trim().toLowerCase();
   if (!query) {
     return true;
   }
 
-  return `${event.title} ${event.body} ${event.category_key} ${event.severity} ${event.source_codes.join(" ")}`
+  return `${event.title} ${event.body} ${event.category_key} ${event.severity} ${translateEnumLabel(language, event.severity)} ${event.source_codes.join(" ")}`
     .toLowerCase()
     .includes(query);
 }
@@ -300,15 +325,17 @@ function signalReadout(
   weather: WeatherForecastResponse | null,
   airQuality: AirQualityCurrentResponse | null,
   energy: EnergyCurrentResponse | null,
-  transit: TransitCurrentResponse | null
+  roadRail: RoadRailCurrentResponse | null,
+  transit: TransitCurrentResponse | null,
+  language: LanguageMode
 ) {
   const tone = categoryTone(category);
 
   if (category.key === "weather") {
     const generatedAt = weather?.generated_at ?? weather?.checked_at ?? metricByKey(category, "source_status")?.updated_at;
     return {
-      label: "Last Sync",
-      value: generatedAt ? formatTimestamp(generatedAt) : formatMetricValue(metricByKey(category, "source_status")),
+      label: translateText(language, "Last Sync"),
+      value: generatedAt ? formatTimestamp(generatedAt, "dateTime", language) : formatMetricValue(metricByKey(category, "source_status")),
       progress: tone === "warn" ? 40 : toneProgress(tone),
       tone
     };
@@ -317,11 +344,11 @@ function signalReadout(
   if (category.key === "air") {
     const score = airQuality?.worst_score;
     return {
-      label: "AQI Avg",
+      label: translateText(language, "AQI Avg"),
       value:
         score === null || score === undefined
           ? formatMetricValue(fallbackMetric(category))
-          : `${scoreLabel(score, airQuality?.worst_label)} (${Math.round(score)}/5)`,
+          : `${scoreLabel(score, airQuality?.worst_label, language)} (${Math.round(score)}/5)`,
       progress: score === null || score === undefined ? toneProgress(tone) : Math.max(12, (score / 5) * 100),
       tone: score !== null && score !== undefined && score >= 4 ? "bad" : tone
     };
@@ -329,13 +356,13 @@ function signalReadout(
 
   if (category.key === "transit") {
     return {
-      label: "Active Events",
+      label: translateText(language, "Active Events"),
       value:
         transit?.quality.active_alert_count !== undefined
           ? `${transit.quality.active_alert_count}`
           : category.events.length > 0
             ? `${category.events.length}`
-            : "Nominal",
+            : translateText(language, "Nominal"),
       progress:
         transit?.quality.raw_alert_count !== undefined
           ? Math.max(12, Math.min(100, (transit.quality.active_alert_count / Math.max(1, transit.quality.raw_alert_count)) * 100))
@@ -346,10 +373,37 @@ function signalReadout(
     };
   }
 
+  if (category.key === "traffic") {
+    return {
+      label: translateText(language, "Active Events"),
+      value:
+        roadRail?.quality.active_event_count !== undefined
+          ? `${roadRail.quality.active_event_count}`
+          : category.events.length > 0
+            ? `${category.events.length}`
+            : translateText(language, "Nominal"),
+      progress:
+        roadRail?.quality.raw_message_count !== undefined
+          ? Math.max(
+              12,
+              Math.min(
+                100,
+                (roadRail.quality.active_event_count /
+                  Math.max(1, roadRail.quality.raw_message_count)) *
+                  100
+              )
+            )
+          : category.events.length > 0
+            ? Math.min(100, 28 + category.events.length * 14)
+            : 85,
+      tone: roadRail && roadRail.quality.active_event_count > 0 ? "warn" : tone
+    };
+  }
+
   if (category.key === "energy") {
     const window = energy?.current_window;
     return {
-      label: "Best Window",
+      label: translateText(language, window?.unit?.includes("kWh") ? "Best Price" : "Best Window"),
       value:
         window !== null && window !== undefined
           ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
@@ -364,7 +418,7 @@ function signalReadout(
 
   const metric = fallbackMetric(category);
   return {
-    label: metric?.label ?? "Signal Level",
+    label: metric?.label ? translateText(language, metric.label) : translateText(language, "Signal Level"),
     value: formatMetricValue(metric),
     progress: metric ? numericPercent(metric.value, toneProgress(tone)) : toneProgress(tone),
     tone
@@ -379,7 +433,7 @@ function categoryByKey(categories: PlatformCategory[], key: string | undefined):
   return categories.find((category) => category.key === key) ?? null;
 }
 
-function eventCategoryLabel(categories: PlatformCategory[], event: PlatformEvent): string {
+function eventCategoryLabel(categories: PlatformCategory[], event: PlatformEvent, language: LanguageMode): string {
   return displayTitle(categories.find((category) => category.key === event.category_key) ?? {
     key: event.category_key,
     title: titleCase(event.category_key),
@@ -390,11 +444,11 @@ function eventCategoryLabel(categories: PlatformCategory[], event: PlatformEvent
     visualizations: [],
     events: [],
     sources: []
-  });
+  }, language);
 }
 
-function eventTimeLabel(categories: PlatformCategory[], event: PlatformEvent): string {
-  return `${formatTimestamp(event.starts_at)} - ${eventCategoryLabel(categories, event)}`;
+function eventTimeLabel(categories: PlatformCategory[], event: PlatformEvent, language: LanguageMode): string {
+  return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${eventCategoryLabel(categories, event, language)}`;
 }
 
 function navItemAvailable(item: NavItem, categories: PlatformCategory[]): boolean {
@@ -425,7 +479,9 @@ export function DataPlatformHome({
   apiBaseUrl,
   defaultUserId,
   energy,
+  history,
   overview,
+  roadRail,
   transit,
   weather,
   error
@@ -434,6 +490,8 @@ export function DataPlatformHome({
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
+  const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
+  const t = (value: string) => translateText(languageMode, value);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const selectedCategory =
@@ -443,9 +501,9 @@ export function DataPlatformHome({
         categoryByKey(categories, SECONDARY_NAV_ITEMS.find((item) => item.key === selectedNavKey)?.categoryKey);
   const signalStats = useMemo(() => platformSignalStats(categories, overview), [categories, overview]);
   const selectedCategories = selectedCategory ? [selectedCategory] : categories;
-  const visibleCategories = selectedCategories.filter((category) => matchesSearch(category, searchValue));
+  const visibleCategories = selectedCategories.filter((category) => matchesSearch(category, searchValue, languageMode));
   const visibleEvents = (selectedCategory ? selectedCategory.events : overview?.recent_events ?? [])
-    .filter((event) => eventMatchesSearch(event, searchValue))
+    .filter((event) => eventMatchesSearch(event, searchValue, languageMode))
     .sort((left, right) => new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime())
     .slice(0, 12);
   const latestVisibleEvent = visibleEvents[0] ?? null;
@@ -454,7 +512,17 @@ export function DataPlatformHome({
   const isAirDetail = selectedCategory?.key === "air";
   const isEnergyDetail = selectedCategory?.key === "energy";
   const isTransitDetail = selectedCategory?.key === "transit";
-  const isDetailPage = isWeatherDetail || isAirDetail || isEnergyDetail || isTransitDetail;
+  const isRoadRailDetail = selectedCategory?.key === "traffic";
+  const isWaterDetail = selectedCategory?.key === "water";
+  const isCityServicesDetail = selectedCategory?.key === "city_services";
+  const isDetailPage =
+    isWeatherDetail ||
+    isAirDetail ||
+    isEnergyDetail ||
+    isTransitDetail ||
+    isRoadRailDetail ||
+    isWaterDetail ||
+    isCityServicesDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
@@ -465,6 +533,13 @@ export function DataPlatformHome({
 
     setThemeMode(nextThemeMode);
     applyThemeMode(nextThemeMode);
+  }, []);
+
+  useEffect(() => {
+    const nextLanguageMode = storedLanguageMode() ?? preferredLanguageMode();
+
+    setLanguageMode(nextLanguageMode);
+    applyLanguageMode(nextLanguageMode);
   }, []);
 
   function toggleThemeMode(): void {
@@ -478,11 +553,18 @@ export function DataPlatformHome({
     });
   }
 
+  function selectLanguageMode(nextLanguageMode: LanguageMode): void {
+    setLanguageMode(nextLanguageMode);
+    applyLanguageMode(nextLanguageMode);
+    saveLanguageMode(nextLanguageMode);
+  }
+
   return (
+    <I18nProvider language={languageMode}>
     <div className="dashboard-shell">
       <aside
         className={isDetailPage ? "dashboard-side-nav detail-side-nav" : "dashboard-side-nav"}
-        aria-label="Primary navigation"
+        aria-label={t("Primary navigation")}
       >
         <div className="brand-panel">
           <div className="brand-icon" aria-hidden="true">
@@ -491,12 +573,12 @@ export function DataPlatformHome({
             </span>
           </div>
           <div>
-            <h1>Data Platform</h1>
-            <p>Operational Monitoring</p>
+            <h1>{t("Data Platform")}</h1>
+            <p>{t("Operational Monitoring")}</p>
           </div>
         </div>
 
-        <nav className="side-nav-list" aria-label="Signal navigation">
+        <nav className="side-nav-list" aria-label={t("Signal navigation")}>
           {PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
             const isActive =
               selectedNavKey === item.key ||
@@ -512,13 +594,13 @@ export function DataPlatformHome({
                 <span className="material-symbols-outlined" aria-hidden="true">
                   {item.icon}
                 </span>
-                <span>{item.label}</span>
+                <span>{t(item.label)}</span>
               </button>
             );
           })}
         </nav>
 
-        <nav className="side-nav-footer" aria-label="Secondary navigation">
+        <nav className="side-nav-footer" aria-label={t("Secondary navigation")}>
           {SECONDARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => (
             <button
               className={selectedNavKey === (item.categoryKey ?? item.key) ? "nav-row nav-row-active" : "nav-row"}
@@ -529,7 +611,7 @@ export function DataPlatformHome({
               <span className="material-symbols-outlined" aria-hidden="true">
                 {item.icon}
               </span>
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </button>
           ))}
         </nav>
@@ -538,7 +620,7 @@ export function DataPlatformHome({
       <div className="dashboard-app">
         <header className="mobile-dashboard-header">
           <div className="mobile-brand">
-            <button className="icon-button" aria-label="Open navigation" type="button">
+            <button className="icon-button" aria-label={t("Open navigation")} type="button">
               <span className="material-symbols-outlined" aria-hidden="true">
                 menu
               </span>
@@ -546,18 +628,19 @@ export function DataPlatformHome({
             <strong>ArkiWatch</strong>
           </div>
           <div className="top-actions">
-            <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
-            <button className="icon-button" aria-label="Notifications" type="button">
+            <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
+            <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
+            <button className="icon-button" aria-label={t("Notifications")} type="button">
               <span className="material-symbols-outlined" aria-hidden="true">
                 notifications
               </span>
             </button>
-            <button className="icon-button" aria-label="Settings" type="button">
+            <button className="icon-button" aria-label={t("Settings")} type="button">
               <span className="material-symbols-outlined" aria-hidden="true">
                 settings
               </span>
             </button>
-            <span className="profile-avatar" aria-label="User profile">
+            <span className="profile-avatar" aria-label={t("User profile")}>
               AW
             </span>
           </div>
@@ -568,28 +651,29 @@ export function DataPlatformHome({
             <div className="detail-topbar-brand">
               <strong>ArkiWatch</strong>
             </div>
-            <nav aria-label="Detail workspace navigation">
+            <nav aria-label={t("Detail workspace navigation")}>
               <button onClick={() => setSelectedNavKey("overview")} type="button">
-                Overview
+                {t("Overview")}
               </button>
               <button className="active" type="button">
-                Dashboard
+                {t("Dashboard")}
               </button>
-              <button type="button">Analytics</button>
+              <button type="button">{t("Analytics")}</button>
             </nav>
             <div className="detail-topbar-actions">
-              <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
-              <button className="icon-button" aria-label="Notifications" type="button">
+              <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
+              <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
+              <button className="icon-button" aria-label={t("Notifications")} type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   notifications
                 </span>
               </button>
-              <button className="icon-button" aria-label="Settings" type="button">
+              <button className="icon-button" aria-label={t("Settings")} type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   settings
                 </span>
               </button>
-              <span className="profile-avatar" aria-label="User profile">
+              <span className="profile-avatar" aria-label={t("User profile")}>
                 AW
               </span>
             </div>
@@ -600,11 +684,11 @@ export function DataPlatformHome({
           {!isDetailPage ? (
           <div className="desktop-dashboard-header">
             <div>
-              <h2>{selectedCategory ? `${displayTitle(selectedCategory)} Dashboard` : "Overview Dashboard"}</h2>
+              <h2>{selectedCategory ? `${displayTitle(selectedCategory, languageMode)} ${t("Dashboard")}` : t("Overview Dashboard")}</h2>
               <p>
                 {selectedCategory
                   ? selectedCategory.description
-                  : "Real-time system telemetry and signal status."}
+                  : t("Real-time system telemetry and signal status.")}
               </p>
             </div>
             <div className="desktop-controls">
@@ -614,17 +698,18 @@ export function DataPlatformHome({
                 </span>
                 <input
                   onChange={(event) => setSearchValue(event.currentTarget.value)}
-                  placeholder="Search signals, events..."
+                  placeholder={t("Search signals, events...")}
                   value={searchValue}
                 />
               </label>
-              <ThemeToggleButton themeMode={themeMode} onToggle={toggleThemeMode} />
-              <button className="icon-button" aria-label="Notifications" type="button">
+              <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
+              <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
+              <button className="icon-button" aria-label={t("Notifications")} type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   notifications
                 </span>
               </button>
-              <span className="profile-avatar" aria-label="User profile">
+              <span className="profile-avatar" aria-label={t("User profile")}>
                 AW
               </span>
             </div>
@@ -633,58 +718,64 @@ export function DataPlatformHome({
 
           {overview ? (
             isWeatherDetail ? (
-              <WeatherDetailView category={selectedCategory} weather={weather} />
+              <WeatherDetailView category={selectedCategory} history={history.weather} weather={weather} />
             ) : isAirDetail ? (
-              <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} />
+              <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} history={history.airQuality} />
             ) : isEnergyDetail ? (
-              <EnergyWorkspace category={selectedCategory} energy={energy} />
+              <EnergyWorkspace category={selectedCategory} energy={energy} history={history.energy} />
             ) : isTransitDetail ? (
-              <TransitWorkspace category={selectedCategory} transit={transit} />
+              <TransitWorkspace category={selectedCategory} history={history.transit} transit={transit} />
+            ) : isRoadRailDetail ? (
+              <RoadRailWorkspace category={selectedCategory} history={history.roadRail} roadRail={roadRail} />
+            ) : isWaterDetail ? (
+              <WaterSnowWorkspace category={selectedCategory} />
+            ) : isCityServicesDetail ? (
+              <CityServicesWorkspace category={selectedCategory} />
             ) : (
             <>
-              <section className="summary-grid" aria-label="Platform summary">
+              <section className="summary-grid" aria-label={t("Platform summary")}>
                 <article className="metric-tile metric-tile-live">
                   <div>
-                    <span>Live Data Streams</span>
+                    <span>{t("Live Data Streams")}</span>
                     <i aria-hidden="true" />
                   </div>
                   <strong>
                     {signalStats.dataStreams}
-                    <small>active</small>
+                    <small>{t("active")}</small>
                   </strong>
                 </article>
                 <article className="metric-tile">
                   <div>
-                    <span>Active Fields</span>
+                    <span>{t("Active Fields")}</span>
                     <span className="material-symbols-outlined" aria-hidden="true">
                       data_array
                     </span>
                   </div>
                   <strong>
                     {signalStats.keyFields}
-                    <small>monitored</small>
+                    <small>{t("monitored")}</small>
                   </strong>
                 </article>
                 <article className="metric-tile metric-tile-events">
                   <div>
-                    <span>Active Events</span>
+                    <span>{t("Active Events")}</span>
                     <i aria-hidden="true" />
                   </div>
                   <strong>
                     {signalStats.activeEvents}
-                    <small>unresolved</small>
+                    <small>{t("unresolved")}</small>
                   </strong>
                 </article>
                 <article className="metric-tile">
                   <div>
-                    <span>Data Sources</span>
+                    <span>{t("Data Sources")}</span>
                     <span className="material-symbols-outlined" aria-hidden="true">
                       hub
                     </span>
                   </div>
                   <strong>
                     {signalStats.dataSources}
-                    <small>connected</small>
+                    <small>{t("connected")}</small>
                   </strong>
                 </article>
               </section>
@@ -696,18 +787,26 @@ export function DataPlatformHome({
                     : "dashboard-main-grid dashboard-main-grid-events-collapsed"
                 }
               >
-                <section className="signal-section" aria-label="Signal status array">
+                <section className="signal-section" aria-label={t("Signal status array")}>
                   <h3>
                     <span className="material-symbols-outlined" aria-hidden="true">
                       sensors
                     </span>
-                    Signal Status Array
+                    {t("Signal Status Array")}
                   </h3>
 
                   <div className="signal-grid">
                     {visibleCategories.length > 0 ? (
                       visibleCategories.map((category) => {
-                        const readout = signalReadout(category, weather, airQuality, energy, transit);
+                        const readout = signalReadout(
+                          category,
+                          weather,
+                          airQuality,
+                          energy,
+                          roadRail,
+                          transit,
+                          languageMode
+                        );
                         const tone = readout.tone;
                         return (
                           <button
@@ -721,9 +820,9 @@ export function DataPlatformHome({
                                 <span className="material-symbols-outlined" aria-hidden="true">
                                   {CATEGORY_ICONS[category.key] ?? "database"}
                                 </span>
-                                <strong>{displayTitle(category)}</strong>
+                                <strong>{displayTitle(category, languageMode)}</strong>
                               </span>
-                              <span className={`status-badge status-badge-${tone}`}>{statusLabel(category)}</span>
+                              <span className={`status-badge status-badge-${tone}`}>{statusLabel(category, languageMode)}</span>
                             </span>
                             <span className="signal-card-bottom">
                               <span className="signal-readout">
@@ -738,20 +837,20 @@ export function DataPlatformHome({
                         );
                       })
                     ) : (
-                      <div className="dashboard-empty-state">No signal cards match the current search.</div>
+                      <div className="dashboard-empty-state">{t("No signal cards match the current search.")}</div>
                     )}
                   </div>
                 </section>
 
                 <aside
                   className={isEventsExpanded ? "events-panel events-panel-expanded" : "events-panel events-panel-collapsed"}
-                  aria-label="Recent events"
+                  aria-label={t("Recent events")}
                 >
                   <header>
                     <button
                       aria-controls="recent-events-timeline"
                       aria-expanded={isEventsExpanded}
-                      aria-label={isEventsExpanded ? "Collapse recent events" : "Expand recent events"}
+                      aria-label={isEventsExpanded ? t("Collapse recent events") : t("Expand recent events")}
                       className="events-panel-toggle"
                       onClick={() => setIsEventsExpanded((isExpanded) => !isExpanded)}
                       type="button"
@@ -761,13 +860,13 @@ export function DataPlatformHome({
                       </span>
                       <span className="events-panel-copy">
                         <span className="events-panel-title">
-                          <span className="events-panel-heading">Recent Events</span>
+                          <span className="events-panel-heading">{t("Recent Events")}</span>
                           <span className="events-count-badge">{visibleEvents.length}</span>
                         </span>
                         <span className="events-panel-summary">
                           {latestVisibleEvent
-                            ? `${eventTimeLabel(categories, latestVisibleEvent)} · ${latestVisibleEvent.title}`
-                            : "No recent events match the current view."}
+                            ? `${eventTimeLabel(categories, latestVisibleEvent, languageMode)} · ${latestVisibleEvent.title}`
+                            : t("No recent events match the current view.")}
                         </span>
                       </span>
                       <span className="material-symbols-outlined events-panel-chevron" aria-hidden="true">
@@ -782,7 +881,7 @@ export function DataPlatformHome({
                         return (
                           <article className="timeline-item" key={event.id}>
                             <span className={`timeline-dot timeline-dot-${tone}`} aria-hidden="true" />
-                            <time>{eventTimeLabel(categories, event)}</time>
+                            <time>{eventTimeLabel(categories, event, languageMode)}</time>
                             <h4>{event.title}</h4>
                             <p>{event.body}</p>
                             {event.evidence.length > 0 ? (
@@ -794,7 +893,7 @@ export function DataPlatformHome({
                         );
                       })
                     ) : (
-                      <div className="dashboard-empty-state">No recent events match the current view.</div>
+                      <div className="dashboard-empty-state">{t("No recent events match the current view.")}</div>
                     )}
                   </div>
                 </aside>
@@ -802,13 +901,13 @@ export function DataPlatformHome({
             </>
             )
           ) : (
-            <section className="platform-error" aria-label="Platform unavailable">
-              <span>Platform unavailable</span>
-              <h1>Data platform could not load</h1>
-              <p>{error ?? "Unknown platform error."}</p>
+            <section className="platform-error" aria-label={t("Platform unavailable")}>
+              <span>{t("Platform unavailable")}</span>
+              <h1>{t("Data platform could not load")}</h1>
+              <p>{error ?? t("Unknown platform error.")}</p>
               <small>
-                API endpoint: {apiBaseUrl}
-                {defaultUserId ? ` · User context: ${defaultUserId}` : ""}
+                {t("API endpoint")}: {apiBaseUrl}
+                {defaultUserId ? ` · ${t("User context")}: ${defaultUserId}` : ""}
               </small>
             </section>
           )}
@@ -818,21 +917,22 @@ export function DataPlatformHome({
           <footer className="detail-footer">
             <span>ArkiWatch v1.2.0-8010/API</span>
             <div>
-              <a href="/privacy">Privacy Policy</a>
-              <a href="/regional-settings">Regional Settings</a>
-              <a href="/api">API Docs</a>
+              <a href="/privacy">{t("Privacy Policy")}</a>
+              <a href="/regional-settings">{t("Regional Settings")}</a>
+              <a href="/api">{t("API Docs")}</a>
             </div>
           </footer>
         ) : (
           <footer className="mobile-dashboard-footer">
             <span>ArkiWatch v1.2.0-8010/API</span>
             <div>
-              <a href="/privacy">Privacy Policy</a>
-              <a href="/api">API Docs</a>
+              <a href="/privacy">{t("Privacy Policy")}</a>
+              <a href="/api">{t("API Docs")}</a>
             </div>
           </footer>
         )}
       </div>
     </div>
+    </I18nProvider>
   );
 }
