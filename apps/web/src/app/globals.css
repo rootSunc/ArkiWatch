@@ -265,6 +265,7 @@ p {
 .side-nav-list,
 .side-nav-footer {
   display: grid;
+  align-content: start;
   gap: 4px;
   padding: 16px 0;
 }
@@ -385,6 +386,48 @@ p {
 .theme-toggle-button:focus-visible {
   background: var(--primary-container);
   color: var(--on-primary-container);
+}
+
+.language-switcher {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  padding: 3px;
+}
+
+.language-switcher > .material-symbols-outlined {
+  margin: 0 4px;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.language-option {
+  min-width: 38px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  padding: 0 8px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.language-option:hover,
+.language-option:focus-visible,
+.language-option-active {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  outline: none;
 }
 
 .profile-avatar {
@@ -1708,6 +1751,151 @@ p {
   font-size: 12px;
 }
 
+.trend-panel {
+  --trend-color: var(--primary);
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.trend-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.trend-panel header div {
+  min-width: 0;
+}
+
+.trend-panel header span,
+.trend-chart-axis span,
+.trend-chart-stats span,
+.trend-chart-stats small {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.trend-panel h3 {
+  margin-top: 3px;
+  color: var(--on-background);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.trend-panel header strong,
+.trend-chart-stats strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: right;
+}
+
+.trend-panel header strong {
+  color: var(--trend-color);
+  flex: 0 0 auto;
+}
+
+.trend-chart-frame {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.trend-chart-svg {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 20vw, 240px);
+  overflow: visible;
+}
+
+.trend-chart-grid {
+  stroke: var(--chart-grid-border);
+  stroke-dasharray: 4 6;
+  stroke-width: 1;
+}
+
+.trend-chart-area {
+  fill: color-mix(in srgb, var(--trend-color) 16%, transparent);
+}
+
+.trend-chart-line {
+  fill: none;
+  stroke: var(--trend-color);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.trend-chart-dot {
+  fill: var(--surface-container-highest);
+  stroke: var(--trend-color);
+  stroke-width: 2;
+}
+
+.trend-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trend-chart-axis span:nth-child(2) {
+  text-align: center;
+}
+
+.trend-chart-axis span:last-child {
+  text-align: right;
+}
+
+.trend-chart-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.trend-chart-stats span {
+  display: grid;
+  min-height: 64px;
+  align-content: space-between;
+  gap: 5px;
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 8px;
+}
+
+.trend-chart-stats strong {
+  color: var(--trend-color);
+  font-size: 13px;
+  line-height: 16px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.trend-chart-stats small {
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.trend-chart-empty {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  border: 1px dashed var(--detail-panel-border-strong);
+  border-radius: 4px;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  text-align: center;
+}
+
 .weather-ops-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -2771,6 +2959,10 @@ p {
   margin: 18px 0;
 }
 
+.transit-current-cluster > div {
+  min-width: 0;
+}
+
 .transit-condition-icon {
   color: var(--primary);
   font-size: 86px;
@@ -2793,6 +2985,17 @@ p {
   line-height: 0.95;
 }
 
+.transit-risk-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
 .transit-current-cluster p {
   margin-top: 8px;
   color: var(--primary);
@@ -2805,6 +3008,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   border-top: 1px solid var(--separator-border);
   padding-top: 12px;
@@ -2812,6 +3016,7 @@ p {
 
 .transit-hero-footer div {
   display: grid;
+  flex: 1 1 116px;
   gap: 3px;
   min-width: 0;
 }
@@ -2976,12 +3181,56 @@ p {
   line-height: 24px;
 }
 
+.transit-alert-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.transit-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 7px 9px;
+  text-transform: uppercase;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.transit-filter-chip:hover,
+.transit-filter-chip-active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--on-background);
+}
+
+.transit-filter-chip .material-symbols-outlined {
+  font-size: 16px;
+}
+
 .transit-alert-list,
 .transit-side-grid,
 .transit-pipeline-panel > div,
 .transit-source-panel > div {
   display: grid;
   gap: 10px;
+}
+
+.transit-side-grid {
+  align-content: start;
+  align-self: start;
 }
 
 .transit-alert {
@@ -3028,6 +3277,24 @@ p {
   min-width: 0;
 }
 
+.transit-alert-time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.transit-alert-time-row span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 2px 5px;
+}
+
 .transit-alert-main strong,
 .transit-stage strong,
 .transit-request strong {
@@ -3044,6 +3311,7 @@ p {
 }
 
 .transit-alert-main p,
+.transit-alert-scope-preview,
 .transit-quality-panel p,
 .transit-quality-panel small,
 .transit-stage p,
@@ -3057,6 +3325,10 @@ p {
   overflow-wrap: anywhere;
 }
 
+.transit-alert-scope-preview {
+  display: block;
+}
+
 .transit-alert-main em {
   flex: 0 0 auto;
   border: 1px solid var(--detail-panel-border-stronger);
@@ -3068,6 +3340,33 @@ p {
   line-height: 12px;
   padding: 4px 6px;
   text-transform: uppercase;
+}
+
+.transit-alert-window {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.transit-alert-window span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.transit-alert-bad .transit-alert-window span {
+  background: var(--error);
+}
+
+.transit-alert-warn .transit-alert-window span {
+  background: var(--tertiary);
+}
+
+.transit-alert-good .transit-alert-window span {
+  background: var(--success);
 }
 
 .transit-alert-meta {
@@ -3150,6 +3449,103 @@ p {
   background: var(--error);
 }
 
+.transit-diagnostics-panel {
+  padding: 0;
+}
+
+.transit-diagnostics-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 12px;
+}
+
+.transit-diagnostics-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.transit-diagnostics-panel summary div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.transit-diagnostics-panel summary span:not(.material-symbols-outlined),
+.transit-diagnostic-section header span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.transit-diagnostics-panel summary strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.transit-diagnostics-panel summary .material-symbols-outlined {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+  transition: transform 150ms ease;
+}
+
+.transit-diagnostics-panel[open] summary .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.transit-diagnostics-body {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--separator-border);
+  padding: 12px;
+}
+
+.transit-diagnostic-section {
+  display: grid;
+  gap: 10px;
+}
+
+.transit-diagnostic-section header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.transit-diagnostic-section header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.transit-quality-notes div {
+  display: grid;
+  gap: 8px;
+}
+
+.transit-quality-notes p {
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
 .transit-provider-status {
   display: flex;
   align-items: center;
@@ -3220,6 +3616,588 @@ p {
 }
 
 .transit-detail-empty p {
+  color: var(--on-surface-variant);
+  line-height: 20px;
+}
+
+.road-rail-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.road-rail-detail-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.road-rail-detail-header h2 {
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-detail-header > div:last-child,
+.road-rail-live-status strong,
+.road-rail-card-kicker,
+.road-rail-severity-panel header span,
+.road-rail-network-panel header span,
+.road-rail-summary-strip article span,
+.road-rail-incident-panel header span,
+.road-rail-corridor-panel header span,
+.road-rail-quality-panel header span,
+.road-rail-pipeline-panel header span,
+.road-rail-source-panel header span,
+.road-rail-provider-status strong,
+.road-rail-detail-freshness {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.road-rail-detail-header > div:last-child,
+.road-rail-card-kicker span,
+.road-rail-severity-panel header span,
+.road-rail-network-panel header span,
+.road-rail-summary-strip article span,
+.road-rail-incident-panel header span,
+.road-rail-corridor-panel header span,
+.road-rail-quality-panel header span,
+.road-rail-pipeline-panel header span,
+.road-rail-source-panel header span,
+.road-rail-provider-status strong {
+  text-transform: uppercase;
+}
+
+.road-rail-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.road-rail-live-status span,
+.road-rail-provider-status > div:first-child span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(142, 213, 255, 0.62);
+}
+
+.road-rail-glass-panel,
+.road-rail-detail-empty {
+  min-width: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.road-rail-bento-grid,
+.road-rail-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.road-rail-hero,
+.road-rail-severity-panel,
+.road-rail-network-panel,
+.road-rail-incident-panel,
+.road-rail-corridor-panel,
+.road-rail-quality-panel,
+.road-rail-pipeline-panel,
+.road-rail-source-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.road-rail-hero {
+  min-height: 260px;
+  justify-content: space-between;
+}
+
+.road-rail-card-kicker,
+.road-rail-severity-panel header,
+.road-rail-network-panel header,
+.road-rail-incident-panel header,
+.road-rail-corridor-panel header,
+.road-rail-quality-panel header,
+.road-rail-pipeline-panel header,
+.road-rail-source-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-card-kicker time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.road-rail-current-cluster {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+
+.road-rail-condition-icon {
+  color: var(--primary);
+  font-size: 86px;
+  font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.road-rail-hero-bad .road-rail-condition-icon {
+  color: var(--error);
+}
+
+.road-rail-hero-warn .road-rail-condition-icon {
+  color: var(--tertiary);
+}
+
+.road-rail-current-cluster strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.road-rail-current-cluster p {
+  margin-top: 8px;
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-hero-footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  border-top: 1px solid var(--separator-border);
+  padding-top: 12px;
+}
+
+.road-rail-hero-footer div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.road-rail-hero-footer span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-hero-footer strong,
+.road-rail-summary-strip article strong,
+.road-rail-severity-panel header strong,
+.road-rail-network-panel header strong,
+.road-rail-incident-panel header strong,
+.road-rail-corridor-panel header strong,
+.road-rail-quality-panel header strong,
+.road-rail-pipeline-panel header strong,
+.road-rail-source-panel header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-severity-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.road-rail-severity-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.road-rail-severity-row > span,
+.road-rail-severity-row strong,
+.road-rail-network-grid article span,
+.road-rail-network-grid article small,
+.road-rail-quality-facts span,
+.road-rail-stage span,
+.road-rail-request span,
+.road-rail-corridor span,
+.road-rail-incident time,
+.road-rail-incident-meta span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.road-rail-severity-row strong {
+  color: var(--on-background);
+  text-align: right;
+}
+
+.road-rail-severity-row i,
+.road-rail-quality-meter,
+.road-rail-stage-meter {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.road-rail-severity-row i span,
+.road-rail-quality-meter span,
+.road-rail-stage-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.road-rail-severity-row-bad i span {
+  background: var(--error);
+}
+
+.road-rail-severity-row-warn i span {
+  background: var(--tertiary);
+}
+
+.road-rail-severity-row-good i span {
+  background: var(--success);
+}
+
+.road-rail-network-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.road-rail-network-grid article,
+.road-rail-quality-facts span,
+.road-rail-stage,
+.road-rail-request,
+.road-rail-corridor,
+.road-rail-incident {
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+}
+
+.road-rail-network-grid article {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.road-rail-network-grid article strong {
+  color: var(--on-background);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+}
+
+.road-rail-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.road-rail-summary-strip article {
+  display: grid;
+  min-height: 76px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.road-rail-incident-panel header div {
+  min-width: 0;
+}
+
+.road-rail-incident-panel h3 {
+  margin-top: 2px;
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-incident-list,
+.road-rail-side-grid,
+.road-rail-corridor-panel > div,
+.road-rail-pipeline-panel > div,
+.road-rail-source-panel > div {
+  display: grid;
+  gap: 10px;
+}
+
+.road-rail-incident {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: 10px 10px 10px 28px;
+}
+
+.road-rail-incident-dot {
+  position: absolute;
+  top: 16px;
+  left: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--outline);
+}
+
+.road-rail-incident-bad .road-rail-incident-dot,
+.road-rail-corridor-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.road-rail-incident-bad .road-rail-incident-dot {
+  background: var(--error);
+  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+}
+
+.road-rail-incident-warn .road-rail-incident-dot {
+  background: var(--tertiary);
+}
+
+.road-rail-incident-good .road-rail-incident-dot {
+  background: var(--success);
+}
+
+.road-rail-incident-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.road-rail-incident-main div {
+  min-width: 0;
+}
+
+.road-rail-incident-main strong,
+.road-rail-stage strong,
+.road-rail-request strong,
+.road-rail-corridor strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-main strong {
+  margin-top: 4px;
+}
+
+.road-rail-incident-main p,
+.road-rail-quality-panel p,
+.road-rail-quality-panel small,
+.road-rail-stage p,
+.road-rail-request p,
+.road-rail-request small,
+.road-rail-corridor p,
+.road-rail-corridor-panel > div > p,
+.road-rail-incident-list > p {
+  margin-top: 4px;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-main em {
+  flex: 0 0 auto;
+  border: 1px solid var(--detail-panel-border-stronger);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-style: normal;
+  line-height: 12px;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-meta,
+.road-rail-corridor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.road-rail-incident-meta span,
+.road-rail-corridor-meta span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--surface-container);
+  color: var(--on-background);
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-quality-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.road-rail-quality-facts span {
+  color: var(--on-background);
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-stage,
+.road-rail-request,
+.road-rail-corridor {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+
+.road-rail-stage > div,
+.road-rail-request > div,
+.road-rail-corridor > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-stage-good,
+.road-rail-request-good,
+.road-rail-corridor-good {
+  border-color: rgba(142, 213, 255, 0.34);
+}
+
+.road-rail-stage-warn,
+.road-rail-request-warn,
+.road-rail-corridor-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.road-rail-stage-bad,
+.road-rail-request-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.road-rail-stage-good span,
+.road-rail-request-good span {
+  color: var(--primary);
+}
+
+.road-rail-stage-warn span,
+.road-rail-request-warn span {
+  color: var(--tertiary);
+}
+
+.road-rail-stage-bad span,
+.road-rail-request-bad span {
+  color: var(--error);
+}
+
+.road-rail-stage-warn .road-rail-stage-meter span {
+  background: var(--tertiary);
+}
+
+.road-rail-stage-bad .road-rail-stage-meter span {
+  background: var(--error);
+}
+
+.road-rail-provider-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+
+.road-rail-provider-status > div,
+.road-rail-provider-status span {
+  display: flex;
+  align-items: center;
+}
+
+.road-rail-provider-status > div {
+  gap: 12px;
+  min-width: 0;
+}
+
+.road-rail-provider-status > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.road-rail-provider-status .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.road-rail-provider-status i {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-variant);
+}
+
+.road-rail-provider-coverage {
+  color: var(--primary);
+}
+
+.road-rail-detail-freshness {
+  opacity: 0.78;
+}
+
+.road-rail-detail-empty {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+}
+
+.road-rail-detail-empty span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-detail-empty h2 {
+  color: var(--on-background);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.road-rail-detail-empty p {
   color: var(--on-surface-variant);
   line-height: 20px;
 }
@@ -3612,6 +4590,141 @@ p {
   line-height: 24px;
 }
 
+.energy-price-chart {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 12px;
+}
+
+.energy-price-chart-head,
+.energy-price-axis,
+.energy-price-row {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+}
+
+.energy-price-chart-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.energy-price-chart-head span,
+.energy-price-chart-head strong,
+.energy-price-axis span,
+.energy-price-row span,
+.energy-price-row strong,
+.energy-price-row em {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.energy-price-chart-head span,
+.energy-price-axis span,
+.energy-price-row span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.energy-price-chart-head span {
+  text-transform: none;
+}
+
+.energy-price-chart-head strong {
+  color: var(--on-background);
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.energy-price-line {
+  display: block;
+  width: 100%;
+  height: clamp(190px, 22vw, 260px);
+  overflow: visible;
+}
+
+.energy-price-grid-line {
+  stroke: var(--outline-variant);
+  stroke-dasharray: 4 7;
+  stroke-width: 1;
+}
+
+.energy-price-area {
+  fill: color-mix(in srgb, var(--tertiary) 18%, transparent);
+}
+
+.energy-price-path {
+  fill: none;
+  stroke: var(--tertiary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.energy-price-dot {
+  fill: var(--surface-container-highest);
+  stroke: var(--tertiary);
+  stroke-width: 1.5;
+}
+
+.energy-price-dot-window {
+  fill: var(--success);
+  stroke: var(--on-background);
+}
+
+.energy-price-axis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.energy-price-axis span:nth-child(2) {
+  text-align: center;
+}
+
+.energy-price-axis span:last-child {
+  text-align: right;
+}
+
+.energy-price-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.energy-price-row {
+  grid-template-columns: minmax(76px, 0.9fr) minmax(0, 1fr) auto;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--surface-container);
+  padding: 8px;
+}
+
+.energy-price-row strong {
+  color: var(--on-background);
+  font-size: 12px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.energy-price-row em {
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 14px;
+  text-align: right;
+}
+
+.energy-price-row-window {
+  border-color: rgba(134, 239, 172, 0.42);
+}
+
+.energy-price-row-window strong,
+.energy-price-row-window em {
+  color: var(--success);
+}
+
 .energy-point-chart {
   display: grid;
   gap: 8px;
@@ -3663,6 +4776,10 @@ p {
 
 .energy-signal-good > div span {
   color: var(--success);
+}
+
+.energy-signal > div span {
+  text-transform: none;
 }
 
 .energy-signal-warn {
@@ -3858,6 +4975,1271 @@ p {
   line-height: 20px;
 }
 
+.water-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.water-detail-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.water-detail-header h2 {
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.water-detail-header > div:last-child,
+.water-live-status strong,
+.water-card-kicker,
+.water-coverage-panel header span,
+.water-field-panel header span,
+.water-summary-strip article span,
+.water-signal-panel header span,
+.water-source-panel header span,
+.water-volume-panel header span,
+.water-event-panel header span,
+.water-provider-status strong,
+.water-detail-freshness {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.water-detail-header > div:last-child,
+.water-card-kicker span,
+.water-coverage-panel header span,
+.water-field-panel header span,
+.water-summary-strip article span,
+.water-signal-panel header span,
+.water-source-panel header span,
+.water-volume-panel header span,
+.water-event-panel header span,
+.water-provider-status strong {
+  text-transform: uppercase;
+}
+
+.water-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.water-live-status span,
+.water-provider-status > div:first-child span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(142, 213, 255, 0.54);
+}
+
+.water-glass-panel,
+.water-detail-empty {
+  min-width: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.water-bento-grid,
+.water-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.water-hero,
+.water-coverage-panel,
+.water-field-panel,
+.water-signal-panel,
+.water-source-panel,
+.water-volume-panel,
+.water-event-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.water-hero {
+  min-height: 260px;
+  justify-content: space-between;
+}
+
+.water-card-kicker,
+.water-coverage-panel header,
+.water-field-panel header,
+.water-signal-panel header,
+.water-source-panel header,
+.water-volume-panel header,
+.water-event-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.water-card-kicker time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.water-current-cluster {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0;
+}
+
+.water-condition-icon {
+  color: var(--primary);
+  font-size: 72px;
+  font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.water-hero-good .water-condition-icon {
+  color: var(--success);
+}
+
+.water-hero-bad .water-condition-icon {
+  color: var(--error);
+}
+
+.water-current-cluster > div {
+  min-width: 0;
+}
+
+.water-current-cluster strong {
+  display: block;
+  color: var(--on-background);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 800;
+  line-height: 1.02;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.water-current-cluster p {
+  margin-top: 8px;
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.water-hero-good .water-current-cluster p {
+  color: var(--success);
+}
+
+.water-hero-bad .water-current-cluster p {
+  color: var(--error);
+}
+
+.water-hero-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--separator-border);
+  padding-top: 12px;
+}
+
+.water-hero-footer div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.water-hero-footer span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.water-hero-footer strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.water-coverage-panel header strong,
+.water-field-panel header strong,
+.water-signal-panel header strong,
+.water-source-panel header strong,
+.water-volume-panel header strong,
+.water-event-panel header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.water-signal-panel header strong {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.water-coverage-list,
+.water-signal-list,
+.water-side-grid,
+.water-volume-panel > div,
+.water-event-list,
+.water-severity-bars {
+  display: grid;
+  gap: 10px;
+}
+
+.water-coverage-row,
+.water-field-grid article,
+.water-schema-card,
+.water-signal,
+.water-source-facts span,
+.water-volume-row,
+.water-event > div {
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+}
+
+.water-coverage-row {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.water-coverage-row > div,
+.water-signal > div,
+.water-volume-row > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.water-coverage-row strong,
+.water-signal strong,
+.water-volume-row strong,
+.water-schema-card strong,
+.water-event strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.water-coverage-row span,
+.water-field-grid article small,
+.water-source-facts span,
+.water-signal span,
+.water-volume-row span,
+.water-severity-row span,
+.water-schema-card span,
+.water-schema-fields span,
+.water-event time {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.water-coverage-row i,
+.water-signal-meter,
+.water-volume-meter,
+.water-severity-row i {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.water-coverage-row i span,
+.water-signal-meter span,
+.water-volume-meter span,
+.water-severity-row i span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.water-coverage-row-good i span,
+.water-signal-good .water-signal-meter span,
+.water-volume-row-good .water-volume-meter span,
+.water-severity-row-good i span {
+  background: var(--success);
+}
+
+.water-coverage-row-warn i span,
+.water-signal-warn .water-signal-meter span,
+.water-volume-row-warn .water-volume-meter span,
+.water-severity-row-warn i span {
+  background: var(--tertiary);
+}
+
+.water-coverage-row-bad i span,
+.water-signal-bad .water-signal-meter span,
+.water-volume-row-bad .water-volume-meter span,
+.water-severity-row-bad i span {
+  background: var(--error);
+}
+
+.water-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.water-field-grid article {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.water-field-grid article > span {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  border-radius: 4px;
+  background: var(--status-good-bg);
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.water-field-grid article div {
+  min-width: 0;
+}
+
+.water-field-grid article strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: normal;
+  text-transform: capitalize;
+  word-break: normal;
+}
+
+.water-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.water-summary-strip article {
+  display: grid;
+  min-height: 76px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.water-summary-strip article strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.water-summary-good strong {
+  color: var(--success);
+}
+
+.water-summary-warn strong {
+  color: var(--tertiary);
+}
+
+.water-summary-bad strong {
+  color: var(--error);
+}
+
+.water-signal-panel header div {
+  min-width: 0;
+}
+
+.water-signal-panel h3 {
+  margin-top: 2px;
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.water-schema-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.water-schema-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.water-schema-card > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.water-schema-card p,
+.water-signal p,
+.water-source-panel p,
+.water-source-panel a,
+.water-event p,
+.water-severity-bars p {
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.water-source-panel a {
+  color: var(--primary);
+}
+
+.water-source-panel a:hover,
+.water-source-panel a:focus-visible {
+  color: var(--on-background);
+  outline: none;
+}
+
+.water-schema-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.water-schema-fields span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 999px;
+  padding: 4px 7px;
+  color: var(--on-background);
+  text-transform: none;
+}
+
+.water-signal {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.water-signal > div span {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.water-signal-good {
+  border-color: rgba(134, 239, 172, 0.3);
+}
+
+.water-signal-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.water-signal-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.water-source-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.water-source-facts span {
+  color: var(--on-background);
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+
+.water-volume-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 10px;
+}
+
+.water-volume-row em {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.water-volume-meter {
+  grid-column: 1 / -1;
+}
+
+.water-event {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.water-event-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--status-good-bg);
+}
+
+.water-event-bad .water-event-dot {
+  background: var(--error);
+  box-shadow: 0 0 0 4px var(--status-bad-bg);
+}
+
+.water-event-warn .water-event-dot {
+  background: var(--tertiary);
+  box-shadow: 0 0 0 4px var(--status-warn-bg);
+}
+
+.water-event > div {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.water-severity-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.water-severity-row strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: right;
+}
+
+.water-provider-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+
+.water-provider-status > div,
+.water-provider-status span {
+  display: flex;
+  align-items: center;
+}
+
+.water-provider-status > div {
+  gap: 12px;
+  min-width: 0;
+}
+
+.water-provider-status > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.water-provider-status .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.water-provider-status i {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-variant);
+}
+
+.water-provider-stage {
+  color: var(--primary);
+}
+
+.water-detail-freshness {
+  opacity: 0.78;
+}
+
+.water-detail-empty {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+}
+
+.water-detail-empty span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.water-detail-empty h2 {
+  color: var(--on-background);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.water-detail-empty p {
+  color: var(--on-surface-variant);
+  line-height: 20px;
+}
+
+.city-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.city-detail-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.city-detail-header h2 {
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.city-detail-header > div:last-child,
+.city-live-status strong,
+.city-card-kicker,
+.city-readiness-panel header span,
+.city-field-panel header span,
+.city-summary-strip article span,
+.city-service-panel header span,
+.city-source-panel header span,
+.city-coverage-panel header span,
+.city-event-model-panel header span,
+.city-visual-panel header span,
+.city-provider-status strong,
+.city-detail-freshness {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.city-detail-header > div:last-child,
+.city-card-kicker span,
+.city-readiness-panel header span,
+.city-field-panel header span,
+.city-summary-strip article span,
+.city-service-panel header span,
+.city-source-panel header span,
+.city-coverage-panel header span,
+.city-event-model-panel header span,
+.city-visual-panel header span,
+.city-provider-status strong {
+  text-transform: uppercase;
+}
+
+.city-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.city-live-status span,
+.city-provider-status > div:first-child span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(142, 213, 255, 0.62);
+}
+
+.city-glass-panel,
+.city-detail-empty {
+  min-width: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.city-bento-grid,
+.city-main-grid,
+.city-visual-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.city-hero,
+.city-readiness-panel,
+.city-field-panel,
+.city-service-panel,
+.city-source-panel,
+.city-coverage-panel,
+.city-event-model-panel,
+.city-visual-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.city-hero {
+  min-height: 260px;
+  justify-content: space-between;
+}
+
+.city-card-kicker,
+.city-readiness-panel header,
+.city-field-panel header,
+.city-service-panel header,
+.city-source-panel header,
+.city-coverage-panel header,
+.city-event-model-panel header,
+.city-visual-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.city-card-kicker time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.city-current-cluster {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+
+.city-condition-icon {
+  color: var(--primary);
+  font-size: 86px;
+  font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.city-hero-warn .city-condition-icon {
+  color: var(--tertiary);
+}
+
+.city-hero-bad .city-condition-icon {
+  color: var(--error);
+}
+
+.city-current-cluster > div {
+  min-width: 0;
+}
+
+.city-current-cluster strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.city-current-cluster p {
+  margin-top: 8px;
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.city-hero-warn .city-current-cluster p {
+  color: var(--tertiary);
+}
+
+.city-hero-bad .city-current-cluster p {
+  color: var(--error);
+}
+
+.city-hero-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--separator-border);
+  padding-top: 12px;
+}
+
+.city-hero-footer div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.city-hero-footer span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.city-hero-footer strong,
+.city-readiness-panel header strong,
+.city-field-panel header strong,
+.city-service-panel header strong,
+.city-source-panel header strong,
+.city-coverage-panel header strong,
+.city-event-model-panel header strong,
+.city-visual-panel header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.city-readiness-stack,
+.city-service-list,
+.city-source-stack,
+.city-event-model-panel > div,
+.city-visual-bars,
+.city-side-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.city-readiness-row,
+.city-field-grid article,
+.city-service-row,
+.city-source-row,
+.city-coverage-grid article,
+.city-model-row {
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+}
+
+.city-readiness-row {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.city-readiness-row > div,
+.city-model-row > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.city-readiness-row strong,
+.city-field-grid article strong,
+.city-service-main strong,
+.city-source-row strong,
+.city-coverage-grid article strong,
+.city-model-row strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.city-readiness-row span,
+.city-field-grid article span,
+.city-service-row time,
+.city-service-meta span,
+.city-source-row span,
+.city-coverage-grid article span,
+.city-model-row span,
+.city-visual-row > span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.city-readiness-row-good,
+.city-source-row-good,
+.city-model-row-good {
+  border-color: rgba(134, 239, 172, 0.3);
+}
+
+.city-readiness-row-warn,
+.city-source-row-warn,
+.city-model-row-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.city-readiness-row-bad,
+.city-source-row-bad,
+.city-model-row-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.city-readiness-row-good > div span,
+.city-source-row-good span,
+.city-model-row-good span {
+  color: var(--success);
+}
+
+.city-readiness-row-warn > div span,
+.city-source-row-warn span,
+.city-model-row-warn span {
+  color: var(--tertiary);
+}
+
+.city-readiness-row-bad > div span,
+.city-source-row-bad span,
+.city-model-row-bad span {
+  color: var(--error);
+}
+
+.city-readiness-meter,
+.city-visual-row i {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.city-readiness-meter span,
+.city-visual-row i span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.city-readiness-row-good .city-readiness-meter span,
+.city-visual-row-good i span {
+  background: var(--success);
+}
+
+.city-readiness-row-warn .city-readiness-meter span,
+.city-visual-row-warn i span {
+  background: var(--tertiary);
+}
+
+.city-readiness-row-bad .city-readiness-meter span,
+.city-visual-row-bad i span {
+  background: var(--error);
+}
+
+.city-field-grid,
+.city-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.city-field-grid article,
+.city-coverage-grid article {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.city-coverage-grid article p,
+.city-source-row p,
+.city-source-row a,
+.city-model-row p,
+.city-service-main p,
+.city-visual-panel p,
+.city-visual-bars > p {
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.city-source-row a {
+  color: var(--primary);
+}
+
+.city-source-row a:hover,
+.city-source-row a:focus-visible {
+  color: var(--on-background);
+  outline: none;
+}
+
+.city-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.city-summary-strip article {
+  display: grid;
+  min-height: 76px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.city-summary-strip article strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.city-summary-good strong {
+  color: var(--success);
+}
+
+.city-summary-warn strong {
+  color: var(--tertiary);
+}
+
+.city-summary-bad strong {
+  color: var(--error);
+}
+
+.city-service-panel header div,
+.city-visual-panel header div {
+  min-width: 0;
+}
+
+.city-service-panel h3,
+.city-visual-panel h3 {
+  margin-top: 2px;
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.city-service-row {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: 10px 10px 10px 28px;
+}
+
+.city-service-dot {
+  position: absolute;
+  top: 16px;
+  left: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--outline);
+}
+
+.city-service-row-good .city-service-dot {
+  background: var(--success);
+}
+
+.city-service-row-warn .city-service-dot {
+  background: var(--tertiary);
+}
+
+.city-service-row-bad .city-service-dot {
+  background: var(--error);
+  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+}
+
+.city-service-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.city-service-main div {
+  min-width: 0;
+}
+
+.city-service-main strong {
+  margin-top: 4px;
+}
+
+.city-service-main em {
+  flex: 0 0 auto;
+  border: 1px solid var(--detail-panel-border-stronger);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-style: normal;
+  line-height: 12px;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.city-service-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.city-service-meta span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--surface-container);
+  color: var(--on-background);
+  padding: 4px 6px;
+}
+
+.city-source-row,
+.city-model-row {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+
+.city-source-row > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.city-visual-row {
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.city-visual-row i span {
+  width: var(--city-visual-width);
+}
+
+.city-visual-row strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: right;
+}
+
+.city-provider-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+
+.city-provider-status > div,
+.city-provider-status span {
+  display: flex;
+  align-items: center;
+}
+
+.city-provider-status > div {
+  gap: 12px;
+  min-width: 0;
+}
+
+.city-provider-status > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.city-provider-status .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.city-provider-status i {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-variant);
+}
+
+.city-provider-coverage {
+  color: var(--primary);
+}
+
+.city-detail-freshness {
+  opacity: 0.78;
+}
+
+.city-detail-empty {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+}
+
+.city-detail-empty span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.city-detail-empty h2 {
+  color: var(--on-background);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.city-detail-empty p {
+  color: var(--on-surface-variant);
+  line-height: 20px;
+}
+
 .detail-footer {
   display: flex;
   align-items: center;
@@ -3939,8 +6321,15 @@ p {
   .air-main-grid,
   .energy-bento-grid,
   .energy-main-grid,
+  .road-rail-bento-grid,
+  .road-rail-main-grid,
   .transit-bento-grid,
-  .transit-main-grid {
+  .transit-main-grid,
+  .water-bento-grid,
+  .water-main-grid,
+  .city-bento-grid,
+  .city-main-grid,
+  .city-visual-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
@@ -3972,6 +6361,18 @@ p {
     grid-column: span 4;
   }
 
+  .road-rail-hero {
+    grid-column: span 5;
+  }
+
+  .road-rail-severity-panel {
+    grid-column: span 3;
+  }
+
+  .road-rail-network-panel {
+    grid-column: span 4;
+  }
+
   .transit-hero {
     grid-column: span 5;
   }
@@ -3981,6 +6382,30 @@ p {
   }
 
   .transit-scope-panel {
+    grid-column: span 4;
+  }
+
+  .water-hero {
+    grid-column: span 5;
+  }
+
+  .water-coverage-panel {
+    grid-column: span 3;
+  }
+
+  .water-field-panel {
+    grid-column: span 4;
+  }
+
+  .city-hero {
+    grid-column: span 5;
+  }
+
+  .city-readiness-panel {
+    grid-column: span 3;
+  }
+
+  .city-field-panel {
     grid-column: span 4;
   }
 
@@ -4013,12 +6438,44 @@ p {
     grid-column: span 4;
   }
 
+  .road-rail-incident-panel {
+    grid-column: span 8;
+  }
+
+  .road-rail-side-grid {
+    grid-column: span 4;
+  }
+
   .transit-alert-panel {
     grid-column: span 8;
   }
 
   .transit-side-grid {
     grid-column: span 4;
+  }
+
+  .water-signal-panel {
+    grid-column: span 8;
+  }
+
+  .water-side-grid {
+    grid-column: span 4;
+  }
+
+  .city-service-panel {
+    grid-column: span 8;
+  }
+
+  .city-side-grid {
+    grid-column: span 4;
+  }
+
+  .city-visual-panel {
+    grid-column: span 6;
+  }
+
+  .water-schema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .summary-grid {
@@ -4072,11 +6529,35 @@ p {
     grid-column: span 5;
   }
 
+  .road-rail-incident-panel {
+    grid-column: span 7;
+  }
+
+  .road-rail-side-grid {
+    grid-column: span 5;
+  }
+
   .transit-alert-panel {
     grid-column: span 7;
   }
 
   .transit-side-grid {
+    grid-column: span 5;
+  }
+
+  .water-signal-panel {
+    grid-column: span 7;
+  }
+
+  .water-side-grid {
+    grid-column: span 5;
+  }
+
+  .city-service-panel {
+    grid-column: span 7;
+  }
+
+  .city-side-grid {
     grid-column: span 5;
   }
 }
@@ -4180,8 +6661,14 @@ p {
   .air-provider-status,
   .energy-detail-header,
   .energy-provider-status,
+  .road-rail-detail-header,
+  .road-rail-provider-status,
   .transit-detail-header,
   .transit-provider-status,
+  .water-detail-header,
+  .water-provider-status,
+  .city-detail-header,
+  .city-provider-status,
   .detail-footer {
     align-items: flex-start;
     flex-direction: column;
@@ -4234,8 +6721,14 @@ p {
   .energy-field-grid,
   .energy-source-facts,
   .energy-quality-facts,
+  .road-rail-network-grid,
+  .road-rail-quality-facts,
   .transit-scope-grid,
-  .transit-quality-facts {
+  .transit-quality-facts,
+  .water-field-grid,
+  .water-source-facts,
+  .city-field-grid,
+  .city-coverage-grid {
     grid-template-columns: 1fr;
   }
 
@@ -4254,6 +6747,24 @@ p {
     line-height: 44px;
   }
 
+  .road-rail-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .road-rail-condition-icon {
+    font-size: 64px;
+  }
+
+  .road-rail-current-cluster strong {
+    font-size: 48px;
+  }
+
+  .road-rail-incident-main {
+    flex-direction: column;
+  }
+
   .transit-current-cluster {
     gap: 16px;
   }
@@ -4268,6 +6779,39 @@ p {
 
   .transit-alert-main {
     flex-direction: column;
+  }
+
+  .city-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .city-condition-icon {
+    font-size: 64px;
+  }
+
+  .city-current-cluster strong {
+    font-size: 48px;
+  }
+
+  .city-service-main {
+    flex-direction: column;
+  }
+
+  .water-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .water-condition-icon {
+    font-size: 64px;
+  }
+
+  .water-current-cluster strong {
+    font-size: 40px;
+    line-height: 44px;
   }
 
   .weather-current-cluster {
@@ -4285,7 +6829,10 @@ p {
   .weather-provider-status > div:last-child,
   .air-provider-status > div:last-child,
   .energy-provider-status > div:last-child,
+  .road-rail-provider-status > div:last-child,
   .transit-provider-status > div:last-child,
+  .water-provider-status > div:last-child,
+  .city-provider-status > div:last-child,
   .detail-footer div {
     justify-content: flex-start;
   }
