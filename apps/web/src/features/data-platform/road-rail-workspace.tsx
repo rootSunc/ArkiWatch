@@ -1,5 +1,7 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { formatRelativeAge } from "@/features/shared/format";
 
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
@@ -21,9 +23,24 @@ type RoadRailWorkspaceProps = {
 };
 
 type RoadRailTone = "good" | "warn" | "bad" | "neutral";
+type RoadRailNetworkMetric = {
+  key: string;
+  label: string;
+  detail: string;
+  count: number;
+  tone: RoadRailTone;
+  width: number;
+};
+
+type RoadRailTimelineBounds = {
+  startsAt: number;
+  endsAt: number;
+};
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
+const MIN_TIMELINE_WINDOW_MS = 15 * 60 * 1000;
+const DEFAULT_TIMELINE_WINDOW_MS = 60 * 60 * 1000;
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -48,6 +65,28 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
   })
     .format(new Date(value))
     .toUpperCase();
+}
+
+function formatTimelineBoundary(value: number, language: LanguageMode): string {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: HELSINKI_TIME_ZONE
+  })
+    .format(new Date(value))
+    .toUpperCase();
+}
+
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, value));
 }
 
 function statusTone(status: string): RoadRailTone {
@@ -138,6 +177,81 @@ function activeConditionTone(roadRail: RoadRailCurrentResponse): RoadRailTone {
   return "good";
 }
 
+function networkCompositionRows(
+  roadRail: RoadRailCurrentResponse,
+  t: (value: string) => string
+): RoadRailNetworkMetric[] {
+  const rows: Array<Omit<RoadRailNetworkMetric, "width">> = [
+    {
+      key: "road",
+      label: t("Road events"),
+      detail: t("normalized road events"),
+      count: roadRail.quality.road_event_count,
+      tone: "warn"
+    },
+    {
+      key: "rail",
+      label: t("Rail events"),
+      detail: t("normalized rail events"),
+      count: roadRail.quality.rail_event_count,
+      tone: "good"
+    },
+    {
+      key: "weather",
+      label: t("Weather Risk"),
+      detail: t("weather-related events"),
+      count: roadRail.quality.weather_risk_count,
+      tone: "bad"
+    },
+    {
+      key: "corridors",
+      label: t("Corridors"),
+      detail: t("grouped locations"),
+      count: roadRail.quality.corridor_count,
+      tone: "neutral"
+    }
+  ];
+  const maxCount = Math.max(1, ...rows.map((row) => row.count));
+
+  return rows.map((row) => ({
+    ...row,
+    width: row.count > 0 ? Math.max(8, (row.count / maxCount) * 100) : 0
+  }));
+}
+
+function incidentTimelineBounds(incidents: RoadRailIncident[], nowMs: number): RoadRailTimelineBounds | null {
+  if (incidents.length === 0) {
+    return null;
+  }
+
+  const times = incidents.flatMap((incident) => {
+    const parsedStart = new Date(incident.starts_at).getTime();
+    const parsedEnd = new Date(incident.ends_at).getTime();
+    const startsAt = Number.isFinite(parsedStart) ? parsedStart : nowMs;
+    const endsAt = Number.isFinite(parsedEnd)
+      ? Math.max(startsAt + MIN_TIMELINE_WINDOW_MS, parsedEnd)
+      : startsAt + DEFAULT_TIMELINE_WINDOW_MS;
+
+    return [startsAt, endsAt];
+  });
+
+  const startsAt = Math.min(nowMs, ...times);
+  const endsAt = Math.max(nowMs + DEFAULT_TIMELINE_WINDOW_MS, ...times);
+
+  if (endsAt <= startsAt) {
+    return {
+      startsAt: nowMs,
+      endsAt: nowMs + DEFAULT_TIMELINE_WINDOW_MS
+    };
+  }
+
+  return { startsAt, endsAt };
+}
+
+function timelinePercent(value: number, bounds: RoadRailTimelineBounds): number {
+  return clampPercent(((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100);
+}
+
 function bboxLabel(bbox: number[] | null, t: (value: string) => string): string {
   if (!bbox || bbox.length !== 4) {
     return t("bbox unavailable");
@@ -146,8 +260,11 @@ function bboxLabel(bbox: number[] | null, t: (value: string) => string): string 
   return bbox.map((value) => value.toFixed(2)).join(" / ");
 }
 
-function renderCorridor(corridor: RoadRailCorridor, t: (value: string) => string) {
+function renderCorridor(corridor: RoadRailCorridor, t: (value: string) => string, maxEventCount: number) {
   const tone = severityTone(corridor.severity);
+  const totalWidth = corridor.event_count > 0 ? Math.max(8, (corridor.event_count / maxEventCount) * 100) : 0;
+  const activeWidth = corridor.event_count > 0 ? clampPercent((corridor.active_event_count / corridor.event_count) * 100) : 0;
+  const weatherWidth = corridor.event_count > 0 ? clampPercent((corridor.weather_risk_count / corridor.event_count) * 100) : 0;
 
   return (
     <article className={`road-rail-corridor road-rail-corridor-${tone}`} key={corridor.key}>
@@ -156,6 +273,12 @@ function renderCorridor(corridor: RoadRailCorridor, t: (value: string) => string
         <span>{t(corridor.severity)}</span>
       </div>
       <p>{corridor.latest_title}</p>
+      <span className={`road-rail-corridor-load road-rail-corridor-load-${tone}`} aria-hidden="true">
+        <span style={{ width: `${totalWidth}%` }}>
+          <i style={{ width: `${activeWidth}%` }} />
+          <em style={{ width: `${weatherWidth}%` }} />
+        </span>
+      </span>
       <div className="road-rail-corridor-meta">
         <span>{corridor.active_event_count} {t("active")}</span>
         <span>{corridor.event_count} {t("total")}</span>
@@ -217,8 +340,12 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
   const activeIncidents = roadRail.incidents.filter((incident) => incident.active);
   const topIncidents = roadRail.incidents.slice(0, 8);
   const topCorridors = roadRail.corridors.slice(0, 5);
+  const maxCorridorEvents = Math.max(1, ...topCorridors.map((corridor) => corridor.event_count));
   const severityRows = severityDistribution(roadRail.incidents);
+  const networkRows = networkCompositionRows(roadRail, t);
   const historyPoints = roadRailHistoryPoints(history, t);
+  const timebandIncidents = topIncidents.slice(0, 5);
+  const timelineBounds = incidentTimelineBounds(timebandIncidents, Date.now());
 
   return (
     <section className="road-rail-detail-page" aria-label={t("Road and rail detail")}>
@@ -312,6 +439,18 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
               <small>{t("normalized events")}</small>
             </article>
           </div>
+          <div className="road-rail-network-bars" aria-label={t("Network composition")}>
+            {networkRows.map((row) => (
+              <article className={`road-rail-network-bar road-rail-network-bar-${row.tone}`} key={row.key}>
+                <span>{row.label}</span>
+                <i aria-hidden="true">
+                  <span style={{ width: `${row.width}%` }} />
+                </i>
+                <strong>{row.count}</strong>
+                <em>{row.detail}</em>
+              </article>
+            ))}
+          </div>
         </article>
       </section>
 
@@ -351,6 +490,47 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
             </div>
             <strong>{topIncidents.length} {t("rows")}</strong>
           </header>
+          {timelineBounds ? (
+            <div className="road-rail-timeband-panel" aria-label={t("Incident time windows")}>
+              <header>
+                <span>{t("Time Windows")}</span>
+                <span>
+                  {formatTimelineBoundary(timelineBounds.startsAt, language)} -{" "}
+                  {formatTimelineBoundary(timelineBounds.endsAt, language)}
+                </span>
+              </header>
+              <div>
+                {timebandIncidents.map((incident) => {
+                  const parsedStart = new Date(incident.starts_at).getTime();
+                  const parsedEnd = new Date(incident.ends_at).getTime();
+                  const startsAt = Number.isFinite(parsedStart) ? parsedStart : timelineBounds.startsAt;
+                  const endsAt = Number.isFinite(parsedEnd)
+                    ? Math.max(startsAt + MIN_TIMELINE_WINDOW_MS, parsedEnd)
+                    : startsAt + DEFAULT_TIMELINE_WINDOW_MS;
+                  const left = timelinePercent(startsAt, timelineBounds);
+                  const right = timelinePercent(endsAt, timelineBounds);
+                  const width = Math.max(3, right - left);
+                  const bandStyle = {
+                    "--timeband-left": `${left}%`,
+                    "--timeband-width": `${width}%`
+                  } as CSSProperties;
+
+                  return (
+                    <article
+                      className={`road-rail-timeband-row road-rail-timeband-row-${severityTone(incident.severity)}`}
+                      key={incident.id}
+                    >
+                      <span>{incident.active ? t("ACTIVE NOW") : formatCompactTime(incident.starts_at, language, t)}</span>
+                      <i aria-hidden="true">
+                        <span style={bandStyle} />
+                      </i>
+                      <strong>{incident.location_ref.replaceAll("-", " ")}</strong>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
           <div className="road-rail-incident-list">
             {topIncidents.length > 0 ? (
               topIncidents.map((incident) => (
@@ -385,7 +565,7 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
             </header>
             <div>
               {topCorridors.length > 0 ? (
-                topCorridors.map((corridor) => renderCorridor(corridor, t))
+                topCorridors.map((corridor) => renderCorridor(corridor, t, maxCorridorEvents))
               ) : (
                 <p>{t("No corridor groups are active in this window.")}</p>
               )}

@@ -41,9 +41,24 @@ type PanelMetric = {
   updated_at?: string | null;
 };
 
+type EnergyPanelProfile = {
+  chartKind: "area-line" | "hourly-bars";
+  chartKindLabel: string;
+  pageClassName: string;
+  rangeLabel: string;
+  scopeValueLabel?: string;
+  spreadLabel: string;
+  unitLabel: string;
+  valueColumnLabel: string;
+  detailColumnLabel: string;
+  signalScopeLabel: string;
+  noUnitLabel: string;
+};
+
 const PRICE_CHART_WIDTH = 720;
 const PRICE_CHART_HEIGHT = 240;
 const PRICE_CHART_PADDING = 30;
+const PRICE_CHART_BASELINE = PRICE_CHART_HEIGHT - PRICE_CHART_PADDING;
 const ENERGY_PANEL_TABS: Array<{
   key: EnergyPanelKey;
   label: string;
@@ -63,6 +78,33 @@ const ENERGY_PANEL_TABS: Array<{
     description: "Household spot-price forecast"
   }
 ];
+const ENERGY_PANEL_PROFILES: Record<EnergyPanelKey, EnergyPanelProfile> = {
+  fingrid: {
+    chartKind: "area-line",
+    chartKindLabel: "Continuous system curve",
+    pageClassName: "energy-detail-page-system",
+    rangeLabel: "System value range",
+    spreadLabel: "System spread",
+    unitLabel: "Signal unit",
+    valueColumnLabel: "Signal value",
+    detailColumnLabel: "Ends",
+    signalScopeLabel: "Configured system dataset",
+    noUnitLabel: "raw value"
+  },
+  porssisahko: {
+    chartKind: "hourly-bars",
+    chartKindLabel: "Hourly spot-price bars",
+    pageClassName: "energy-detail-page-price",
+    rangeLabel: "Spot price range",
+    scopeValueLabel: "48h spot-price feed",
+    spreadLabel: "Price spread",
+    unitLabel: "Price unit",
+    valueColumnLabel: "Spot price",
+    detailColumnLabel: "Cost",
+    signalScopeLabel: "Household cost signal",
+    noUnitLabel: "c/kWh"
+  }
+};
 
 function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
   if (!metric) {
@@ -286,6 +328,50 @@ function formatEstimatedCost(value: number | null | undefined, t: (value: string
   return `EUR ${value.toFixed(2)}`;
 }
 
+function formatEnergyRange(
+  range: { min: number; max: number },
+  unit: string | null | undefined,
+  t: (value: string) => string
+): string {
+  const unitSuffix = unit ? ` ${unit}` : "";
+  return `${range.min.toFixed(2)} ${t("to")} ${range.max.toFixed(2)}${unitSuffix}`;
+}
+
+function formatEnergySpread(range: { min: number; max: number }, unit: string | null | undefined): string {
+  const unitSuffix = unit ? ` ${unit}` : "";
+  return `${(range.max - range.min).toFixed(2)}${unitSuffix}`;
+}
+
+function sourceRequestLabel(energy: EnergyCurrentResponse | null, fallback: string): string {
+  const endpoint = energy?.source_requests.find((request) => request.endpoint)?.endpoint;
+  const datasetMatch = endpoint?.match(/\/datasets\/([^/]+)\/data/);
+  if (datasetMatch) {
+    return `dataset ${datasetMatch[1]}`;
+  }
+
+  return energy?.source_requests[0]?.key ?? fallback;
+}
+
+function chartScale(points: EnergyPoint[], includeZero: boolean): { min: number; max: number } {
+  if (points.length === 0) {
+    return { min: 0, max: 1 };
+  }
+
+  const values = points.map((point) => point.value);
+  const rawMin = includeZero ? Math.min(0, ...values) : Math.min(...values);
+  const rawMax = includeZero ? Math.max(0, ...values) : Math.max(...values);
+  if (rawMin === rawMax) {
+    const padding = rawMax === 0 ? 1 : Math.abs(rawMax) * 0.12;
+    return { min: rawMin - padding, max: rawMax + padding };
+  }
+
+  const padding = (rawMax - rawMin) * 0.08;
+  return {
+    min: includeZero ? Math.min(0, rawMin - padding) : rawMin - padding,
+    max: includeZero ? Math.max(0, rawMax + padding) : rawMax + padding
+  };
+}
+
 function chartY(value: number, min: number, max: number): number {
   if (max === min) {
     return PRICE_CHART_HEIGHT / 2;
@@ -304,28 +390,26 @@ function chartX(index: number, count: number): number {
   return PRICE_CHART_PADDING + (index / (count - 1)) * innerWidth;
 }
 
-function priceLinePath(points: EnergyPoint[]): string {
+function priceLinePath(points: EnergyPoint[], scale: { min: number; max: number }): string {
   if (points.length === 0) {
     return "";
   }
 
-  const { min, max } = pointValueRange(points);
   return points
     .map((point, index) => {
       const command = index === 0 ? "M" : "L";
-      return `${command}${chartX(index, points.length).toFixed(1)},${chartY(point.value, min, max).toFixed(1)}`;
+      return `${command}${chartX(index, points.length).toFixed(1)},${chartY(point.value, scale.min, scale.max).toFixed(1)}`;
     })
     .join(" ");
 }
 
-function priceAreaPath(points: EnergyPoint[]): string {
+function priceAreaPath(points: EnergyPoint[], scale: { min: number; max: number }): string {
   if (points.length === 0) {
     return "";
   }
 
-  const line = priceLinePath(points);
-  const baseline = PRICE_CHART_HEIGHT - PRICE_CHART_PADDING;
-  return `${line} L${chartX(points.length - 1, points.length).toFixed(1)},${baseline} L${PRICE_CHART_PADDING},${baseline} Z`;
+  const line = priceLinePath(points, scale);
+  return `${line} L${chartX(points.length - 1, points.length).toFixed(1)},${PRICE_CHART_BASELINE} L${PRICE_CHART_PADDING},${PRICE_CHART_BASELINE} Z`;
 }
 
 function isWindowPoint(point: EnergyPoint, startsAt: string | null | undefined, endsAt: string | null | undefined): boolean {
@@ -423,6 +507,7 @@ export function EnergyWorkspace({
   }
 
   const isPricePanel = activePanel === "porssisahko";
+  const activeProfile = ENERGY_PANEL_PROFILES[activePanel];
   const activeEnergy = isPricePanel ? householdEnergy : energy;
   const activeHistory = isPricePanel ? householdHistory : history;
   const activeSource = sourceByCode(category, activePanel);
@@ -481,6 +566,7 @@ export function EnergyWorkspace({
   const points = activeEnergy?.points ?? [];
   const chartPoints = points.slice(0, 96);
   const chartRange = chartPoints.length > 0 ? pointValueRange(chartPoints) : null;
+  const chartVisualScale = chartPoints.length > 0 ? chartScale(chartPoints, isPricePanel) : null;
   const chartLabels = chartPoints.length > 0
     ? [
         chartPoints[0],
@@ -493,6 +579,10 @@ export function EnergyWorkspace({
   const activeTitle = isPricePanel ? t("Porssisahko Household Price") : t("Fingrid Energy Signals");
   const panelDescription = isPricePanel ? t("Household spot-price forecast") : t("Electricity system telemetry");
   const activeSourceName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
+  const activeUnitLabel = activeEnergy?.unit ?? t(activeProfile.noUnitLabel);
+  const activeScopeLabel = isPricePanel
+    ? t(activeProfile.scopeValueLabel ?? activeProfile.signalScopeLabel)
+    : sourceRequestLabel(activeEnergy, t(activeProfile.signalScopeLabel));
   const activeVolumePoints = activeSourcePoints.length > 0 ? activeSourcePoints : [{
     label: activePanel,
     value: activeSource?.records_ingested ?? 0,
@@ -501,11 +591,16 @@ export function EnergyWorkspace({
   }];
 
   return (
-    <section className="energy-detail-page" aria-label={t("Energy detail")}>
+    <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={t("Energy detail")}>
       <div className="energy-detail-header">
         <div>
           <h2>{activeTitle}</h2>
           <p>{panelDescription}</p>
+          <div className="energy-profile-meta" aria-label={t("Energy signal scope")}>
+            <span>{t(activeProfile.signalScopeLabel)}</span>
+            <span>{activeScopeLabel}</span>
+            <span>{activeUnitLabel}</span>
+          </div>
           <div className="energy-live-status">
             <span aria-hidden="true" />
             <strong>{activeSourceLabel}</strong>
@@ -661,11 +756,29 @@ export function EnergyWorkspace({
             </div>
             <strong>{signalMetrics.length} {t("metrics")}</strong>
           </header>
-          {chartPoints.length > 0 && chartRange ? (
+          {chartPoints.length > 0 && chartRange && chartVisualScale ? (
             <div className="energy-price-chart" aria-label={isPricePanel ? t("Household electricity price forecast") : t("Fingrid electricity-system timeseries")}>
+              <div className="energy-chart-context" aria-label={t("Energy chart context")}>
+                <article>
+                  <span>{t(activeProfile.rangeLabel)}</span>
+                  <strong>{formatEnergyRange(chartRange, activeEnergy?.unit, t)}</strong>
+                </article>
+                <article>
+                  <span>{t(activeProfile.spreadLabel)}</span>
+                  <strong>{formatEnergySpread(chartRange, activeEnergy?.unit)}</strong>
+                </article>
+                <article>
+                  <span>{t(activeProfile.unitLabel)}</span>
+                  <strong>{activeUnitLabel}</strong>
+                </article>
+                <article>
+                  <span>{t("Chart form")}</span>
+                  <strong>{t(activeProfile.chartKindLabel)}</strong>
+                </article>
+              </div>
               <div className="energy-price-chart-head">
-                <span>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, activeEnergy?.unit)}</span>
-                <strong>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, activeEnergy?.unit)}</strong>
+                <span>{t("Min")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, activeEnergy?.unit)}</span>
+                <strong>{t("Max")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, activeEnergy?.unit)}</strong>
               </div>
               <svg
                 aria-hidden="true"
@@ -677,30 +790,69 @@ export function EnergyWorkspace({
                   className="energy-price-grid-line"
                   x1={PRICE_CHART_PADDING}
                   x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
-                  y1={chartY(chartRange.max, chartRange.min, chartRange.max)}
-                  y2={chartY(chartRange.max, chartRange.min, chartRange.max)}
+                  y1={chartY(chartVisualScale.max, chartVisualScale.min, chartVisualScale.max)}
+                  y2={chartY(chartVisualScale.max, chartVisualScale.min, chartVisualScale.max)}
                 />
                 <line
                   className="energy-price-grid-line"
                   x1={PRICE_CHART_PADDING}
                   x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
-                  y1={chartY(chartRange.min, chartRange.min, chartRange.max)}
-                  y2={chartY(chartRange.min, chartRange.min, chartRange.max)}
+                  y1={chartY(chartVisualScale.min, chartVisualScale.min, chartVisualScale.max)}
+                  y2={chartY(chartVisualScale.min, chartVisualScale.min, chartVisualScale.max)}
                 />
-                <path className="energy-price-area" d={priceAreaPath(chartPoints)} />
-                <path className="energy-price-path" d={priceLinePath(chartPoints)} />
-                {chartPoints.map((point, index) => {
-                  const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
-                  return (
-                    <circle
-                      className={inWindow ? "energy-price-dot energy-price-dot-window" : "energy-price-dot"}
-                      cx={chartX(index, chartPoints.length)}
-                      cy={chartY(point.value, chartRange.min, chartRange.max)}
-                      key={point.starts_at}
-                      r={inWindow ? 4.5 : 2.6}
-                    />
-                  );
-                })}
+                {chartVisualScale.min < 0 && chartVisualScale.max > 0 ? (
+                  <line
+                    className="energy-price-zero-line"
+                    x1={PRICE_CHART_PADDING}
+                    x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
+                    y1={chartY(0, chartVisualScale.min, chartVisualScale.max)}
+                    y2={chartY(0, chartVisualScale.min, chartVisualScale.max)}
+                  />
+                ) : null}
+                {activeProfile.chartKind === "hourly-bars" ? (
+                  chartPoints.map((point, index) => {
+                    const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
+                    const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PADDING * 2;
+                    const slotWidth = innerWidth / Math.max(chartPoints.length, 1);
+                    const barWidth = Math.max(3, slotWidth * 0.62);
+                    const baseline = chartY(0, chartVisualScale.min, chartVisualScale.max);
+                    const pointY = chartY(point.value, chartVisualScale.min, chartVisualScale.max);
+                    const y = Math.min(pointY, baseline);
+                    const height = Math.max(2, Math.abs(baseline - pointY));
+                    return (
+                      <rect
+                        className={[
+                          "energy-price-bar",
+                          point.value < 0 ? "energy-price-bar-negative" : "",
+                          inWindow ? "energy-price-bar-window" : ""
+                        ].filter(Boolean).join(" ")}
+                        height={height}
+                        key={point.starts_at}
+                        rx="3"
+                        width={barWidth}
+                        x={chartX(index, chartPoints.length) - barWidth / 2}
+                        y={y}
+                      />
+                    );
+                  })
+                ) : (
+                  <>
+                    <path className="energy-price-area" d={priceAreaPath(chartPoints, chartVisualScale)} />
+                    <path className="energy-price-path" d={priceLinePath(chartPoints, chartVisualScale)} />
+                    {chartPoints.map((point, index) => {
+                      const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
+                      return (
+                        <circle
+                          className={inWindow ? "energy-price-dot energy-price-dot-window" : "energy-price-dot"}
+                          cx={chartX(index, chartPoints.length)}
+                          cy={chartY(point.value, chartVisualScale.min, chartVisualScale.max)}
+                          key={point.starts_at}
+                          r={inWindow ? 4.5 : 2.6}
+                        />
+                      );
+                    })}
+                  </>
+                )}
               </svg>
               <div className="energy-price-axis" aria-hidden="true">
                 {chartLabels.map((point) => (
@@ -708,6 +860,11 @@ export function EnergyWorkspace({
                 ))}
               </div>
               <div className="energy-price-list">
+                <article className="energy-price-row energy-price-row-heading" aria-hidden="true">
+                  <span>{t("Starts")}</span>
+                  <strong>{t(activeProfile.valueColumnLabel)}</strong>
+                  <em>{t(activeProfile.detailColumnLabel)}</em>
+                </article>
                 {chartPoints.slice(0, 12).map((point) => {
                   const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
                   return (

@@ -1,5 +1,8 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
+import type { SourceDatasetStructure, SourceNormalizedEventStructure } from "@/features/public-dashboard/types";
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
@@ -18,6 +21,7 @@ type WaterSnowWorkspaceProps = {
 };
 
 type WaterTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
+type WaterFieldSignalKey = "level" | "flow" | "ground" | "snow" | "risk";
 
 type PanelMetric = {
   key: string;
@@ -27,6 +31,28 @@ type PanelMetric = {
   tone?: string | null;
   detail?: string | null;
   updated_at?: string | null;
+};
+
+type WaterShapeRow = {
+  key: string;
+  label: string;
+  count: number;
+  tone: WaterTone;
+  width: number;
+};
+
+type WaterGuidanceRow = {
+  key: string;
+  label: string;
+  icon: string;
+  tone: WaterTone;
+  status: string;
+  width: number;
+};
+
+type WaterTimelineBounds = {
+  startsAt: number;
+  endsAt: number;
 };
 
 const SUMMARY_KEYS = [
@@ -43,6 +69,24 @@ const FIELD_ICONS: Record<string, string> = {
   snow_water_equivalent: "cloudy_snowing",
   water_level: "water_drop"
 };
+
+const FIELD_SIGNAL_COLUMNS: Array<{ key: WaterFieldSignalKey; label: string }> = [
+  { key: "level", label: "Level" },
+  { key: "flow", label: "Flow" },
+  { key: "ground", label: "Ground" },
+  { key: "snow", label: "Snow" },
+  { key: "risk", label: "Risk" }
+];
+
+const GUIDANCE_TYPES = [
+  { key: "flood", label: "Flood guidance", icon: "flood" },
+  { key: "drought", label: "Drought guidance", icon: "water_drop" },
+  { key: "snow", label: "Snow-load guidance", icon: "cloudy_snowing" },
+  { key: "algae", label: "Algae guidance", icon: "water" }
+];
+
+const MIN_TIMELINE_WINDOW_MS = 15 * 60 * 1000;
+const DEFAULT_TIMELINE_WINDOW_MS = 60 * 60 * 1000;
 
 function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetric {
   return metric !== null;
@@ -121,6 +165,14 @@ function metricProgress(metric: PanelMetric | null): number {
   return Math.max(8, Math.min(100, value));
 }
 
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, value));
+}
+
 function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
   return value ? formatRelativeAge(value, language) : t("not observed");
 }
@@ -133,6 +185,20 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Helsinki"
+  })
+    .format(new Date(value))
+    .toUpperCase();
+}
+
+function formatTimelineBoundary(value: number, language: LanguageMode): string {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -180,6 +246,101 @@ function sourceVolumePoints(category: PlatformCategory): PlatformVisualizationPo
 function catalogCoveragePoints(category: PlatformCategory): PlatformVisualizationPoint[] {
   const coverage = category.visualizations.find((item) => item.id === "water-catalog-coverage");
   return coverage?.data.points ?? [];
+}
+
+function schemaShapeTone(shape: string): WaterTone {
+  if (shape === "timeseries") {
+    return "good";
+  }
+  if (shape === "event_stream") {
+    return "warn";
+  }
+  if (shape === "service_directory") {
+    return "neutral";
+  }
+  return "neutral";
+}
+
+function schemaShapeRows(datasets: SourceDatasetStructure[], language: LanguageMode): WaterShapeRow[] {
+  const counts = datasets.reduce<Map<string, number>>((accumulator, dataset) => {
+    accumulator.set(dataset.shape, (accumulator.get(dataset.shape) ?? 0) + 1);
+    return accumulator;
+  }, new Map<string, number>());
+  const maxCount = Math.max(1, ...counts.values());
+
+  return Array.from(counts.entries()).map(([shape, count]) => ({
+    key: shape,
+    label: translateEnumLabel(language, shape),
+    count,
+    tone: schemaShapeTone(shape),
+    width: count > 0 ? Math.max(12, (count / maxCount) * 100) : 0
+  }));
+}
+
+function fieldSignalKeys(field: string): WaterFieldSignalKey[] {
+  if (field === "water_level") {
+    return ["level", "risk"];
+  }
+  if (field === "discharge") {
+    return ["flow", "risk"];
+  }
+  if (field === "groundwater") {
+    return ["ground", "risk"];
+  }
+  if (field === "snow_water_equivalent") {
+    return ["snow", "risk"];
+  }
+  if (field === "flood_warning") {
+    return ["level", "flow", "risk"];
+  }
+  return ["risk"];
+}
+
+function guidanceRows(eventSchemas: SourceNormalizedEventStructure[], t: (value: string) => string): WaterGuidanceRow[] {
+  return GUIDANCE_TYPES.map((guidance) => {
+    const isMapped = eventSchemas.some((schema) => {
+      const eventType = schema.event_type.toLowerCase();
+      return eventType.includes(guidance.key) || schema.description.toLowerCase().includes(guidance.key);
+    });
+
+    return {
+      key: guidance.key,
+      label: t(guidance.label),
+      icon: guidance.icon,
+      tone: isMapped ? "good" : "neutral",
+      status: isMapped ? t("mapped") : t("reserved"),
+      width: isMapped ? 100 : 28
+    };
+  });
+}
+
+function timelineBounds(items: PlatformVisualizationTimelineItem[]): WaterTimelineBounds | null {
+  if (items.length === 0) {
+    return null;
+  }
+
+  const times = items.flatMap((item) => {
+    const parsedStart = new Date(item.starts_at).getTime();
+    const parsedEnd = new Date(item.ends_at).getTime();
+    const startsAt = Number.isFinite(parsedStart) ? parsedStart : Date.now();
+    const endsAt = Number.isFinite(parsedEnd)
+      ? Math.max(startsAt + MIN_TIMELINE_WINDOW_MS, parsedEnd)
+      : startsAt + DEFAULT_TIMELINE_WINDOW_MS;
+
+    return [startsAt, endsAt];
+  });
+  const startsAt = Math.min(...times);
+  const endsAt = Math.max(...times);
+
+  if (endsAt <= startsAt) {
+    return { startsAt, endsAt: startsAt + DEFAULT_TIMELINE_WINDOW_MS };
+  }
+
+  return { startsAt, endsAt };
+}
+
+function timelinePercent(value: number, bounds: WaterTimelineBounds): number {
+  return clampPercent(((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100);
 }
 
 function pointWidth(point: PlatformVisualizationPoint, points: PlatformVisualizationPoint[]): number {
@@ -242,6 +403,9 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
   const sourcePoints = sourceVolumePoints(category);
   const severityRows = severityPoints(category);
   const coverageRows = catalogCoveragePoints(category);
+  const shapeRows = schemaShapeRows(datasets, language);
+  const waterTimelineBounds = timelineBounds(timeline);
+  const waterGuidanceRows = guidanceRows(eventSchemas, t);
   const sourceRows =
     sourcePoints.length > 0
       ? sourcePoints
@@ -363,6 +527,32 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               </article>
             ))}
           </div>
+          {keyDataItems.length > 0 ? (
+            <div className="water-field-lattice" aria-label={t("Hydrology field matrix")}>
+              <div className="water-field-lattice-head">
+                <span>{t("Signal")}</span>
+                {FIELD_SIGNAL_COLUMNS.map((column) => (
+                  <span key={column.key}>{t(column.label)}</span>
+                ))}
+              </div>
+              {keyDataItems.map((field) => {
+                const activeSignals = fieldSignalKeys(field);
+
+                return (
+                  <div className="water-field-lattice-row" key={field}>
+                    <strong>{t(formatDataItemLabel(field))}</strong>
+                    {FIELD_SIGNAL_COLUMNS.map((column) => (
+                      <i
+                        aria-label={`${t(formatDataItemLabel(field))} ${t(column.label)}`}
+                        className={activeSignals.includes(column.key) ? "active" : undefined}
+                        key={column.key}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </article>
       </section>
 
@@ -385,22 +575,59 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             <strong>{signalMetrics.length} {t("metrics")}</strong>
           </header>
 
+          {shapeRows.length > 0 ? (
+            <div className="water-schema-shape-bars" aria-label={t("Dataset shape distribution")}>
+              {shapeRows.map((row) => (
+                <article className={`water-schema-shape-row water-schema-shape-row-${row.tone}`} key={row.key}>
+                  <span>{row.label}</span>
+                  <i aria-hidden="true">
+                    <span style={{ width: `${row.width}%` }} />
+                  </i>
+                  <strong>{row.count}</strong>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
           <div className="water-schema-grid">
             {datasets.length > 0 ? (
-              datasets.map((dataset) => (
-                <article className="water-schema-card" key={dataset.dataset}>
-                  <div>
-                    <strong>{dataset.label}</strong>
-                    <span>{dataset.shape.replaceAll("_", " ")}</span>
-                  </div>
-                  <p>{dataset.spatial_grain} · {dataset.cadence}</p>
-                  <div className="water-schema-fields">
-                    {dataset.fields.slice(0, 4).map((field) => (
-                      <span key={field.key}>{field.label}</span>
-                    ))}
-                  </div>
-                </article>
-              ))
+              datasets.map((dataset) => {
+                const requiredFieldCount = dataset.fields.filter((field) => field.required).length;
+                const fieldTotal = Math.max(1, dataset.fields.length);
+
+                return (
+                  <article className="water-schema-card" key={dataset.dataset}>
+                    <div>
+                      <strong>{dataset.label}</strong>
+                      <span>{translateEnumLabel(language, dataset.shape)}</span>
+                    </div>
+                    <p>{dataset.spatial_grain} · {dataset.cadence}</p>
+                    <div className="water-schema-composition">
+                      <span>
+                        {requiredFieldCount}/{dataset.fields.length} {t("required fields")}
+                      </span>
+                      <i aria-hidden="true">
+                        <span style={{ width: `${Math.max(8, (requiredFieldCount / fieldTotal) * 100)}%` }} />
+                      </i>
+                    </div>
+                    <div className="water-schema-field-strip" aria-label={t("Field requirement lattice")}>
+                      {dataset.fields.slice(0, 10).map((field) => (
+                        <span
+                          aria-label={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                          className={field.required ? "required" : undefined}
+                          key={field.key}
+                          title={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="water-schema-fields">
+                      {dataset.fields.slice(0, 4).map((field) => (
+                        <span key={field.key}>{field.label}</span>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })
             ) : (
               <article className="water-schema-card">
                   <div>
@@ -479,20 +706,75 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               <strong>{events.length}</strong>
             </header>
             {timeline.length > 0 ? (
-              <div className="water-event-list">
-                {timeline.map((item) => (
-                  <article className={`water-event water-event-${eventTone(item)}`} key={item.id}>
-                    <span className="water-event-dot" aria-hidden="true" />
+              <>
+                {waterTimelineBounds ? (
+                  <div className="water-timeband-panel" aria-label={t("Water guidance time windows")}>
+                    <header>
+                      <span>{t("Time Windows")}</span>
+                      <span>
+                        {formatTimelineBoundary(waterTimelineBounds.startsAt, language)} -{" "}
+                        {formatTimelineBoundary(waterTimelineBounds.endsAt, language)}
+                      </span>
+                    </header>
                     <div>
-                      <time>{formatCompactTime(item.starts_at, language, t)}</time>
-                      <strong>{item.label}</strong>
-                      <p>{item.detail}</p>
+                      {timeline.slice(0, 5).map((item) => {
+                        const parsedStart = new Date(item.starts_at).getTime();
+                        const parsedEnd = new Date(item.ends_at).getTime();
+                        const startsAt = Number.isFinite(parsedStart) ? parsedStart : waterTimelineBounds.startsAt;
+                        const endsAt = Number.isFinite(parsedEnd)
+                          ? Math.max(startsAt + MIN_TIMELINE_WINDOW_MS, parsedEnd)
+                          : startsAt + DEFAULT_TIMELINE_WINDOW_MS;
+                        const left = timelinePercent(startsAt, waterTimelineBounds);
+                        const right = timelinePercent(endsAt, waterTimelineBounds);
+                        const bandStyle = {
+                          "--timeband-left": `${left}%`,
+                          "--timeband-width": `${Math.max(3, right - left)}%`
+                        } as CSSProperties;
+
+                        return (
+                          <article className={`water-timeband-row water-timeband-row-${eventTone(item)}`} key={item.id}>
+                            <span>{formatCompactTime(item.starts_at, language, t)}</span>
+                            <i aria-hidden="true">
+                              <span style={bandStyle} />
+                            </i>
+                            <strong>{item.label}</strong>
+                          </article>
+                        );
+                      })}
                     </div>
-                  </article>
-                ))}
-              </div>
+                  </div>
+                ) : null}
+                <div className="water-event-list">
+                  {timeline.map((item) => (
+                    <article className={`water-event water-event-${eventTone(item)}`} key={item.id}>
+                      <span className="water-event-dot" aria-hidden="true" />
+                      <div>
+                        <time>{formatCompactTime(item.starts_at, language, t)}</time>
+                        <strong>{item.label}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="water-severity-bars">
+                <div className="water-guidance-grid" aria-label={t("Guidance readiness")}>
+                  {waterGuidanceRows.map((row) => (
+                    <article className={`water-guidance-row water-guidance-row-${row.tone}`} key={row.key}>
+                      <span className="material-symbols-outlined" aria-hidden="true">
+                        {row.icon}
+                      </span>
+                      <div>
+                        <strong>{row.label}</strong>
+                        <i aria-hidden="true">
+                          <span style={{ width: `${row.width}%` }} />
+                        </i>
+                      </div>
+                      <em>{row.status}</em>
+                    </article>
+                  ))}
+                </div>
                 {severityRows.map((row) => (
                   <article className={`water-severity-row water-severity-row-${row.tone ?? "neutral"}`} key={row.label}>
                     <span>{row.label}</span>

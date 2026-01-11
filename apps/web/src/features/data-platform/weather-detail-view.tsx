@@ -55,24 +55,138 @@ type CurrentMetricCard = {
   tone: string;
 };
 
+type ForecastChartKind = "line" | "bar" | "area" | "band" | "dual-line";
+type ForecastChartTone = "primary" | "rain" | "wind" | "cloud" | "humidity" | "pressure" | "visibility";
+
+type ForecastChartConfig = {
+  key: ChartMode;
+  label: string;
+  fullLabel: string;
+  unit: string;
+  tone: ForecastChartTone;
+  kind: ForecastChartKind;
+  description: string;
+  floorZero?: boolean;
+  fixedMin?: number;
+  fixedMax?: number;
+  pairedKey?: ChartMode;
+  pairedLabel?: string;
+};
+
+type ForecastChartPoint = {
+  label: string;
+  sourceCount: number;
+  sourceIndex: number;
+  timestamp: string;
+  value: number;
+};
+
+type ForecastChartScale = {
+  min: number;
+  max: number;
+};
+
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const OUTDOOR_MAX_GUST_MS = 14;
 const OUTDOOR_MIN_VISIBILITY_M = 5000;
-const CHART_MODES: Array<{
-  key: ChartMode;
-  label: string;
-  unit: string;
-  tone: "primary" | "rain" | "wind" | "cloud" | "humidity" | "pressure" | "visibility";
-}> = [
-  { key: "temperature", label: "TMP", unit: "°", tone: "primary" },
-  { key: "precipitation", label: "PRCP", unit: " mm", tone: "rain" },
-  { key: "wind", label: "WIND", unit: " m/s", tone: "wind" },
-  { key: "gust", label: "GUST", unit: " m/s", tone: "wind" },
-  { key: "cloud", label: "CLD", unit: "%", tone: "cloud" },
-  { key: "humidity", label: "RH", unit: "%", tone: "humidity" },
-  { key: "dewPoint", label: "DEW", unit: "°", tone: "humidity" },
-  { key: "pressure", label: "HPA", unit: " hPa", tone: "pressure" },
-  { key: "visibility", label: "VIS", unit: " km", tone: "visibility" }
+const FORECAST_CHART_WIDTH = 1000;
+const FORECAST_CHART_HEIGHT = 220;
+const FORECAST_CHART_TOP = 18;
+const FORECAST_CHART_BOTTOM = 190;
+const CHART_MODES: ForecastChartConfig[] = [
+  {
+    key: "temperature",
+    label: "TMP",
+    fullLabel: "Temperature",
+    unit: "°",
+    tone: "primary",
+    kind: "line",
+    description: "Continuous thermal curve"
+  },
+  {
+    key: "precipitation",
+    label: "PRCP",
+    fullLabel: "Precipitation",
+    unit: " mm",
+    tone: "rain",
+    kind: "bar",
+    description: "Hourly rain volume",
+    floorZero: true
+  },
+  {
+    key: "wind",
+    label: "WIND",
+    fullLabel: "Wind and Gust",
+    unit: " m/s",
+    tone: "wind",
+    kind: "dual-line",
+    description: "Sustained wind with gust overlay",
+    floorZero: true,
+    pairedKey: "gust",
+    pairedLabel: "Gust"
+  },
+  {
+    key: "gust",
+    label: "GUST",
+    fullLabel: "Gust and Wind",
+    unit: " m/s",
+    tone: "wind",
+    kind: "dual-line",
+    description: "Gust peaks against sustained wind",
+    floorZero: true,
+    pairedKey: "wind",
+    pairedLabel: "Wind"
+  },
+  {
+    key: "cloud",
+    label: "CLD",
+    fullLabel: "Cloud Cover",
+    unit: "%",
+    tone: "cloud",
+    kind: "band",
+    description: "Percent coverage band",
+    fixedMin: 0,
+    fixedMax: 100
+  },
+  {
+    key: "humidity",
+    label: "RH",
+    fullLabel: "Humidity",
+    unit: "%",
+    tone: "humidity",
+    kind: "band",
+    description: "Relative humidity band",
+    fixedMin: 0,
+    fixedMax: 100
+  },
+  {
+    key: "dewPoint",
+    label: "DEW",
+    fullLabel: "Dew Point",
+    unit: "°",
+    tone: "humidity",
+    kind: "line",
+    description: "Moisture temperature curve"
+  },
+  {
+    key: "pressure",
+    label: "HPA",
+    fullLabel: "Pressure",
+    unit: " hPa",
+    tone: "pressure",
+    kind: "line",
+    description: "Pressure trend line"
+  },
+  {
+    key: "visibility",
+    label: "VIS",
+    fullLabel: "Visibility",
+    unit: " km",
+    tone: "visibility",
+    kind: "area",
+    description: "Distance envelope",
+    floorZero: true
+  }
 ];
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
@@ -360,7 +474,7 @@ function buildTimelineItems(
   return [...warningItems, ...syntheticItems, ...eventItems].slice(0, 5);
 }
 
-function chartConfig(mode: ChartMode) {
+function chartConfig(mode: ChartMode): ForecastChartConfig {
   return CHART_MODES.find((item) => item.key === mode) ?? CHART_MODES[0];
 }
 
@@ -389,53 +503,135 @@ function chartValue(point: WeatherForecastPoint, mode: ChartMode): number | null
   }
 }
 
-function chartPoints(points: WeatherForecastPoint[], mode: ChartMode, language: LanguageMode): Array<{ label: string; value: number }> {
-  return points.flatMap((point) => {
+function chartPoints(
+  points: WeatherForecastPoint[],
+  mode: ChartMode,
+  language: LanguageMode
+): ForecastChartPoint[] {
+  return points.flatMap((point, index) => {
     const value = chartValue(point, mode);
     if (value === null || value === undefined) {
       return [];
     }
 
-    return [{ label: formatCompactTime(point.timestamp, language), value }];
+    return [
+      {
+        label: formatCompactTime(point.timestamp, language),
+        sourceCount: points.length,
+        sourceIndex: index,
+        timestamp: point.timestamp,
+        value
+      }
+    ];
   });
 }
 
-function chartPolyline(points: Array<{ value: number }>): string {
+function chartScale(
+  config: ForecastChartConfig,
+  primaryPoints: ForecastChartPoint[],
+  secondaryPoints: ForecastChartPoint[] = []
+): ForecastChartScale {
+  if (config.fixedMin !== undefined && config.fixedMax !== undefined) {
+    return { min: config.fixedMin, max: config.fixedMax };
+  }
+
+  const values = [...primaryPoints, ...secondaryPoints].map((point) => point.value);
+  if (values.length === 0) {
+    return {
+      min: config.fixedMin ?? 0,
+      max: config.fixedMax ?? 1
+    };
+  }
+
+  const rawMin = config.fixedMin ?? (config.floorZero ? 0 : Math.min(...values));
+  const rawMax = config.fixedMax ?? Math.max(...values, config.floorZero ? 1 : values[0]);
+  if (rawMax === rawMin) {
+    const padding = rawMax === 0 ? 1 : Math.abs(rawMax) * 0.12;
+    return {
+      min: config.floorZero ? 0 : rawMin - padding,
+      max: rawMax + padding
+    };
+  }
+
+  const padding = config.fixedMax !== undefined ? 0 : Math.max((rawMax - rawMin) * 0.12, config.floorZero ? 0 : 0.5);
+  return {
+    min: config.floorZero ? 0 : rawMin - padding,
+    max: rawMax + padding
+  };
+}
+
+function chartX(index: number, count: number): number {
+  if (count <= 1) {
+    return 0;
+  }
+
+  return (index / (count - 1)) * FORECAST_CHART_WIDTH;
+}
+
+function chartPointX(point: ForecastChartPoint): number {
+  return chartX(point.sourceIndex, point.sourceCount);
+}
+
+function chartY(value: number, scale: ForecastChartScale): number {
+  if (scale.max === scale.min) {
+    return FORECAST_CHART_TOP + (FORECAST_CHART_BOTTOM - FORECAST_CHART_TOP) / 2;
+  }
+
+  return (
+    FORECAST_CHART_BOTTOM -
+    ((value - scale.min) / (scale.max - scale.min)) * (FORECAST_CHART_BOTTOM - FORECAST_CHART_TOP)
+  );
+}
+
+function chartLinePath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
   if (points.length === 0) {
     return "";
   }
 
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, min + 1);
-  const pad = Math.max((max - min) * 0.15, 1);
-  const low = min - pad;
-  const high = max + pad;
   return points
     .map((point, index) => {
-      const x = points.length === 1 ? 0 : (index / (points.length - 1)) * 1000;
-      const y = 190 - ((point.value - low) / (high - low)) * 170;
+      const x = chartPointX(point);
+      const y = chartY(point.value, scale);
+      const command = index === 0 ? "M" : "L";
+      return `${command}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function chartAreaPath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
+  if (points.length === 0) {
+    return "";
+  }
+
+  const linePath = chartLinePath(points, scale);
+  return `${linePath} L${chartPointX(points[points.length - 1]).toFixed(1)},${FORECAST_CHART_BOTTOM} L${chartPointX(points[0]).toFixed(1)},${FORECAST_CHART_BOTTOM} Z`;
+}
+
+function chartPolyline(points: ForecastChartPoint[], scale: ForecastChartScale): string {
+  return points
+    .map((point) => {
+      const x = chartPointX(point);
+      const y = chartY(point.value, scale);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(" ");
 }
 
-function chartAxis(points: Array<{ value: number }>): { top: string; middle: string; bottom: string } {
-  if (points.length === 0) {
-    return { top: "n/a", middle: "n/a", bottom: "n/a" };
-  }
-
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, min + 1);
+function chartAxis(scale: ForecastChartScale, config: ForecastChartConfig): { top: string; middle: string; bottom: string } {
+  const digits = ["pressure", "cloud", "humidity"].includes(config.key) ? 0 : 1;
   return {
-    top: formatNumber(max, 0),
-    middle: formatNumber((max + min) / 2, 0),
-    bottom: formatNumber(min, 0)
+    top: formatNumber(scale.max, digits),
+    middle: formatNumber((scale.max + scale.min) / 2, digits),
+    bottom: formatNumber(scale.min, digits)
   };
 }
 
-function chartReadout(points: Array<{ value: number }>, mode: ChartMode, t: (value: string) => string): string {
+function chartReadout(
+  points: ForecastChartPoint[],
+  mode: ChartMode,
+  t: (value: string) => string,
+  secondaryPoints: ForecastChartPoint[] = []
+): string {
   if (points.length === 0) {
     return t("No values");
   }
@@ -445,10 +641,36 @@ function chartReadout(points: Array<{ value: number }>, mode: ChartMode, t: (val
   const min = Math.min(...values);
   const max = Math.max(...values);
   const digits = ["cloud", "humidity", "pressure"].includes(mode) ? 0 : 1;
+  if (config.kind === "bar") {
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return `${t("total")} ${formatNumber(total, 1)}${config.unit} / ${t("peak")} ${formatNumber(max, 1)}${config.unit}`;
+  }
+  if (config.kind === "dual-line" && secondaryPoints.length > 0) {
+    const secondaryMax = Math.max(...secondaryPoints.map((point) => point.value));
+    return `${formatNumber(min, digits)}-${formatNumber(max, digits)}${config.unit} / ${config.pairedLabel ?? t("Overlay")} ${formatNumber(secondaryMax, digits)}${config.unit}`;
+  }
+
   return `${formatNumber(min, digits)}${config.unit} to ${formatNumber(max, digits)}${config.unit}`;
 }
 
-function chartXAxisLabels(points: Array<{ label: string; value: number }>): string[] {
+function chartKindLabel(kind: ForecastChartKind): string {
+  if (kind === "bar") {
+    return "Bar chart";
+  }
+  if (kind === "area") {
+    return "Area chart";
+  }
+  if (kind === "band") {
+    return "Coverage band";
+  }
+  if (kind === "dual-line") {
+    return "Dual-line chart";
+  }
+
+  return "Line chart";
+}
+
+function chartXAxisLabels(points: ForecastChartPoint[]): string[] {
   if (points.length <= 5) {
     return points.map((point) => point.label);
   }
@@ -457,6 +679,110 @@ function chartXAxisLabels(points: Array<{ label: string; value: number }>): stri
     const index = Math.min(points.length - 1, Math.round((points.length - 1) * ratio));
     return points[index].label;
   });
+}
+
+function renderForecastChart(
+  points: ForecastChartPoint[],
+  secondaryPoints: ForecastChartPoint[],
+  config: ForecastChartConfig,
+  t: (value: string) => string
+) {
+  if (points.length === 0) {
+    return <div className="weather-chart-empty">{t("No forecast points available")}</div>;
+  }
+
+  const scale = chartScale(config, points, secondaryPoints);
+  const linePath = chartLinePath(points, scale);
+  const areaPath = chartAreaPath(points, scale);
+  const polyline = chartPolyline(points, scale);
+  const secondaryLinePath = chartLinePath(secondaryPoints, scale);
+  const sourceCount = points[0]?.sourceCount ?? points.length;
+  const slotWidth = FORECAST_CHART_WIDTH / Math.max(sourceCount, 1);
+  const barWidth = Math.max(8, slotWidth * 0.68);
+  const firstX = chartPointX(points[0]);
+  const lastX = chartPointX(points[points.length - 1]);
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="weather-forecast-svg"
+      preserveAspectRatio="none"
+      viewBox={`0 0 ${FORECAST_CHART_WIDTH} ${FORECAST_CHART_HEIGHT}`}
+    >
+      {[FORECAST_CHART_TOP, (FORECAST_CHART_TOP + FORECAST_CHART_BOTTOM) / 2, FORECAST_CHART_BOTTOM].map((yValue) => (
+        <line
+          className="weather-chart-grid-line"
+          key={yValue}
+          x1="0"
+          x2={FORECAST_CHART_WIDTH}
+          y1={yValue}
+          y2={yValue}
+        />
+      ))}
+      {scale.min < 0 && scale.max > 0 ? (
+        <line
+          className="weather-chart-zero-line"
+          x1="0"
+          x2={FORECAST_CHART_WIDTH}
+          y1={chartY(0, scale)}
+          y2={chartY(0, scale)}
+        />
+      ) : null}
+
+      {config.kind === "bar"
+        ? points.map((point, index) => {
+            const x = chartPointX(point) - barWidth / 2;
+            const y = chartY(point.value, scale);
+            return (
+              <rect
+                className="weather-chart-bar"
+                height={Math.max(2, FORECAST_CHART_BOTTOM - y)}
+                key={`${point.timestamp}-${index}`}
+                rx="4"
+                width={barWidth}
+                x={Math.max(0, Math.min(FORECAST_CHART_WIDTH - barWidth, x))}
+                y={y}
+              >
+                <title>{`${point.label}: ${formatNumber(point.value, 1)}${config.unit}`}</title>
+              </rect>
+            );
+          })
+        : null}
+
+      {config.kind === "area" ? <path className="weather-chart-area" d={areaPath} /> : null}
+      {config.kind === "band" ? <polygon className="weather-chart-band" points={`${polyline} ${lastX},${FORECAST_CHART_BOTTOM} ${firstX},${FORECAST_CHART_BOTTOM}`} /> : null}
+
+      {config.kind !== "bar" ? <path className="weather-chart-line" d={linePath} /> : null}
+      {config.kind === "dual-line" && secondaryLinePath ? (
+        <path className="weather-chart-line-secondary" d={secondaryLinePath} />
+      ) : null}
+
+      {points.map((point, index) => (
+        <circle
+          className="weather-chart-point"
+          cx={chartPointX(point)}
+          cy={chartY(point.value, scale)}
+          key={`${point.timestamp}-${index}`}
+          r={index === points.length - 1 ? 4 : 2.4}
+        >
+          <title>{`${config.fullLabel}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
+        </circle>
+      ))}
+      {config.kind === "dual-line"
+        ? secondaryPoints.map((point, index) => (
+            <circle
+              className="weather-chart-point-secondary"
+              cx={chartPointX(point)}
+              cy={chartY(point.value, scale)}
+              key={`${point.timestamp}-secondary-${index}`}
+              r={index === secondaryPoints.length - 1 ? 3.4 : 2}
+            >
+              <title>{`${config.pairedLabel ?? t("Overlay")}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
+            </circle>
+          ))
+        : null}
+    </svg>
+  );
 }
 
 function metricValue(weather: WeatherForecastResponse | null, key: string): string {
@@ -685,10 +1011,13 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
       : null;
   const trendLabel = previous ? t("Trend 3H") : t("Next 3H");
   const timelineItems = buildTimelineItems(weather, category, current, language, t);
-  const chartData = chartPoints(points, chartMode, language);
   const activeChartConfig = chartConfig(chartMode);
-  const axis = chartAxis(chartData);
-  const polyline = chartPolyline(chartData);
+  const chartData = chartPoints(points, chartMode, language);
+  const secondaryChartData = activeChartConfig.pairedKey
+    ? chartPoints(points, activeChartConfig.pairedKey, language)
+    : [];
+  const chartScaleValue = chartScale(activeChartConfig, chartData, secondaryChartData);
+  const axis = chartAxis(chartScaleValue, activeChartConfig);
   const chartLabels = chartXAxisLabels(chartData);
   const sourceRequest = weather?.source_requests[0];
   const syncTime = weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
@@ -813,13 +1142,18 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
         <article className="weather-glass-panel weather-chart-panel">
           <header>
             <span>{weather.quality.forecast_hours}H {t("Forecast Trajectory")}</span>
-            <strong>{chartReadout(chartData, chartMode, t)}</strong>
+            <strong>{chartReadout(chartData, chartMode, t, secondaryChartData)}</strong>
+            <small className="weather-chart-kind">
+              {t(chartKindLabel(activeChartConfig.kind))} · {t(activeChartConfig.description)}
+            </small>
             <div className="weather-chart-toggle" aria-label={t("Forecast chart mode")}>
               {CHART_MODES.map((mode) => (
                 <button
+                  aria-label={`${t(mode.fullLabel)} · ${t(mode.description)}`}
                   className={chartMode === mode.key ? "active" : ""}
                   key={mode.key}
                   onClick={() => setChartMode(mode.key)}
+                  title={`${t(mode.fullLabel)} · ${t(mode.description)}`}
                   type="button"
                 >
                   {mode.label}
@@ -827,7 +1161,9 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
               ))}
             </div>
           </header>
-          <div className={`weather-line-chart weather-line-chart-${activeChartConfig.tone}`}>
+          <div
+            className={`weather-line-chart weather-forecast-chart weather-forecast-chart-${activeChartConfig.tone} weather-forecast-chart-${activeChartConfig.kind}`}
+          >
             <span className="weather-axis weather-axis-top">
               {axis.top}
               {activeChartConfig.unit}
@@ -840,15 +1176,7 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
               {axis.bottom}
               {activeChartConfig.unit}
             </span>
-            {chartData.length > 0 ? (
-              <svg aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1000 220">
-                <polyline className="weather-chart-line" points={polyline} />
-                <line className="weather-chart-marker" x1="0" x2="0" y1="0" y2="220" />
-                <circle className="weather-chart-point" cx="0" cy={polyline.split(" ")[0]?.split(",")[1] ?? "110"} r="4" />
-              </svg>
-            ) : (
-              <div className="weather-chart-empty">{t("No forecast points available")}</div>
-            )}
+            {renderForecastChart(chartData, secondaryChartData, activeChartConfig, t)}
             <div className="weather-chart-x-axis">
               {chartLabels.map((label, index) => (
                 <span key={`${label}-${index}`}>{label}</span>

@@ -1,6 +1,7 @@
- "use client";
+"use client";
 
 import type { CSSProperties } from "react";
+import { useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
@@ -30,10 +31,25 @@ type FieldSignal = {
   detail: string;
 };
 
+type PollutantKey = "pm2_5" | "pm10" | "no2";
+
+type PollutantProfile = {
+  key: PollutantKey;
+  label: string;
+  unit: string;
+  cautionValue: number;
+  severeValue: number;
+};
+
 const SCORE_LABELS = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
 const SCORE_BUCKETS = [1, 2, 3, 4, 5];
 const SCORE_FIELD_KEYS: Array<keyof AirQualityStation> = ["score", "label"];
-const POLLUTANT_FIELD_KEYS: Array<keyof AirQualityStation> = ["pm2_5", "pm10", "no2"];
+const POLLUTANT_PROFILES: PollutantProfile[] = [
+  { key: "pm2_5", label: "PM2.5", unit: "ug/m3", cautionValue: 10, severeValue: 25 },
+  { key: "pm10", label: "PM10", unit: "ug/m3", cautionValue: 20, severeValue: 50 },
+  { key: "no2", label: "NO2", unit: "ug/m3", cautionValue: 40, severeValue: 100 }
+];
+const POLLUTANT_FIELD_KEYS: PollutantKey[] = POLLUTANT_PROFILES.map((profile) => profile.key);
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -195,6 +211,46 @@ function indexPercent(value: number | null): number {
   return Math.max(6, Math.min(100, value ?? 0));
 }
 
+function pollutantProfile(key: PollutantKey): PollutantProfile {
+  return POLLUTANT_PROFILES.find((profile) => profile.key === key) ?? POLLUTANT_PROFILES[0];
+}
+
+function pollutantValue(station: AirQualityStation, key: PollutantKey): number | null {
+  return station[key];
+}
+
+function pollutantTone(value: number | null, profile: PollutantProfile): AirTone {
+  if (value === null) {
+    return "neutral";
+  }
+  if (value >= profile.severeValue) {
+    return "bad";
+  }
+  if (value >= profile.cautionValue) {
+    return "warn";
+  }
+  return "good";
+}
+
+function pollutantStations(stations: AirQualityStation[], key: PollutantKey): AirQualityStation[] {
+  return [...stations]
+    .filter((station) => hasNumber(pollutantValue(station, key)))
+    .sort((left, right) => (pollutantValue(right, key) ?? -1) - (pollutantValue(left, key) ?? -1));
+}
+
+function averagePollutantValue(stations: AirQualityStation[], key: PollutantKey): number | null {
+  const values = stations.map((station) => pollutantValue(station, key)).filter(hasNumber);
+  if (values.length === 0) {
+    return null;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function stationDisplayName(station: AirQualityStation): string {
+  return station.station || station.label || "Unknown station";
+}
+
 function sourceRequestCount(airQuality: AirQualityCurrentResponse): string {
   const fetched = airQuality.source_requests.filter((request) => request.status === "fetched").length;
   return `${fetched}/${airQuality.source_requests.length}`;
@@ -256,8 +312,125 @@ function airHistoryPoints(
   });
 }
 
+function renderPollutantChart(
+  profile: PollutantProfile,
+  stations: AirQualityStation[],
+  language: LanguageMode,
+  t: (value: string) => string
+) {
+  const rows = pollutantStations(stations, profile.key).slice(0, 8);
+  const values = rows.map((station) => pollutantValue(station, profile.key)).filter(hasNumber);
+  const maxValue = Math.max(profile.severeValue, ...values, 1);
+  const averageValue = averagePollutantValue(stations, profile.key);
+  const peakValue = values.length > 0 ? Math.max(...values) : null;
+
+  return (
+    <>
+      <div className="air-pollutant-readout">
+        <article>
+          <span>{t("Average")}</span>
+          <strong>{hasNumber(averageValue) ? `${formatNumber(averageValue, 1)} ${profile.unit}` : t("missing")}</strong>
+        </article>
+        <article>
+          <span>{t("Peak")}</span>
+          <strong>{hasNumber(peakValue) ? `${formatNumber(peakValue, 1)} ${profile.unit}` : t("missing")}</strong>
+        </article>
+        <article>
+          <span>{t("Reporting")}</span>
+          <strong>{pollutantStations(stations, profile.key).length}/{stations.length}</strong>
+        </article>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="air-pollutant-list">
+          {rows.map((station) => {
+            const value = pollutantValue(station, profile.key);
+            const percent = Math.max(2, Math.min(100, ((value ?? 0) / maxValue) * 100));
+            const tone = pollutantTone(value, profile);
+            return (
+              <article className={`air-pollutant-row air-pollutant-row-${tone}`} key={station.station}>
+                <div>
+                  <strong>{stationDisplayName(station)}</strong>
+                  <span>{scoreLabel(station.score, station.label, language, t)}</span>
+                </div>
+                <i className="air-pollutant-track" aria-hidden="true">
+                  <span style={{ width: `${percent}%` }} />
+                  <b style={{ left: `${percent}%` }} />
+                </i>
+                <em>{formatNumber(value, 1)}</em>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <p>{t("No pollutant concentration values were returned for this field.")}</p>
+      )}
+    </>
+  );
+}
+
+function renderStationMap(
+  stations: AirQualityStation[],
+  language: LanguageMode,
+  t: (value: string) => string
+) {
+  const mappedStations = stations.filter((station) => hasNumber(station.lat) && hasNumber(station.lon));
+  if (mappedStations.length === 0) {
+    return <p>{t("No station coordinates were returned in the latest HSY payload.")}</p>;
+  }
+
+  const latValues = mappedStations.map((station) => station.lat).filter(hasNumber);
+  const lonValues = mappedStations.map((station) => station.lon).filter(hasNumber);
+  const minLat = Math.min(...latValues);
+  const maxLat = Math.max(...latValues);
+  const minLon = Math.min(...lonValues);
+  const maxLon = Math.max(...lonValues);
+  const latRange = maxLat - minLat || 0.01;
+  const lonRange = maxLon - minLon || 0.01;
+
+  return (
+    <>
+      <div className="air-map-frame">
+        <svg aria-hidden="true" className="air-map-svg" focusable="false" viewBox="0 0 100 100">
+          {[25, 50, 75].map((position) => (
+            <g key={position}>
+              <line className="air-map-grid-line" x1={position} x2={position} y1="4" y2="96" />
+              <line className="air-map-grid-line" x1="4" x2="96" y1={position} y2={position} />
+            </g>
+          ))}
+          {mappedStations.map((station) => {
+            const score = station.score ?? 0;
+            const x = 8 + (((station.lon ?? minLon) - minLon) / lonRange) * 84;
+            const y = 92 - (((station.lat ?? minLat) - minLat) / latRange) * 84;
+            const radius = 3.8 + score * 1.2;
+            return (
+              <circle
+                className={`air-map-dot air-map-dot-${scoreTone(station.score)}`}
+                cx={x}
+                cy={y}
+                key={station.station}
+                r={radius}
+              >
+                <title>
+                  {stationDisplayName(station)} · {scoreLabel(station.score, station.label, language, t)}
+                </title>
+              </circle>
+            );
+          })}
+        </svg>
+      </div>
+      <div className="air-map-meta">
+        <span>{mappedStations.length}/{stations.length} {t("mapped")}</span>
+        <span>{formatNumber(minLat, 3)}-{formatNumber(maxLat, 3)} lat</span>
+        <span>{formatNumber(minLon, 3)}-{formatNumber(maxLon, 3)} lon</span>
+      </div>
+    </>
+  );
+}
+
 export function AirQualityWorkspace({ airQuality, category, history }: AirQualityWorkspaceProps) {
   const { language, t } = useI18n();
+  const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
   if (!airQuality) {
     return (
@@ -281,6 +454,7 @@ export function AirQualityWorkspace({ airQuality, category, history }: AirQualit
   const pollutantFieldsReady = POLLUTANT_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const historyPoints = airHistoryPoints(history, t);
+  const activePollutantProfile = pollutantProfile(activePollutantKey);
 
   return (
     <section className="air-detail-page" aria-label={t("Air-quality detail")}>
@@ -401,6 +575,30 @@ export function AirQualityWorkspace({ airQuality, category, history }: AirQualit
       />
 
       <section className="air-main-grid" aria-label={t("Air-quality station analytics")}>
+        <article className="air-glass-panel air-pollutant-panel">
+          <header>
+            <div>
+              <span>{t("Pollutant Concentration")}</span>
+              <h3>{activePollutantProfile.label} {t("by reporting station")}</h3>
+            </div>
+            <div className="air-pollutant-toggle" aria-label={t("Pollutant field")}>
+              {POLLUTANT_PROFILES.map((profile) => (
+                <button
+                  aria-pressed={activePollutantKey === profile.key}
+                  className={activePollutantKey === profile.key ? "active" : ""}
+                  key={profile.key}
+                  onClick={() => setActivePollutantKey(profile.key)}
+                  title={`${profile.label} · ${profile.unit}`}
+                  type="button"
+                >
+                  {profile.label}
+                </button>
+              ))}
+            </div>
+          </header>
+          {renderPollutantChart(activePollutantProfile, stations, language, t)}
+        </article>
+
         <article className="air-glass-panel air-station-panel">
           <header>
             <div>
@@ -436,6 +634,14 @@ export function AirQualityWorkspace({ airQuality, category, history }: AirQualit
         </article>
 
         <div className="air-side-grid">
+          <article className="air-glass-panel air-map-panel">
+            <header>
+              <span>{t("Station Geometry")}</span>
+              <strong>{stations.filter((station) => hasNumber(station.lat) && hasNumber(station.lon)).length}</strong>
+            </header>
+            {renderStationMap(stations, language, t)}
+          </article>
+
           <article className="air-glass-panel air-quality-panel">
             <header>
               <span>{t("Data Quality")}</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
@@ -23,6 +24,14 @@ type TransitWorkspaceProps = {
 
 type TransitTone = "good" | "warn" | "bad" | "neutral";
 type TransitAlertFilter = "priority" | "active" | "upcoming" | "high" | "scoped" | "all";
+type TransitScopeMetric = {
+  key: string;
+  label: string;
+  count: number;
+  detail: string;
+  tone: TransitTone;
+  width: number;
+};
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
@@ -109,6 +118,49 @@ function severityDistribution(alerts: TransitAlert[]) {
       width: Math.max(8, (count / max) * 100)
     };
   });
+}
+
+function uniqueScopeCount(alerts: TransitAlert[], field: "route_ids" | "stop_ids" | "trip_ids"): number {
+  return new Set(alerts.flatMap((alert) => alert[field])).size;
+}
+
+function transitScopeMetrics(alerts: TransitAlert[], t: (value: string) => string): TransitScopeMetric[] {
+  const rows = [
+    {
+      key: "routes",
+      label: t("Routes"),
+      count: uniqueScopeCount(alerts, "route_ids"),
+      detail: `${alerts.filter((alert) => alert.route_ids.length > 0).length} ${t("alerts")}`,
+      tone: "warn" as TransitTone
+    },
+    {
+      key: "stops",
+      label: t("Stops"),
+      count: uniqueScopeCount(alerts, "stop_ids"),
+      detail: `${alerts.filter((alert) => alert.stop_ids.length > 0).length} ${t("alerts")}`,
+      tone: "bad" as TransitTone
+    },
+    {
+      key: "trips",
+      label: t("Trips"),
+      count: uniqueScopeCount(alerts, "trip_ids"),
+      detail: `${alerts.filter((alert) => alert.trip_ids.length > 0).length} ${t("alerts")}`,
+      tone: "good" as TransitTone
+    },
+    {
+      key: "network",
+      label: t("Network-wide"),
+      count: alerts.filter((alert) => !isScopedAlert(alert)).length,
+      detail: t("no ids attached"),
+      tone: "neutral" as TransitTone
+    }
+  ];
+  const maxCount = Math.max(1, ...rows.map((row) => row.count));
+
+  return rows.map((row) => ({
+    ...row,
+    width: clampPercent((row.count / maxCount) * 100)
+  }));
 }
 
 function sourceRequestHost(endpoint: string | null, t: (value: string) => string): string {
@@ -299,6 +351,31 @@ function alertWindowProgress(alert: TransitAlert, nowTimestamp: number): number 
   return clampPercent(((nowTimestamp - startsAt) / (endsAt - startsAt)) * 100);
 }
 
+function alertTimelineBounds(alerts: TransitAlert[], nowTimestamp: number): { startsAt: number; endsAt: number } | null {
+  const timestamps = alerts.flatMap((alert) => {
+    const startsAt = new Date(alert.starts_at).getTime();
+    const endsAt = new Date(alert.ends_at).getTime();
+    return Number.isFinite(startsAt) && Number.isFinite(endsAt) ? [startsAt, endsAt] : [];
+  });
+
+  if (timestamps.length === 0) {
+    return null;
+  }
+
+  return {
+    startsAt: Math.min(nowTimestamp, ...timestamps),
+    endsAt: Math.max(nowTimestamp + 60 * 60 * 1000, ...timestamps)
+  };
+}
+
+function timelinePercent(value: number, bounds: { startsAt: number; endsAt: number }): number {
+  if (bounds.endsAt <= bounds.startsAt) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, ((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100));
+}
+
 function formatHistoryDate(value: string): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
@@ -356,7 +433,10 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
   const activeTone = activeAlertTone(activeAlerts, transit.alerts);
   const riskState = transitRiskState(activeAlerts, transit.alerts, t);
   const topAlerts = filteredAlerts.slice(0, 8);
+  const timebandAlerts = topAlerts.slice(0, 5);
+  const timebandBounds = alertTimelineBounds(timebandAlerts, nowTimestamp);
   const severityRows = severityDistribution(transit.alerts);
+  const scopeRows = transitScopeMetrics(transit.alerts, t);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
   const historyPoints = transitHistoryPoints(history);
@@ -451,6 +531,20 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
               <small>{t("stored event rows")}</small>
             </article>
           </div>
+          <div className="transit-scope-bars" aria-label={t("Transit affected scope distribution")}>
+            {scopeRows.map((row) => (
+              <article className={`transit-scope-bar transit-scope-bar-${row.tone}`} key={row.key}>
+                <div>
+                  <strong>{row.label}</strong>
+                  <span>{row.detail}</span>
+                </div>
+                <i aria-hidden="true">
+                  <span style={{ width: `${row.width}%` }} />
+                </i>
+                <em>{row.count}</em>
+              </article>
+            ))}
+          </div>
         </article>
       </section>
 
@@ -506,6 +600,39 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
               </button>
             ))}
           </div>
+          {timebandAlerts.length > 0 && timebandBounds ? (
+            <div className="transit-timeband-panel" aria-label={t("Transit alert time windows")}>
+              <header>
+                <span>{t("Time Windows")}</span>
+                <strong>{timebandAlerts.length}</strong>
+              </header>
+              <div className="transit-timeband-list">
+                {timebandAlerts.map((alert) => {
+                  const startsAt = new Date(alert.starts_at).getTime();
+                  const endsAt = new Date(alert.ends_at).getTime();
+                  const left = timelinePercent(startsAt, timebandBounds);
+                  const right = timelinePercent(endsAt, timebandBounds);
+                  const width = Math.max(4, right - left);
+                  return (
+                    <article className={`transit-timeband-row transit-timeband-row-${severityTone(alert.severity)}`} key={alert.id}>
+                      <span>{alert.active ? t("ACTIVE NOW") : formatCompactTime(alert.starts_at, language, t)}</span>
+                      <i aria-hidden="true">
+                        <span
+                          style={
+                            {
+                              "--timeband-left": `${left}%`,
+                              "--timeband-width": `${width}%`
+                            } as CSSProperties
+                          }
+                        />
+                      </i>
+                      <strong>{scopeLabel(alert, t)}</strong>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
           <div className="transit-alert-list">
             {topAlerts.length > 0 ? (
               topAlerts.map((alert) => (
