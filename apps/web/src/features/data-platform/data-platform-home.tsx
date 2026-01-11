@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatTimestamp, severityTone, statusTone } from "@/features/shared/format";
@@ -114,6 +115,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const THEME_STORAGE_KEY = "arkiwatch-theme";
+const BRAND_LOGO_SRC = "/brand/logo.png";
 
 function NotificationButton({
   count,
@@ -775,9 +777,14 @@ export function DataPlatformHome({
       >
         <div className="brand-panel">
           <div className="brand-icon" aria-hidden="true">
-            <span className="material-symbols-outlined">
-              {isDetailPage ? "monitor_heart" : "monitoring"}
-            </span>
+            <Image
+              alt=""
+              className="brand-logo-image"
+              height={96}
+              priority
+              src={BRAND_LOGO_SRC}
+              width={96}
+            />
           </div>
           <div>
             <h1>{t("Data Platform")}</h1>
@@ -832,6 +839,9 @@ export function DataPlatformHome({
                 menu
               </span>
             </button>
+            <span className="mobile-brand-mark" aria-hidden="true">
+              <Image alt="" className="brand-logo-image" height={96} src={BRAND_LOGO_SRC} width={96} />
+            </span>
             <strong>ArkiWatch</strong>
           </div>
           <div className="top-actions">
@@ -864,6 +874,9 @@ export function DataPlatformHome({
         {isDetailPage ? (
           <header className="detail-topbar">
             <div className="detail-topbar-brand">
+              <span className="detail-topbar-mark" aria-hidden="true">
+                <Image alt="" className="brand-logo-image" height={96} src={BRAND_LOGO_SRC} width={96} />
+              </span>
               <strong>ArkiWatch</strong>
             </div>
             <nav aria-label={t("Detail workspace navigation")}>

@@ -233,18 +233,24 @@ p {
 
 .brand-icon {
   display: inline-flex;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  border-radius: 4px;
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  background: var(--surface-container);
 }
 
-.brand-icon .material-symbols-outlined {
-  font-size: 20px;
+.brand-logo-image {
+  display: block;
+  width: 230%;
+  max-width: none;
+  height: 230%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .brand-panel h1 {
@@ -339,6 +345,20 @@ p {
 .mobile-brand {
   min-width: 0;
   gap: 12px;
+}
+
+.mobile-brand-mark,
+.detail-topbar-mark {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  background: var(--surface-container);
 }
 
 .mobile-brand strong {
@@ -1317,13 +1337,7 @@ p {
 }
 
 .detail-side-nav .brand-icon {
-  border-radius: 50%;
-  background: var(--primary);
-  color: var(--on-primary);
-}
-
-.detail-side-nav .brand-icon .material-symbols-outlined {
-  font-variation-settings: "FILL" 1;
+  background: var(--surface-container);
 }
 
 .detail-topbar {
@@ -1343,6 +1357,13 @@ p {
   font-size: 24px;
   font-weight: 800;
   line-height: 32px;
+}
+
+.detail-topbar-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 .detail-topbar nav {
