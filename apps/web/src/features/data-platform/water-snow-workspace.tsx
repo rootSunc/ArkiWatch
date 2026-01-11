@@ -60,15 +60,6 @@ function formatMetricValue(metric: PanelMetric | null, t: (value: string) => str
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
-function titleCase(value: string): string {
-  return value
-    .replaceAll("_", " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
 function statusTone(status: string | null | undefined): WaterTone {
   if (status === "healthy" || status === "ready" || status === "fetched" || status === "connected") {
     return "good";

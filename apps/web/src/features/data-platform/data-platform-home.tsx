@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatTimestamp, severityTone, statusTone } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
+import {
+  CITY_OPTIONS,
+  CITY_STORAGE_KEY,
+  categorySupportsCityScope,
+  cityLabel,
+  normalizeCityValue
+} from "./city-scope";
 import {
   I18nProvider,
   LanguageMode,
@@ -42,7 +50,9 @@ type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
   defaultUserId: string;
+  initialCity: string;
   energy: EnergyCurrentResponse | null;
+  householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
   overview: PlatformOverviewResponse | null;
   roadRail: RoadRailCurrentResponse | null;
@@ -172,6 +182,65 @@ function ThemeToggleButton({
         {isLightTheme ? "dark_mode" : "light_mode"}
       </span>
     </button>
+  );
+}
+
+function storedCityValue(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const value = window.localStorage.getItem(CITY_STORAGE_KEY);
+    return value ? normalizeCityValue(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCityValue(city: string): void {
+  try {
+    window.localStorage.setItem(CITY_STORAGE_KEY, city);
+  } catch {
+    // City switching should still work when persistent storage is unavailable.
+  }
+}
+
+function CityScopeSelector({
+  city,
+  isPending,
+  language,
+  onCityChange
+}: {
+  city: string;
+  isPending: boolean;
+  language: LanguageMode;
+  onCityChange: (city: string) => void;
+}) {
+  const label = translateText(language, "Current city");
+
+  return (
+    <label className={isPending ? "city-scope-control city-scope-control-pending" : "city-scope-control"}>
+      <span className="material-symbols-outlined" aria-hidden="true">
+        location_on
+      </span>
+      <span className="city-scope-label">{label}</span>
+      <select
+        aria-label={label}
+        disabled={isPending}
+        onChange={(event) => onCityChange(event.currentTarget.value)}
+        value={city}
+      >
+        {CITY_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span className="material-symbols-outlined city-scope-chevron" aria-hidden="true">
+        expand_more
+      </span>
+    </label>
   );
 }
 
@@ -478,7 +547,9 @@ export function DataPlatformHome({
   airQuality,
   apiBaseUrl,
   defaultUserId,
+  initialCity,
   energy,
+  householdEnergy,
   history,
   overview,
   roadRail,
@@ -486,11 +557,16 @@ export function DataPlatformHome({
   weather,
   error
 }: DataPlatformHomeProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
+  const [selectedCity, setSelectedCity] = useState(() => normalizeCityValue(initialCity));
+  const [isCityRefreshPending, startCityRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
@@ -528,6 +604,14 @@ export function DataPlatformHome({
     setSelectedNavKey(item.categoryKey ?? item.key);
   }
 
+  const replaceCityParam = useCallback((nextCity: string): void => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("city", nextCity);
+    startCityRefresh(() => {
+      router.replace(`${pathname}?${nextParams.toString()}`);
+    });
+  }, [pathname, router, searchParams, startCityRefresh]);
+
   useEffect(() => {
     const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
 
@@ -541,6 +625,23 @@ export function DataPlatformHome({
     setLanguageMode(nextLanguageMode);
     applyLanguageMode(nextLanguageMode);
   }, []);
+
+  useEffect(() => {
+    setSelectedCity(normalizeCityValue(initialCity));
+  }, [initialCity]);
+
+  useEffect(() => {
+    if (searchParams.has("city")) {
+      saveCityValue(selectedCity);
+      return;
+    }
+
+    const storedCity = storedCityValue();
+    if (storedCity && storedCity !== selectedCity) {
+      setSelectedCity(storedCity);
+      replaceCityParam(storedCity);
+    }
+  }, [replaceCityParam, searchParams, selectedCity]);
 
   function toggleThemeMode(): void {
     setThemeMode((currentThemeMode) => {
@@ -557,6 +658,13 @@ export function DataPlatformHome({
     setLanguageMode(nextLanguageMode);
     applyLanguageMode(nextLanguageMode);
     saveLanguageMode(nextLanguageMode);
+  }
+
+  function selectCity(nextCityValue: string): void {
+    const nextCity = normalizeCityValue(nextCityValue);
+    setSelectedCity(nextCity);
+    saveCityValue(nextCity);
+    replaceCityParam(nextCity);
   }
 
   return (
@@ -628,6 +736,12 @@ export function DataPlatformHome({
             <strong>ArkiWatch</strong>
           </div>
           <div className="top-actions">
+            <CityScopeSelector
+              city={selectedCity}
+              isPending={isCityRefreshPending}
+              language={languageMode}
+              onCityChange={selectCity}
+            />
             <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
             <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
             <button className="icon-button" aria-label={t("Notifications")} type="button">
@@ -661,6 +775,12 @@ export function DataPlatformHome({
               <button type="button">{t("Analytics")}</button>
             </nav>
             <div className="detail-topbar-actions">
+              <CityScopeSelector
+                city={selectedCity}
+                isPending={isCityRefreshPending}
+                language={languageMode}
+                onCityChange={selectCity}
+              />
               <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
               <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
               <button className="icon-button" aria-label={t("Notifications")} type="button">
@@ -702,6 +822,12 @@ export function DataPlatformHome({
                   value={searchValue}
                 />
               </label>
+              <CityScopeSelector
+                city={selectedCity}
+                isPending={isCityRefreshPending}
+                language={languageMode}
+                onCityChange={selectCity}
+              />
               <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
               <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
               <button className="icon-button" aria-label={t("Notifications")} type="button">
@@ -722,7 +848,13 @@ export function DataPlatformHome({
             ) : isAirDetail ? (
               <AirQualityWorkspace airQuality={airQuality} category={selectedCategory} history={history.airQuality} />
             ) : isEnergyDetail ? (
-              <EnergyWorkspace category={selectedCategory} energy={energy} history={history.energy} />
+              <EnergyWorkspace
+                category={selectedCategory}
+                energy={energy}
+                history={history.energy}
+                householdEnergy={householdEnergy}
+                householdHistory={history.householdEnergy}
+              />
             ) : isTransitDetail ? (
               <TransitWorkspace category={selectedCategory} history={history.transit} transit={transit} />
             ) : isRoadRailDetail ? (
@@ -808,6 +940,7 @@ export function DataPlatformHome({
                           languageMode
                         );
                         const tone = readout.tone;
+                        const followsSelectedCity = categorySupportsCityScope(category.key);
                         return (
                           <button
                             className={`signal-card signal-card-${tone}`}
@@ -828,6 +961,20 @@ export function DataPlatformHome({
                               <span className="signal-readout">
                                 <span>{readout.label}</span>
                                 <strong>{readout.value}</strong>
+                              </span>
+                              <span
+                                className={
+                                  followsSelectedCity
+                                    ? "signal-scope-chip signal-scope-chip-city"
+                                    : "signal-scope-chip"
+                                }
+                              >
+                                <span className="material-symbols-outlined" aria-hidden="true">
+                                  {followsSelectedCity ? "location_on" : "public"}
+                                </span>
+                                <span>
+                                  {followsSelectedCity ? cityLabel(selectedCity) : t("Regional scope")}
+                                </span>
                               </span>
                               <span className="signal-meter" aria-hidden="true">
                                 <span style={{ width: `${readout.progress}%` }} />

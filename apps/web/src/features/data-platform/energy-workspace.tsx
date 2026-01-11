@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import { formatRelativeAge } from "@/features/shared/format";
+import type { DashboardSource } from "@/features/public-dashboard/types";
 
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -21,9 +24,12 @@ type EnergyWorkspaceProps = {
   category: PlatformCategory | null;
   energy: EnergyCurrentResponse | null;
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
+  householdEnergy: EnergyCurrentResponse | null;
+  householdHistory: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
 };
 
 type EnergyTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
+type EnergyPanelKey = "fingrid" | "porssisahko";
 
 type PanelMetric = {
   key: string;
@@ -38,12 +44,25 @@ type PanelMetric = {
 const PRICE_CHART_WIDTH = 720;
 const PRICE_CHART_HEIGHT = 240;
 const PRICE_CHART_PADDING = 30;
-
-function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetric {
-  return metric !== null;
-}
-
-const SUMMARY_KEYS = ["low_energy_window", "active_events", "records_ingested", "source_status", "catalog_stage"];
+const ENERGY_PANEL_TABS: Array<{
+  key: EnergyPanelKey;
+  label: string;
+  icon: string;
+  description: string;
+}> = [
+  {
+    key: "fingrid",
+    label: "Fingrid System",
+    icon: "electrical_services",
+    description: "Electricity system telemetry"
+  },
+  {
+    key: "porssisahko",
+    label: "Porssisahko Prices",
+    icon: "payments",
+    description: "Household spot-price forecast"
+  }
+];
 
 function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
   if (!metric) {
@@ -165,17 +184,6 @@ function energyMetricTone(metric: EnergyMetric): EnergyTone {
   return "neutral";
 }
 
-function visibleSummaryMetrics(category: PlatformCategory, energy: EnergyCurrentResponse | null): PanelMetric[] {
-  if (energy?.metrics.length) {
-    return energy.metrics.map((metric) => ({ ...metric, tone: energyMetricTone(metric) })).slice(0, 5);
-  }
-
-  const preferred = SUMMARY_KEYS.map((key) => metricByKey(category, key)).filter(isPlatformMetric);
-  const fallback = category.summary_metrics.filter((metric) => !SUMMARY_KEYS.includes(metric.key));
-
-  return [...preferred, ...fallback].slice(0, 5);
-}
-
 function latestEnergyEvent(category: PlatformCategory): PlatformEvent | null {
   return (
     [...category.events]
@@ -199,9 +207,41 @@ function severityPoints(category: PlatformCategory): PlatformVisualizationPoint[
   return severity?.data.points ?? [];
 }
 
-function sourceStatusLabel(category: PlatformCategory, language: LanguageMode): string {
-  const source = category.sources[0];
-  return translateEnumLabel(language, source?.operational_status ?? category.status);
+function sourceByCode(category: PlatformCategory, sourceCode: EnergyPanelKey): DashboardSource | null {
+  return category.sources.find((candidate) => candidate.source_code === sourceCode) ?? null;
+}
+
+function sourceStatusLabel(
+  source: DashboardSource | null,
+  fallbackStatus: string,
+  language: LanguageMode
+): string {
+  return translateEnumLabel(language, source?.operational_status ?? fallbackStatus);
+}
+
+function sourceStatusMetric(source: DashboardSource | null, fallbackStatus: string): PanelMetric {
+  const status = source?.operational_status ?? fallbackStatus;
+  return {
+    key: "source_status",
+    label: "Source state",
+    value: status,
+    unit: null,
+    tone: toneFromStatus(status),
+    detail: source?.error_message ?? null,
+    updated_at: source?.last_run_finished_at ?? source?.last_run_started_at ?? null
+  };
+}
+
+function sourceRecordsMetric(source: DashboardSource | null): PanelMetric {
+  return {
+    key: "records_ingested",
+    label: "Records",
+    value: `${source?.records_ingested ?? 0}`,
+    unit: null,
+    tone: toneFromStatus(source?.operational_status ?? "unknown"),
+    detail: source?.last_run_status ?? null,
+    updated_at: source?.last_run_finished_at ?? source?.last_run_started_at ?? null
+  };
 }
 
 function pollIntervalLabel(seconds: number | null | undefined, t: (value: string) => string): string {
@@ -362,8 +402,15 @@ function energyHistoryPoints(
   });
 }
 
-export function EnergyWorkspace({ category, energy, history }: EnergyWorkspaceProps) {
+export function EnergyWorkspace({
+  category,
+  energy,
+  history,
+  householdEnergy,
+  householdHistory
+}: EnergyWorkspaceProps) {
   const { language, t } = useI18n();
+  const [activePanel, setActivePanel] = useState<EnergyPanelKey>("fingrid");
 
   if (!category) {
     return (
@@ -375,21 +422,24 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
     );
   }
 
-  const lowWindowMetric = metricByKey(category, "low_energy_window");
-  const sourceStatusMetric = metricByKey(category, "source_status");
-  const recordsMetric = metricByKey(category, "records_ingested");
-  const activeEventsMetric = metricByKey(category, "active_events");
-  const source =
-    category.sources.find((candidate) => candidate.source_code === energy?.source_code) ??
-    category.sources[0] ??
-    null;
-  const latestEvent = latestEnergyEvent(category);
-  const timelineItems = energyTimelineItems(category);
+  const isPricePanel = activePanel === "porssisahko";
+  const activeEnergy = isPricePanel ? householdEnergy : energy;
+  const activeHistory = isPricePanel ? householdHistory : history;
+  const activeSource = sourceByCode(category, activePanel);
+  const activeStatus = activeSource?.operational_status ?? activeEnergy?.status ?? category.status;
+  const lowWindowMetric = isPricePanel ? null : metricByKey(category, "low_energy_window");
+  const recordsMetric = sourceRecordsMetric(activeSource);
+  const sourceStateMetric = sourceStatusMetric(activeSource, activeStatus);
+  const latestEvent = isPricePanel ? null : latestEnergyEvent(category);
+  const timelineItems = isPricePanel ? [] : energyTimelineItems(category);
   const sourcePoints = sourceVolumePoints(category);
+  const activeSourcePoints = sourcePoints.filter((point) => point.label === activePanel);
   const severityRows = severityPoints(category);
-  const summaryMetrics = visibleSummaryMetrics(category, energy);
-  const window = energy?.current_window ?? null;
-  const activeTone = window ? toneFromSeverity(window.severity) : lowWindowMetric ? metricTone(lowWindowMetric) : toneFromStatus(category.status);
+  const summaryMetrics = activeEnergy?.metrics.length
+    ? activeEnergy.metrics.map((metric) => ({ ...metric, tone: energyMetricTone(metric) })).slice(0, 5)
+    : [lowWindowMetric, recordsMetric, sourceStateMetric].filter((metric): metric is PanelMetric => metric !== null);
+  const window = activeEnergy?.current_window ?? null;
+  const activeTone = window ? toneFromSeverity(window.severity) : lowWindowMetric ? metricTone(lowWindowMetric) : toneFromStatus(activeStatus);
   const hasWindowEvidence = window !== null || latestEvent !== null || timelineItems.length > 0;
   const hasActiveWindow =
     window !== null ||
@@ -406,20 +456,14 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
     : hasActiveWindow && latestEvent
       ? formatCompactTime(latestEvent.ends_at, language, t)
       : t("waiting for event");
-  const keyDataItems = category.key_data_items ?? [];
+  const keyDataItems = activeSource?.key_data_items ?? category.key_data_items ?? [];
   const fieldCount = keyDataItems.length;
-  const datasetCount = source?.datasets?.length ?? 0;
-  const signalMetrics: PanelMetric[] = energy?.metrics.length ? energy.metrics.map((metric) => ({
+  const datasetCount = activeSource?.datasets?.length ?? 0;
+  const signalMetrics: PanelMetric[] = activeEnergy?.metrics.length ? activeEnergy.metrics.map((metric) => ({
     ...metric,
     detail: null,
     tone: energyMetricTone(metric)
-  })) : [
-    lowWindowMetric,
-    activeEventsMetric,
-    recordsMetric,
-    sourceStatusMetric,
-    metricByKey(category, "catalog_stage")
-  ].filter(isPlatformMetric);
+  })) : [lowWindowMetric, recordsMetric, sourceStateMetric].filter((metric): metric is PanelMetric => metric !== null);
   const heroValue = window
     ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
     : lowWindowMetric
@@ -428,11 +472,13 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
       ? t("Window detected")
       : t("No active window");
   const heroDetail =
-    energy?.summary ??
+    activeEnergy?.summary ??
     lowWindowMetric?.detail ??
     latestEvent?.body ??
-    t("Fingrid data has not produced a low-value energy window for the current platform view.");
-  const points = energy?.points ?? [];
+    (isPricePanel
+      ? t("Porssisahko price data has not produced a household price window for the current platform view.")
+      : t("Fingrid data has not produced a low-value energy window for the current platform view."));
+  const points = activeEnergy?.points ?? [];
   const chartPoints = points.slice(0, 96);
   const chartRange = chartPoints.length > 0 ? pointValueRange(chartPoints) : null;
   const chartLabels = chartPoints.length > 0
@@ -442,26 +488,67 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
         chartPoints[chartPoints.length - 1]
       ]
     : [];
-  const historyPoints = energyHistoryPoints(history, t);
+  const historyPoints = energyHistoryPoints(activeHistory, t);
+  const activeSourceLabel = sourceStatusLabel(activeSource, activeStatus, language);
+  const activeTitle = isPricePanel ? t("Porssisahko Household Price") : t("Fingrid Energy Signals");
+  const panelDescription = isPricePanel ? t("Household spot-price forecast") : t("Electricity system telemetry");
+  const activeSourceName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
+  const activeVolumePoints = activeSourcePoints.length > 0 ? activeSourcePoints : [{
+    label: activePanel,
+    value: activeSource?.records_ingested ?? 0,
+    tone: toneFromStatus(activeStatus),
+    detail: activeStatus
+  }];
 
   return (
     <section className="energy-detail-page" aria-label={t("Energy detail")}>
       <div className="energy-detail-header">
         <div>
-          <h2>{t("Household Energy Price")}</h2>
+          <h2>{activeTitle}</h2>
+          <p>{panelDescription}</p>
           <div className="energy-live-status">
             <span aria-hidden="true" />
-            <strong>{sourceStatusLabel(category, language)}</strong>
+            <strong>{activeSourceLabel}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(energy?.observed_at ?? lowWindowMetric?.updated_at ?? source?.last_run_finished_at, language, t)}</div>
+        <div>{activeSourceName} / {relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at, language, t)}</div>
+      </div>
+
+      <div className="energy-secondary-tabs" role="tablist" aria-label={t("Energy source tabs")}>
+        {ENERGY_PANEL_TABS.map((tab) => {
+          const tabSource = sourceByCode(category, tab.key);
+          const selected = activePanel === tab.key;
+          const tabFallbackStatus = tab.key === "porssisahko"
+            ? householdEnergy?.status ?? "unknown"
+            : energy?.status ?? "unknown";
+
+          return (
+            <button
+              aria-selected={selected}
+              className={selected ? "energy-secondary-tab energy-secondary-tab-active" : "energy-secondary-tab"}
+              key={tab.key}
+              onClick={() => setActivePanel(tab.key)}
+              role="tab"
+              type="button"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {tab.icon}
+              </span>
+              <span>
+                <strong>{t(tab.label)}</strong>
+                <em>{t(tab.description)}</em>
+              </span>
+              <small>{sourceStatusLabel(tabSource, tabFallbackStatus, language)}</small>
+            </button>
+          );
+        })}
       </div>
 
       <section className="energy-bento-grid" aria-label={t("Energy operating condition")}>
         <article className={`energy-glass-panel energy-hero energy-hero-${activeTone}`}>
           <div className="energy-card-kicker">
-            <span>{t("Cheapest Flexible Use Window")}</span>
-            <time>{relativeTime(energy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
+            <span>{isPricePanel ? t("Cheapest Flexible Use Window") : t("Low-value System Window")}</span>
+            <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
           </div>
           <div className="energy-current-cluster">
             <span className="material-symbols-outlined energy-condition-icon" aria-hidden="true">
@@ -498,7 +585,7 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
                     : window.source === "raw_preview"
                       ? t("Preview energy timing window")
                       : t("Detected energy timing window"),
-                  detail: energy?.summary ?? t("Flexible electricity use window is ready."),
+                  detail: activeEnergy?.summary ?? t("Flexible electricity use window is ready."),
                   severity: window.severity,
                   starts_at: window.starts_at,
                   ends_at: window.ends_at
@@ -519,7 +606,11 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
                 </article>
               );
             })}
-            {!hasWindowEvidence ? <p>{t("No household price window is available from the latest energy payload.")}</p> : null}
+            {!hasWindowEvidence ? (
+              <p>{isPricePanel
+                ? t("No household price window is available from the latest energy payload.")
+                : t("No Fingrid energy window is available from the latest energy payload.")}</p>
+            ) : null}
           </div>
         </article>
 
@@ -554,25 +645,27 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
         eyebrow={`${historyPoints.length}D ${t("History")}`}
         maximumFractionDigits={2}
         points={historyPoints}
-        title={t("Daily Average Price Trend")}
+        title={isPricePanel ? t("Daily Average Price Trend") : t("Daily Average Energy Trend")}
         tone={activeTone}
-        unit={energy?.unit}
+        unit={activeEnergy?.unit}
       />
 
       <section className="energy-main-grid" aria-label={t("Energy platform analytics")}>
         <article className="energy-glass-panel energy-signal-panel">
           <header>
             <div>
-              <span>{t("Household Price Forecast")}</span>
-              <h3>{t("Spot price by time and estimated flexible-use cost")}</h3>
+              <span>{isPricePanel ? t("Household Price Forecast") : t("Fingrid System Timeseries")}</span>
+              <h3>{isPricePanel
+                ? t("Spot price by time and estimated flexible-use cost")
+                : t("Configured Fingrid dataset by time and selected low-value window")}</h3>
             </div>
             <strong>{signalMetrics.length} {t("metrics")}</strong>
           </header>
           {chartPoints.length > 0 && chartRange ? (
-            <div className="energy-price-chart" aria-label={t("Household electricity price forecast")}>
+            <div className="energy-price-chart" aria-label={isPricePanel ? t("Household electricity price forecast") : t("Fingrid electricity-system timeseries")}>
               <div className="energy-price-chart-head">
-                <span>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, energy?.unit)}</span>
-                <strong>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, energy?.unit)}</strong>
+                <span>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, activeEnergy?.unit)}</span>
+                <strong>{formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, activeEnergy?.unit)}</strong>
               </div>
               <svg
                 aria-hidden="true"
@@ -620,8 +713,8 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
                   return (
                     <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={point.starts_at}>
                       <span>{formatCompactTime(point.starts_at, language, t)}</span>
-                      <strong>{formatEnergyPointValue(point, energy?.unit)}</strong>
-                      <em>{formatEstimatedCost(point.estimated_cost_eur, t)}</em>
+                      <strong>{formatEnergyPointValue(point, activeEnergy?.unit)}</strong>
+                      <em>{isPricePanel ? formatEstimatedCost(point.estimated_cost_eur, t) : formatCompactTime(point.ends_at, language, t)}</em>
                     </article>
                   );
                 })}
@@ -647,17 +740,18 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
         <div className="energy-side-grid">
           <article className="energy-glass-panel energy-source-panel">
             <header>
-              <span>{t("Price Source")}</span>
-              <strong>{sourceStatusLabel(category, language)}</strong>
+              <span>{isPricePanel ? t("Price Source") : t("System Source")}</span>
+              <strong>{activeSourceLabel}</strong>
             </header>
             <div className="energy-source-facts">
-              <span>{datasetCount || energy?.source_requests.length || 0} {t("datasets")}</span>
-              <span>{pollIntervalLabel(source?.poll_interval_seconds, t)} {t("poll")}</span>
-              <span>{energy?.quality.point_count ?? formatMetricValue(recordsMetric, t)} {t("points")}</span>
+              <span>{datasetCount || activeEnergy?.source_requests.length || 0} {t("datasets")}</span>
+              <span>{pollIntervalLabel(activeSource?.poll_interval_seconds, t)} {t("poll")}</span>
+              <span>{activeEnergy?.quality.point_count ?? formatMetricValue(recordsMetric, t)} {t("points")}</span>
             </div>
-            <p>{source?.source_name ?? "Porssisahko.net"} · {source?.license_label ?? t("license unavailable")}</p>
-            {source?.documentation_url ? (
-              <a href={source.documentation_url} rel="noreferrer" target="_blank">
+            <p>{activeSourceName} · {activeSource?.license_label ?? t("license unavailable")}</p>
+            {activeSource?.error_message ? <p>{activeSource.error_message}</p> : null}
+            {activeSource?.documentation_url ? (
+              <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">
                 {t("Open data documentation")}
               </a>
             ) : null}
@@ -666,15 +760,10 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
           <article className="energy-glass-panel energy-volume-panel">
             <header>
               <span>{t("Collection Volume")}</span>
-              <strong>{sourcePoints.length || category.sources.length}</strong>
+              <strong>{activeVolumePoints.length}</strong>
             </header>
             <div>
-              {(sourcePoints.length > 0 ? sourcePoints : category.sources.map((item) => ({
-                label: item.source_code,
-                value: item.records_ingested ?? 0,
-                tone: toneFromStatus(item.operational_status),
-                detail: item.operational_status
-              }))).map((point) => (
+              {activeVolumePoints.map((point) => (
                 <article className={`energy-volume-row energy-volume-row-${point.tone ?? "neutral"}`} key={point.label}>
                   <div>
                     <strong>{point.label}</strong>
@@ -692,13 +781,13 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
           <article className="energy-glass-panel energy-severity-panel">
             <header>
               <span>{t("Data Quality")}</span>
-              <strong>{energy ? `${energy.quality.field_coverage_pct.toFixed(0)}%` : category.events.length}</strong>
+              <strong>{activeEnergy ? `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%` : severityRows.length}</strong>
             </header>
-            {energy ? (
+            {activeEnergy ? (
               <div className="energy-quality-facts">
-                <span>{energy.quality.point_count} {t("points")}</span>
-                <span>{energy.quality.window_point_count} {t("window points")}</span>
-                <span>{energy.quality.missing_fields.length} {t("missing fields")}</span>
+                <span>{activeEnergy.quality.point_count} {t("points")}</span>
+                <span>{activeEnergy.quality.window_point_count} {t("window points")}</span>
+                <span>{activeEnergy.quality.missing_fields.length} {t("missing fields")}</span>
               </div>
             ) : (
               <div>
@@ -713,7 +802,7 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
                 ))}
               </div>
             )}
-            {energy?.quality.notes.map((note) => (
+            {activeEnergy?.quality.notes.map((note) => (
               <p key={note}>{note}</p>
             ))}
           </article>
@@ -730,14 +819,14 @@ export function EnergyWorkspace({ category, energy, history }: EnergyWorkspacePr
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            Porssisahko prices / Fingrid load
+            {activeSourceName} / {isPricePanel ? t("spot prices") : t("system timeseries")}
           </span>
           <i aria-hidden="true" />
           <span>
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {relativeTime(energy?.observed_at ?? source?.last_run_finished_at ?? lowWindowMetric?.updated_at, language, t)}
+            {t("Last Sync")}: {relativeTime(activeEnergy?.observed_at ?? activeSource?.last_run_finished_at ?? lowWindowMetric?.updated_at, language, t)}
           </span>
           <i aria-hidden="true" />
           <span className="energy-provider-window">{hasActiveWindow ? t("Window detected") : t("Window pending")}</span>

@@ -503,6 +503,7 @@ export type PlatformHistoryResponse = {
   weather: PlatformHistoricalSnapshot<WeatherForecastResponse>[];
   airQuality: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
   energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
+  householdEnergy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
   roadRail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
   transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
 };

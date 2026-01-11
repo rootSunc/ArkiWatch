@@ -10,14 +10,16 @@ import {
   TransitCurrentResponse,
   WeatherForecastResponse
 } from "./types";
+import { DEFAULT_CITY, normalizeCityValue } from "./city-scope";
 
-type PlatformFetchResult = {
+export type PlatformFetchResult = {
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
   weather: WeatherForecastResponse | null;
   airQuality: AirQualityCurrentResponse | null;
   energy: EnergyCurrentResponse | null;
+  householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
   roadRail: RoadRailCurrentResponse | null;
   transit: TransitCurrentResponse | null;
@@ -86,12 +88,20 @@ function recentHistoryDates(dayCount = HISTORY_DAY_COUNT): string[] {
 async function fetchHistory<T>(
   apiBaseUrl: string,
   path: string,
-  dates: string[]
+  dates: string[],
+  city: string | null = null,
+  extraSearchParams: Record<string, string> = {}
 ): Promise<Array<PlatformHistoricalSnapshot<T>>> {
   const snapshots = await Promise.all(
     dates.map(async (date) => {
       const url = new URL(`${apiBaseUrl}${path}`);
       url.searchParams.set("date", date);
+      if (city) {
+        url.searchParams.set("city", city);
+      }
+      Object.entries(extraSearchParams).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+      });
       const result = await fetchJson<T>(url);
 
       return {
@@ -105,36 +115,46 @@ async function fetchHistory<T>(
   return snapshots;
 }
 
-export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
+export async function fetchPlatformHome(city: string | null = DEFAULT_CITY): Promise<PlatformFetchResult> {
   const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const selectedCity = normalizeCityValue(city);
   const overviewUrl = new URL(`${apiBaseUrl}/platform/overview`);
   const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
   const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
   const energyUrl = new URL(`${apiBaseUrl}/energy/current`);
+  const householdEnergyUrl = new URL(`${apiBaseUrl}/energy/current`);
   const roadRailUrl = new URL(`${apiBaseUrl}/traffic/current`);
   const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
 
   if (appEnv.defaultUserId) {
     overviewUrl.searchParams.set("user_id", appEnv.defaultUserId);
   }
+  overviewUrl.searchParams.set("city", selectedCity);
+  weatherUrl.searchParams.set("city", selectedCity);
+  airQualityUrl.searchParams.set("city", selectedCity);
+  energyUrl.searchParams.set("source", "fingrid");
+  householdEnergyUrl.searchParams.set("source", "porssisahko");
+  transitUrl.searchParams.set("city", selectedCity);
 
-  const [overviewResult, weatherResult, airQualityResult, energyResult, roadRailResult, transitResult] =
+  const [overviewResult, weatherResult, airQualityResult, energyResult, householdEnergyResult, roadRailResult, transitResult] =
     await Promise.all([
       fetchJson<PlatformOverviewResponse>(overviewUrl),
       fetchJson<WeatherForecastResponse>(weatherUrl),
       fetchJson<AirQualityCurrentResponse>(airQualityUrl),
       fetchJson<EnergyCurrentResponse>(energyUrl),
+      fetchJson<EnergyCurrentResponse>(householdEnergyUrl),
       fetchJson<RoadRailCurrentResponse>(roadRailUrl),
       fetchJson<TransitCurrentResponse>(transitUrl)
     ]);
   const historyDates = recentHistoryDates();
-  const [weatherHistory, airQualityHistory, energyHistory, roadRailHistory, transitHistory] =
+  const [weatherHistory, airQualityHistory, energyHistory, householdEnergyHistory, roadRailHistory, transitHistory] =
     await Promise.all([
-      fetchHistory<WeatherForecastResponse>(apiBaseUrl, "/weather/forecast", historyDates),
-      fetchHistory<AirQualityCurrentResponse>(apiBaseUrl, "/air-quality/current", historyDates),
-      fetchHistory<EnergyCurrentResponse>(apiBaseUrl, "/energy/current", historyDates),
+      fetchHistory<WeatherForecastResponse>(apiBaseUrl, "/weather/forecast", historyDates, selectedCity),
+      fetchHistory<AirQualityCurrentResponse>(apiBaseUrl, "/air-quality/current", historyDates, selectedCity),
+      fetchHistory<EnergyCurrentResponse>(apiBaseUrl, "/energy/current", historyDates, null, { source: "fingrid" }),
+      fetchHistory<EnergyCurrentResponse>(apiBaseUrl, "/energy/current", historyDates, null, { source: "porssisahko" }),
       fetchHistory<RoadRailCurrentResponse>(apiBaseUrl, "/traffic/current", historyDates),
-      fetchHistory<TransitCurrentResponse>(apiBaseUrl, "/transit/current", historyDates)
+      fetchHistory<TransitCurrentResponse>(apiBaseUrl, "/transit/current", historyDates, selectedCity)
     ]);
 
   return {
@@ -144,10 +164,12 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
     weather: weatherResult.data,
     airQuality: airQualityResult.data,
     energy: energyResult.data,
+    householdEnergy: householdEnergyResult.data,
     history: {
       weather: weatherHistory,
       airQuality: airQualityHistory,
       energy: energyHistory,
+      householdEnergy: householdEnergyHistory,
       roadRail: roadRailHistory,
       transit: transitHistory
     },
@@ -158,6 +180,7 @@ export async function fetchPlatformHome(): Promise<PlatformFetchResult> {
       weatherResult.error ??
       airQualityResult.error ??
       energyResult.error ??
+      householdEnergyResult.error ??
       roadRailResult.error ??
       transitResult.error
   };
