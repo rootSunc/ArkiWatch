@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html className="dark" lang="en">
+    <html className="dark" data-theme="dark" lang="en">
       <body className={`${inter.variable} ${jetBrainsMono.variable}`}>{children}</body>
     </html>
   );
