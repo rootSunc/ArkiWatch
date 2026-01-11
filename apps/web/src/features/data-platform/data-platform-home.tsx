@@ -115,6 +115,45 @@ const STATUS_LABELS: Record<string, string> = {
 
 const THEME_STORAGE_KEY = "arkiwatch-theme";
 
+function NotificationButton({
+  count,
+  isActive,
+  language,
+  onClick,
+  tone
+}: {
+  count: number;
+  isActive: boolean;
+  language: LanguageMode;
+  onClick: () => void;
+  tone: DashboardTone;
+}) {
+  const displayCount = count > 99 ? "99+" : String(count);
+  const hasNotifications = count > 0;
+  const label = translateText(
+    language,
+    hasNotifications ? "Open overall notifications" : "Open notifications"
+  );
+
+  return (
+    <button
+      className={`icon-button notification-button notification-button-${tone}${
+        isActive ? " notification-button-active" : ""
+      }`}
+      aria-label={label}
+      aria-pressed={isActive}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        {hasNotifications ? "notifications_active" : "notifications"}
+      </span>
+      {hasNotifications ? <span className="notification-badge">{displayCount}</span> : null}
+    </button>
+  );
+}
+
 function isThemeMode(value: string | null): value is ThemeMode {
   return value === "dark" || value === "light";
 }
@@ -520,6 +559,46 @@ function eventTimeLabel(categories: PlatformCategory[], event: PlatformEvent, la
   return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${eventCategoryLabel(categories, event, language)}`;
 }
 
+function eventSeverityRank(event: PlatformEvent): number {
+  switch (event.severity.toUpperCase()) {
+    case "HIGH":
+      return 3;
+    case "MEDIUM":
+      return 2;
+    case "LOW":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function pickPriorityEvent(events: PlatformEvent[]): PlatformEvent | null {
+  return [...events].sort((left, right) => {
+    const severityDiff = eventSeverityRank(right) - eventSeverityRank(left);
+    if (severityDiff !== 0) {
+      return severityDiff;
+    }
+
+    return new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime();
+  })[0] ?? null;
+}
+
+function notificationToneForEvents(events: PlatformEvent[]): DashboardTone {
+  if (events.some((event) => eventSeverityRank(event) >= 3)) {
+    return "bad";
+  }
+
+  if (events.length > 0) {
+    return "warn";
+  }
+
+  return "neutral";
+}
+
+function activeEventLabel(count: number, language: LanguageMode): string {
+  return `${count} ${translateText(language, count === 1 ? "active event" : "active events")}`;
+}
+
 function navItemAvailable(item: NavItem, categories: PlatformCategory[]): boolean {
   if (!item.categoryKey) {
     return true;
@@ -583,7 +662,21 @@ export function DataPlatformHome({
     .sort((left, right) => new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime())
     .slice(0, 12);
   const latestVisibleEvent = visibleEvents[0] ?? null;
-  const latestEventTone = latestVisibleEvent ? (severityTone(latestVisibleEvent.severity) as DashboardTone) : "neutral";
+  const latestEventTone = notificationToneForEvents(visibleEvents);
+  const overallNotificationEvents = overview?.recent_events ?? [];
+  const overallNotificationCount = overallNotificationEvents.length;
+  const overallNotificationTone = notificationToneForEvents(overallNotificationEvents);
+  const priorityVisibleEvent = pickPriorityEvent(visibleEvents);
+  const overallScopeLabel = selectedCategory ? displayTitle(selectedCategory, languageMode) : t("Overall");
+  const overallNotificationTitle =
+    visibleEvents.length > 0
+      ? `${overallScopeLabel} · ${activeEventLabel(visibleEvents.length, languageMode)}`
+      : `${overallScopeLabel} · ${t("No active events")}`;
+  const overallNotificationBody = priorityVisibleEvent
+    ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${priorityVisibleEvent.title}`
+    : t("No active cross-signal notifications in this view.");
+  const overallNotificationDetail =
+    priorityVisibleEvent?.body ?? t("Signal cards are nominal for the current view.");
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
   const isEnergyDetail = selectedCategory?.key === "energy";
@@ -602,6 +695,12 @@ export function DataPlatformHome({
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
+  }
+
+  function openOverallNotifications(): void {
+    setSelectedNavKey("overview");
+    setSearchValue("");
+    setIsEventsExpanded(true);
   }
 
   const replaceCityParam = useCallback((nextCity: string): void => {
@@ -744,11 +843,13 @@ export function DataPlatformHome({
             />
             <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
             <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
-            <button className="icon-button" aria-label={t("Notifications")} type="button">
-              <span className="material-symbols-outlined" aria-hidden="true">
-                notifications
-              </span>
-            </button>
+            <NotificationButton
+              count={overallNotificationCount}
+              isActive={isEventsExpanded && !isDetailPage}
+              language={languageMode}
+              onClick={openOverallNotifications}
+              tone={overallNotificationTone}
+            />
             <button className="icon-button" aria-label={t("Settings")} type="button">
               <span className="material-symbols-outlined" aria-hidden="true">
                 settings
@@ -783,11 +884,13 @@ export function DataPlatformHome({
               />
               <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
               <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
-              <button className="icon-button" aria-label={t("Notifications")} type="button">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  notifications
-                </span>
-              </button>
+              <NotificationButton
+                count={overallNotificationCount}
+                isActive={isEventsExpanded && !isDetailPage}
+                language={languageMode}
+                onClick={openOverallNotifications}
+                tone={overallNotificationTone}
+              />
               <button className="icon-button" aria-label={t("Settings")} type="button">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   settings
@@ -830,11 +933,13 @@ export function DataPlatformHome({
               />
               <LanguageSwitchButton language={languageMode} onLanguageChange={selectLanguageMode} />
               <ThemeToggleButton language={languageMode} themeMode={themeMode} onToggle={toggleThemeMode} />
-              <button className="icon-button" aria-label={t("Notifications")} type="button">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  notifications
-                </span>
-              </button>
+              <NotificationButton
+                count={overallNotificationCount}
+                isActive={isEventsExpanded && !isDetailPage}
+                language={languageMode}
+                onClick={openOverallNotifications}
+                tone={overallNotificationTone}
+              />
               <span className="profile-avatar" aria-label={t("User profile")}>
                 AW
               </span>
@@ -1022,6 +1127,35 @@ export function DataPlatformHome({
                     </button>
                   </header>
                   <div className="event-timeline" hidden={!isEventsExpanded} id="recent-events-timeline">
+                    <section
+                      className={`overall-notification overall-notification-${latestEventTone}`}
+                      aria-label={t("Overall notification")}
+                      aria-live="polite"
+                    >
+                      <div className="overall-notification-main">
+                        <span className={`events-panel-icon events-panel-icon-${latestEventTone}`} aria-hidden="true">
+                          <span className="material-symbols-outlined">
+                            {visibleEvents.length > 0 ? "notifications_active" : "notifications_off"}
+                          </span>
+                        </span>
+                        <div className="overall-notification-copy">
+                          <span className="overall-notification-kicker">
+                            {t("Overall notification")} · {cityLabel(selectedCity)}
+                          </span>
+                          <strong>{overallNotificationTitle}</strong>
+                          <p>{overallNotificationBody}</p>
+                        </div>
+                      </div>
+                      <div className="overall-notification-meta">
+                        <span>
+                          {t("Updated")} {formatTimestamp(overview.checked_at, "dateTime", languageMode)}
+                        </span>
+                        <span className={`status-badge status-badge-${latestEventTone}`}>
+                          {visibleEvents.length > 0 ? t("Needs attention") : t("Nominal")}
+                        </span>
+                      </div>
+                      <p className="overall-notification-detail">{overallNotificationDetail}</p>
+                    </section>
                     {visibleEvents.length > 0 ? (
                       visibleEvents.map((event) => {
                         const tone = severityTone(event.severity) as DashboardTone;
