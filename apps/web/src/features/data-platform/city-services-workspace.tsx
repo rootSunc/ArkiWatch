@@ -453,11 +453,13 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
       </section>
 
       <section className="city-visual-grid" aria-label={t("City service data visualizations")}>
-        {visualizations.map((visualization) => {
-          const points = visualization.data.points ?? [];
-          const maxValue = Math.max(1, ...points.map((point) => point.value));
-          return (
-            <article className={`city-glass-panel city-visual-panel city-visual-panel-${visualization.status}`} key={visualization.id}>
+        {visualizations
+          .filter((v) => v.type === "bar" || v.type === "gauge")
+          .map((visualization) => {
+            const points = visualization.data.points ?? [];
+            const maxValue = Math.max(1, ...points.map((point) => point.value));
+            return (
+              <article className={`city-glass-panel city-visual-panel city-visual-panel-${visualization.status}`} key={visualization.id}>
               <header>
                 <div>
                   <span>{visualization.type}</span>

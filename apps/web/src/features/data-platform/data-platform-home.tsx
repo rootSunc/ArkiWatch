@@ -58,12 +58,16 @@ import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 import { WaterSnowWorkspace } from "./water-snow-workspace";
 import { GeospatialWorkspace } from "./geospatial-workspace";
+import { RegionalProfileWorkspace } from "./regional-profile-workspace";
+import { SourceHealthStrip } from "./source-health-strip";
+import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
 type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
   defaultUserId: string;
   initialCity: string;
+  initialDate: string | null;
   energy: EnergyCurrentResponse | null;
   householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
@@ -122,9 +126,15 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
   },
   {
     key: "geospatial",
-    label: "Geospatial Base Dashboard",
+    label: "Geospatial Base",
     icon: "map",
     categoryKey: "geospatial",
+  },
+  {
+    key: "regional_profile",
+    label: "Regional Profile",
+    icon: "public",
+    categoryKey: "regional_profile",
   },
 ];
 
@@ -208,12 +218,12 @@ function isThemeMode(value: string | null): value is ThemeMode {
 
 function preferredThemeMode(): ThemeMode {
   if (typeof window === "undefined") {
-    return "dark";
+    return "light";
   }
 
-  return window.matchMedia("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function storedThemeMode(): ThemeMode | null {
@@ -342,6 +352,112 @@ function CityScopeSelector({
         expand_more
       </span>
     </label>
+  );
+}
+
+function todayDateValue(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Europe/Helsinki",
+  }).format(new Date());
+}
+
+function DateScopeSelector({
+  date,
+  isPending,
+  language,
+  onDateChange,
+}: {
+  date: string | null;
+  isPending: boolean;
+  language: LanguageMode;
+  onDateChange: (date: string | null) => void;
+}) {
+  const label = translateText(language, "Selected date");
+  const todayStr = todayDateValue();
+  const displayValue = date ?? todayStr;
+
+  return (
+    <label
+      className={
+        isPending
+          ? "date-scope-control date-scope-control-pending"
+          : `date-scope-control${date ? " date-scope-control-historical" : ""}`
+      }
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        calendar_today
+      </span>
+      <input
+        type="date"
+        aria-label={label}
+        disabled={isPending}
+        max={todayStr}
+        onChange={(event) => {
+          const value = event.currentTarget.value;
+          if (!value || value === todayStr) {
+            onDateChange(null);
+          } else {
+            onDateChange(value);
+          }
+        }}
+        value={displayValue}
+      />
+      {date ? (
+        <button
+          className="date-scope-clear"
+          aria-label={translateText(language, "Return to Live")}
+          onClick={(event) => {
+            event.preventDefault();
+            onDateChange(null);
+          }}
+          title={translateText(language, "Return to Live")}
+          type="button"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
+      ) : null}
+    </label>
+  );
+}
+
+function HistoricalWarningBanner({
+  date,
+  language,
+  onReturnToLive,
+}: {
+  date: string;
+  language: LanguageMode;
+  onReturnToLive: () => void;
+}) {
+  return (
+    <div className="historical-banner" role="alert">
+      <span className="material-symbols-outlined historical-banner-icon" aria-hidden="true">
+        history
+      </span>
+      <span className="historical-banner-text">
+        <strong>
+          {translateText(language, "Viewing historical dashboard for")} {date}
+        </strong>
+        <span>
+          {translateText(language, "Data may not reflect the current real-time state.")}
+        </span>
+      </span>
+      <button
+        className="historical-banner-action"
+        onClick={onReturnToLive}
+        type="button"
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          trending_flat
+        </span>
+        {translateText(language, "Return to Live")}
+      </button>
+    </div>
   );
 }
 
@@ -793,6 +909,7 @@ export function DataPlatformHome({
   apiBaseUrl,
   defaultUserId,
   initialCity,
+  initialDate,
   energy,
   householdEnergy,
   history,
@@ -808,13 +925,42 @@ export function DataPlatformHome({
   const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(() =>
     normalizeCityValue(initialCity),
   );
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    initialDate ?? null,
+  );
+  const isHistorical = selectedDate !== null;
   const [isCityRefreshPending, startCityRefresh] = useTransition();
+  const [isDateRefreshPending, startDateRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function triggerDataRefresh() {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/sources/refresh`, {
+        method: "POST"
+      });
+      if (response.ok) {
+        router.refresh();
+      } else {
+        console.error("Failed to refresh data sources");
+      }
+    } catch (err) {
+      console.error("Error refreshing data sources:", err);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000);
+    }
+  }
 
   const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const selectedCategory =
@@ -874,6 +1020,7 @@ export function DataPlatformHome({
   const isCityServicesDetail = selectedCategory?.key === "city_services";
   const isLinkedEventsDetail = selectedCategory?.key === "events";
   const isGeospatialDetail = selectedCategory?.key === "geospatial";
+  const isRegionalProfileDetail = selectedCategory?.key === "regional_profile";
   const isDetailPage =
     isWeatherDetail ||
     isAirDetail ||
@@ -883,16 +1030,22 @@ export function DataPlatformHome({
     isWaterDetail ||
     isCityServicesDetail ||
     isLinkedEventsDetail ||
-    isGeospatialDetail;
+    isGeospatialDetail ||
+    isRegionalProfileDetail;
 
   function selectNavItem(item: NavItem): void {
     setSelectedNavKey(item.categoryKey ?? item.key);
+    setIsMobileMenuOpen(false);
   }
 
   function openOverallNotifications(): void {
-    setSelectedNavKey("overview");
-    setSearchValue("");
-    setIsEventsExpanded(true);
+    if (selectedNavKey === "overview" && isEventsExpanded) {
+      setIsEventsExpanded(false);
+    } else {
+      setSelectedNavKey("overview");
+      setSearchValue("");
+      setIsEventsExpanded(true);
+    }
   }
 
   const replaceCityParam = useCallback(
@@ -904,6 +1057,21 @@ export function DataPlatformHome({
       });
     },
     [pathname, router, searchParams, startCityRefresh],
+  );
+
+  const replaceDateParam = useCallback(
+    (nextDate: string | null): void => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (nextDate) {
+        nextParams.set("date", nextDate);
+      } else {
+        nextParams.delete("date");
+      }
+      startDateRefresh(() => {
+        router.replace(`${pathname}?${nextParams.toString()}`);
+      });
+    },
+    [pathname, router, searchParams, startDateRefresh],
   );
 
   useEffect(() => {
@@ -923,6 +1091,10 @@ export function DataPlatformHome({
   useEffect(() => {
     setSelectedCity(normalizeCityValue(initialCity));
   }, [initialCity]);
+
+  useEffect(() => {
+    setSelectedDate(initialDate ?? null);
+  }, [initialDate]);
 
   useEffect(() => {
     if (searchParams.has("city")) {
@@ -961,15 +1133,20 @@ export function DataPlatformHome({
     replaceCityParam(nextCity);
   }
 
+  function selectDate(nextDate: string | null): void {
+    setSelectedDate(nextDate);
+    replaceDateParam(nextDate);
+  }
+
   return (
     <I18nProvider language={languageMode}>
       <div className="dashboard-shell">
         <aside
-          className={
+          className={`${
             isDetailPage
               ? "dashboard-side-nav detail-side-nav"
               : "dashboard-side-nav"
-          }
+          } ${isMobileMenuOpen ? "mobile-side-nav-open" : ""}`}
           aria-label={t("Primary navigation")}
         >
           <div className="brand-panel">
@@ -1041,6 +1218,13 @@ export function DataPlatformHome({
             ))}
           </nav>
         </aside>
+        {isMobileMenuOpen ? (
+          <div
+            className="mobile-side-nav-backdrop"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        ) : null}
 
         <div className="dashboard-app">
           <header className="mobile-dashboard-header">
@@ -1048,6 +1232,7 @@ export function DataPlatformHome({
               <button
                 className="icon-button"
                 aria-label={t("Open navigation")}
+                onClick={() => setIsMobileMenuOpen(true)}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
@@ -1072,6 +1257,12 @@ export function DataPlatformHome({
                 language={languageMode}
                 onCityChange={selectCity}
               />
+              <DateScopeSelector
+                date={selectedDate}
+                isPending={isDateRefreshPending}
+                language={languageMode}
+                onDateChange={selectDate}
+              />
               <LanguageSwitchButton
                 language={languageMode}
                 onLanguageChange={selectLanguageMode}
@@ -1081,6 +1272,23 @@ export function DataPlatformHome({
                 themeMode={themeMode}
                 onToggle={toggleThemeMode}
               />
+              {!isDetailPage && !isHistorical ? (
+                <button
+                  className="icon-button theme-toggle-button refresh-button"
+                  aria-label={t("Refresh data")}
+                  disabled={isRefreshing}
+                  onClick={triggerDataRefresh}
+                  title={t("Refresh data")}
+                  type="button"
+                >
+                  <span
+                    className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
+                    aria-hidden="true"
+                  >
+                    refresh
+                  </span>
+                </button>
+              ) : null}
               <NotificationButton
                 count={overallNotificationCount}
                 isActive={isEventsExpanded && !isDetailPage}
@@ -1136,6 +1344,12 @@ export function DataPlatformHome({
                   language={languageMode}
                   onCityChange={selectCity}
                 />
+                <DateScopeSelector
+                  date={selectedDate}
+                  isPending={isDateRefreshPending}
+                  language={languageMode}
+                  onDateChange={selectDate}
+                />
                 <LanguageSwitchButton
                   language={languageMode}
                   onLanguageChange={selectLanguageMode}
@@ -1178,6 +1392,13 @@ export function DataPlatformHome({
                 : "dashboard-content"
             }
           >
+            {isHistorical && selectedDate ? (
+              <HistoricalWarningBanner
+                date={selectedDate}
+                language={languageMode}
+                onReturnToLive={() => selectDate(null)}
+              />
+            ) : null}
             {!isDetailPage ? (
               <div className="desktop-dashboard-header">
                 <div>
@@ -1214,6 +1435,12 @@ export function DataPlatformHome({
                     language={languageMode}
                     onCityChange={selectCity}
                   />
+                  <DateScopeSelector
+                    date={selectedDate}
+                    isPending={isDateRefreshPending}
+                    language={languageMode}
+                    onDateChange={selectDate}
+                  />
                   <LanguageSwitchButton
                     language={languageMode}
                     onLanguageChange={selectLanguageMode}
@@ -1223,6 +1450,23 @@ export function DataPlatformHome({
                     themeMode={themeMode}
                     onToggle={toggleThemeMode}
                   />
+                  {!isHistorical ? (
+                  <button
+                    className="icon-button theme-toggle-button refresh-button"
+                    aria-label={t("Refresh data")}
+                    disabled={isRefreshing}
+                    onClick={triggerDataRefresh}
+                    title={t("Refresh data")}
+                    type="button"
+                  >
+                    <span
+                      className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
+                      aria-hidden="true"
+                    >
+                      refresh
+                    </span>
+                  </button>
+                  ) : null}
                   <NotificationButton
                     count={overallNotificationCount}
                     isActive={isEventsExpanded && !isDetailPage}
@@ -1281,6 +1525,8 @@ export function DataPlatformHome({
                 <LinkedEventsWorkspace category={selectedCategory} />
               ) : isGeospatialDetail ? (
                 <GeospatialWorkspace category={selectedCategory} />
+              ) : isRegionalProfileDetail ? (
+                <RegionalProfileWorkspace category={selectedCategory} />
               ) : (
                 <>
                   <section
@@ -1338,6 +1584,8 @@ export function DataPlatformHome({
                       </strong>
                     </article>
                   </section>
+
+                  <SourceHealthStrip overview={overview} />
 
                   <div
                     className={
@@ -1447,146 +1695,140 @@ export function DataPlatformHome({
                       </div>
                     </section>
 
-                    <aside
-                      className={
-                        isEventsExpanded
-                          ? "events-panel events-panel-expanded"
-                          : "events-panel events-panel-collapsed"
-                      }
-                      aria-label={t("Recent events")}
-                    >
-                      <header>
-                        <button
-                          aria-controls="recent-events-timeline"
-                          aria-expanded={isEventsExpanded}
-                          aria-label={
-                            isEventsExpanded
-                              ? t("Collapse recent events")
-                              : t("Expand recent events")
-                          }
-                          className="events-panel-toggle"
-                          onClick={() =>
-                            setIsEventsExpanded((isExpanded) => !isExpanded)
-                          }
-                          type="button"
-                        >
-                          <span
-                            className={`events-panel-icon events-panel-icon-${latestEventTone}`}
-                            aria-hidden="true"
-                          >
-                            <span className="material-symbols-outlined">
-                              notifications
-                            </span>
-                          </span>
-                          <span className="events-panel-copy">
-                            <span className="events-panel-title">
-                              <span className="events-panel-heading">
-                                {t("Recent Events")}
-                              </span>
-                              <span className="events-count-badge">
-                                {visibleEvents.length}
-                              </span>
-                            </span>
-                            <span className="events-panel-summary">
-                              {latestVisibleEvent
-                                ? `${eventTimeLabel(categories, latestVisibleEvent, languageMode)} · ${latestVisibleEvent.title}`
-                                : t("No recent events match the current view.")}
-                            </span>
-                          </span>
-                          <span
-                            className="material-symbols-outlined events-panel-chevron"
-                            aria-hidden="true"
-                          >
-                            expand_more
-                          </span>
-                        </button>
-                      </header>
-                      <div
-                        className="event-timeline"
-                        hidden={!isEventsExpanded}
-                        id="recent-events-timeline"
+                    {isEventsExpanded ? (
+                      <aside
+                        className="events-panel events-panel-expanded"
+                        aria-label={t("Recent events")}
                       >
-                        <section
-                          className={`overall-notification overall-notification-${latestEventTone}`}
-                          aria-label={t("Overall notification")}
-                          aria-live="polite"
-                        >
-                          <div className="overall-notification-main">
+                        <header>
+                          <button
+                            aria-controls="recent-events-timeline"
+                            aria-expanded={isEventsExpanded}
+                            aria-label={t("Collapse recent events")}
+                            className="events-panel-toggle"
+                            onClick={() =>
+                              setIsEventsExpanded((isExpanded) => !isExpanded)
+                            }
+                            type="button"
+                          >
                             <span
                               className={`events-panel-icon events-panel-icon-${latestEventTone}`}
                               aria-hidden="true"
                             >
                               <span className="material-symbols-outlined">
-                                {visibleEvents.length > 0
-                                  ? "notifications_active"
-                                  : "notifications_off"}
+                                notifications
                               </span>
                             </span>
-                            <div className="overall-notification-copy">
-                              <span className="overall-notification-kicker">
-                                {t("Overall notification")} ·{" "}
-                                {cityLabel(selectedCity)}
+                            <span className="events-panel-copy">
+                              <span className="events-panel-title">
+                                <span className="events-panel-heading">
+                                  {t("Recent Events")}
+                                </span>
+                                <span className="events-count-badge">
+                                  {visibleEvents.length}
+                                </span>
                               </span>
-                              <strong>{overallNotificationTitle}</strong>
-                              <p>{overallNotificationBody}</p>
-                            </div>
-                          </div>
-                          <div className="overall-notification-meta">
-                            <span>
-                              {t("Updated")}{" "}
-                              {formatTimestamp(
-                                overview.checked_at,
-                                "dateTime",
-                                languageMode,
-                              )}
+                              <span className="events-panel-summary">
+                                {latestVisibleEvent
+                                  ? `${eventTimeLabel(categories, latestVisibleEvent, languageMode)} · ${latestVisibleEvent.title}`
+                                  : t("No recent events match the current view.")}
+                              </span>
                             </span>
                             <span
-                              className={`status-badge status-badge-${latestEventTone}`}
+                              className="material-symbols-outlined events-panel-chevron"
+                              aria-hidden="true"
                             >
-                              {visibleEvents.length > 0
-                                ? t("Needs attention")
-                                : t("Nominal")}
+                              expand_less
                             </span>
-                          </div>
-                          <p className="overall-notification-detail">
-                            {overallNotificationDetail}
-                          </p>
-                        </section>
-                        {visibleEvents.length > 0 ? (
-                          visibleEvents.map((event) => {
-                            const tone = severityTone(
-                              event.severity,
-                            ) as DashboardTone;
-                            return (
-                              <article className="timeline-item" key={event.id}>
-                                <span
-                                  className={`timeline-dot timeline-dot-${tone}`}
-                                  aria-hidden="true"
-                                />
-                                <time>
-                                  {eventTimeLabel(
-                                    categories,
-                                    event,
-                                    languageMode,
-                                  )}
-                                </time>
-                                <h4>{event.title}</h4>
-                                <p>{event.body}</p>
-                                {event.evidence.length > 0 ? (
-                                  <div className="event-tags">
-                                    <span>{event.evidence[0]}</span>
-                                  </div>
-                                ) : null}
-                              </article>
-                            );
-                          })
-                        ) : (
-                          <div className="dashboard-empty-state">
-                            {t("No recent events match the current view.")}
-                          </div>
-                        )}
-                      </div>
-                    </aside>
+                          </button>
+                        </header>
+                        <div
+                          className="event-timeline"
+                          hidden={!isEventsExpanded}
+                          id="recent-events-timeline"
+                        >
+                          <section
+                            className={`overall-notification overall-notification-${latestEventTone}`}
+                            aria-label={t("Overall notification")}
+                            aria-live="polite"
+                          >
+                            <div className="overall-notification-main">
+                              <span
+                                className={`events-panel-icon events-panel-icon-${latestEventTone}`}
+                                aria-hidden="true"
+                              >
+                                <span className="material-symbols-outlined">
+                                  {visibleEvents.length > 0
+                                    ? "notifications_active"
+                                    : "notifications_off"}
+                                </span>
+                              </span>
+                              <div className="overall-notification-copy">
+                                <span className="overall-notification-kicker">
+                                  {t("Overall notification")} ·{" "}
+                                  {cityLabel(selectedCity)}
+                                </span>
+                                <strong>{overallNotificationTitle}</strong>
+                                <p>{overallNotificationBody}</p>
+                              </div>
+                            </div>
+                            <div className="overall-notification-meta">
+                              <span>
+                                {t("Updated")}{" "}
+                                {formatTimestamp(
+                                  overview.checked_at,
+                                  "dateTime",
+                                  languageMode,
+                                )}
+                              </span>
+                              <span
+                                className={`status-badge status-badge-${latestEventTone}`}
+                              >
+                                {visibleEvents.length > 0
+                                  ? t("Needs attention")
+                                  : t("Nominal")}
+                              </span>
+                            </div>
+                            <p className="overall-notification-detail">
+                              {overallNotificationDetail}
+                            </p>
+                          </section>
+                          {visibleEvents.length > 0 ? (
+                            visibleEvents.map((event) => {
+                              const tone = severityTone(
+                                event.severity,
+                              ) as DashboardTone;
+                              return (
+                                <article className="timeline-item" key={event.id}>
+                                  <span
+                                    className={`timeline-dot timeline-dot-${tone}`}
+                                    aria-hidden="true"
+                                  />
+                                  <time>
+                                    {eventTimeLabel(
+                                      categories,
+                                      event,
+                                      languageMode,
+                                    )}
+                                  </time>
+                                  <h4>{event.title}</h4>
+                                  <p>{event.body}</p>
+                                  {event.evidence.length > 0 ? (
+                                    <div className="event-tags">
+                                      <span>{event.evidence[0]}</span>
+                                    </div>
+                                  ) : null}
+                                </article>
+                              );
+                            })
+                          ) : (
+                            <div className="dashboard-empty-state">
+                              {t("No recent events match the current view.")}
+                            </div>
+                          )}
+                        </div>
+                      </aside>
+                    ) : null}
                   </div>
                 </>
               )
@@ -1626,6 +1868,10 @@ export function DataPlatformHome({
               </div>
             </footer>
           )}
+          <AssistantWidget
+            overview={overview}
+            language={languageMode}
+          />
         </div>
       </div>
     </I18nProvider>

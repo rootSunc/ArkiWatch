@@ -1,12 +1,15 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
 import { PlatformCategory, PlatformOverviewResponse } from "@/features/data-platform/types";
+import { LanguageMode, translateText } from "@/features/data-platform/i18n";
 
 type AssistantWidgetProps = {
   overview: PlatformOverviewResponse | null;
+  language: LanguageMode;
 };
 
 type ChatMessage = {
@@ -15,18 +18,36 @@ type ChatMessage = {
   text: string;
 };
 
-const DEFAULT_QUESTIONS = [
-  "解释当前页面的数据",
-  "哪个数据源最近异常？",
-  "哪些扩展方向还在规划？",
-  "交通和天气有什么值得注意？"
-];
+const WIDGET_TRANSLATIONS = {
+  en: {
+    welcome: "Hello! I am your AI Data Assistant. I can help explain telemetry records, sensor statuses, and system alerts.",
+    explainCurrent: "Explain the current page's data",
+    analyzeCategory: (category: string) => `Analyze ${category} data`,
+    whichSourceAbnormal: "Which data source is abnormal recently?",
+    whichExpansionPlanned: "What expansion directions are being planned?",
+    askPlaceholder: "Ask about the current data...",
+    send: "Send",
+    title: "AI Assistant",
+    subtitle: "Data Explainer",
+    tooltip: "💡 Need help with data?",
+    offlinePrompt: "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
+  },
+  zh: {
+    welcome: "您好！我是您的 AI 数据助手。我可以帮您解释当前平台的遥测数据、传感器运行状态以及系统警报。",
+    explainCurrent: "解释当前页面的数据",
+    analyzeCategory: (category: string) => `分析 ${category} 数据`,
+    whichSourceAbnormal: "哪个数据源最近异常？",
+    whichExpansionPlanned: "哪些扩展方向还在规划？",
+    askPlaceholder: "询问关于当前数据的任何问题...",
+    send: "发送",
+    title: "AI 助手",
+    subtitle: "数据解析器",
+    tooltip: "💡 需要数据协助吗？",
+    offlinePrompt: "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。"
+  }
+};
 
-function categorySummary(category: PlatformCategory): string {
-  const eventMetric = category.summary_metrics.find((metric) => metric.key === "active_events");
-  const sourceMetric = category.summary_metrics.find((metric) => metric.key === "source_status");
-  return `${category.title}: ${category.status}, ${eventMetric?.value ?? "0"} events, source ${sourceMetric?.value ?? "unknown"}`;
-}
+
 
 function mostImportantCategory(categories: PlatformCategory[]): PlatformCategory | null {
   const score = (category: PlatformCategory) => {
@@ -45,9 +66,9 @@ function mostImportantCategory(categories: PlatformCategory[]): PlatformCategory
   return [...categories].sort((left, right) => score(right) - score(left))[0] ?? null;
 }
 
-function buildAssistantReply(question: string, overview: PlatformOverviewResponse | null): string {
+function buildAssistantReply(question: string, overview: PlatformOverviewResponse | null, language: LanguageMode): string {
   if (!overview) {
-    return "平台数据暂时不可用。等 /api/platform/overview 恢复后，我可以解释分类数据、图表和数据源状态。";
+    return WIDGET_TRANSLATIONS[language].offlinePrompt;
   }
 
   const normalizedQuestion = question.toLowerCase();
@@ -59,58 +80,160 @@ function buildAssistantReply(question: string, overview: PlatformOverviewRespons
 
   if (normalizedQuestion.includes("source") || normalizedQuestion.includes("数据源")) {
     const sourceSummary = overview.sources
-      .map((source) => `${source.source_code}: ${source.operational_status}`)
+      .map((source) => `${source.source_code}: ${translateText(language, source.operational_status)}`)
       .join("; ");
-    return `当前数据源状态是：${sourceSummary || "暂无数据源状态"}。更新时间：${formatTimestamp(overview.checked_at)}。`;
+    return language === "zh"
+      ? `当前数据源状态是：${sourceSummary || "暂无数据源状态"}。更新时间：${formatTimestamp(overview.checked_at, "dateTime", language)}。`
+      : `Current data sources are: ${sourceSummary || "No source status available"}. Updated at: ${formatTimestamp(overview.checked_at, "dateTime", language)}.`;
   }
 
-  if (normalizedQuestion.includes("扩展") || normalizedQuestion.includes("规划")) {
+  if (normalizedQuestion.includes("扩展") || normalizedQuestion.includes("规划") || normalizedQuestion.includes("expansion") || normalizedQuestion.includes("plan")) {
     const plannedCategories = overview.categories
       .filter((category) => (category.stage ?? "connected") !== "connected")
-      .map((category) => `${category.title}: ${category.stage ?? "connected"}`)
+      .map((category) => `${translateText(language, category.title)}: ${translateText(language, category.stage ?? "connected")}`)
       .join("; ");
-    return `当前扩展目录是：${plannedCategories || "暂无规划分类"}。这些分类已经进入平台目录，但采集器和规则可以按优先级逐步接入。`;
+    return language === "zh"
+      ? `当前扩展目录是：${plannedCategories || "暂无规划分类"}。这些分类已录入平台目录，后续可按优先级配置采集器和规则。`
+      : `Planned expansion categories are: ${plannedCategories || "No planned categories"}. These are in the catalog and will be integrated with high priority.`;
   }
 
   if (matchedCategory) {
     const metrics = matchedCategory.summary_metrics
       .slice(0, 4)
-      .map((metric) => `${metric.label} ${metric.value}${metric.unit ? metric.unit : ""}`)
+      .map((metric) => `${translateText(language, metric.label)} ${metric.value}${metric.unit ? metric.unit : ""}`)
       .join("; ");
     const latestEvent = matchedCategory.events[0];
-    return latestEvent
-      ? `${categorySummary(matchedCategory)}。关键指标：${metrics}。最近事件：${latestEvent.title}，${latestEvent.body}`
-      : `${categorySummary(matchedCategory)}。关键指标：${metrics}。当前分类没有活跃事件，可以继续查看图表和数据源采集状态。`;
+    const translatedTitle = translateText(language, matchedCategory.title);
+    const translatedStatus = translateText(language, matchedCategory.status);
+    if (language === "zh") {
+      return latestEvent
+        ? `${translatedTitle}分类状态目前为 ${translatedStatus}。关键指标：${metrics}。最近事件：${latestEvent.title}，${latestEvent.body}`
+        : `${translatedTitle}分类状态目前为 ${translatedStatus}。关键指标：${metrics}。当前分类没有活跃事件，采集通道运转正常。`;
+    } else {
+      return latestEvent
+        ? `${translatedTitle} category status is currently ${translatedStatus}. Metrics: ${metrics}. Recent event: ${latestEvent.title} - ${latestEvent.body}`
+        : `${translatedTitle} category status is currently ${translatedStatus}. Metrics: ${metrics}. There are no active events for this channel, and telemetry pipeline is nominal.`;
+    }
   }
 
   const importantCategory = mostImportantCategory(overview.categories);
-  const categoryList = overview.categories.map(categorySummary).join("; ");
-  return importantCategory
-    ? `平台整体状态是 ${overview.health_status}。最值得先看的分类是 ${importantCategory.title}，状态为 ${importantCategory.status}。分类概览：${categoryList}。`
-    : `平台整体状态是 ${overview.health_status}，但当前没有可展示的分类数据。`;
+  const categoryList = overview.categories.map((category) => `${translateText(language, category.title)} (${translateText(language, category.status)})`).join("; ");
+  const translatedHealthStatus = translateText(language, overview.health_status);
+  if (language === "zh") {
+    return importantCategory
+      ? `平台整体健康状态是 ${translatedHealthStatus}。当前最值得关注的分类是 ${translateText(language, importantCategory.title)}（状态为 ${translateText(language, importantCategory.status)}）。全部分类概览：${categoryList}。`
+      : `平台整体状态是 ${translatedHealthStatus}，但当前没有可展示的分类数据。`;
+  } else {
+    return importantCategory
+      ? `Platform health status is ${translatedHealthStatus}. The most critical category to inspect is ${translateText(language, importantCategory.title)} (${translateText(language, importantCategory.status)}). Category summary: ${categoryList}.`
+      : `Platform health status is ${translatedHealthStatus}, but no category metrics are loaded.`;
+  }
 }
 
-export function AssistantWidget({ overview }: AssistantWidgetProps) {
+export function AssistantWidget({
+  overview,
+  language,
+}: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const t = WIDGET_TRANSLATIONS[language] || WIDGET_TRANSLATIONS.en;
+
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const totalMovement = useRef(0);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      totalMovement.current = Math.sqrt(dx * dx + dy * dy);
+      setPosition({
+        x: dragStart.current.posX + dx,
+        y: dragStart.current.posY + dy,
+      });
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragStart.current.x;
+      const dy = touch.clientY - dragStart.current.y;
+      totalMovement.current = Math.sqrt(dx * dx + dy * dy);
+      setPosition({
+        x: dragStart.current.posX + dx,
+        y: dragStart.current.posY + dy,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleMouseUp);
+    
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only left click
+    setIsDragging(true);
+    dragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: position.x,
+      posY: position.y,
+    };
+    totalMovement.current = 0;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    setIsDragging(true);
+    dragStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      posX: position.x,
+      posY: position.y,
+    };
+    totalMovement.current = 0;
+  };
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: "welcome",
       role: "assistant",
-      text: "我可以帮你解释当前数据、图表和数据源状态。"
+      text: t.welcome
     }
   ]);
+
   const suggestedQuestions = useMemo(() => {
     if (!overview) {
-      return DEFAULT_QUESTIONS;
+      return [
+        t.explainCurrent,
+        t.whichSourceAbnormal,
+        t.whichExpansionPlanned
+      ];
     }
+    const firstCat = overview.categories[0]?.title ?? "Weather";
     return [
-      "解释当前页面的数据",
-      `分析 ${overview.categories[0]?.title ?? "Weather"} 数据`,
-      "哪个数据源最近异常？",
-      "哪些扩展方向还在规划？"
+      t.explainCurrent,
+      t.analyzeCategory(firstCat),
+      t.whichSourceAbnormal,
+      t.whichExpansionPlanned
     ];
-  }, [overview]);
+  }, [overview, t, language]);
 
   const submitQuestion = (question: string) => {
     const normalizedQuestion = question.trim();
@@ -121,11 +244,11 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
     const timestamp = Date.now();
     setMessages((currentMessages) => [
       ...currentMessages,
-      { id: `user-${timestamp}`, role: "user", text: normalizedQuestion },
+      { id: `user-${timestamp}`, role: `user`, text: normalizedQuestion },
       {
         id: `assistant-${timestamp}`,
-        role: "assistant",
-        text: buildAssistantReply(normalizedQuestion, overview)
+        role: `assistant`,
+        text: buildAssistantReply(normalizedQuestion, overview, language)
       }
     ]);
     setInputValue("");
@@ -138,16 +261,25 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
   };
 
   return (
-    <div className={isOpen ? "assistant-widget assistant-widget-open" : "assistant-widget"}>
+    <div
+      className={`assistant-widget ${isOpen ? "assistant-widget-open" : ""}`}
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+    >
       {isOpen ? (
         <section className="assistant-drawer" aria-label="AI data assistant">
           <header>
             <div className="assistant-mini-person" aria-hidden="true">
-              <span />
+              <Image
+                src="/brand/zoro_mascot.png"
+                alt="AI Mascot Mini"
+                width={36}
+                height={36}
+                className="assistant-mini-mascot-img"
+              />
             </div>
             <div>
-              <span className="label-text">AI assistant</span>
-              <h2>Data explainer</h2>
+              <span className="label-text">{t.title}</span>
+              <h2>{t.subtitle}</h2>
             </div>
             <button
               aria-label="Close assistant"
@@ -155,9 +287,10 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
               onClick={() => setIsOpen(false)}
               type="button"
             >
-              X
+              <span className="material-symbols-outlined">close</span>
             </button>
           </header>
+          
           <div className="assistant-messages">
             {messages.map((message) => (
               <article className={`assistant-message assistant-message-${message.role}`} key={message.id}>
@@ -165,6 +298,7 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
               </article>
             ))}
           </div>
+          
           <div className="assistant-suggestions">
             {suggestedQuestions.map((question) => (
               <button key={question} onClick={() => submitQuestion(question)} type="button">
@@ -172,27 +306,46 @@ export function AssistantWidget({ overview }: AssistantWidgetProps) {
               </button>
             ))}
           </div>
+          
           <form className="assistant-form" onSubmit={onSubmit}>
             <input
               aria-label="Ask about platform data"
               onChange={(event) => setInputValue(event.target.value)}
-              placeholder="Ask about the current data..."
+              placeholder={t.askPlaceholder}
               value={inputValue}
             />
-            <button type="submit">Send</button>
+            <button type="submit">
+              <span className="material-symbols-outlined">send</span>
+            </button>
           </form>
         </section>
       ) : (
         <button
-          aria-label="Open AI data assistant"
+          aria-label={t.tooltip}
           className="assistant-launcher"
-          onClick={() => setIsOpen(true)}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onClick={(e) => {
+            if (totalMovement.current > 5) {
+              e.preventDefault();
+              e.stopPropagation();
+            } else {
+              setIsOpen(true);
+            }
+          }}
           type="button"
         >
-          <span className="assistant-person" aria-hidden="true">
-            <span />
-          </span>
-          <span className="assistant-bubble">我可以解释当前数据</span>
+          <div className="assistant-mascot-wrapper">
+            <Image
+              src="/brand/zoro_mascot.png"
+              alt="AI Mascot Launcher"
+              width={76}
+              height={76}
+              className="assistant-mascot-img"
+              priority
+            />
+          </div>
+          <span className="assistant-bubble">{t.tooltip}</span>
         </button>
       )}
     </div>

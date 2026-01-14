@@ -253,7 +253,8 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
   ].filter(isPlatformMetric);
 
   // High premium visual mock metrics for geospatial density maps
-  const topographicDensityPoints: PlatformVisualizationPoint[] = [
+  const densityVis = category.visualizations.find((v) => v.id === "geospatial-feature-density");
+  const topographicDensityPoints: PlatformVisualizationPoint[] = (densityVis?.data?.points as PlatformVisualizationPoint[]) ?? [
     { label: "Building Footprints", value: 384102, tone: "good" },
     { label: "Addresses Lattice", value: 195420, tone: "good" },
     { label: "Cadastral Parcels", value: 124801, tone: "neutral" },
@@ -267,7 +268,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
     <section className="water-detail-page" aria-label={t("Geospatial detail")}>
       <div className="water-detail-header">
         <div>
-          <h2>{t("Geospatial Base Dashboard")}</h2>
+          <h2>{t("Geospatial Base")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>
@@ -356,21 +357,13 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
               const activeSignals = fieldSignalKeys(field);
 
               return (
-                <div className="water-field-lattice-row" key={field} style={{ display: "grid", gridTemplateColumns: "120px repeat(5, 1fr)", alignItems: "center" }}>
+                <div className="water-field-lattice-row geo-field-lattice-row" key={field}>
                   <strong>{t(formatDataItemLabel(field))}</strong>
                   {FIELD_SIGNAL_COLUMNS.map((column) => (
                     <i
                       aria-label={`${t(formatDataItemLabel(field))} ${t(column.label)}`}
-                      className={activeSignals.includes(column.key) ? "active" : undefined}
+                      className={`geo-field-lattice-dot ${activeSignals.includes(column.key) ? "active" : ""}`}
                       key={column.key}
-                      style={{
-                        height: "10px",
-                        width: "10px",
-                        borderRadius: "50%",
-                        backgroundColor: activeSignals.includes(column.key) ? "var(--accent-green, #10b981)" : "rgba(255,255,255,0.06)",
-                        margin: "0 auto",
-                        display: "inline-block"
-                      }}
                     />
                   ))}
                 </div>
@@ -532,19 +525,18 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             </header>
             <div className="water-guidance-grid" aria-label={t("Topographic density layers")} style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
               {topographicDensityPoints.map((row) => (
-                <article className={`water-guidance-row water-guidance-row-${row.tone}`} key={row.label} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <div style={{ display: "flex", justifyContent: "between", alignItems: "center", width: "100%" }}>
+                <article className={`water-guidance-row water-guidance-row-${row.tone} geo-density-row`} key={row.label}>
+                  <div className="geo-density-row-header">
                     <strong>{t(row.label)}</strong>
-                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem" }}>{new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(row.value)}</span>
+                    <span>{new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(row.value)}</span>
                   </div>
-                  <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden", position: "relative" }}>
-                    <span style={{
-                      display: "block",
-                      height: "100%",
-                      width: `${(row.value / maxDensityValue) * 100}%`,
-                      backgroundColor: row.tone === "good" ? "var(--accent-green, #10b981)" : row.tone === "warn" ? "var(--accent-yellow, #f59e0b)" : "rgba(255,255,255,0.3)",
-                      borderRadius: "3px"
-                    }} />
+                  <div className="geo-density-progress-track">
+                    <span
+                      className={`geo-density-progress-bar ${row.tone === "good" ? "good" : row.tone === "warn" ? "warn" : "primary"}`}
+                      style={{
+                        width: `${(row.value / maxDensityValue) * 100}%`
+                      }}
+                    />
                   </div>
                 </article>
               ))}

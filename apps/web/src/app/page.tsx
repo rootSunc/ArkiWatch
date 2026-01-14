@@ -7,13 +7,15 @@ export const dynamic = "force-dynamic";
 type PageProps = {
   searchParams?: {
     city?: string;
+    date?: string;
   };
 };
 
 export default async function Page({ searchParams }: PageProps) {
   const selectedCity = normalizeCityValue(searchParams?.city);
+  const selectedDate = searchParams?.date ?? null;
   const { apiBaseUrl, defaultUserId, overview, weather, airQuality, energy, householdEnergy, history, roadRail, transit, error } =
-    await fetchPlatformHome(selectedCity);
+    await fetchPlatformHome(selectedCity, selectedDate);
 
   return (
     <DataPlatformHome
@@ -21,6 +23,7 @@ export default async function Page({ searchParams }: PageProps) {
       apiBaseUrl={apiBaseUrl}
       defaultUserId={defaultUserId}
       initialCity={selectedCity}
+      initialDate={selectedDate}
       energy={energy}
       householdEnergy={householdEnergy}
       history={history}
