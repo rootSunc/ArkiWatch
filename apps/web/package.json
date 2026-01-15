@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck"
+    "check": "pnpm run lint && pnpm run typecheck"
   },
   "dependencies": {
     "next": "^14.2.0",
