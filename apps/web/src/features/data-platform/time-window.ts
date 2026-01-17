@@ -96,6 +96,23 @@ function shiftDateInputValue(value: string, days: number): string | null {
   }).format(new Date(Date.UTC(Number(year), Number(month) - 1, Number(day) + days, 12)));
 }
 
+function isCanonicalDateInputValue(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return false;
+  }
+
+  const [, year, month, day] = match;
+  const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12));
+
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "UTC"
+  }).format(parsedDate) === value;
+}
+
 function zonedDateStart(value: string): Date | null {
   return zonedDateTimeValue(`${value}T00:00`);
 }
@@ -133,7 +150,20 @@ export function defaultCustomWindowForDate(dateValue: string): { startsAt: strin
 }
 
 export function isValidSourceDate(dateValue: string): boolean {
-  return zonedDateStart(dateValue) !== null;
+  return isCanonicalDateInputValue(dateValue) && zonedDateStart(dateValue) !== null;
+}
+
+export function normalizeSourceDateValue(value: string | null | undefined): string | null {
+  if (!value || !isValidSourceDate(value)) {
+    return null;
+  }
+
+  const todayDate = localDateInputValue(new Date());
+  if (value >= todayDate) {
+    return null;
+  }
+
+  return value;
 }
 
 function invalidWeatherTimeWindow(preset: WeatherTimePreset, label: string): WeatherTimeWindow {

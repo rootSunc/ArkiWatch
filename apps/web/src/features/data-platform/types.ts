@@ -2,6 +2,14 @@ import { DashboardSource } from "@/features/public-dashboard/types";
 
 export type PlatformTone = "good" | "warn" | "bad" | "neutral";
 
+export type PlatformTimeScope = {
+  mode: "live" | "historical" | string;
+  date: string | null;
+  timezone: string;
+  window_start: string | null;
+  window_end: string | null;
+};
+
 export type PlatformMetric = {
   key: string;
   label: string;
@@ -92,6 +100,7 @@ export type PlatformCategory = {
 
 export type PlatformOverviewResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   app_name: string;
   timezone: string;
   coverage_area: string;
@@ -190,6 +199,7 @@ export type WeatherTimeWindow = {
 
 export type WeatherForecastResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   status: string;
   location: string | null;
   source_code: string;
@@ -253,6 +263,7 @@ export type AirQualityQuality = {
 
 export type AirQualityCurrentResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   status: string;
   location: string | null;
   source_code: string;
@@ -323,6 +334,7 @@ export type TransitQuality = {
 
 export type TransitCurrentResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   status: string;
   location: string | null;
   source_code: string;
@@ -405,6 +417,7 @@ export type RoadRailQuality = {
 
 export type RoadRailCurrentResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   status: string;
   location: string | null;
   source_code: string;
@@ -478,6 +491,7 @@ export type EnergyQuality = {
 
 export type EnergyCurrentResponse = {
   checked_at: string;
+  time_scope?: PlatformTimeScope | null;
   status: string;
   location: string | null;
   source_code: string;
@@ -506,5 +520,14 @@ export type PlatformHistoryResponse = {
   energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
   householdEnergy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
   roadRail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
+  transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
+};
+
+export type PlatformHistoryApiResponse = {
+  weather: PlatformHistoricalSnapshot<WeatherForecastResponse>[];
+  air_quality: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
+  energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
+  household_energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
+  road_rail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
   transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
 };
