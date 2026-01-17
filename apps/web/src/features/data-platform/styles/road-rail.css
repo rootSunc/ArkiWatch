@@ -1,0 +1,849 @@
+.road-rail-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.road-rail-detail-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.road-rail-detail-header h2 {
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-detail-header > div:last-child,
+.road-rail-live-status strong,
+.road-rail-card-kicker,
+.road-rail-severity-panel header span,
+.road-rail-network-panel header span,
+.road-rail-summary-strip article span,
+.road-rail-incident-panel header span,
+.road-rail-timeband-panel header span,
+.road-rail-corridor-panel header span,
+.road-rail-quality-panel header span,
+.road-rail-pipeline-panel header span,
+.road-rail-source-panel header span,
+.road-rail-provider-status strong,
+.road-rail-detail-freshness {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.road-rail-detail-header > div:last-child,
+.road-rail-card-kicker span,
+.road-rail-severity-panel header span,
+.road-rail-network-panel header span,
+.road-rail-summary-strip article span,
+.road-rail-incident-panel header span,
+.road-rail-timeband-panel header span:first-child,
+.road-rail-corridor-panel header span,
+.road-rail-quality-panel header span,
+.road-rail-pipeline-panel header span,
+.road-rail-source-panel header span,
+.road-rail-provider-status strong {
+  text-transform: uppercase;
+}
+
+.road-rail-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.road-rail-live-status span,
+.road-rail-provider-status > div:first-child span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.road-rail-glass-panel,
+.road-rail-detail-empty {
+  min-width: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.road-rail-bento-grid,
+.road-rail-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.road-rail-hero,
+.road-rail-severity-panel,
+.road-rail-network-panel,
+.road-rail-incident-panel,
+.road-rail-corridor-panel,
+.road-rail-quality-panel,
+.road-rail-pipeline-panel,
+.road-rail-source-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.road-rail-hero {
+  min-height: 260px;
+  justify-content: space-between;
+}
+
+.road-rail-card-kicker,
+.road-rail-severity-panel header,
+.road-rail-network-panel header,
+.road-rail-incident-panel header,
+.road-rail-corridor-panel header,
+.road-rail-quality-panel header,
+.road-rail-pipeline-panel header,
+.road-rail-source-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-card-kicker time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.road-rail-current-cluster {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+
+.road-rail-condition-icon {
+  color: var(--primary);
+  font-size: 86px;
+  font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.road-rail-hero-bad .road-rail-condition-icon {
+  color: var(--error);
+}
+
+.road-rail-hero-warn .road-rail-condition-icon {
+  color: var(--tertiary);
+}
+
+.road-rail-current-cluster strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.road-rail-current-cluster p {
+  margin-top: 8px;
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-hero-footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  border-top: 1px solid var(--separator-border);
+  padding-top: 12px;
+}
+
+.road-rail-hero-footer div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.road-rail-hero-footer span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-hero-footer strong,
+.road-rail-summary-strip article strong,
+.road-rail-severity-panel header strong,
+.road-rail-network-panel header strong,
+.road-rail-incident-panel header strong,
+.road-rail-corridor-panel header strong,
+.road-rail-quality-panel header strong,
+.road-rail-pipeline-panel header strong,
+.road-rail-source-panel header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-severity-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.road-rail-severity-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.road-rail-severity-row > span,
+.road-rail-severity-row strong,
+.road-rail-network-grid article span,
+.road-rail-network-grid article small,
+.road-rail-network-bar > span,
+.road-rail-network-bar em,
+.road-rail-quality-facts span,
+.road-rail-stage span,
+.road-rail-request span,
+.road-rail-corridor span,
+.road-rail-incident time,
+.road-rail-timeband-row > span,
+.road-rail-timeband-row strong,
+.road-rail-incident-meta span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.road-rail-severity-row strong {
+  color: var(--on-background);
+  text-align: right;
+}
+
+.road-rail-severity-row i,
+.road-rail-quality-meter,
+.road-rail-stage-meter,
+.road-rail-network-bar i,
+.road-rail-corridor-load {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.road-rail-severity-row i span,
+.road-rail-quality-meter span,
+.road-rail-stage-meter span,
+.road-rail-network-bar i span,
+.road-rail-corridor-load > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.road-rail-severity-row-bad i span {
+  background: var(--error);
+}
+
+.road-rail-severity-row-warn i span {
+  background: var(--tertiary);
+}
+
+.road-rail-severity-row-good i span {
+  background: var(--success);
+}
+
+.road-rail-network-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.road-rail-network-grid article,
+.road-rail-quality-facts span,
+.road-rail-stage,
+.road-rail-request,
+.road-rail-corridor,
+.road-rail-incident {
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+}
+
+.road-rail-network-grid article {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.road-rail-network-grid article strong {
+  color: var(--on-background);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+}
+
+.road-rail-network-bars {
+  display: grid;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.road-rail-network-bar {
+  display: grid;
+  grid-template-columns: minmax(86px, 1fr) minmax(0, 2fr) 38px;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.road-rail-network-bar > span {
+  color: var(--on-background);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.road-rail-network-bar strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 14px;
+  text-align: right;
+}
+
+.road-rail-network-bar em {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+  color: var(--on-surface-variant);
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-network-bar i {
+  height: 6px;
+}
+
+.road-rail-network-bar-good i span {
+  background: var(--success);
+}
+
+.road-rail-network-bar-warn i span {
+  background: var(--tertiary);
+}
+
+.road-rail-network-bar-bad i span {
+  background: var(--error);
+}
+
+.road-rail-network-bar-neutral i span {
+  background: var(--primary);
+}
+
+.road-rail-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.road-rail-summary-strip article {
+  display: grid;
+  min-height: 76px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.road-rail-incident-panel header div {
+  min-width: 0;
+}
+
+.road-rail-incident-panel h3 {
+  margin-top: 2px;
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.road-rail-timeband-panel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 10px;
+}
+
+.road-rail-timeband-panel header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-timeband-panel header span:last-child {
+  color: var(--primary);
+  text-align: right;
+}
+
+.road-rail-timeband-panel > div {
+  display: grid;
+  gap: 7px;
+}
+
+.road-rail-timeband-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) minmax(120px, 0.9fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.road-rail-timeband-row i {
+  position: relative;
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.road-rail-timeband-row i span {
+  position: absolute;
+  top: 0;
+  left: var(--timeband-left);
+  display: block;
+  width: var(--timeband-width);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.road-rail-timeband-row strong {
+  color: var(--on-background);
+  font-weight: 600;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.road-rail-timeband-row-bad i span {
+  background: var(--error);
+}
+
+.road-rail-timeband-row-warn i span {
+  background: var(--tertiary);
+}
+
+.road-rail-timeband-row-good i span {
+  background: var(--success);
+}
+
+.road-rail-incident-list,
+.road-rail-side-grid,
+.road-rail-corridor-panel > div,
+.road-rail-pipeline-panel > div,
+.road-rail-source-panel > div {
+  display: grid;
+  gap: 10px;
+}
+
+.road-rail-incident {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: 10px 10px 10px 28px;
+}
+
+.road-rail-incident-dot {
+  position: absolute;
+  top: 16px;
+  left: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--outline);
+}
+
+.road-rail-incident-bad .road-rail-incident-dot,
+.road-rail-corridor-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.road-rail-incident-bad .road-rail-incident-dot {
+  background: var(--error);
+  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+}
+
+.road-rail-incident-warn .road-rail-incident-dot {
+  background: var(--tertiary);
+}
+
+.road-rail-incident-good .road-rail-incident-dot {
+  background: var(--success);
+}
+
+.road-rail-incident-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.road-rail-incident-main div {
+  min-width: 0;
+}
+
+.road-rail-incident-main strong,
+.road-rail-stage strong,
+.road-rail-request strong,
+.road-rail-corridor strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-main strong {
+  margin-top: 4px;
+}
+
+.road-rail-incident-main p,
+.road-rail-quality-panel p,
+.road-rail-quality-panel small,
+.road-rail-stage p,
+.road-rail-request p,
+.road-rail-request small,
+.road-rail-corridor p,
+.road-rail-corridor-panel > div > p,
+.road-rail-incident-list > p {
+  margin-top: 4px;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-main em {
+  flex: 0 0 auto;
+  border: 1px solid var(--detail-panel-border-stronger);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-style: normal;
+  line-height: 12px;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-meta,
+.road-rail-corridor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.road-rail-incident-meta span,
+.road-rail-corridor-meta span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--surface-container);
+  color: var(--on-background);
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-corridor-load {
+  position: relative;
+  height: 6px;
+}
+
+.road-rail-corridor-load > span {
+  position: relative;
+  overflow: hidden;
+  background: rgba(142, 213, 255, 0.3);
+}
+
+.road-rail-corridor-load > span > i,
+.road-rail-corridor-load > span > em {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: block;
+}
+
+.road-rail-corridor-load > span > i {
+  left: 0;
+  background: var(--primary);
+}
+
+.road-rail-corridor-load > span > em {
+  right: 0;
+  background: rgba(241, 160, 43, 0.78);
+}
+
+.road-rail-corridor-load-good > span {
+  background: rgba(92, 214, 149, 0.24);
+}
+
+.road-rail-corridor-load-good > span > i {
+  background: var(--success);
+}
+
+.road-rail-corridor-load-warn > span {
+  background: rgba(241, 160, 43, 0.24);
+}
+
+.road-rail-corridor-load-warn > span > i {
+  background: var(--tertiary);
+}
+
+.road-rail-corridor-load-bad > span {
+  background: rgba(255, 180, 171, 0.24);
+}
+
+.road-rail-corridor-load-bad > span > i {
+  background: var(--error);
+}
+
+.road-rail-quality-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.road-rail-quality-facts span {
+  color: var(--on-background);
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-stage,
+.road-rail-request,
+.road-rail-corridor {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+
+.road-rail-stage > div,
+.road-rail-request > div,
+.road-rail-corridor > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-stage-good,
+.road-rail-request-good,
+.road-rail-corridor-good {
+  border-color: rgba(142, 213, 255, 0.34);
+}
+
+.road-rail-stage-warn,
+.road-rail-request-warn,
+.road-rail-corridor-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.road-rail-stage-bad,
+.road-rail-request-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.road-rail-stage-good span,
+.road-rail-request-good span {
+  color: var(--primary);
+}
+
+.road-rail-stage-warn span,
+.road-rail-request-warn span {
+  color: var(--tertiary);
+}
+
+.road-rail-stage-bad span,
+.road-rail-request-bad span {
+  color: var(--error);
+}
+
+.road-rail-stage-warn .road-rail-stage-meter span {
+  background: var(--tertiary);
+}
+
+.road-rail-stage-bad .road-rail-stage-meter span {
+  background: var(--error);
+}
+
+.road-rail-provider-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+
+.road-rail-provider-status > div,
+.road-rail-provider-status span {
+  display: flex;
+  align-items: center;
+}
+
+.road-rail-provider-status > div {
+  gap: 12px;
+  min-width: 0;
+}
+
+.road-rail-provider-status > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.road-rail-provider-status .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.road-rail-provider-status i {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-variant);
+}
+
+.road-rail-provider-coverage {
+  color: var(--primary);
+}
+
+.road-rail-detail-freshness {
+  opacity: 0.78;
+}
+
+.road-rail-detail-empty {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+}
+
+.road-rail-detail-empty span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-detail-empty h2 {
+  color: var(--on-background);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.road-rail-detail-empty p {
+  color: var(--on-surface-variant);
+  line-height: 20px;
+}
+
+/* Premium Road & Rail Workspace Styles */
+.road-rail-glass-panel {
+  position: relative;
+  overflow: hidden;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.road-rail-glass-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(var(--primary), 0.25);
+}
+
+.road-rail-hero {
+  background: linear-gradient(135deg, var(--card-bg), var(--surface-container-low));
+  border-radius: 12px;
+}
+
+.road-rail-hero-good:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  border-color: var(--success);
+  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+}
+
+.road-rail-hero-warn:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  border-color: var(--amber);
+  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+}
+
+.road-rail-hero-bad:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  border-color: var(--red);
+  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+}
+
+.road-rail-summary-strip article {
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--card-bg), var(--surface-container-low));
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.road-rail-summary-strip article:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: rgba(var(--primary), 0.22);
+  background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
+}
+
+.road-rail-incident {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.road-rail-incident:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: var(--outline-variant);
+}
+
+.road-rail-corridor {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.road-rail-corridor:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: var(--outline-variant);
+}

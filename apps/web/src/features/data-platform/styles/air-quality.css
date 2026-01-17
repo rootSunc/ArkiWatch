@@ -1,0 +1,911 @@
+.air-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.air-detail-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.air-detail-header h2 {
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  text-transform: capitalize;
+}
+
+.air-detail-header > div:last-child,
+.air-live-status strong,
+.air-card-kicker,
+.air-distribution-panel header span,
+.air-field-panel header span,
+.air-summary-strip article span,
+.air-pollutant-panel header span,
+.air-station-panel header span,
+.air-map-panel header span,
+.air-quality-panel header span,
+.air-pipeline-panel header span,
+.air-source-panel header span,
+.air-provider-status strong,
+.air-detail-freshness {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.air-detail-header > div:last-child,
+.air-card-kicker span,
+.air-distribution-panel header span,
+.air-field-panel header span,
+.air-summary-strip article span,
+.air-pollutant-panel header span,
+.air-station-panel header span,
+.air-map-panel header span,
+.air-quality-panel header span,
+.air-pipeline-panel header span,
+.air-source-panel header span,
+.air-provider-status strong {
+  text-transform: uppercase;
+}
+
+.air-live-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.air-live-status span,
+.air-provider-status > div:first-child span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+.air-glass-panel,
+.air-detail-empty {
+  min-width: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.air-bento-grid,
+.air-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.air-hero,
+.air-distribution-panel,
+.air-field-panel,
+.air-pollutant-panel,
+.air-station-panel,
+.air-map-panel,
+.air-quality-panel,
+.air-pipeline-panel,
+.air-source-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.air-hero {
+  min-height: 260px;
+  justify-content: space-between;
+}
+
+.air-card-kicker,
+.air-distribution-panel header,
+.air-field-panel header,
+.air-pollutant-panel header,
+.air-station-panel header,
+.air-map-panel header,
+.air-quality-panel header,
+.air-pipeline-panel header,
+.air-source-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.air-card-kicker time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.air-current-score {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+
+.air-score-ring {
+  position: relative;
+  display: flex;
+  width: 132px;
+  height: 132px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: conic-gradient(var(--success) var(--score), var(--score-track) 0);
+}
+
+.air-score-ring::after {
+  position: absolute;
+  inset: 12px;
+  border-radius: inherit;
+  background: var(--score-ring-center);
+  content: "";
+}
+
+.air-score-ring strong,
+.air-score-ring span {
+  position: relative;
+  z-index: 1;
+}
+
+.air-score-ring strong {
+  color: var(--on-background);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.air-score-ring span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.air-hero-warn .air-score-ring {
+  background: conic-gradient(var(--tertiary) var(--score), var(--score-track) 0);
+}
+
+.air-hero-bad .air-score-ring {
+  background: conic-gradient(var(--error) var(--score), var(--score-track) 0);
+}
+
+.air-current-score > div:last-child {
+  min-width: 0;
+}
+
+.air-current-score > div:last-child strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 44px;
+}
+
+.air-current-score p {
+  margin-top: 8px;
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.air-hero-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--separator-border);
+  padding-top: 12px;
+}
+
+.air-hero-footer div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.air-hero-footer span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.air-hero-footer strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.air-distribution-panel header strong,
+.air-field-panel header strong,
+.air-pollutant-panel header strong,
+.air-station-panel header strong,
+.air-map-panel header strong,
+.air-quality-panel header strong,
+.air-pipeline-panel header strong,
+.air-source-panel header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.air-score-bars {
+  display: grid;
+  gap: 10px;
+}
+
+.air-score-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.air-score-row > span,
+.air-score-row strong {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.air-score-row strong {
+  color: var(--on-background);
+  text-align: right;
+}
+
+.air-score-row i,
+.air-index-track,
+.air-quality-meter {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.air-score-row i span,
+.air-index-track span,
+.air-quality-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+
+.air-score-row-warn i span {
+  background: var(--tertiary);
+}
+
+.air-score-row-bad i span {
+  background: var(--error);
+}
+
+.air-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.air-field-grid article {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 10px;
+}
+
+.air-field-grid article span,
+.air-field-grid article small,
+.air-quality-facts span,
+.air-stage span,
+.air-request span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.air-field-grid article strong {
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.air-field-ready {
+  border-color: rgba(134, 239, 172, 0.35) !important;
+}
+
+.air-field-ready strong {
+  color: var(--success) !important;
+}
+
+.air-field-missing {
+  border-color: rgba(255, 193, 118, 0.28) !important;
+}
+
+.air-field-missing strong {
+  color: var(--tertiary) !important;
+}
+
+.air-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.air-summary-strip article {
+  display: grid;
+  min-height: 76px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.air-summary-strip article strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.air-pollutant-panel header div:first-child,
+.air-station-panel header div {
+  min-width: 0;
+}
+
+.air-pollutant-panel h3,
+.air-station-panel h3 {
+  margin-top: 2px;
+  color: var(--on-background);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.air-pollutant-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 3px;
+  border-radius: 8px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.air-pollutant-toggle button {
+  border-radius: 6px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  padding: 6px 12px;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.air-pollutant-toggle button:hover {
+  background: var(--surface-container-highest);
+  color: var(--on-surface);
+}
+
+.air-pollutant-toggle button.active {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 800;
+}
+
+.air-pollutant-readout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.air-pollutant-readout article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 8px;
+}
+
+.air-pollutant-readout span,
+.air-pollutant-row span,
+.air-pollutant-row em,
+.air-map-meta span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.air-pollutant-readout strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.air-pollutant-list {
+  display: grid;
+  gap: 9px;
+}
+
+.air-pollutant-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.36fr) minmax(0, 1fr) 54px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 10px;
+}
+
+.air-pollutant-row div {
+  min-width: 0;
+}
+
+.air-pollutant-row strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.air-pollutant-row span {
+  display: block;
+  margin-top: 3px;
+  text-transform: none;
+}
+
+.air-pollutant-row em {
+  color: var(--on-background);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  text-align: right;
+}
+
+.air-pollutant-track {
+  position: relative;
+  display: block;
+  height: 6px;
+  overflow: visible;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.air-pollutant-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+
+.air-pollutant-track b {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--detail-panel-bg);
+  border-radius: 50%;
+  background: var(--success);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.air-pollutant-row-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.air-pollutant-row-warn .air-pollutant-track span,
+.air-pollutant-row-warn .air-pollutant-track b {
+  background: var(--tertiary);
+}
+
+.air-pollutant-row-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.air-pollutant-row-bad .air-pollutant-track span,
+.air-pollutant-row-bad .air-pollutant-track b {
+  background: var(--error);
+}
+
+.air-map-panel {
+  min-height: 260px;
+}
+
+.air-map-frame {
+  position: relative;
+  min-height: 210px;
+  overflow: hidden;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--success) 12%, transparent), transparent 52%),
+    var(--detail-panel-bg);
+}
+
+.air-map-svg {
+  display: block;
+  width: 100%;
+  height: 210px;
+}
+
+.air-map-grid-line {
+  opacity: 0.72;
+  stroke: var(--chart-grid-border);
+  stroke-dasharray: 2 4;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.air-map-dot {
+  opacity: 0.84;
+  fill: var(--success);
+  stroke: var(--surface-container-lowest);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.air-map-dot-warn {
+  fill: var(--tertiary);
+}
+
+.air-map-dot-bad {
+  fill: var(--error);
+}
+
+.air-map-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.air-map-meta span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  color: var(--on-background);
+  overflow-wrap: anywhere;
+  padding: 8px;
+}
+
+.air-station-list,
+.air-side-grid,
+.air-pipeline-panel > div,
+.air-source-panel > div {
+  display: grid;
+  gap: 10px;
+}
+
+.air-station {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 10px;
+}
+
+.air-station-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.air-station-main div {
+  min-width: 0;
+}
+
+.air-station-main strong,
+.air-stage strong,
+.air-request strong {
+  display: block;
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.air-station-main span {
+  display: block;
+  margin-top: 3px;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.air-station-main em {
+  flex: 0 0 auto;
+  color: var(--primary-fixed);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.air-station-warn .air-index-track span {
+  background: var(--tertiary);
+}
+
+.air-station-bad .air-index-track span {
+  background: var(--error);
+}
+
+.air-quality-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.air-quality-facts span {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  color: var(--on-background);
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+
+.air-quality-panel p,
+.air-quality-panel small,
+.air-pollutant-panel p,
+.air-map-panel p,
+.air-stage p,
+.air-request p,
+.air-request small,
+.air-station-list > p {
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.air-stage,
+.air-request {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 10px;
+}
+
+.air-stage > div,
+.air-request > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.air-stage-good,
+.air-request-good {
+  border-color: rgba(134, 239, 172, 0.3);
+}
+
+.air-stage-warn,
+.air-request-warn {
+  border-color: rgba(241, 160, 43, 0.4);
+}
+
+.air-stage-bad,
+.air-request-bad {
+  border-color: rgba(255, 180, 171, 0.5);
+}
+
+.air-stage-good span,
+.air-request-good span {
+  color: var(--success);
+}
+
+.air-stage-warn span,
+.air-request-warn span {
+  color: var(--tertiary);
+}
+
+.air-stage-bad span,
+.air-request-bad span {
+  color: var(--error);
+}
+
+.air-provider-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+
+.air-provider-status > div,
+.air-provider-status span {
+  display: flex;
+  align-items: center;
+}
+
+.air-provider-status > div {
+  gap: 12px;
+  min-width: 0;
+}
+
+.air-provider-status > div:last-child {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.air-provider-status .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.air-provider-status i {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-variant);
+}
+
+.air-provider-coverage {
+  color: var(--success);
+}
+
+.air-detail-freshness {
+  opacity: 0.78;
+}
+
+.air-detail-empty {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+}
+
+.air-detail-empty span {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.air-detail-empty h2 {
+  color: var(--on-background);
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.air-detail-empty p {
+  color: var(--on-surface-variant);
+  line-height: 20px;
+}
+
+/* Premium Air Quality Workspace Styles */
+.air-glass-panel {
+  position: relative;
+  overflow: hidden;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.air-glass-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(var(--primary), 0.25);
+}
+
+.trend-panel {
+  position: relative;
+  overflow: hidden;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trend-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(var(--primary), 0.25);
+}
+
+.air-hero {
+  background: linear-gradient(135deg, var(--card-bg), var(--surface-container-low));
+}
+
+.air-hero-good:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  border-color: var(--success);
+  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+}
+
+.air-hero-warn:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  border-color: var(--amber);
+  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+}
+
+.air-hero-bad:hover {
+  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  border-color: var(--red);
+  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+}
+
+.air-map-dot {
+  cursor: pointer;
+  transition: transform 200ms ease, r 200ms ease, opacity 200ms ease, stroke-width 200ms ease;
+}
+
+.air-map-dot:hover {
+  opacity: 1;
+  stroke-width: 2.2;
+  stroke: var(--primary);
+}
+
+.air-summary-strip article {
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--card-bg), var(--surface-container-low));
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.air-summary-strip article:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: rgba(var(--primary), 0.22);
+  background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
+}

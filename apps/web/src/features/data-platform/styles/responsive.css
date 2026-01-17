@@ -1,0 +1,1004 @@
+.detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 0 0 auto;
+  border-top: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface-variant);
+  padding: 8px 24px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.detail-footer div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.detail-footer a:hover,
+.detail-footer a:focus-visible {
+  color: var(--primary);
+  outline: none;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (min-width: 768px) {
+  .dashboard-side-nav {
+    display: flex;
+    width: 256px;
+    height: 100vh;
+    flex: 0 0 256px;
+    flex-direction: column;
+    border-right: 1px solid var(--outline-variant);
+    background: var(--surface-container-lowest);
+    color: var(--primary-fixed-dim);
+    padding: 24px 12px;
+    z-index: 2;
+  }
+
+  .mobile-dashboard-header,
+  .mobile-dashboard-footer {
+    display: none;
+  }
+
+  .desktop-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .detail-topbar {
+    display: flex;
+  }
+
+  .detail-content-shell {
+    padding: 24px;
+  }
+
+  .weather-bento-grid,
+  .weather-lower-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .air-bento-grid,
+  .air-main-grid,
+  .energy-bento-grid,
+  .energy-main-grid,
+  .road-rail-bento-grid,
+  .road-rail-main-grid,
+  .transit-bento-grid,
+  .transit-main-grid,
+  .water-bento-grid,
+  .water-main-grid,
+  .city-bento-grid,
+  .city-main-grid,
+  .city-visual-grid,
+  .linked-events-command,
+  .linked-events-main-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .weather-hero-card {
+    grid-column: span 4;
+  }
+
+  .air-hero {
+    grid-column: span 5;
+  }
+
+  .air-distribution-panel {
+    grid-column: span 3;
+  }
+
+  .air-field-panel {
+    grid-column: span 4;
+  }
+
+  .energy-hero {
+    grid-column: span 5;
+  }
+
+  .energy-window-panel {
+    grid-column: span 3;
+  }
+
+  .energy-field-panel {
+    grid-column: span 4;
+  }
+
+  .road-rail-hero {
+    grid-column: span 5;
+  }
+
+  .road-rail-severity-panel {
+    grid-column: span 3;
+  }
+
+  .road-rail-network-panel {
+    grid-column: span 4;
+  }
+
+  .transit-hero {
+    grid-column: span 5;
+  }
+
+  .transit-severity-panel {
+    grid-column: span 3;
+  }
+
+  .transit-scope-panel {
+    grid-column: span 4;
+  }
+
+  .water-hero {
+    grid-column: span 5;
+  }
+
+  .water-coverage-panel {
+    grid-column: span 3;
+  }
+
+  .water-field-panel {
+    grid-column: span 4;
+  }
+
+  .city-hero {
+    grid-column: span 5;
+  }
+
+  .city-readiness-panel {
+    grid-column: span 3;
+  }
+
+  .city-field-panel {
+    grid-column: span 4;
+  }
+
+  .linked-events-hero {
+    grid-column: span 5;
+  }
+
+  .linked-events-filter-panel {
+    grid-column: span 4;
+  }
+
+  .linked-events-source-panel {
+    grid-column: span 3;
+  }
+
+  .weather-detail-metrics {
+    grid-column: span 8;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .weather-chart-panel {
+    grid-column: span 8;
+  }
+
+  .weather-event-panel {
+    grid-column: span 4;
+  }
+
+  .air-pollutant-panel {
+    grid-column: span 8;
+  }
+
+  .air-station-panel {
+    grid-column: span 8;
+  }
+
+  .air-side-grid {
+    grid-column: span 4;
+  }
+
+  .energy-signal-panel {
+    grid-column: span 8;
+  }
+
+  .energy-side-grid {
+    grid-column: span 4;
+  }
+
+  .road-rail-incident-panel {
+    grid-column: span 8;
+  }
+
+  .road-rail-side-grid {
+    grid-column: span 4;
+  }
+
+  .transit-alert-panel {
+    grid-column: span 8;
+  }
+
+  .transit-side-grid {
+    grid-column: span 4;
+  }
+
+  .water-signal-panel {
+    grid-column: span 8;
+  }
+
+  .water-side-grid {
+    grid-column: span 4;
+  }
+
+  .city-service-panel {
+    grid-column: span 8;
+  }
+
+  .city-side-grid {
+    grid-column: span 4;
+  }
+
+  .linked-events-timeline-panel {
+    grid-column: span 8;
+  }
+
+  .linked-events-side-grid {
+    grid-column: span 4;
+  }
+
+  .city-visual-panel {
+    grid-column: span 6;
+  }
+
+  .water-schema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .weather-ops-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .linked-events-hero,
+  .linked-events-filter-panel,
+  .linked-events-source-panel {
+    grid-column: span 12;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .linked-events-hero,
+  .linked-events-filter-panel {
+    grid-column: span 6;
+  }
+
+  .linked-events-source-panel {
+    grid-column: span 12;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-main-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    min-height: calc(100vh - 220px);
+  }
+
+  .signal-section {
+    grid-column: span 8;
+  }
+
+  .dashboard-main-grid-events-collapsed .signal-section {
+    grid-column: span 12;
+  }
+
+  .events-panel {
+    grid-column: span 4;
+  }
+
+  .events-panel-expanded {
+    height: clamp(420px, calc(100vh - 220px), 640px);
+  }
+
+  .weather-ops-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .air-pollutant-panel,
+  .air-station-panel {
+    grid-column: span 7;
+  }
+
+  .air-side-grid {
+    grid-column: span 5;
+  }
+
+  .energy-signal-panel {
+    grid-column: span 7;
+  }
+
+  .energy-side-grid {
+    grid-column: span 5;
+  }
+
+  .road-rail-incident-panel {
+    grid-column: span 7;
+  }
+
+  .road-rail-side-grid {
+    grid-column: span 5;
+  }
+
+  .transit-alert-panel {
+    grid-column: span 7;
+  }
+
+  .transit-side-grid {
+    grid-column: span 5;
+  }
+
+  .water-signal-panel {
+    grid-column: span 7;
+  }
+
+  .water-side-grid {
+    grid-column: span 5;
+  }
+
+  .city-service-panel {
+    grid-column: span 7;
+  }
+
+  .city-side-grid {
+    grid-column: span 5;
+  }
+
+  .linked-events-timeline-panel {
+    grid-column: span 7;
+  }
+
+  .linked-events-side-grid {
+    grid-column: span 5;
+  }
+}
+
+@media (min-width: 1280px) {
+  .signal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    overflow: hidden;
+  }
+
+  .dashboard-shell,
+  .dashboard-app {
+    height: 100dvh;
+  }
+
+  .dashboard-side-nav {
+    display: none;
+  }
+
+  .brand-panel {
+    justify-content: flex-start;
+    padding: 0 0 16px;
+  }
+
+  .brand-panel > div:last-child,
+  .nav-row span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .mobile-brand .icon-button[aria-label="Open navigation"] {
+    display: inline-flex;
+  }
+
+  .mobile-brand strong {
+    font-size: 18px;
+    line-height: 22px;
+    white-space: nowrap;
+  }
+
+  .mobile-dashboard-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: 0;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px 10px;
+  }
+
+  .mobile-brand {
+    width: 100%;
+  }
+
+  .mobile-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .top-actions {
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .top-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .top-actions > * {
+    flex: 0 0 auto;
+  }
+
+  .mobile-dashboard-header .profile-avatar {
+    display: none;
+  }
+
+  .language-switcher {
+    height: 34px;
+    gap: 0;
+    padding: 2px;
+  }
+
+  .language-switcher > .material-symbols-outlined {
+    display: none;
+  }
+
+  .language-option {
+    min-width: 32px;
+    height: 28px;
+    padding: 0 7px;
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .city-scope-control {
+    height: 34px;
+    min-width: 116px;
+    padding-right: 28px;
+  }
+
+  .city-scope-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .city-scope-control select {
+    min-width: 66px;
+  }
+
+  .date-scope-control {
+    height: 34px;
+    width: 104px;
+    gap: 6px;
+    padding: 0 7px 0 9px;
+  }
+
+  .date-scope-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .date-scope-value {
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  .date-scope-value-full,
+  .date-scope-clear {
+    display: none;
+  }
+
+  .date-scope-value-short {
+    display: block;
+  }
+
+  .historical-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .historical-banner-text {
+    flex-basis: calc(100% - 30px);
+  }
+
+  .historical-banner-action {
+    width: 100%;
+    margin-left: 30px;
+  }
+
+  .dashboard-content {
+    overflow-x: hidden;
+    padding: 16px 12px 90px;
+  }
+
+  .detail-content-shell {
+    padding: 14px 10px 90px;
+  }
+
+  .dashboard-main-grid {
+    min-height: 0;
+  }
+
+  .platform-error {
+    margin-top: 24px;
+    padding: 20px 16px;
+  }
+
+  .platform-error h1 {
+    font-size: 22px;
+    line-height: 28px;
+    overflow-wrap: anywhere;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .source-health-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow: hidden;
+    padding: 10px;
+  }
+
+  .source-chip {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .source-chip span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .source-chip strong {
+    flex: 0 0 auto;
+  }
+
+  .source-chip small {
+    flex: 0 0 auto;
+  }
+
+  .signal-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .events-panel-expanded {
+    position: fixed;
+    right: 12px;
+    bottom: 92px;
+    width: calc(100vw - 24px);
+    height: clamp(320px, calc(100vh - 180px), 480px);
+    box-shadow: var(--elevated-shadow);
+    z-index: 10;
+  }
+
+  .events-panel-collapsed {
+    right: 12px;
+    bottom: 92px;
+    width: calc(100vw - 24px);
+  }
+
+  .overall-notification-detail {
+    margin-left: 0;
+  }
+
+  .weather-detail-header,
+  .weather-provider-status,
+  .air-detail-header,
+  .air-provider-status,
+  .energy-detail-header,
+  .energy-provider-status,
+  .road-rail-detail-header,
+  .road-rail-provider-status,
+  .transit-detail-header,
+  .transit-provider-status,
+  .water-detail-header,
+  .water-provider-status,
+  .city-detail-header,
+  .city-provider-status,
+  .linked-events-header,
+  .detail-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .weather-detail-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .weather-chart-panel header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .weather-chart-panel header strong {
+    margin-right: 0;
+  }
+
+  .weather-chart-toggle {
+    width: 100%;
+  }
+
+  .weather-chart-toggle button {
+    flex: 1 1 52px;
+  }
+
+  .weather-quality-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .air-current-score {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .air-score-ring {
+    width: 112px;
+    height: 112px;
+  }
+
+  .air-current-score > div:last-child strong {
+    font-size: 34px;
+    line-height: 38px;
+  }
+
+  .air-field-grid,
+  .air-map-meta,
+  .air-pollutant-readout,
+  .air-pollutant-row,
+  .air-quality-facts,
+  .energy-chart-context,
+  .energy-secondary-tabs,
+  .energy-field-grid,
+  .energy-source-facts,
+  .energy-quality-facts,
+  .road-rail-network-bar,
+  .road-rail-network-grid,
+  .road-rail-quality-facts,
+  .road-rail-timeband-row,
+  .transit-scope-bar,
+  .transit-scope-grid,
+  .transit-timeband-row,
+  .transit-quality-facts,
+  .water-field-grid,
+  .water-guidance-row,
+  .water-schema-composition,
+  .water-schema-shape-row,
+  .water-source-facts,
+  .water-timeband-row,
+  .city-field-grid,
+  .city-coverage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .linked-events-filter-grid,
+  .linked-events-hero-footer,
+  .linked-events-row,
+  .linked-events-inspector-body dl div {
+    grid-template-columns: 1fr;
+  }
+
+  .air-pollutant-panel header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .air-pollutant-toggle {
+    width: 100%;
+  }
+
+  .air-pollutant-toggle button {
+    flex: 1 1 70px;
+  }
+
+  .air-pollutant-row em {
+    text-align: left;
+  }
+
+  .transit-scope-bar em,
+  .road-rail-network-bar strong,
+  .road-rail-timeband-row strong,
+  .water-guidance-row em,
+  .water-schema-shape-row strong,
+  .water-timeband-row strong,
+  .transit-timeband-row strong {
+    text-align: left;
+  }
+
+  .road-rail-timeband-row strong,
+  .water-timeband-row strong,
+  .transit-timeband-row strong {
+    white-space: normal;
+  }
+
+  .energy-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .energy-condition-icon {
+    font-size: 64px;
+  }
+
+  .energy-current-cluster strong {
+    font-size: 40px;
+    line-height: 44px;
+  }
+
+  .road-rail-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .road-rail-condition-icon {
+    font-size: 64px;
+  }
+
+  .road-rail-current-cluster strong {
+    font-size: 48px;
+  }
+
+  .road-rail-incident-main {
+    flex-direction: column;
+  }
+
+  .transit-current-cluster {
+    gap: 16px;
+  }
+
+  .transit-condition-icon {
+    font-size: 64px;
+  }
+
+  .transit-current-cluster strong {
+    font-size: 48px;
+  }
+
+  .transit-alert-main {
+    flex-direction: column;
+  }
+
+  .city-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .city-condition-icon {
+    font-size: 64px;
+  }
+
+  .city-current-cluster strong {
+    font-size: 48px;
+  }
+
+  .city-service-main {
+    flex-direction: column;
+  }
+
+  .linked-events-focus {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .linked-events-focus-icon {
+    font-size: 64px;
+  }
+
+  .linked-events-focus strong {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .linked-events-row-meta {
+    justify-self: start;
+  }
+
+  .water-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .water-condition-icon {
+    font-size: 64px;
+  }
+
+  .water-current-cluster strong {
+    font-size: 40px;
+    line-height: 44px;
+  }
+
+  .weather-current-cluster {
+    gap: 16px;
+  }
+
+  .weather-condition-icon {
+    font-size: 56px;
+  }
+
+  .weather-current-cluster strong {
+    font-size: 44px;
+  }
+
+  .weather-provider-status > div:last-child,
+  .air-provider-status > div:last-child,
+  .energy-provider-status > div:last-child,
+  .road-rail-provider-status > div:last-child,
+  .transit-provider-status > div:last-child,
+  .water-provider-status > div:last-child,
+  .city-provider-status > div:last-child,
+  .detail-footer div {
+    justify-content: flex-start;
+  }
+
+  .mobile-dashboard-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+}
+
+/* Mobile Side Navigation Menu Drawer Overlay & Backdrop */
+@media (max-width: 767px) {
+  .dashboard-side-nav.mobile-side-nav-open {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(82vw, 304px);
+    height: 100dvh;
+    background: var(--surface-container-lowest);
+    border-right: 1px solid var(--outline-variant);
+    z-index: 1100;
+    padding: 24px 16px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+    animation: sideNavSlideIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .brand-panel > div:last-child,
+  .dashboard-side-nav.mobile-side-nav-open .nav-row span:last-child {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .brand-panel {
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 4px 18px;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .side-nav-list,
+  .dashboard-side-nav.mobile-side-nav-open .side-nav-footer {
+    justify-items: stretch;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .nav-row {
+    width: 100%;
+    min-height: 42px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 8px 10px;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .nav-row .material-symbols-outlined {
+    font-size: 21px;
+  }
+
+  @keyframes sideNavSlideIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .mobile-side-nav-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1050;
+    animation: fadeIn 200ms ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@media (max-width: 430px) {
+  .mobile-brand strong {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .dashboard-content {
+    padding-inline: 10px;
+  }
+
+  .metric-tile {
+    min-height: 84px;
+  }
+
+  .metric-tile strong {
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .historical-banner-action {
+    margin-left: 0;
+  }
+}

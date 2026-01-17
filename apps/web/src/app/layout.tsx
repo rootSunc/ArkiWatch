@@ -5,6 +5,8 @@ import { ReactNode } from "react";
 import { appEnv } from "@/lib/env";
 
 import "./globals.css";
+import "@/features/data-platform/data-platform.css";
+import "@/features/assistant-widget/assistant-widget.css";
 
 const inter = Inter({
   subsets: ["latin"],

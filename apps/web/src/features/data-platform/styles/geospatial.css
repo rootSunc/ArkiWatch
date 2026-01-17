@@ -1,0 +1,71 @@
+/* ==========================================================================
+   GEOSPATIAL & REGIONAL PROFILE DESIGN SYSTEMS
+   ========================================================================== */
+
+/* Geospatial Workspace Styling */
+.geo-field-lattice-row {
+  display: grid;
+  grid-template-columns: 120px repeat(5, 1fr);
+  align-items: center;
+}
+
+.geo-field-lattice-dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.06);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.geo-field-lattice-dot.active {
+  background-color: var(--accent-green, #10b981) !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.geo-density-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.geo-density-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.geo-density-row-header span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.geo-density-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.geo-density-progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.geo-density-progress-bar.good {
+  background-color: var(--success, #10b981);
+}
+
+.geo-density-progress-bar.warn {
+  background-color: var(--amber, #f59e0b);
+}
+
+.geo-density-progress-bar.primary {
+  background-color: var(--blue, #3b82f6);
+}
