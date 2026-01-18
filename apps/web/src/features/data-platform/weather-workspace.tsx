@@ -14,6 +14,7 @@ import {
   WeatherTimeWindow,
   WeatherWarning
 } from "./types";
+import { LanguageMode, useI18n } from "./i18n";
 
 type WeatherWorkspaceProps = {
   category: PlatformCategory | null;
@@ -45,6 +46,8 @@ type WeatherWindow = {
   detail: string;
 };
 
+type Translate = (value: string) => string;
+
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const RAIN_WINDOW_MIN_MM = 0.1;
 const OUTDOOR_MAX_WIND_MS = 10;
@@ -62,12 +65,12 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
   }).format(value);
 }
 
-function formatCompactTime(value: string | null | undefined): string {
+function formatCompactTime(value: string | null | undefined, language: LanguageMode = "en"): string {
   if (!value) {
     return "n/a";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -75,12 +78,12 @@ function formatCompactTime(value: string | null | undefined): string {
   }).format(new Date(value));
 }
 
-function formatDateTime(value: string | null | undefined): string {
+function formatDateTime(value: string | null | undefined, language: LanguageMode = "en"): string {
   if (!value) {
     return "n/a";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
@@ -99,8 +102,8 @@ function localDateKey(value: Date): string {
   }).format(value);
 }
 
-function formatTimeWithDay(value: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatTimeWithDay(value: string, language: LanguageMode = "en"): string {
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -109,7 +112,12 @@ function formatTimeWithDay(value: string): string {
   }).format(new Date(value));
 }
 
-function formatTimeRange(startsAt: string | null | undefined, endsAt: string | null | undefined): string {
+function formatTimeRange(
+  startsAt: string | null | undefined,
+  endsAt: string | null | undefined,
+  t: Translate,
+  language: LanguageMode = "en"
+): string {
   if (!startsAt || !endsAt) {
     return "n/a";
   }
@@ -117,19 +125,19 @@ function formatTimeRange(startsAt: string | null | undefined, endsAt: string | n
   const starts = new Date(startsAt);
   const ends = new Date(endsAt);
   if (localDateKey(starts) === localDateKey(ends)) {
-    return `${formatCompactTime(startsAt)} to ${formatCompactTime(endsAt)}`;
+    return `${formatCompactTime(startsAt, language)} ${t("to")} ${formatCompactTime(endsAt, language)}`;
   }
 
-  return `${formatTimeWithDay(startsAt)} to ${formatTimeWithDay(endsAt)}`;
+  return `${formatTimeWithDay(startsAt, language)} ${t("to")} ${formatTimeWithDay(endsAt, language)}`;
 }
 
-function formatTableTime(value: string): string {
+function formatTableTime(value: string, language: LanguageMode = "en"): string {
   const date = new Date(value);
   if (localDateKey(date) === localDateKey(new Date())) {
-    return formatCompactTime(value);
+    return formatCompactTime(value, language);
   }
 
-  return formatTimeWithDay(value);
+  return formatTimeWithDay(value, language);
 }
 
 function pointTime(point: WeatherForecastPoint): number {
@@ -173,7 +181,9 @@ function fallbackPointLimit(timeWindow: WeatherTimeWindow): number {
 
 function forecastPointsForWindow(
   points: WeatherForecastPoint[],
-  timeWindow: WeatherTimeWindow
+  timeWindow: WeatherTimeWindow,
+  t: Translate,
+  language: LanguageMode
 ): ForecastPointSelection {
   const ordered = orderedPoints(points);
   if (!timeWindow.isValid || !timeWindow.startsAt || !timeWindow.endsAt) {
@@ -199,14 +209,19 @@ function forecastPointsForWindow(
     points: fallbackPoints,
     fallbackLabel:
       fallbackPoints.length > 0
-        ? `Available data ${formatTimeRange(fallbackPoints[0].timestamp, fallbackPoints[fallbackPoints.length - 1].timestamp)}`
+        ? `${t("Available data")} ${formatTimeRange(
+            fallbackPoints[0].timestamp,
+            fallbackPoints[fallbackPoints.length - 1].timestamp,
+            t,
+            language
+          )}`
         : null
   };
 }
 
-function weatherSignalText(point: WeatherForecastPoint | null): string {
+function weatherSignalText(point: WeatherForecastPoint | null, t: Translate): string {
   if (!point) {
-    return "Waiting for FMI forecast points";
+    return t("Waiting for FMI forecast points");
   }
 
   const rain = point.precipitation_mm ?? 0;
@@ -215,18 +230,18 @@ function weatherSignalText(point: WeatherForecastPoint | null): string {
   const visibility = point.visibility_m;
   const cloud = point.cloud_cover_pct ?? 0;
   if (rain >= 1) {
-    return "Rain gear useful";
+    return t("Rain gear useful");
   }
   if (gust >= OUTDOOR_MAX_GUST_MS || wind >= OUTDOOR_MAX_WIND_MS) {
-    return "Windy window";
+    return t("Windy window");
   }
   if (visibility !== null && visibility < OUTDOOR_MIN_VISIBILITY_M) {
-    return "Low visibility";
+    return t("Low visibility");
   }
   if (cloud <= 35) {
-    return "Brighter spell";
+    return t("Brighter spell");
   }
-  return "Ordinary outdoor conditions";
+  return t("Ordinary outdoor conditions");
 }
 
 function maxValue(
@@ -236,18 +251,19 @@ function maxValue(
   return Math.max(1, ...points.map((point) => selector(point) ?? 0));
 }
 
-function metricValue(weather: WeatherForecastResponse, key: string): string {
+function metricValue(weather: WeatherForecastResponse, key: string, t?: Translate): string {
   const metric = weather.metrics.find((item) => item.key === key);
   if (!metric) {
     return "n/a";
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  const value = t ? metric.value.replace(" to ", ` ${t("to")} `) : metric.value;
+  return `${value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
-function firstMetricValue(weather: WeatherForecastResponse, keys: string[]): string {
+function firstMetricValue(weather: WeatherForecastResponse, keys: string[], t: Translate): string {
   for (const key of keys) {
-    const value = metricValue(weather, key);
+    const value = metricValue(weather, key, t);
     if (!value.startsWith("n/a")) {
       return value;
     }
@@ -258,7 +274,8 @@ function firstMetricValue(weather: WeatherForecastResponse, keys: string[]): str
 
 function seriesPoints(
   points: WeatherForecastPoint[],
-  selector: (point: WeatherForecastPoint) => number | null
+  selector: (point: WeatherForecastPoint) => number | null,
+  language: LanguageMode
 ): WeatherChartPoint[] {
   return points.flatMap((point) => {
     const value = selector(point);
@@ -268,7 +285,7 @@ function seriesPoints(
 
     return [
       {
-        label: formatTableTime(point.timestamp),
+        label: formatTableTime(point.timestamp, language),
         timestamp: point.timestamp,
         value
       }
@@ -276,43 +293,47 @@ function seriesPoints(
   });
 }
 
-function buildWeatherSeries(points: WeatherForecastPoint[]): WeatherChartSeries[] {
+function buildWeatherSeries(
+  points: WeatherForecastPoint[],
+  t: Translate,
+  language: LanguageMode
+): WeatherChartSeries[] {
   return [
     {
       key: "temperature",
-      label: "Temperature",
+      label: t("Temperature"),
       unit: "C",
       tone: "temperature",
       chart: "line",
-      points: seriesPoints(points, (point) => point.temperature_c)
+      points: seriesPoints(points, (point) => point.temperature_c, language)
     },
     {
       key: "rain",
-      label: "Rain",
+      label: t("Rain"),
       unit: "mm",
       tone: "rain",
       chart: "bar",
       floorZero: true,
-      points: seriesPoints(points, (point) => point.precipitation_mm)
+      points: seriesPoints(points, (point) => point.precipitation_mm, language)
     },
     {
       key: "wind",
-      label: "Wind",
+      label: t("Wind"),
       unit: "m/s",
       tone: "wind",
       chart: "line",
       floorZero: true,
-      points: seriesPoints(points, (point) => point.wind_gust_ms ?? point.wind_speed_ms)
+      points: seriesPoints(points, (point) => point.wind_gust_ms ?? point.wind_speed_ms, language)
     },
     {
       key: "cloud",
-      label: "Cloud",
+      label: t("Cloud"),
       unit: "%",
       tone: "cloud",
       chart: "line",
       floorZero: true,
       maxOverride: 100,
-      points: seriesPoints(points, (point) => point.cloud_cover_pct)
+      points: seriesPoints(points, (point) => point.cloud_cover_pct, language)
     }
   ];
 }
@@ -360,23 +381,23 @@ function formatChartValue(series: WeatherChartSeries, value: number): string {
   return `${formatNumber(value, series.unit === "%" ? 0 : 1)} ${series.unit}`;
 }
 
-function seriesReadout(series: WeatherChartSeries): string {
+function seriesReadout(series: WeatherChartSeries, t: Translate): string {
   const values = series.points.map((point) => point.value);
   if (values.length === 0) {
     return "n/a";
   }
 
   if (series.key === "temperature") {
-    return `${formatChartValue(series, Math.min(...values))} to ${formatChartValue(
+    return `${formatChartValue(series, Math.min(...values))} ${t("to")} ${formatChartValue(
       series,
       Math.max(...values)
     )}`;
   }
 
-  return `peak ${formatChartValue(series, Math.max(...values))}`;
+  return `${t("peak")} ${formatChartValue(series, Math.max(...values))}`;
 }
 
-function renderMiniChart(series: WeatherChartSeries) {
+function renderMiniChart(series: WeatherChartSeries, t: Translate) {
   if (series.points.length === 0) {
     return <div className="weather-chart-empty">n/a</div>;
   }
@@ -398,9 +419,9 @@ function renderMiniChart(series: WeatherChartSeries) {
   return (
     <>
       <div className="weather-chart-card-readout">
-        <strong>{seriesReadout(series)}</strong>
+        <strong>{seriesReadout(series, t)}</strong>
         <small>
-          {first.label} to {last.label}
+          {first.label} {t("to")} {last.label}
         </small>
       </div>
       <svg aria-hidden="true" className="weather-mini-svg" viewBox="0 0 200 82">
@@ -421,7 +442,7 @@ function renderMiniChart(series: WeatherChartSeries) {
                 x={18 + index * slotWidth}
                 y={y}
               >
-                <title>{`${series.label}: ${formatChartValue(series, point.value)} at ${point.label}`}</title>
+                <title>{`${series.label}: ${formatChartValue(series, point.value)} ${t("at")} ${point.label}`}</title>
               </rect>
             );
           })
@@ -436,7 +457,7 @@ function renderMiniChart(series: WeatherChartSeries) {
                 key={`${series.key}-${point.timestamp}`}
                 r="2"
               >
-                <title>{`${series.label}: ${formatChartValue(series, point.value)} at ${point.label}`}</title>
+                <title>{`${series.label}: ${formatChartValue(series, point.value)} ${t("at")} ${point.label}`}</title>
               </circle>
             ))}
           </>
@@ -446,18 +467,18 @@ function renderMiniChart(series: WeatherChartSeries) {
   );
 }
 
-function formatDuration(milliseconds: number): string {
+function formatDuration(milliseconds: number, t: Translate): string {
   const totalMinutes = Math.max(0, Math.round(milliseconds / 60000));
   if (totalMinutes < 60) {
-    return `${totalMinutes} min`;
+    return `${totalMinutes} ${t("min")}`;
   }
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`;
+  return minutes > 0 ? `${hours} ${t("h")} ${minutes} ${t("min")}` : `${hours} ${t("h")}`;
 }
 
-function rainSummaryForWindows(windows: WeatherRainWindow[]): {
+function rainSummaryForWindows(windows: WeatherRainWindow[], t: Translate, language: LanguageMode): {
   label: string;
   value: string;
   detail: string;
@@ -469,9 +490,9 @@ function rainSummaryForWindows(windows: WeatherRainWindow[]): {
   );
   if (currentWindow) {
     return {
-      label: "Rain now",
-      value: `Until ${formatTableTime(currentWindow.ends_at)}`,
-      detail: `ends in ${formatDuration(new Date(currentWindow.ends_at).getTime() - now)}`
+      label: t("Rain now"),
+      value: `${t("Until")} ${formatTableTime(currentWindow.ends_at, language)}`,
+      detail: `${t("ends in")} ${formatDuration(new Date(currentWindow.ends_at).getTime() - now, t)}`
     };
   }
 
@@ -481,18 +502,18 @@ function rainSummaryForWindows(windows: WeatherRainWindow[]): {
 
   if (nextWindow) {
     return {
-      label: "Next rain",
-      value: formatTableTime(nextWindow.starts_at),
-      detail: `starts in ${formatDuration(new Date(nextWindow.starts_at).getTime() - now)}, peak ${formatNumber(
+      label: t("Next rain"),
+      value: formatTableTime(nextWindow.starts_at, language),
+      detail: `${t("starts in")} ${formatDuration(new Date(nextWindow.starts_at).getTime() - now, t)}, ${t("peak")} ${formatNumber(
         nextWindow.peak_precip_mm
       )} mm`
     };
   }
 
   return {
-    label: "Rain",
-    value: "No rain",
-    detail: "No rain window in the selected forecast range"
+    label: t("Rain"),
+    value: t("No rain"),
+    detail: t("No rain window in the selected forecast range")
   };
 }
 
@@ -509,7 +530,7 @@ function isOutdoorPoint(point: WeatherForecastPoint): boolean {
   );
 }
 
-function outdoorWindows(points: WeatherForecastPoint[]): WeatherWindow[] {
+function outdoorWindows(points: WeatherForecastPoint[], t: Translate): WeatherWindow[] {
   const windows: WeatherForecastPoint[][] = [];
   let current: WeatherForecastPoint[] = [];
   let previous: WeatherForecastPoint | null = null;
@@ -544,13 +565,13 @@ function outdoorWindows(points: WeatherForecastPoint[]): WeatherWindow[] {
       starts_at: window[0].timestamp,
       ends_at: new Date(pointTime(window[window.length - 1]) + 60 * 60 * 1000).toISOString(),
       hours: window.length,
-      detail: `${formatNumber(maxRain)} mm rain, ${formatNumber(maxWind)} m/s wind`
+      detail: `${formatNumber(maxRain)} mm ${t("rain")}, ${formatNumber(maxWind)} m/s ${t("wind")}`
     };
   });
 }
 
-function bestOutdoorWindow(points: WeatherForecastPoint[]): WeatherWindow | null {
-  const windows = outdoorWindows(points);
+function bestOutdoorWindow(points: WeatherForecastPoint[], t: Translate): WeatherWindow | null {
+  const windows = outdoorWindows(points, t);
   if (windows.length === 0) {
     return null;
   }
@@ -593,7 +614,7 @@ function apparentTemperature(point: WeatherForecastPoint | null): number | null 
   return temp;
 }
 
-function comfortLabel(point: WeatherForecastPoint | null): string {
+function comfortLabel(point: WeatherForecastPoint | null, t: Translate): string {
   if (!point) {
     return "n/a";
   }
@@ -601,24 +622,24 @@ function comfortLabel(point: WeatherForecastPoint | null): string {
   const feelsLike = apparentTemperature(point);
   const gust = point.wind_gust_ms ?? point.wind_speed_ms ?? 0;
   if (point.visibility_m !== null && point.visibility_m < OUTDOOR_MIN_VISIBILITY_M) {
-    return "Low visibility";
+    return t("Low visibility");
   }
   if (gust >= OUTDOOR_MAX_GUST_MS) {
-    return "Gusty";
+    return t("Gusty");
   }
   if (feelsLike !== null && feelsLike <= 0) {
-    return "Cold";
+    return t("Cold");
   }
   if (feelsLike !== null && feelsLike <= 10) {
-    return "Cool";
+    return t("Cool");
   }
   if (feelsLike !== null && feelsLike >= 27) {
-    return "Hot";
+    return t("Hot");
   }
   if ((point.humidity_pct ?? 0) >= 85) {
-    return "Humid";
+    return t("Humid");
   }
-  return "Comfortable";
+  return t("Comfortable");
 }
 
 function windDirectionLabel(value: number | null | undefined): string {
@@ -683,19 +704,23 @@ function conditionClass(label: string): string {
   return label.toLowerCase().replaceAll(" ", "-");
 }
 
-function freshnessStatus(generatedAt: string | null): { label: string; detail: string; stale: boolean } {
+function freshnessStatus(
+  generatedAt: string | null,
+  language: LanguageMode,
+  t: Translate
+): { label: string; detail: string; stale: boolean } {
   if (!generatedAt) {
     return {
-      label: "No update",
-      detail: "forecast timestamp missing",
+      label: t("No update"),
+      detail: t("forecast timestamp missing"),
       stale: true
     };
   }
 
   const age = Date.now() - new Date(generatedAt).getTime();
   return {
-    label: formatRelativeAge(generatedAt),
-    detail: age > STALE_FORECAST_MS ? "stale forecast" : "fresh forecast",
+    label: formatRelativeAge(generatedAt, language),
+    detail: age > STALE_FORECAST_MS ? t("stale forecast") : t("fresh forecast"),
     stale: age > STALE_FORECAST_MS
   };
 }
@@ -743,9 +768,9 @@ function defaultQuality(): WeatherQuality {
   };
 }
 
-function endpointLabel(request: WeatherSourceRequest): string {
+function endpointLabel(request: WeatherSourceRequest, t: Translate): string {
   if (!request.endpoint) {
-    return "endpoint not recorded";
+    return t("endpoint not recorded");
   }
 
   try {
@@ -757,18 +782,72 @@ function endpointLabel(request: WeatherSourceRequest): string {
   }
 }
 
+function weatherSummaryText(
+  summary: string | null | undefined,
+  fallback: string | null | undefined,
+  language: LanguageMode,
+  t: Translate
+): string {
+  const value = summary ?? fallback ?? "Latest normalized weather signals.";
+  if (language !== "zh") {
+    return value;
+  }
+
+  const temperatureSummary = value.match(
+    /^Temperature ranges from ([\d.-]+)C to ([\d.-]+)C in the next hours\. Peak wind reaches ([\d.-]+) m\/s with gusts up to ([\d.-]+) m\/s and cloud cover peaks at ([\d.-]+)%\.$/
+  );
+  if (temperatureSummary) {
+    return `${t("Next-hours temperature")} ${temperatureSummary[1]} C ${t("to")} ${temperatureSummary[2]} C, ${t("peak wind reaches")} ${temperatureSummary[3]} m/s, ${t("gusts up to")} ${temperatureSummary[4]} m/s, ${t("cloud cover peaks at")} ${temperatureSummary[5]}%.`;
+  }
+
+  return t(value);
+}
+
+function weatherDetailText(detail: string, t: Translate): string {
+  const fetched = detail.match(/^(\d+)\/(\d+) FMI layers fetched$/);
+  if (fetched) {
+    return `${fetched[1]}/${fetched[2]} ${t("FMI layers fetched")}`;
+  }
+
+  const chartItems = detail.match(/^(\d+) chart points, (\d+) rain windows, (\d+) warning items\.$/);
+  if (chartItems) {
+    return `${chartItems[1]} ${t("chart points")}, ${chartItems[2]} ${t("rain windows")}, ${chartItems[3]} ${t("warning items")}.`;
+  }
+
+  const warningItems = detail.match(/^(\d+) active warning item(s?) in the CAP feed\.$/);
+  if (warningItems) {
+    return `${warningItems[1]} ${t(Number(warningItems[1]) === 1 ? "active warning item" : "active warning items")} ${t("in the CAP feed")}.`;
+  }
+
+  return t(detail);
+}
+
+function weatherQualityNoteText(note: string, t: Translate): string {
+  const missingSeries = note.match(/^Missing full series: (.+)\.$/);
+  if (missingSeries) {
+    return `${t("Missing full series")}: ${missingSeries[1]
+      .split(", ")
+      .map((field) => t(field))
+      .join(", ")}.`;
+  }
+
+  return t(note);
+}
+
 function renderForecastRibbon(
   points: WeatherForecastPoint[],
   maxRain: number,
-  maxWind: number
+  maxWind: number,
+  t: Translate,
+  language: LanguageMode
 ) {
   if (points.length === 0) {
-    return <p>No hourly rows are available for the selected range.</p>;
+    return <p>{t("No hourly rows are available for the selected range.")}</p>;
   }
 
   const sampledPoints = points.length > 36 ? points.filter((_, index) => index % 2 === 0) : points;
   return (
-    <div className="weather-ribbon-track" aria-label="Forecast condition ribbon">
+    <div className="weather-ribbon-track" aria-label={t("Forecast condition ribbon")}>
       {sampledPoints.map((point) => {
         const label = conditionLabel(point);
         const rainPct = Math.min(100, ((point.precipitation_mm ?? 0) / maxRain) * 100);
@@ -783,11 +862,11 @@ function renderForecastRibbon(
                 "--wind": `${windPct}%`
               } as CSSProperties
             }
-            title={`${formatTableTime(point.timestamp)} · ${label} · rain ${formatNumber(
+            title={`${formatTableTime(point.timestamp, language)} · ${t(label)} · ${t("rain")} ${formatNumber(
               point.precipitation_mm
-            )} mm · wind ${formatNumber(point.wind_speed_ms)} m/s`}
+            )} mm · ${t("wind")} ${formatNumber(point.wind_speed_ms)} m/s`}
           >
-            <span>{formatCompactTime(point.timestamp)}</span>
+            <span>{formatCompactTime(point.timestamp, language)}</span>
             <i aria-hidden="true" />
           </div>
         );
@@ -797,12 +876,14 @@ function renderForecastRibbon(
 }
 
 export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorkspaceProps) {
+  const { language, t } = useI18n();
+
   if (!weather) {
     return (
-      <section className="weather-empty" aria-label="Weather data unavailable">
-        <span className="label-text">Weather</span>
-        <h2>Forecast data is not available yet</h2>
-        <p>Hourly FMI forecast points have not arrived for the current platform window.</p>
+      <section className="weather-empty" aria-label={t("Weather data unavailable")}>
+        <span className="label-text">{t("Weather")}</span>
+        <h2>{t("Forecast data is not available yet")}</h2>
+        <p>{t("Hourly FMI forecast points have not arrived for the current platform window.")}</p>
       </section>
     );
   }
@@ -810,7 +891,7 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
   const forecastPoints = weather.points ?? [];
   const rainWindows = weather.rain_windows ?? [];
   const current = latestPoint(forecastPoints);
-  const visibleSelection = forecastPointsForWindow(forecastPoints, timeWindow);
+  const visibleSelection = forecastPointsForWindow(forecastPoints, timeWindow, t, language);
   const visiblePoints = visibleSelection.points;
   const maxRain = maxValue(visiblePoints, (point) => point.precipitation_mm);
   const maxWind = maxValue(visiblePoints, (point) => point.wind_gust_ms ?? point.wind_speed_ms);
@@ -822,10 +903,10 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
       new Date(window.ends_at).getTime() >= new Date(selectedWindowStart ?? 0).getTime() &&
       new Date(window.starts_at).getTime() <= new Date(selectedWindowEnd ?? Date.now()).getTime()
   );
-  const rainSummary = rainSummaryForWindows(relevantRainWindows);
-  const outdoorWindow = bestOutdoorWindow(visiblePoints);
-  const weatherSeries = buildWeatherSeries(visiblePoints);
-  const freshness = freshnessStatus(weather.generated_at);
+  const rainSummary = rainSummaryForWindows(relevantRainWindows, t, language);
+  const outdoorWindow = bestOutdoorWindow(visiblePoints, t);
+  const weatherSeries = buildWeatherSeries(visiblePoints, t, language);
+  const freshness = freshnessStatus(weather.generated_at, language, t);
   const currentCondition = conditionLabel(current);
   const feelsLike = apparentTemperature(current);
   const currentWind = current?.wind_gust_ms ?? current?.wind_speed_ms;
@@ -838,31 +919,31 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
     quality.missing_fields.length > 0 ? quality.missing_fields : ["no full-series gaps"];
 
   return (
-    <section className="weather-workspace" aria-label="Weather workspace">
+    <section className="weather-workspace" aria-label={t("Weather workspace")}>
       <div className={`weather-hero ${freshness.stale ? "weather-hero-stale" : ""}`}>
         <div>
-          <span className="label-text">{weather.source_code} weather</span>
-          <h2>{weather.location ?? "Helsinki"} forecast</h2>
-          <p>{weather.summary ?? category?.description ?? "Latest normalized weather signals."}</p>
+          <span className="label-text">{weather.source_code} {t("weather")}</span>
+          <h2>{weather.location ?? "Helsinki"} {t("forecast")}</h2>
+          <p>{weatherSummaryText(weather.summary, category?.description, language, t)}</p>
         </div>
         <div className="weather-current">
           <span className={`weather-symbol weather-symbol-${conditionClass(currentCondition)}`}>
             <i aria-hidden="true" />
-            {currentCondition}
+            {t(currentCondition)}
           </span>
           <strong>{formatNumber(current?.temperature_c)} C</strong>
           <small>
-            {current ? formatTableTime(current.timestamp) : "n/a"} · rain{" "}
-            {formatNumber(current?.precipitation_mm)} mm · wind{" "}
-            {formatWind(currentWind, current?.wind_direction_deg)} · {weatherSignalText(current)}
+            {current ? formatTableTime(current.timestamp, language) : "n/a"} · {t("rain")}{" "}
+            {formatNumber(current?.precipitation_mm)} mm · {t("wind")}{" "}
+            {formatWind(currentWind, current?.wind_direction_deg)} · {weatherSignalText(current, t)}
           </small>
         </div>
       </div>
 
       {freshness.stale ? (
-        <section className="weather-status-banner" aria-label="Weather data freshness">
-          <strong>Forecast may be stale</strong>
-          <span>Last generated {freshness.label}. Treat timing-sensitive rain and wind details with care.</span>
+        <section className="weather-status-banner" aria-label={t("Weather data freshness")}>
+          <strong>{t("Forecast may be stale")}</strong>
+          <span>{t("Last generated")} {freshness.label}. {t("Treat timing-sensitive rain and wind details with care.")}</span>
         </section>
       ) : null}
 
@@ -873,45 +954,53 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
           <small>{rainSummary.detail}</small>
         </article>
         <article>
-          <span>Best outdoor window</span>
-          <strong>{outdoorWindow ? formatTimeRange(outdoorWindow.starts_at, outdoorWindow.ends_at) : "No clear window"}</strong>
-          <small>{outdoorWindow ? `${outdoorWindow.hours} h · ${outdoorWindow.detail}` : "Rain, gusts, or visibility limit this range"}</small>
-        </article>
-        <article>
-          <span>Comfort</span>
-          <strong>{comfortLabel(current)}</strong>
+          <span>{t("Best outdoor window")}</span>
+          <strong>
+            {outdoorWindow
+              ? formatTimeRange(outdoorWindow.starts_at, outdoorWindow.ends_at, t, language)
+              : t("No clear window")}
+          </strong>
           <small>
-            feels {formatNumber(feelsLike)} C · humidity {formatNumber(current?.humidity_pct, 0)}%
+            {outdoorWindow
+              ? `${outdoorWindow.hours} ${t("h")} · ${outdoorWindow.detail}`
+              : t("Rain, gusts, or visibility limit this range")}
           </small>
         </article>
         <article>
-          <span>Temperature range</span>
-          <strong>{metricValue(weather, "temperature_range")}</strong>
-          <small>{formatTimeRange(weather.valid_from, weather.valid_to)}</small>
+          <span>{t("Comfort")}</span>
+          <strong>{comfortLabel(current, t)}</strong>
+          <small>
+            {t("feels")} {formatNumber(feelsLike)} C · {t("humidity")} {formatNumber(current?.humidity_pct, 0)}%
+          </small>
         </article>
         <article>
-          <span>Wind</span>
-          <strong>{firstMetricValue(weather, ["peak_gust", "peak_wind"])}</strong>
+          <span>{t("Temperature range")}</span>
+          <strong>{metricValue(weather, "temperature_range", t)}</strong>
+          <small>{formatTimeRange(weather.valid_from, weather.valid_to, t, language)}</small>
+        </article>
+        <article>
+          <span>{t("Wind")}</span>
+          <strong>{firstMetricValue(weather, ["peak_gust", "peak_wind"], t)}</strong>
           <small>
-            avg peak {metricValue(weather, "peak_wind")}
+            {t("avg peak")} {metricValue(weather, "peak_wind", t)}
             {windDirectionLabel(current?.wind_direction_deg)
               ? ` · ${windDirectionLabel(current?.wind_direction_deg)}`
               : ""}
           </small>
         </article>
         <article className={freshness.stale ? "weather-kpi-warn" : ""}>
-          <span>Updated</span>
+          <span>{t("Updated")}</span>
           <strong>{freshness.label}</strong>
-          <small>{freshness.detail} · valid until {formatDateTime(weather.valid_to)}</small>
+          <small>{freshness.detail} · {t("valid until")} {formatDateTime(weather.valid_to, language)}</small>
         </article>
       </div>
 
       <div className="weather-data-grid">
-        <section className="weather-pipeline-panel" aria-label="Weather data pipeline">
+        <section className="weather-pipeline-panel" aria-label={t("Weather data pipeline")}>
           <header>
             <div>
-              <span className="label-text">Data pipeline</span>
-              <h3>Fetch, clean, visualize</h3>
+              <span className="label-text">{t("Data pipeline")}</span>
+              <h3>{t("Fetch, clean, visualize")}</h3>
             </div>
             <strong>{dataPipeline.filter((stage) => stage.status === "ready").length}/3</strong>
           </header>
@@ -920,26 +1009,26 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
               dataPipeline.map((stage) => (
                 <article className={`weather-stage weather-stage-${stageTone(stage)}`} key={stage.key}>
                   <div>
-                    <strong>{stage.label}</strong>
-                    <span>{stage.status.replaceAll("_", " ")}</span>
+                    <strong>{t(stage.label)}</strong>
+                    <span>{t(stage.status.replaceAll("_", " "))}</span>
                   </div>
                   <small>
-                    {stage.detail}
-                    {stage.record_count !== null ? ` · records ${stage.record_count}` : ""}
+                    {weatherDetailText(stage.detail, t)}
+                    {stage.record_count !== null ? ` · ${t("records")} ${stage.record_count}` : ""}
                   </small>
                 </article>
               ))
             ) : (
-              <p>No pipeline metadata was returned with this weather response.</p>
+              <p>{t("No pipeline metadata was returned with this weather response.")}</p>
             )}
           </div>
         </section>
 
-        <section className="weather-quality-panel" aria-label="Weather data quality">
+        <section className="weather-quality-panel" aria-label={t("Weather data quality")}>
           <header>
             <div>
-              <span className="label-text">Cleaned data</span>
-              <h3>{quality.point_count} hourly rows</h3>
+              <span className="label-text">{t("Cleaned data")}</span>
+              <h3>{quality.point_count} {t("hourly rows")}</h3>
             </div>
             <strong>{formatPercent(quality.field_coverage_pct)}</strong>
           </header>
@@ -947,48 +1036,48 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
             <i style={{ "--quality": `${quality.field_coverage_pct}%` } as CSSProperties} />
           </div>
           <div className="weather-quality-grid">
-            <span>{quality.forecast_hours} h horizon</span>
-            <span>{quality.rain_window_count} rain windows</span>
-            <span>{missingFields.join(", ")}</span>
+            <span>{quality.forecast_hours} {t("h")} {t("horizon")}</span>
+            <span>{quality.rain_window_count} {t("rain windows")}</span>
+            <span>{missingFields.map((field) => t(field)).join(", ")}</span>
           </div>
           <div className="weather-quality-notes">
             {(quality.notes.length > 0 ? quality.notes : ["No quality notes returned."]).map((note) => (
-              <small key={note}>{note}</small>
+              <small key={note}>{weatherQualityNoteText(note, t)}</small>
             ))}
           </div>
         </section>
       </div>
 
       <div className="weather-main-grid">
-        <section className="weather-chart-panel" aria-label="Hourly weather signals">
+        <section className="weather-chart-panel" aria-label={t("Hourly weather signals")}>
           <header>
             <div>
-              <span className="label-text">Hourly signals</span>
-              <h3>{timeWindow.label} · {visiblePoints.length} forecast points</h3>
+              <span className="label-text">{t("Hourly signals")}</span>
+              <h3>{t(timeWindow.label)} · {visiblePoints.length} {t("forecast points")}</h3>
             </div>
-            <small>{visibleSelection.fallbackLabel ?? timeWindow.status}</small>
+            <small>{visibleSelection.fallbackLabel ?? t(timeWindow.status)}</small>
           </header>
           <div className="weather-ribbon-panel">
             <div>
-              <span className="label-text">Visualization layer</span>
-              <strong>Condition, rain, and wind density</strong>
+              <span className="label-text">{t("Visualization layer")}</span>
+              <strong>{t("Condition, rain, and wind density")}</strong>
             </div>
-            {renderForecastRibbon(visiblePoints, maxRain, maxWind)}
+            {renderForecastRibbon(visiblePoints, maxRain, maxWind, t, language)}
           </div>
           <div className="weather-chart-grid">
             {weatherSeries.map((series) => (
               <article className={`weather-chart-card weather-chart-card-${series.tone}`} key={series.key}>
                 <span>{series.label}</span>
-                {renderMiniChart(series)}
+                {renderMiniChart(series, t)}
               </article>
             ))}
           </div>
         </section>
 
         <div className="weather-side-stack">
-          <section className="weather-rain-panel" aria-label="Upcoming rain windows">
+          <section className="weather-rain-panel" aria-label={t("Upcoming rain windows")}>
             <header>
-              <span className="label-text">Rain windows</span>
+              <span className="label-text">{t("Rain windows")}</span>
               <strong>{relevantRainWindows.length}</strong>
             </header>
             <div className="weather-rain-list">
@@ -996,24 +1085,24 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
                 relevantRainWindows.map((window) => (
                   <article key={`${window.starts_at}-${window.ends_at}`}>
                     <div>
-                      <strong>{formatTimeRange(window.starts_at, window.ends_at)}</strong>
-                      <span>{window.hours} h</span>
+                      <strong>{formatTimeRange(window.starts_at, window.ends_at, t, language)}</strong>
+                      <span>{window.hours} {t("h")}</span>
                     </div>
                     <small>
-                      peak {formatNumber(window.peak_precip_mm)} mm at{" "}
-                      {formatTableTime(window.peak_precip_at)} · total {formatNumber(window.total_precip_mm)} mm
+                      {t("peak")} {formatNumber(window.peak_precip_mm)} mm {t("at")}{" "}
+                      {formatTableTime(window.peak_precip_at, language)} · {t("total")} {formatNumber(window.total_precip_mm)} mm
                     </small>
                   </article>
                 ))
               ) : (
-                <p>No rain windows detected in this forecast range.</p>
+                <p>{t("No rain windows detected in this forecast range.")}</p>
               )}
             </div>
           </section>
 
-          <section className="weather-source-panel" aria-label="Weather source layers">
+          <section className="weather-source-panel" aria-label={t("Weather source layers")}>
             <header>
-              <span className="label-text">Source layers</span>
+              <span className="label-text">{t("Source layers")}</span>
               <strong>{sourceLayers.filter((layer) => layer.status === "ready").length}</strong>
             </header>
             <div className="weather-source-list">
@@ -1021,73 +1110,73 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
                 sourceLayers.map((layer) => (
                   <article className={`weather-source-layer weather-source-layer-${sourceLayerTone(layer)}`} key={layer.key}>
                     <div>
-                      <strong>{layer.label}</strong>
-                      <span>{layer.status.replaceAll("_", " ")}</span>
+                      <strong>{t(layer.label)}</strong>
+                      <span>{t(layer.status.replaceAll("_", " "))}</span>
                     </div>
-                    <small>{layer.detail}</small>
+                    <small>{weatherDetailText(layer.detail, t)}</small>
                   </article>
                 ))
               ) : (
-                <p>No source layer metadata was returned with this forecast.</p>
+                <p>{t("No source layer metadata was returned with this forecast.")}</p>
               )}
             </div>
             <div className="weather-request-list">
-              <span className="label-text">Acquisition requests</span>
+              <span className="label-text">{t("Acquisition requests")}</span>
               {sourceRequests.length > 0 ? (
                 sourceRequests.map((request) => (
                   <article className={`weather-request weather-request-${stageTone(request)}`} key={request.key}>
                     <div>
-                      <strong>{request.label}</strong>
-                      <span>{request.status}</span>
+                      <strong>{t(request.label)}</strong>
+                      <span>{t(request.status)}</span>
                     </div>
                     <small>
-                      {endpointLabel(request)}
-                      {request.fetched_at ? ` · fetched ${formatRelativeAge(request.fetched_at)}` : ""}
+                      {endpointLabel(request, t)}
+                      {request.fetched_at ? ` · ${t("fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
                     </small>
                   </article>
                 ))
               ) : (
-                <p>No acquisition request metadata was returned with this forecast.</p>
+                <p>{t("No acquisition request metadata was returned with this forecast.")}</p>
               )}
             </div>
             <div className="weather-warning-list">
-              <span className="label-text">Official warnings</span>
+              <span className="label-text">{t("Official warnings")}</span>
               {warnings.length > 0 ? (
                 warnings.slice(0, 3).map((warning) => (
                   <article className={`weather-warning weather-warning-${warningTone(warning)}`} key={warning.link ?? warning.title}>
                     {warning.link ? (
-                      <a href={warning.link}>{warning.title}</a>
+                      <a href={warning.link}>{t(warning.title)}</a>
                     ) : (
-                      <strong>{warning.title}</strong>
+                      <strong>{t(warning.title)}</strong>
                     )}
-                    {warning.description ? <small>{warning.description}</small> : null}
+                    {warning.description ? <small>{t(warning.description)}</small> : null}
                   </article>
                 ))
               ) : (
-                <p>No active warnings in the latest collected CAP feed.</p>
+                <p>{t("No active warnings in the latest collected CAP feed.")}</p>
               )}
             </div>
           </section>
         </div>
       </div>
 
-      <section className="weather-hour-table" aria-label="Hourly weather table">
+      <section className="weather-hour-table" aria-label={t("Hourly weather table")}>
         <header>
-          <span className="label-text">Hourly details</span>
-          <strong>{visiblePoints.length} rows</strong>
+          <span className="label-text">{t("Hourly details")}</span>
+          <strong>{visiblePoints.length} {t("rows")}</strong>
         </header>
         <div className="weather-table-scroll">
           <table className="weather-hour-table-grid">
             <thead>
               <tr>
-                <th scope="col">Time</th>
-                <th scope="col">Condition</th>
-                <th scope="col">Temp</th>
-                <th scope="col">Rain</th>
-                <th scope="col">Wind</th>
-                <th scope="col">Gust</th>
-                <th scope="col">Cloud</th>
-                <th scope="col">Comfort</th>
+                <th scope="col">{t("Time")}</th>
+                <th scope="col">{t("Condition")}</th>
+                <th scope="col">{t("Temp")}</th>
+                <th scope="col">{t("Rain")}</th>
+                <th scope="col">{t("Wind")}</th>
+                <th scope="col">{t("Gust")}</th>
+                <th scope="col">{t("Cloud")}</th>
+                <th scope="col">{t("Comfort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1096,17 +1185,17 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
                 const gust = point.wind_gust_ms ?? point.wind_speed_ms;
                 return (
                   <tr key={point.timestamp}>
-                    <th scope="row">{formatTableTime(point.timestamp)}</th>
-                    <td title={`Weather symbol ${point.smart_symbol ?? point.weather_symbol ?? "n/a"}`}>
+                    <th scope="row">{formatTableTime(point.timestamp, language)}</th>
+                    <td title={`${t("Weather symbol")} ${point.smart_symbol ?? point.weather_symbol ?? "n/a"}`}>
                       <span className={`weather-symbol weather-symbol-${conditionClass(label)}`}>
                         <i aria-hidden="true" />
-                        {label}
+                        {t(label)}
                       </span>
                     </td>
-                    <td title={`Temperature ${formatNumber(point.temperature_c)} C`}>
+                    <td title={`${t("Temperature")} ${formatNumber(point.temperature_c)} C`}>
                       {formatNumber(point.temperature_c)} C
                     </td>
-                    <td title={`Rain ${formatNumber(point.precipitation_mm)} mm`}>
+                    <td title={`${t("Rain")} ${formatNumber(point.precipitation_mm)} mm`}>
                       <div className="weather-hour-measure">
                         <div className="weather-hour-bar">
                           <i
@@ -1123,7 +1212,7 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
                         <span>{formatNumber(point.precipitation_mm)} mm</span>
                       </div>
                     </td>
-                    <td title={`Wind ${formatWind(point.wind_speed_ms, point.wind_direction_deg)}`}>
+                    <td title={`${t("Wind")} ${formatWind(point.wind_speed_ms, point.wind_direction_deg)}`}>
                       <div className="weather-hour-measure">
                         <div className="weather-hour-bar weather-hour-bar-wind">
                           <i
@@ -1140,12 +1229,12 @@ export function WeatherWorkspace({ category, weather, timeWindow }: WeatherWorks
                         <span>{formatWind(point.wind_speed_ms, point.wind_direction_deg)}</span>
                       </div>
                     </td>
-                    <td title={`Gust ${formatNumber(gust)} m/s`}>{formatNumber(gust)} m/s</td>
-                    <td title={`Cloud cover ${formatNumber(point.cloud_cover_pct, 0)}%`}>
+                    <td title={`${t("Gust")} ${formatNumber(gust)} m/s`}>{formatNumber(gust)} m/s</td>
+                    <td title={`${t("Cloud cover")} ${formatNumber(point.cloud_cover_pct, 0)}%`}>
                       {formatNumber(point.cloud_cover_pct, 0)}%
                     </td>
-                    <td title={`Feels like ${formatNumber(apparentTemperature(point))} C`}>
-                      {comfortLabel(point)}
+                    <td title={`${t("Feels like")} ${formatNumber(apparentTemperature(point))} C`}>
+                      {comfortLabel(point, t)}
                     </td>
                   </tr>
                 );
