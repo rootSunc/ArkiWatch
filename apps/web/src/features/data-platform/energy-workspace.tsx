@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
-import type { DashboardSource } from "@/features/public-dashboard/types";
 
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
+  DashboardSource,
   EnergyCurrentResponse,
   EnergyMetric,
   EnergyPoint,
@@ -15,14 +15,15 @@ import {
   PlatformHistoricalSnapshot,
   PlatformMetric,
   PlatformTone,
-  PlatformVisualizationPoint,
   PlatformVisualizationTimelineItem
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
+import { eventAnchorId } from "./recent-events";
 
 type EnergyWorkspaceProps = {
   category: PlatformCategory | null;
   energy: EnergyCurrentResponse | null;
+  highlightedEventId?: string | null;
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
   householdEnergy: EnergyCurrentResponse | null;
   householdHistory: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
@@ -41,6 +42,11 @@ type PanelMetric = {
   updated_at?: string | null;
 };
 
+type EnergyDisplayPoint = {
+  raw: EnergyPoint;
+  display: EnergyPoint;
+};
+
 type EnergyPanelProfile = {
   chartKind: "area-line" | "hourly-bars";
   chartKindLabel: string;
@@ -57,8 +63,11 @@ type EnergyPanelProfile = {
 
 const PRICE_CHART_WIDTH = 720;
 const PRICE_CHART_HEIGHT = 240;
-const PRICE_CHART_PADDING = 30;
-const PRICE_CHART_BASELINE = PRICE_CHART_HEIGHT - PRICE_CHART_PADDING;
+const PRICE_CHART_PAD_LEFT = 65;
+const PRICE_CHART_PAD_RIGHT = 25;
+const PRICE_CHART_PAD_TOP = 25;
+const PRICE_CHART_PAD_BOTTOM = 40;
+const DEFAULT_HOUSEHOLD_PRICE_PROVIDER = "Fortum";
 const ENERGY_PANEL_TABS: Array<{
   key: EnergyPanelKey;
   label: string;
@@ -66,16 +75,16 @@ const ENERGY_PANEL_TABS: Array<{
   description: string;
 }> = [
   {
+    key: "porssisahko",
+    label: "Household Prices",
+    icon: "payments",
+    description: "Household electricity cost estimate without transfer fees"
+  },
+  {
     key: "fingrid",
     label: "Fingrid System",
     icon: "electrical_services",
     description: "Electricity system telemetry"
-  },
-  {
-    key: "porssisahko",
-    label: "Porssisahko Prices",
-    icon: "payments",
-    description: "Household spot-price forecast"
   }
 ];
 const ENERGY_PANEL_PROFILES: Record<EnergyPanelKey, EnergyPanelProfile> = {
@@ -93,22 +102,26 @@ const ENERGY_PANEL_PROFILES: Record<EnergyPanelKey, EnergyPanelProfile> = {
   },
   porssisahko: {
     chartKind: "hourly-bars",
-    chartKindLabel: "Hourly spot-price bars",
+    chartKindLabel: "Hourly cost bars",
     pageClassName: "energy-detail-page-price",
-    rangeLabel: "Spot price range",
-    scopeValueLabel: "48h spot-price feed",
-    spreadLabel: "Price spread",
-    unitLabel: "Price unit",
-    valueColumnLabel: "Spot price",
-    detailColumnLabel: "Cost",
+    rangeLabel: "Estimated cost range",
+    scopeValueLabel: "Household contract estimate",
+    spreadLabel: "Cost spread",
+    unitLabel: "Displayed unit",
+    valueColumnLabel: "Estimated cost",
+    detailColumnLabel: "Spot price",
     signalScopeLabel: "Household cost signal",
-    noUnitLabel: "c/kWh"
+    noUnitLabel: "EUR"
   }
 };
 
 function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
   if (!metric) {
     return t("missing");
+  }
+
+  if (metric.unit?.toUpperCase() === "EUR") {
+    return formatEstimatedCost(numericValue(metric.value), t);
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -119,6 +132,19 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
 }
 
 function displayMetricLabel(metric: PanelMetric | null, fallback: string): string {
+  if (metric?.key === "estimated_cost") {
+    return "Estimated cost";
+  }
+  if (metric?.key === "window_average" && isPriceUnit(metric.unit)) {
+    return "Average spot price";
+  }
+  if (metric?.key === "minimum_value" && isPriceUnit(metric.unit)) {
+    return "Cheapest spot price";
+  }
+  if (metric?.key === "maximum_value" && isPriceUnit(metric.unit)) {
+    return "Peak spot price";
+  }
+
   return metric?.label ?? fallback;
 }
 
@@ -239,16 +265,6 @@ function energyTimelineItems(category: PlatformCategory): PlatformVisualizationT
   return timeline?.data.items ?? [];
 }
 
-function sourceVolumePoints(category: PlatformCategory): PlatformVisualizationPoint[] {
-  const sourceVolume = category.visualizations.find((item) => item.id === "energy-source-volume");
-  return sourceVolume?.data.points ?? [];
-}
-
-function severityPoints(category: PlatformCategory): PlatformVisualizationPoint[] {
-  const severity = category.visualizations.find((item) => item.id === "energy-severity-distribution");
-  return severity?.data.points ?? [];
-}
-
 function sourceByCode(category: PlatformCategory, sourceCode: EnergyPanelKey): DashboardSource | null {
   return category.sources.find((candidate) => candidate.source_code === sourceCode) ?? null;
 }
@@ -286,23 +302,6 @@ function sourceRecordsMetric(source: DashboardSource | null): PanelMetric {
   };
 }
 
-function pollIntervalLabel(seconds: number | null | undefined, t: (value: string) => string): string {
-  if (!seconds) {
-    return t("cadence missing");
-  }
-
-  if (seconds < 3600) {
-    return `${Math.round(seconds / 60)} min`;
-  }
-
-  return `${Math.round(seconds / 3600)} h`;
-}
-
-function sourceProgress(point: PlatformVisualizationPoint): number {
-  const max = Math.max(1, point.value);
-  return Math.max(8, Math.min(100, (point.value / max) * 100));
-}
-
 function pointValueRange(points: EnergyPoint[]): { min: number; max: number } {
   const values = points.map((point) => point.value);
   return {
@@ -315,9 +314,17 @@ function energyPointUnit(point: EnergyPoint | null, fallback: string | null | un
   return point?.unit ?? fallback ?? null;
 }
 
+function formatValueWithUnit(value: number, unit: string | null | undefined): string {
+  if (unit?.toUpperCase() === "EUR") {
+    return formatEstimatedCost(value, (label) => label);
+  }
+
+  return `${value.toFixed(2)}${unit ? ` ${unit}` : ""}`;
+}
+
 function formatEnergyPointValue(point: EnergyPoint, fallbackUnit: string | null | undefined): string {
   const unit = energyPointUnit(point, fallbackUnit);
-  return `${point.value.toFixed(2)}${unit ? ` ${unit}` : ""}`;
+  return formatValueWithUnit(point.value, unit);
 }
 
 function formatEstimatedCost(value: number | null | undefined, t: (value: string) => string): string {
@@ -328,18 +335,70 @@ function formatEstimatedCost(value: number | null | undefined, t: (value: string
   return `EUR ${value.toFixed(2)}`;
 }
 
+function isPriceUnit(unit: string | null | undefined): boolean {
+  return unit !== null && unit !== undefined && unit.toLowerCase().includes("kwh");
+}
+
+function estimatedCostFromPrice(
+  priceValue: number | null | undefined,
+  unit: string | null | undefined,
+  usageKwh: number | null | undefined
+): number | null {
+  if (priceValue === null || priceValue === undefined || usageKwh === null || usageKwh === undefined || !isPriceUnit(unit)) {
+    return null;
+  }
+
+  return (priceValue * usageKwh) / 100;
+}
+
+function priceDisplayPoint(
+  point: EnergyPoint,
+  fallbackUnit: string | null | undefined,
+  usageKwh: number | null | undefined
+): EnergyDisplayPoint | null {
+  const displayValue =
+    point.estimated_cost_eur ?? estimatedCostFromPrice(point.value, energyPointUnit(point, fallbackUnit), usageKwh);
+
+  if (displayValue === null || !Number.isFinite(displayValue)) {
+    return null;
+  }
+
+  return {
+    raw: point,
+    display: {
+      ...point,
+      value: displayValue,
+      unit: "EUR"
+    }
+  };
+}
+
+function chartDisplayPoints(
+  points: EnergyPoint[],
+  isPricePanel: boolean,
+  fallbackUnit: string | null | undefined,
+  usageKwh: number | null | undefined
+): EnergyDisplayPoint[] {
+  if (!isPricePanel) {
+    return points.map((point) => ({ raw: point, display: point }));
+  }
+
+  return points.flatMap((point) => {
+    const displayPoint = priceDisplayPoint(point, fallbackUnit, usageKwh);
+    return displayPoint ? [displayPoint] : [];
+  });
+}
+
 function formatEnergyRange(
   range: { min: number; max: number },
   unit: string | null | undefined,
   t: (value: string) => string
 ): string {
-  const unitSuffix = unit ? ` ${unit}` : "";
-  return `${range.min.toFixed(2)} ${t("to")} ${range.max.toFixed(2)}${unitSuffix}`;
+  return `${formatValueWithUnit(range.min, unit)} ${t("to")} ${formatValueWithUnit(range.max, unit)}`;
 }
 
 function formatEnergySpread(range: { min: number; max: number }, unit: string | null | undefined): string {
-  const unitSuffix = unit ? ` ${unit}` : "";
-  return `${(range.max - range.min).toFixed(2)}${unitSuffix}`;
+  return formatValueWithUnit(range.max - range.min, unit);
 }
 
 function sourceRequestLabel(energy: EnergyCurrentResponse | null, fallback: string): string {
@@ -377,17 +436,17 @@ function chartY(value: number, min: number, max: number): number {
     return PRICE_CHART_HEIGHT / 2;
   }
 
-  const innerHeight = PRICE_CHART_HEIGHT - PRICE_CHART_PADDING * 2;
-  return PRICE_CHART_PADDING + (1 - (value - min) / (max - min)) * innerHeight;
+  const innerHeight = PRICE_CHART_HEIGHT - PRICE_CHART_PAD_TOP - PRICE_CHART_PAD_BOTTOM;
+  return PRICE_CHART_PAD_TOP + (1 - (value - min) / (max - min)) * innerHeight;
 }
 
 function chartX(index: number, count: number): number {
   if (count <= 1) {
-    return PRICE_CHART_PADDING;
+    return PRICE_CHART_PAD_LEFT;
   }
 
-  const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PADDING * 2;
-  return PRICE_CHART_PADDING + (index / (count - 1)) * innerWidth;
+  const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PAD_LEFT - PRICE_CHART_PAD_RIGHT;
+  return PRICE_CHART_PAD_LEFT + (index / (count - 1)) * innerWidth;
 }
 
 function priceLinePath(points: EnergyPoint[], scale: { min: number; max: number }): string {
@@ -409,7 +468,8 @@ function priceAreaPath(points: EnergyPoint[], scale: { min: number; max: number 
   }
 
   const line = priceLinePath(points, scale);
-  return `${line} L${chartX(points.length - 1, points.length).toFixed(1)},${PRICE_CHART_BASELINE} L${PRICE_CHART_PADDING},${PRICE_CHART_BASELINE} Z`;
+  const baseline = PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM;
+  return `${line} L${chartX(points.length - 1, points.length).toFixed(1)},${baseline} L${PRICE_CHART_PAD_LEFT},${baseline} Z`;
 }
 
 function isWindowPoint(point: EnergyPoint, startsAt: string | null | undefined, endsAt: string | null | undefined): boolean {
@@ -452,7 +512,8 @@ function averagePointValue(points: EnergyPoint[]): number | null {
 
 function energyHistoryPoints(
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[],
-  t: (value: string) => string
+  t: (value: string) => string,
+  showEstimatedCost: boolean
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -460,18 +521,29 @@ function energyHistoryPoints(
       return [];
     }
 
-    const averageValue = data.quality.average_value ?? averagePointValue(data.points);
+    const averageRawValue = data.quality.average_value ?? averagePointValue(data.points);
+    const usageKwh = data.current_window?.usage_kwh ?? null;
+    const averageValue = showEstimatedCost
+      ? data.current_window?.estimated_cost_eur ?? estimatedCostFromPrice(averageRawValue, data.unit, usageKwh)
+      : averageRawValue;
     if (averageValue === null || !Number.isFinite(averageValue)) {
       return [];
     }
 
-    const minimumValue =
+    const minimumRawValue =
       data.quality.minimum_value ?? (data.points.length > 0 ? pointValueRange(data.points).min : null);
-    const maximumValue =
+    const maximumRawValue =
       data.quality.maximum_value ?? (data.points.length > 0 ? pointValueRange(data.points).max : null);
+    const minimumValue = showEstimatedCost
+      ? estimatedCostFromPrice(minimumRawValue, data.unit, usageKwh)
+      : minimumRawValue;
+    const maximumValue = showEstimatedCost
+      ? estimatedCostFromPrice(maximumRawValue, data.unit, usageKwh)
+      : maximumRawValue;
+    const historyFractionDigits = showEstimatedCost ? 2 : 1;
     const rangeDetail =
       minimumValue !== null && maximumValue !== null
-        ? `${t("range")} ${minimumValue.toFixed(1)}-${maximumValue.toFixed(1)}`
+        ? `${t("range")} ${minimumValue.toFixed(historyFractionDigits)}-${maximumValue.toFixed(historyFractionDigits)}`
         : `${data.quality.point_count} ${t("points")}`;
 
     return [
@@ -486,15 +558,46 @@ function energyHistoryPoints(
   });
 }
 
+function orderedEnergyMetrics(metrics: EnergyMetric[], isPricePanel: boolean): PanelMetric[] {
+  const priority = isPricePanel
+    ? ["estimated_cost", "window_average", "minimum_value", "maximum_value", "point_count"]
+    : ["window_average", "minimum_value", "maximum_value", "point_count"];
+
+  return [...metrics]
+    .sort((left, right) => {
+      const leftIndex = priority.indexOf(left.key);
+      const rightIndex = priority.indexOf(right.key);
+      return (leftIndex === -1 ? priority.length : leftIndex) - (rightIndex === -1 ? priority.length : rightIndex);
+    })
+    .map((metric) => ({
+      ...metric,
+      tone: energyMetricTone(metric)
+    }));
+}
+
 export function EnergyWorkspace({
   category,
   energy,
+  highlightedEventId,
   history,
   householdEnergy,
   householdHistory
 }: EnergyWorkspaceProps) {
   const { language, t } = useI18n();
-  const [activePanel, setActivePanel] = useState<EnergyPanelKey>("fingrid");
+  const [activePanel, setActivePanel] = useState<EnergyPanelKey>("porssisahko");
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    point: EnergyPoint;
+    index: number;
+    x: number;
+    y: number;
+    raw?: EnergyPoint;
+  } | null>(null);
+
+  useEffect(() => {
+    if (highlightedEventId && category?.events.some((event) => event.id === highlightedEventId)) {
+      setActivePanel("fingrid");
+    }
+  }, [category, highlightedEventId]);
 
   if (!category) {
     return (
@@ -511,21 +614,21 @@ export function EnergyWorkspace({
   const activeEnergy = isPricePanel ? householdEnergy : energy;
   const activeHistory = isPricePanel ? householdHistory : history;
   const activeSource = sourceByCode(category, activePanel);
+  const priceProviderName = householdEnergy?.provider_name ?? DEFAULT_HOUSEHOLD_PRICE_PROVIDER;
   const activeStatus = activeSource?.operational_status ?? activeEnergy?.status ?? category.status;
   const lowWindowMetric = isPricePanel ? null : metricByKey(category, "low_energy_window");
   const recordsMetric = sourceRecordsMetric(activeSource);
   const sourceStateMetric = sourceStatusMetric(activeSource, activeStatus);
   const latestEvent = isPricePanel ? null : latestEnergyEvent(category);
+  const highlightedCategoryEvent =
+    (highlightedEventId
+      ? category.events.find((event) => event.id === highlightedEventId)
+      : null) ??
+    latestEvent ??
+    null;
   const timelineItems = isPricePanel ? [] : energyTimelineItems(category);
-  const sourcePoints = sourceVolumePoints(category);
-  const activeSourcePoints = sourcePoints.filter((point) => point.label === activePanel);
-  const severityRows = severityPoints(category);
-  const summaryMetrics = activeEnergy?.metrics.length
-    ? activeEnergy.metrics.map((metric) => ({ ...metric, tone: energyMetricTone(metric) })).slice(0, 5)
-    : [lowWindowMetric, recordsMetric, sourceStateMetric].filter((metric): metric is PanelMetric => metric !== null);
   const window = activeEnergy?.current_window ?? null;
   const activeTone = window ? toneFromSeverity(window.severity) : lowWindowMetric ? metricTone(lowWindowMetric) : toneFromStatus(activeStatus);
-  const hasWindowEvidence = window !== null || latestEvent !== null || timelineItems.length > 0;
   const hasActiveWindow =
     window !== null ||
     lowWindowMetric !== null ||
@@ -541,54 +644,90 @@ export function EnergyWorkspace({
     : hasActiveWindow && latestEvent
       ? formatCompactTime(latestEvent.ends_at, language, t)
       : t("waiting for event");
-  const keyDataItems = activeSource?.key_data_items ?? category.key_data_items ?? [];
-  const fieldCount = keyDataItems.length;
-  const datasetCount = activeSource?.datasets?.length ?? 0;
+  const householdWindowUsage = isPricePanel && window?.usage_kwh != null ? window.usage_kwh : null;
+  const householdUsageMetric = householdWindowUsage !== null
+    ? {
+      key: "window_usage",
+      label: "Window usage",
+      value: `${householdWindowUsage.toFixed(2)}`,
+      unit: "kWh",
+      tone: "neutral",
+      detail: null,
+      updated_at: window?.starts_at ?? null
+    }
+    : null;
+  const windowAveragePoint = window
+    ? {
+      starts_at: window.starts_at,
+      ends_at: window.ends_at,
+      value: window.average_value,
+      unit: window.unit,
+      estimated_cost_eur: window.estimated_cost_eur
+    }
+    : null;
+  const windowAverageLabel = windowAveragePoint ? formatEnergyPointValue(windowAveragePoint, activeEnergy?.unit) : t("n/a");
   const signalMetrics: PanelMetric[] = activeEnergy?.metrics.length ? activeEnergy.metrics.map((metric) => ({
     ...metric,
     detail: null,
     tone: energyMetricTone(metric)
   })) : [lowWindowMetric, recordsMetric, sourceStateMetric].filter((metric): metric is PanelMetric => metric !== null);
   const heroValue = window
-    ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
+    ? isPricePanel
+      ? formatEstimatedCost(window.estimated_cost_eur, t)
+      : `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
     : lowWindowMetric
     ? formatMetricValue(lowWindowMetric, t)
     : hasActiveWindow
       ? t("Window detected")
       : t("No active window");
   const heroDetail =
-    activeEnergy?.summary ??
+    (isPricePanel && window
+      ? `${t("Estimated household bill for this flexible-use window.")} ${t("Average spot price")}: ${windowAverageLabel}.`
+      : activeEnergy?.summary) ??
     lowWindowMetric?.detail ??
     latestEvent?.body ??
     (isPricePanel
-      ? t("Porssisahko price data has not produced a household price window for the current platform view.")
+      ? `${priceProviderName} ${t("price data has not produced a household price window for the current platform view.")}`
       : t("Fingrid data has not produced a low-value energy window for the current platform view."));
   const points = activeEnergy?.points ?? [];
-  const chartPoints = points.slice(0, 96);
+  const sourceChartPoints = points.slice(0, 96);
+  const chartPointPairs = chartDisplayPoints(sourceChartPoints, isPricePanel, activeEnergy?.unit, householdWindowUsage);
+  const chartPoints = chartPointPairs.map((point) => point.display);
+  const chartUnit = isPricePanel ? "EUR" : activeEnergy?.unit;
   const chartRange = chartPoints.length > 0 ? pointValueRange(chartPoints) : null;
   const chartVisualScale = chartPoints.length > 0 ? chartScale(chartPoints, isPricePanel) : null;
-  const chartLabels = chartPoints.length > 0
-    ? [
-        chartPoints[0],
-        chartPoints[Math.floor(chartPoints.length / 2)],
-        chartPoints[chartPoints.length - 1]
-      ]
-    : [];
-  const historyPoints = energyHistoryPoints(activeHistory, t);
+  const xTicks = chartPoints.length > 0 ? (() => {
+    const tickCount = 6;
+    const step = Math.max(1, Math.floor(chartPoints.length / (tickCount - 1)));
+    const ticks: number[] = [];
+    for (let i = 0; i < chartPoints.length; i += step) {
+      ticks.push(i);
+    }
+    if (ticks[ticks.length - 1] !== chartPoints.length - 1) {
+      ticks.push(chartPoints.length - 1);
+    }
+    return ticks;
+  })() : [];
+
+  const historyPoints = energyHistoryPoints(activeHistory, t, isPricePanel);
   const activeSourceLabel = sourceStatusLabel(activeSource, activeStatus, language);
-  const activeTitle = isPricePanel ? t("Porssisahko Household Price") : t("Fingrid Energy Signals");
-  const panelDescription = isPricePanel ? t("Household spot-price forecast") : t("Electricity system telemetry");
-  const activeSourceName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
-  const activeUnitLabel = activeEnergy?.unit ?? t(activeProfile.noUnitLabel);
+  const activeTitle = isPricePanel ? `${priceProviderName} ${t("Household Energy Price")}` : t("Fingrid Energy Signals");
+  const panelDescription = isPricePanel
+    ? t("Household electricity cost estimate without transfer fees")
+    : t("Electricity system telemetry");
+  const activeDataFeedName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
+  const activeSourceName = isPricePanel ? priceProviderName : activeDataFeedName;
+  const sourceDisclosureName = isPricePanel ? activeDataFeedName : activeSourceName;
+  const activeUnitLabel = isPricePanel ? "EUR" : activeEnergy?.unit ?? t(activeProfile.noUnitLabel);
   const activeScopeLabel = isPricePanel
-    ? t(activeProfile.scopeValueLabel ?? activeProfile.signalScopeLabel)
+    ? `${priceProviderName} ${t(activeProfile.scopeValueLabel ?? activeProfile.signalScopeLabel)}`
     : sourceRequestLabel(activeEnergy, t(activeProfile.signalScopeLabel));
-  const activeVolumePoints = activeSourcePoints.length > 0 ? activeSourcePoints : [{
-    label: activePanel,
-    value: activeSource?.records_ingested ?? 0,
-    tone: toneFromStatus(activeStatus),
-    detail: activeStatus
-  }];
+  const baseSummaryMetrics: PanelMetric[] = activeEnergy?.metrics.length
+    ? orderedEnergyMetrics(activeEnergy.metrics, isPricePanel).slice(0, 5)
+    : [lowWindowMetric, recordsMetric, sourceStateMetric, householdUsageMetric].filter((metric): metric is PanelMetric => metric !== null);
+  const displaySummaryMetrics = householdUsageMetric
+    ? [...baseSummaryMetrics, householdUsageMetric]
+    : baseSummaryMetrics;
 
   return (
     <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={t("Energy detail")}>
@@ -616,6 +755,10 @@ export function EnergyWorkspace({
           const tabFallbackStatus = tab.key === "porssisahko"
             ? householdEnergy?.status ?? "unknown"
             : energy?.status ?? "unknown";
+          const tabLabel = tab.key === "porssisahko" ? `${priceProviderName} ${t("Prices")}` : t(tab.label);
+          const tabDescription = tab.key === "porssisahko"
+            ? t("Household electricity cost estimate without transfer fees")
+            : t(tab.description);
 
           return (
             <button
@@ -630,8 +773,8 @@ export function EnergyWorkspace({
                 {tab.icon}
               </span>
               <span>
-                <strong>{t(tab.label)}</strong>
-                <em>{t(tab.description)}</em>
+                <strong>{tabLabel}</strong>
+                <em>{tabDescription}</em>
               </span>
               <small>{sourceStatusLabel(tabSource, tabFallbackStatus, language)}</small>
             </button>
@@ -639,8 +782,15 @@ export function EnergyWorkspace({
         })}
       </div>
 
-      <section className="energy-bento-grid" aria-label={t("Energy operating condition")}>
-        <article className={`energy-glass-panel energy-hero energy-hero-${activeTone}`}>
+      <section className="energy-overview-grid" aria-label={t("Energy operating condition")}>
+        <article
+          className={`energy-glass-panel energy-hero energy-hero-${activeTone} energy-hero-primary`}
+          id={
+            highlightedCategoryEvent
+              ? eventAnchorId(highlightedCategoryEvent.id)
+              : undefined
+          }
+        >
           <div className="energy-card-kicker">
             <span>{isPricePanel ? t("Cheapest Flexible Use Window") : t("Low-value System Window")}</span>
             <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
@@ -663,75 +813,32 @@ export function EnergyWorkspace({
               <span>{t("Ends")}</span>
               <strong>{endLabel}</strong>
             </div>
-          </div>
-        </article>
-
-        <article className="energy-glass-panel energy-window-panel">
-          <header>
-            <span>{t("Window State")}</span>
-            <strong>{hasActiveWindow ? t("Ready") : t("Pending")}</strong>
-          </header>
-          <div className="energy-window-stack">
-            {(window
-              ? [{
-                  id: "energy-current-window",
-                  label: window.unit?.includes("kWh")
-                    ? t("Cheapest household price window")
-                    : window.source === "raw_preview"
-                      ? t("Preview energy timing window")
-                      : t("Detected energy timing window"),
-                  detail: activeEnergy?.summary ?? t("Flexible electricity use window is ready."),
-                  severity: window.severity,
-                  starts_at: window.starts_at,
-                  ends_at: window.ends_at
-                }]
-              : timelineItems.length > 0
-                ? timelineItems
-                : latestEvent
-                  ? [latestEvent]
-                  : []).map((item) => {
-              const tone = toneFromSeverity(item.severity);
-              return (
-                <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
-                  <div>
-                    <strong>{"label" in item ? item.label : item.title}</strong>
-                    <span>{formatCompactTime(item.starts_at, language, t)} - {formatCompactTime(item.ends_at, language, t)}</span>
-                  </div>
-                  <p>{"detail" in item ? item.detail : item.body}</p>
-                </article>
-              );
-            })}
-            {!hasWindowEvidence ? (
-              <p>{isPricePanel
-                ? t("No household price window is available from the latest energy payload.")
-                : t("No Fingrid energy window is available from the latest energy payload.")}</p>
+            {isPricePanel ? (
+              <div>
+                <span>{t("Average spot price")}</span>
+                <strong>{windowAverageLabel}</strong>
+              </div>
             ) : null}
+            <div>
+              <span>{isPricePanel ? t("Window usage") : t("System Source")}</span>
+              <strong>{isPricePanel
+                ? householdWindowUsage === null
+                  ? t("n/a")
+                  : `${householdWindowUsage.toFixed(2)} kWh`
+                : sourceDisclosureName}
+              </strong>
+            </div>
           </div>
         </article>
 
-        <article className="energy-glass-panel energy-field-panel">
-          <header>
-            <span>{t("Tracked Fields")}</span>
-            <strong>{fieldCount}</strong>
-          </header>
-          <div className="energy-field-grid">
-            {keyDataItems.map((field) => (
-              <article key={field}>
-                <span>{field.replaceAll("_", " ")}</span>
-                <strong>{field === "low_value_window" && hasActiveWindow ? t("Live") : t("Mapped")}</strong>
-              </article>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="energy-summary-strip" aria-label={t("Energy summary metrics")}>
-        {summaryMetrics.map((metric) => (
-          <article className={`energy-glass-panel energy-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
-            <strong>{formatMetricValue(metric, t)}</strong>
-          </article>
-        ))}
+        <div className="energy-summary-strip energy-summary-stack" aria-label={t("Energy summary metrics")}>
+          {displaySummaryMetrics.map((metric) => (
+            <article className={`energy-glass-panel energy-summary-${metricTone(metric)}`} key={metric.key}>
+              <span>{t(displayMetricLabel(metric, "Metric unavailable"))}</span>
+              <strong>{formatMetricValue(metric, t)}</strong>
+            </article>
+          ))}
+        </div>
       </section>
 
       <TrendChart
@@ -740,9 +847,9 @@ export function EnergyWorkspace({
         eyebrow={`${historyPoints.length}D ${t("History")}`}
         maximumFractionDigits={2}
         points={historyPoints}
-        title={isPricePanel ? t("Daily Average Price Trend") : t("Daily Average Energy Trend")}
+        title={isPricePanel ? t("Daily Estimated Cost Trend") : t("Daily Average Energy Trend")}
         tone={activeTone}
-        unit={activeEnergy?.unit}
+        unit={isPricePanel ? "EUR" : activeEnergy?.unit}
       />
 
       <section className="energy-main-grid" aria-label={t("Energy platform analytics")}>
@@ -761,11 +868,11 @@ export function EnergyWorkspace({
               <div className="energy-chart-context" aria-label={t("Energy chart context")}>
                 <article>
                   <span>{t(activeProfile.rangeLabel)}</span>
-                  <strong>{formatEnergyRange(chartRange, activeEnergy?.unit, t)}</strong>
+                  <strong>{formatEnergyRange(chartRange, chartUnit, t)}</strong>
                 </article>
                 <article>
                   <span>{t(activeProfile.spreadLabel)}</span>
-                  <strong>{formatEnergySpread(chartRange, activeEnergy?.unit)}</strong>
+                  <strong>{formatEnergySpread(chartRange, chartUnit)}</strong>
                 </article>
                 <article>
                   <span>{t(activeProfile.unitLabel)}</span>
@@ -777,58 +884,158 @@ export function EnergyWorkspace({
                 </article>
               </div>
               <div className="energy-price-chart-head">
-                <span>{t("Min")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, activeEnergy?.unit)}</span>
-                <strong>{t("Max")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, activeEnergy?.unit)}</strong>
+                <span>{t("Min")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, chartUnit)}</span>
+                <strong>{t("Max")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, chartUnit)}</strong>
               </div>
               <svg
-                aria-hidden="true"
+                aria-hidden="false"
                 className="energy-price-line"
                 focusable="false"
                 viewBox={`0 0 ${PRICE_CHART_WIDTH} ${PRICE_CHART_HEIGHT}`}
               >
-                <line
-                  className="energy-price-grid-line"
-                  x1={PRICE_CHART_PADDING}
-                  x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
-                  y1={chartY(chartVisualScale.max, chartVisualScale.min, chartVisualScale.max)}
-                  y2={chartY(chartVisualScale.max, chartVisualScale.min, chartVisualScale.max)}
-                />
-                <line
-                  className="energy-price-grid-line"
-                  x1={PRICE_CHART_PADDING}
-                  x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
-                  y1={chartY(chartVisualScale.min, chartVisualScale.min, chartVisualScale.max)}
-                  y2={chartY(chartVisualScale.min, chartVisualScale.min, chartVisualScale.max)}
-                />
+                {/* Y-axis Grid Lines & Text Labels */}
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                  const val = chartVisualScale.min + (chartVisualScale.max - chartVisualScale.min) * ratio;
+                  const yVal = chartY(val, chartVisualScale.min, chartVisualScale.max);
+                  return (
+                    <g key={`y-axis-${ratio}`}>
+                      <line
+                        className="energy-price-grid-line"
+                        x1={PRICE_CHART_PAD_LEFT}
+                        x2={PRICE_CHART_WIDTH - PRICE_CHART_PAD_RIGHT}
+                        y1={yVal}
+                        y2={yVal}
+                      />
+                      <text
+                        className="energy-price-axis-text"
+                        fill="var(--on-surface-variant)"
+                        fontFamily="var(--font-jetbrains-mono), monospace"
+                        fontSize="9px"
+                        textAnchor="end"
+                        x={PRICE_CHART_PAD_LEFT - 8}
+                        y={yVal + 3}
+                      >
+                        {formatEnergyPointValue({ ...chartPoints[0], value: val }, chartUnit)}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* Zero Level Line */}
                 {chartVisualScale.min < 0 && chartVisualScale.max > 0 ? (
                   <line
                     className="energy-price-zero-line"
-                    x1={PRICE_CHART_PADDING}
-                    x2={PRICE_CHART_WIDTH - PRICE_CHART_PADDING}
+                    x1={PRICE_CHART_PAD_LEFT}
+                    x2={PRICE_CHART_WIDTH - PRICE_CHART_PAD_RIGHT}
                     y1={chartY(0, chartVisualScale.min, chartVisualScale.max)}
                     y2={chartY(0, chartVisualScale.min, chartVisualScale.max)}
                   />
                 ) : null}
+
+                {/* X-axis Grid Ticks & Time Labels */}
+                {xTicks.map((index) => {
+                  const point = chartPoints[index];
+                  const xVal = chartX(index, chartPoints.length);
+                  const yBaseline = PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM;
+
+                  const date = new Date(point.starts_at);
+                  const timeStr = new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone: "Europe/Helsinki"
+                  }).format(date);
+
+                  return (
+                    <g key={`x-axis-${point.starts_at}`}>
+                      <line
+                        className="energy-price-grid-line"
+                        strokeOpacity={0.25}
+                        x1={xVal}
+                        x2={xVal}
+                        y1={PRICE_CHART_PAD_TOP}
+                        y2={yBaseline}
+                      />
+                      <line
+                        className="energy-price-axis-tick"
+                        stroke="var(--outline-variant)"
+                        strokeWidth={1}
+                        x1={xVal}
+                        x2={xVal}
+                        y1={yBaseline}
+                        y2={yBaseline + 5}
+                      />
+                      <text
+                        className="energy-price-axis-text"
+                        fill="var(--on-surface-variant)"
+                        fontFamily="var(--font-jetbrains-mono), monospace"
+                        fontSize="9px"
+                        textAnchor="middle"
+                        x={xVal}
+                        y={yBaseline + 18}
+                      >
+                        {timeStr}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* Solid Axis Lines */}
+                <line
+                  className="energy-price-axis-line"
+                  stroke="var(--outline-variant)"
+                  strokeWidth={1}
+                  x1={PRICE_CHART_PAD_LEFT}
+                  x2={PRICE_CHART_WIDTH - PRICE_CHART_PAD_RIGHT}
+                  y1={PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM}
+                  y2={PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM}
+                />
+                <line
+                  className="energy-price-axis-line"
+                  stroke="var(--outline-variant)"
+                  strokeWidth={1}
+                  x1={PRICE_CHART_PAD_LEFT}
+                  x2={PRICE_CHART_PAD_LEFT}
+                  y1={PRICE_CHART_PAD_TOP}
+                  y2={PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM}
+                />
+
+                {/* Hover Line Indicator */}
+                {hoveredPoint ? (
+                  <line
+                    className="energy-price-hover-line"
+                    pointerEvents="none"
+                    x1={hoveredPoint.x}
+                    x2={hoveredPoint.x}
+                    y1={PRICE_CHART_PAD_TOP}
+                    y2={PRICE_CHART_HEIGHT - PRICE_CHART_PAD_BOTTOM}
+                  />
+                ) : null}
+
+                {/* Main Data Render */}
                 {activeProfile.chartKind === "hourly-bars" ? (
                   chartPoints.map((point, index) => {
                     const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
-                    const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PADDING * 2;
+                    const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PAD_LEFT - PRICE_CHART_PAD_RIGHT;
                     const slotWidth = innerWidth / Math.max(chartPoints.length, 1);
                     const barWidth = Math.max(3, slotWidth * 0.62);
                     const baseline = chartY(0, chartVisualScale.min, chartVisualScale.max);
                     const pointY = chartY(point.value, chartVisualScale.min, chartVisualScale.max);
                     const y = Math.min(pointY, baseline);
                     const height = Math.max(2, Math.abs(baseline - pointY));
+                    const isHovered = hoveredPoint?.index === index;
+
                     return (
                       <rect
                         className={[
                           "energy-price-bar",
                           point.value < 0 ? "energy-price-bar-negative" : "",
-                          inWindow ? "energy-price-bar-window" : ""
+                          inWindow ? "energy-price-bar-window" : "",
+                          isHovered ? "energy-price-bar-hovered" : ""
                         ].filter(Boolean).join(" ")}
                         height={height}
                         key={point.starts_at}
-                        rx="3"
+                        rx="1.5"
                         width={barWidth}
                         x={chartX(index, chartPoints.length) - barWidth / 2}
                         y={y}
@@ -841,37 +1048,98 @@ export function EnergyWorkspace({
                     <path className="energy-price-path" d={priceLinePath(chartPoints, chartVisualScale)} />
                     {chartPoints.map((point, index) => {
                       const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
+                      const isHovered = hoveredPoint?.index === index;
                       return (
                         <circle
-                          className={inWindow ? "energy-price-dot energy-price-dot-window" : "energy-price-dot"}
+                          className={[
+                            inWindow ? "energy-price-dot energy-price-dot-window" : "energy-price-dot",
+                            isHovered ? "energy-price-dot-hovered" : ""
+                          ].filter(Boolean).join(" ")}
                           cx={chartX(index, chartPoints.length)}
                           cy={chartY(point.value, chartVisualScale.min, chartVisualScale.max)}
                           key={point.starts_at}
-                          r={inWindow ? 4.5 : 2.6}
+                          r={isHovered ? 6 : (inWindow ? 4.5 : 2.6)}
                         />
                       );
                     })}
                   </>
                 )}
+
+                {/* Hover Hit-target Rects for Premium Mouse Interaction */}
+                {chartPoints.map((point, index) => {
+                  const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PAD_LEFT - PRICE_CHART_PAD_RIGHT;
+                  const slotWidth = innerWidth / Math.max(chartPoints.length, 1);
+                  const pair = chartPointPairs[index];
+                  const baseline = chartY(0, chartVisualScale.min, chartVisualScale.max);
+                  const pointY = chartY(point.value, chartVisualScale.min, chartVisualScale.max);
+                  const y = Math.min(pointY, baseline);
+
+                  return (
+                    <rect
+                      key={`hit-${point.starts_at}`}
+                      x={chartX(index, chartPoints.length) - slotWidth / 2}
+                      y={PRICE_CHART_PAD_TOP}
+                      width={slotWidth}
+                      height={PRICE_CHART_HEIGHT - PRICE_CHART_PAD_TOP - PRICE_CHART_PAD_BOTTOM}
+                      fill="transparent"
+                      style={{ cursor: "pointer" }}
+                      onMouseEnter={() => {
+                        setHoveredPoint({
+                          point,
+                          index,
+                          x: chartX(index, chartPoints.length),
+                          y: activeProfile.chartKind === "hourly-bars" ? y : pointY,
+                          raw: pair?.raw
+                        });
+                      }}
+                      onMouseLeave={() => setHoveredPoint(null)}
+                    />
+                  );
+                })}
               </svg>
-              <div className="energy-price-axis" aria-hidden="true">
-                {chartLabels.map((point) => (
-                  <span key={point.starts_at}>{formatCompactTime(point.starts_at, language, t)}</span>
-                ))}
-              </div>
+
+              {/* Absolute Premium Tooltip Rendering */}
+              {hoveredPoint && (
+                <div
+                  className="energy-price-tooltip"
+                  style={{
+                    position: "absolute",
+                    left: `${(hoveredPoint.x / PRICE_CHART_WIDTH) * 100}%`,
+                    top: `${(hoveredPoint.y / PRICE_CHART_HEIGHT) * 100}%`,
+                    transform: "translate(-50%, -100%) translateY(-12px)",
+                    pointerEvents: "none",
+                    zIndex: 10,
+                  }}
+                >
+                  <div className="energy-tooltip-content">
+                    <div className="energy-tooltip-time">
+                      {formatCompactTime(hoveredPoint.point.starts_at, language, t)}
+                    </div>
+                    <div className="energy-tooltip-value">
+                      <strong>{formatEnergyPointValue(hoveredPoint.point, chartUnit)}</strong>
+                    </div>
+                    {hoveredPoint.raw && hoveredPoint.raw !== hoveredPoint.point && (
+                      <div className="energy-tooltip-detail">
+                        <span>{t("Spot price")}:</span>
+                        <strong>{formatEnergyPointValue(hoveredPoint.raw, activeEnergy?.unit)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="energy-price-list">
                 <article className="energy-price-row energy-price-row-heading" aria-hidden="true">
                   <span>{t("Starts")}</span>
                   <strong>{t(activeProfile.valueColumnLabel)}</strong>
                   <em>{t(activeProfile.detailColumnLabel)}</em>
                 </article>
-                {chartPoints.slice(0, 12).map((point) => {
-                  const inWindow = isWindowPoint(point, window?.starts_at, window?.ends_at);
+                {chartPointPairs.slice(0, 12).map(({ raw, display }) => {
+                  const inWindow = isWindowPoint(display, window?.starts_at, window?.ends_at);
                   return (
-                    <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={point.starts_at}>
-                      <span>{formatCompactTime(point.starts_at, language, t)}</span>
-                      <strong>{formatEnergyPointValue(point, activeEnergy?.unit)}</strong>
-                      <em>{isPricePanel ? formatEstimatedCost(point.estimated_cost_eur, t) : formatCompactTime(point.ends_at, language, t)}</em>
+                    <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={display.starts_at}>
+                      <span>{formatCompactTime(display.starts_at, language, t)}</span>
+                      <strong>{formatEnergyPointValue(display, chartUnit)}</strong>
+                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, t)}</em>
                     </article>
                   );
                 })}
@@ -893,77 +1161,6 @@ export function EnergyWorkspace({
             ))}
           </div>
         </article>
-
-        <div className="energy-side-grid">
-          <article className="energy-glass-panel energy-source-panel">
-            <header>
-              <span>{isPricePanel ? t("Price Source") : t("System Source")}</span>
-              <strong>{activeSourceLabel}</strong>
-            </header>
-            <div className="energy-source-facts">
-              <span>{datasetCount || activeEnergy?.source_requests.length || 0} {t("datasets")}</span>
-              <span>{pollIntervalLabel(activeSource?.poll_interval_seconds, t)} {t("poll")}</span>
-              <span>{activeEnergy?.quality.point_count ?? formatMetricValue(recordsMetric, t)} {t("points")}</span>
-            </div>
-            <p>{activeSourceName} · {activeSource?.license_label ?? t("license unavailable")}</p>
-            {activeSource?.error_message ? <p>{activeSource.error_message}</p> : null}
-            {activeSource?.documentation_url ? (
-              <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">
-                {t("Open data documentation")}
-              </a>
-            ) : null}
-          </article>
-
-          <article className="energy-glass-panel energy-volume-panel">
-            <header>
-              <span>{t("Collection Volume")}</span>
-              <strong>{activeVolumePoints.length}</strong>
-            </header>
-            <div>
-              {activeVolumePoints.map((point) => (
-                <article className={`energy-volume-row energy-volume-row-${point.tone ?? "neutral"}`} key={point.label}>
-                  <div>
-                    <strong>{point.label}</strong>
-                    <span>{point.detail ? translateEnumLabel(language, point.detail) : t("records")}</span>
-                  </div>
-                  <em>{point.value}</em>
-                  <span className="energy-volume-meter" aria-hidden="true">
-                    <span style={{ width: `${sourceProgress(point)}%` }} />
-                  </span>
-                </article>
-              ))}
-            </div>
-          </article>
-
-          <article className="energy-glass-panel energy-severity-panel">
-            <header>
-              <span>{t("Data Quality")}</span>
-              <strong>{activeEnergy ? `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%` : severityRows.length}</strong>
-            </header>
-            {activeEnergy ? (
-              <div className="energy-quality-facts">
-                <span>{activeEnergy.quality.point_count} {t("points")}</span>
-                <span>{activeEnergy.quality.window_point_count} {t("window points")}</span>
-                <span>{activeEnergy.quality.missing_fields.length} {t("missing fields")}</span>
-              </div>
-            ) : (
-              <div>
-                {severityRows.map((row) => (
-                <article className={`energy-severity-row energy-severity-row-${row.tone ?? "neutral"}`} key={row.label}>
-                  <span>{row.label}</span>
-                  <i aria-hidden="true">
-                    <span style={{ width: `${Math.max(8, Math.min(100, row.value * 25))}%` }} />
-                  </i>
-                  <strong>{row.value}</strong>
-                </article>
-                ))}
-              </div>
-            )}
-            {activeEnergy?.quality.notes.map((note) => (
-              <p key={note}>{note}</p>
-            ))}
-          </article>
-        </div>
       </section>
 
       <section className="energy-provider-status" aria-label={t("Energy provider status")}>
@@ -976,7 +1173,7 @@ export function EnergyWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            {activeSourceName} / {isPricePanel ? t("spot prices") : t("system timeseries")}
+            {isPricePanel ? t("Price Source") : t("System Source")}: {sourceDisclosureName}
           </span>
           <i aria-hidden="true" />
           <span>

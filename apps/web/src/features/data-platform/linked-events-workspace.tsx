@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import { PlatformCategory, PlatformEvent, PlatformMetric, PlatformTone, PlatformVisualizationPoint } from "./types";
+import { eventAnchorId } from "./recent-events";
 
 type LinkedEventsWorkspaceProps = {
   category: PlatformCategory | null;
+  highlightedEventId?: string | null;
 };
 
 type EventTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -165,7 +167,10 @@ function eventCoordinate(event: PlatformEvent | null): string | null {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
 }
 
-export function LinkedEventsWorkspace({ category }: LinkedEventsWorkspaceProps) {
+export function LinkedEventsWorkspace({
+  category,
+  highlightedEventId,
+}: LinkedEventsWorkspaceProps) {
   const { language, t } = useI18n();
   const [filter, setFilter] = useState<EventFilter>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -187,6 +192,22 @@ export function LinkedEventsWorkspace({ category }: LinkedEventsWorkspaceProps) 
     }
     return result;
   }, [filter, sortedEvents, activeKeyword, activeVenue, t]);
+
+  useEffect(() => {
+    if (!highlightedEventId) {
+      return;
+    }
+
+    const highlighted = sortedEvents.find((event) => event.id === highlightedEventId);
+    if (!highlighted) {
+      return;
+    }
+
+    setFilter("all");
+    setActiveKeyword(null);
+    setActiveVenue(null);
+    setSelectedEventId(highlighted.id);
+  }, [highlightedEventId, sortedEvents]);
 
   const selectedEvent =
     filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? sortedEvents[0] ?? null;
@@ -575,14 +596,15 @@ export function LinkedEventsWorkspace({ category }: LinkedEventsWorkspaceProps) 
                 const tone = severityTone(event.severity) as EventTone;
                 const keywords = attributeList(event, "keywords").slice(0, 3);
                 return (
-                  <button
-                    className={
-                      isSelected
-                        ? `linked-events-row linked-events-row-${tone} linked-events-row-selected`
-                        : `linked-events-row linked-events-row-${tone}`
-                    }
-                    key={event.id}
-                    onClick={() => setSelectedEventId(event.id)}
+	                  <button
+	                    className={
+	                      isSelected
+	                        ? `linked-events-row linked-events-row-${tone} linked-events-row-selected`
+	                        : `linked-events-row linked-events-row-${tone}`
+	                    }
+	                    id={eventAnchorId(event.id)}
+	                    key={event.id}
+	                    onClick={() => setSelectedEventId(event.id)}
                     type="button"
                   >
                     <span className="linked-events-date-rail">

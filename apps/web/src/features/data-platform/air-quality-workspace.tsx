@@ -15,10 +15,12 @@ import {
   PlatformHistoricalSnapshot
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
+import { eventAnchorId } from "./recent-events";
 
 type AirQualityWorkspaceProps = {
   airQuality: AirQualityCurrentResponse | null;
   category: PlatformCategory | null;
+  highlightedEventId?: string | null;
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
 };
 
@@ -428,7 +430,12 @@ function renderStationMap(
   );
 }
 
-export function AirQualityWorkspace({ airQuality, category, history }: AirQualityWorkspaceProps) {
+export function AirQualityWorkspace({
+  airQuality,
+  category,
+  highlightedEventId,
+  history,
+}: AirQualityWorkspaceProps) {
   const { language, t } = useI18n();
   const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
@@ -455,6 +462,13 @@ export function AirQualityWorkspace({ airQuality, category, history }: AirQualit
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const historyPoints = airHistoryPoints(history, t);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
+  const highlightedCategoryEvent =
+    (highlightedEventId
+      ? category?.events.find((event) => event.id === highlightedEventId)
+      : null) ??
+    category?.events[0] ??
+    null;
+  const heroEventAnchorId = highlightedEventId ?? highlightedCategoryEvent?.id ?? null;
 
   return (
     <section className="air-detail-page" aria-label={t("Air-quality detail")}>
@@ -470,7 +484,10 @@ export function AirQualityWorkspace({ airQuality, category, history }: AirQualit
       </div>
 
       <section className="air-bento-grid" aria-label={t("Air-quality current condition")}>
-        <article className={`air-glass-panel air-hero air-hero-${currentTone}`}>
+        <article
+          className={`air-glass-panel air-hero air-hero-${currentTone}`}
+          id={heroEventAnchorId ? eventAnchorId(heroEventAnchorId) : undefined}
+        >
           <div className="air-card-kicker">
             <span>{t("Current Network Condition")}</span>
             <time>{airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}</time>
