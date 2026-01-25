@@ -851,7 +851,7 @@ export function DataPlatformHome({
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [readRecentEventIds, setReadRecentEventIds] = useState<Set<string>>(
-    () => loadReadRecentEventIds(),
+    () => new Set(),
   );
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
@@ -1156,6 +1156,10 @@ export function DataPlatformHome({
     },
     [pathname, router, searchParams, startDateRefresh],
   );
+
+  useEffect(() => {
+    setReadRecentEventIds(loadReadRecentEventIds());
+  }, []);
 
   useEffect(() => {
     const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
