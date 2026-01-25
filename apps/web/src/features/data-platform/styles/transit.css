@@ -939,9 +939,7 @@
 }
 
 .transit-alert-detail header > div > span:not(.transit-alert-status),
-.transit-alert-detail-meta span,
-.transit-alert-detail-scope > section > span,
-.transit-alert-detail-scope em {
+.transit-alert-detail-meta span {
   color: var(--on-surface-variant);
   font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
@@ -1092,8 +1090,7 @@
   gap: 8px;
 }
 
-.transit-alert-detail-meta div,
-.transit-alert-detail-scope section {
+.transit-alert-detail-meta div {
   display: grid;
   gap: 5px;
   border: 1px solid var(--detail-panel-border-medium);
@@ -1113,66 +1110,123 @@
 
 .transit-alert-detail-scope {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.transit-scope-group {
+  display: grid;
   gap: 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-container-low) 88%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 72%, transparent);
+  padding: 10px 12px;
 }
 
-.transit-alert-detail-scope section div {
+.transit-scope-group-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.transit-alert-detail-scope > section > span {
-  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  min-width: 0;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
 }
 
-.transit-alert-detail-scope > section > span .material-symbols-outlined {
+.transit-scope-group-header .material-symbols-outlined {
   flex: 0 0 auto;
   color: var(--primary);
   font-family: "Material Symbols Outlined";
-  font-size: 14px;
+  font-size: 18px;
+  font-variation-settings: "FILL" 1, "wght" 500;
   letter-spacing: 0;
   line-height: 1;
-  text-transform: none;
-  font-variation-settings: "FILL" 0, "wght" 500;
 }
 
-.transit-alert-detail-scope strong {
-  display: grid;
-  flex: 1 1 132px;
-  gap: 2px;
-  min-width: 0;
-  border: 1px solid var(--detail-panel-border-stronger);
-  border-radius: 4px;
-  color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 12px;
-  overflow-wrap: anywhere;
-  padding: 6px 7px;
-}
-
-.transit-alert-detail-scope strong > span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.transit-alert-detail-scope strong small {
+.transit-scope-group-count {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
   color: var(--on-surface-variant);
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  min-width: 22px;
+  padding: 1px 8px;
+  text-align: center;
+}
+
+.transit-scope-list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.transit-scope-item {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border-radius: 10px;
+  background: var(--card-bg);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 55%, transparent);
+  padding: 10px 12px;
+}
+
+.transit-scope-item-label {
+  color: var(--on-background);
+  font-size: 14px;
   font-weight: 600;
-  line-height: 12px;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
-.transit-alert-detail-scope em {
-  display: block;
-  font-style: normal;
+.transit-scope-item-meta {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.transit-scope-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.transit-scope-facts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  border-radius: 999px;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  padding: 3px 10px;
+}
+
+.transit-scope-facts em {
+  color: var(--on-surface);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.transit-scope-empty {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  padding: 2px 0;
 }
 
 .transit-quality-facts {

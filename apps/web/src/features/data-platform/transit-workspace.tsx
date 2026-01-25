@@ -26,10 +26,16 @@ type TransitWorkspaceProps = {
 
 type TransitTone = "good" | "warn" | "bad" | "neutral";
 type TransitAlertFilter = "priority" | "active" | "upcoming" | "high" | "scoped" | "all";
+type TransitScopeFact = {
+  label?: string;
+  value: string;
+};
+
 type TransitScopeValue = {
   id: string;
   label: string;
   meta: string | null;
+  facts?: TransitScopeFact[];
 };
 type TransitScopeDetailItem = {
   empty: string;
@@ -50,8 +56,9 @@ type TransitScopeMetric = {
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
 const ALERTS_PER_PAGE = 8;
-const HSL_STOP_DETAILS: Record<string, { code: string; name: string; zone: string }> = {
+const HSL_STOP_DETAILS: Record<string, { address: string; code: string; name: string; zone: string }> = {
   "4180227": {
+    address: "Martinkyläntie",
     code: "V1827",
     name: "Vantaankosken VPK",
     zone: "B"
@@ -129,13 +136,24 @@ function stopLabel(stopId: string): string {
   return HSL_STOP_DETAILS[stopId]?.name ?? stopId;
 }
 
-function stopMeta(stopId: string, t: (value: string) => string): string {
+function scopeFactsLabel(facts: TransitScopeFact[]): string {
+  return facts
+    .map((fact) => (fact.label ? `${fact.label} ${fact.value}` : fact.value))
+    .join(" · ");
+}
+
+function stopFacts(stopId: string, t: (value: string) => string): TransitScopeFact[] {
   const stop = HSL_STOP_DETAILS[stopId];
   if (!stop) {
-    return `${t("Stop ID")} ${stopId}`;
+    return [{ label: t("Stop ID"), value: stopId }];
   }
 
-  return `${t("Stop ID")} ${stopId} / ${stop.code} / ${t("Zone")} ${stop.zone}`;
+  return [
+    { value: stop.address },
+    { value: stop.code },
+    { label: t("Zone"), value: stop.zone },
+    { label: t("Stop ID"), value: stopId }
+  ];
 }
 
 function metricValue(transit: TransitCurrentResponse, key: string): string {
@@ -430,33 +448,45 @@ function detailScopeItems(alert: TransitAlert, t: (value: string) => string): Tr
       key: "routes",
       label: t("Routes affected"),
       icon: "route",
-      values: alert.route_ids.map((routeId) => ({
-        id: routeId,
-        label: routeId,
-        meta: `${t("Route ID")} ${routeId}`
-      })),
+      values: alert.route_ids.map((routeId) => {
+        const facts = [{ label: t("Route ID"), value: routeId }];
+        return {
+          id: routeId,
+          label: routeId,
+          facts,
+          meta: scopeFactsLabel(facts)
+        };
+      }),
       empty: t("No routes attached")
     },
     {
       key: "stops",
       label: t("Stops affected"),
       icon: "pin_drop",
-      values: alert.stop_ids.map((stopId) => ({
-        id: stopId,
-        label: stopLabel(stopId),
-        meta: stopMeta(stopId, t)
-      })),
+      values: alert.stop_ids.map((stopId) => {
+        const facts = stopFacts(stopId, t);
+        return {
+          id: stopId,
+          label: stopLabel(stopId),
+          facts,
+          meta: scopeFactsLabel(facts)
+        };
+      }),
       empty: t("No stops attached")
     },
     {
       key: "trips",
       label: t("Trips affected"),
       icon: "confirmation_number",
-      values: alert.trip_ids.map((tripId) => ({
-        id: tripId,
-        label: tripId,
-        meta: `${t("Trip ID")} ${tripId}`
-      })),
+      values: alert.trip_ids.map((tripId) => {
+        const facts = [{ label: t("Trip ID"), value: tripId }];
+        return {
+          id: tripId,
+          label: tripId,
+          facts,
+          meta: scopeFactsLabel(facts)
+        };
+      }),
       empty: t("No trips attached")
     }
   ];
@@ -920,25 +950,41 @@ export function TransitWorkspace({
                   </div>
                   <div className="transit-alert-detail-scope">
                     {detailScopeItems(selectedAlert, t).map((item) => (
-                      <section key={item.key}>
-                        <span>
+                      <section key={item.key} className="transit-scope-group">
+                        <header className="transit-scope-group-header">
                           <span className="material-symbols-outlined" aria-hidden="true">
                             {item.icon}
                           </span>
-                          {item.label}
-                        </span>
-                        <div>
+                          <span>{item.label}</span>
+                          {item.values.length > 0 ? (
+                            <span className="transit-scope-group-count" aria-hidden="true">
+                              {item.values.length}
+                            </span>
+                          ) : null}
+                        </header>
+                        <ul className="transit-scope-list">
                           {item.values.length > 0 ? (
                             item.values.map((value) => (
-                              <strong key={value.id} title={value.meta ?? value.id}>
-                                <span>{value.label}</span>
-                                {value.meta ? <small>{value.meta}</small> : null}
-                              </strong>
+                              <li key={value.id} className="transit-scope-item" title={value.meta ?? value.id}>
+                                <p className="transit-scope-item-label">{value.label}</p>
+                                {value.facts && value.facts.length > 0 ? (
+                                  <div className="transit-scope-facts">
+                                    {value.facts.map((fact, index) => (
+                                      <span key={`${fact.label ?? "value"}-${fact.value}-${index}`}>
+                                        {fact.label ? <em>{fact.label}</em> : null}
+                                        {fact.value}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : value.meta ? (
+                                  <p className="transit-scope-item-meta">{value.meta}</p>
+                                ) : null}
+                              </li>
                             ))
                           ) : (
-                            <em>{item.empty}</em>
+                            <li className="transit-scope-empty">{item.empty}</li>
                           )}
-                        </div>
+                        </ul>
                       </section>
                     ))}
                   </div>
