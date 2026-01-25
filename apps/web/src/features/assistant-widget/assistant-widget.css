@@ -217,7 +217,6 @@
   line-height: 1.45;
   letter-spacing: -0.1px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  white-space: pre-wrap;
 }
 
 .assistant-message-assistant {
@@ -234,47 +233,6 @@
   color: var(--on-primary-container);
   border-radius: 16px 16px 4px 16px;
   font-weight: 500;
-}
-
-.assistant-message-pending {
-  opacity: 0.72;
-}
-
-.assistant-citations {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
-  padding-top: 7px;
-  border-top: 1px solid var(--detail-panel-border-soft);
-  color: var(--on-surface-variant);
-  font-size: 10.5px;
-  line-height: 1.3;
-}
-
-.assistant-citations span,
-.assistant-citations em,
-.assistant-citations small {
-  display: inline-flex;
-  align-items: center;
-  min-height: 18px;
-}
-
-.assistant-citations span {
-  font-weight: 700;
-  color: var(--on-surface);
-}
-
-.assistant-citations em {
-  border: 1px solid var(--detail-panel-border-medium);
-  border-radius: 999px;
-  padding: 0 6px;
-  font-style: normal;
-}
-
-.assistant-citations small {
-  max-width: 100%;
-  overflow-wrap: anywhere;
 }
 
 /* Suggestions Chips */
@@ -304,13 +262,6 @@
   color: var(--on-primary-container);
   border-color: var(--primary);
   transform: translateY(-1px);
-}
-
-.assistant-suggestions button:disabled,
-.assistant-form button:disabled,
-.assistant-form input:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 /* Form Send Panel */

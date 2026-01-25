@@ -1,6 +1,5 @@
 import { appEnv } from "@/lib/env";
 
-import { filterPlatformOverviewForCurrentUser } from "./category-access";
 import {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -28,11 +27,6 @@ export type PlatformFetchResult = {
   error: string | null;
 };
 
-type PlatformFetchOptions = {
-  authToken?: string;
-  userId?: string;
-};
-
 const HISTORY_DAY_COUNT = 7;
 
 function normalizeApiBaseUrl(rawValue: string | undefined): string {
@@ -43,17 +37,11 @@ function normalizeApiBaseUrl(rawValue: string | undefined): string {
 }
 
 async function fetchJson<T>(
-  url: URL,
-  authToken?: string
+  url: URL
 ): Promise<{ data: T | null; error: string | null; status: number | null }> {
   try {
     const response = await fetch(url, {
-      cache: "no-store",
-      headers: authToken
-        ? {
-            Authorization: `Bearer ${authToken}`
-          }
-        : undefined
+      cache: "no-store"
     });
 
     if (!response.ok) {
@@ -102,15 +90,10 @@ function normalizeHistoryResponse(
   };
 }
 
-export async function fetchPlatformHome(
-  city: string | null = DEFAULT_CITY,
-  date: string | null = null,
-  options: PlatformFetchOptions = {}
-): Promise<PlatformFetchResult> {
+export async function fetchPlatformHome(city: string | null = DEFAULT_CITY, date: string | null = null): Promise<PlatformFetchResult> {
   const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const selectedCity = normalizeCityValue(city);
   const selectedDate = normalizeSourceDateValue(date);
-  const userId = options.userId ?? appEnv.defaultUserId;
   const overviewUrl = new URL(`${apiBaseUrl}/platform/overview`);
   const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
   const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
@@ -120,8 +103,8 @@ export async function fetchPlatformHome(
   const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
   const historyUrl = new URL(`${apiBaseUrl}/platform/history`);
 
-  if (userId) {
-    overviewUrl.searchParams.set("user_id", userId);
+  if (appEnv.defaultUserId) {
+    overviewUrl.searchParams.set("user_id", appEnv.defaultUserId);
   }
   overviewUrl.searchParams.set("city", selectedCity);
   weatherUrl.searchParams.set("city", selectedCity);
@@ -141,20 +124,20 @@ export async function fetchPlatformHome(
 
   const [overviewResult, weatherResult, airQualityResult, energyResult, householdEnergyResult, roadRailResult, transitResult, historyResult] =
     await Promise.all([
-      fetchJson<PlatformOverviewResponse>(overviewUrl, options.authToken),
-      fetchJson<WeatherForecastResponse>(weatherUrl, options.authToken),
-      fetchJson<AirQualityCurrentResponse>(airQualityUrl, options.authToken),
-      fetchJson<EnergyCurrentResponse>(energyUrl, options.authToken),
-      fetchJson<EnergyCurrentResponse>(householdEnergyUrl, options.authToken),
-      fetchJson<RoadRailCurrentResponse>(roadRailUrl, options.authToken),
-      fetchJson<TransitCurrentResponse>(transitUrl, options.authToken),
-      fetchJson<PlatformHistoryApiResponse>(historyUrl, options.authToken)
+      fetchJson<PlatformOverviewResponse>(overviewUrl),
+      fetchJson<WeatherForecastResponse>(weatherUrl),
+      fetchJson<AirQualityCurrentResponse>(airQualityUrl),
+      fetchJson<EnergyCurrentResponse>(energyUrl),
+      fetchJson<EnergyCurrentResponse>(householdEnergyUrl),
+      fetchJson<RoadRailCurrentResponse>(roadRailUrl),
+      fetchJson<TransitCurrentResponse>(transitUrl),
+      fetchJson<PlatformHistoryApiResponse>(historyUrl)
     ]);
 
   return {
     apiBaseUrl,
-    defaultUserId: userId,
-    overview: filterPlatformOverviewForCurrentUser(overviewResult.data),
+    defaultUserId: appEnv.defaultUserId,
+    overview: overviewResult.data,
     weather: weatherResult.data,
     airQuality: airQualityResult.data,
     energy: energyResult.data,

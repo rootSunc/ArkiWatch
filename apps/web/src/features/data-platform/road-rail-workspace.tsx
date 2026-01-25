@@ -15,11 +15,9 @@ import {
   RoadRailSourceRequest
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
-import { eventAnchorId } from "./recent-events";
 
 type RoadRailWorkspaceProps = {
   category: PlatformCategory | null;
-  highlightedEventId?: string | null;
   history: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
   roadRail: RoadRailCurrentResponse | null;
 };
@@ -325,12 +323,7 @@ function roadRailHistoryPoints(
   });
 }
 
-export function RoadRailWorkspace({
-  category,
-  highlightedEventId,
-  history,
-  roadRail,
-}: RoadRailWorkspaceProps) {
+export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorkspaceProps) {
   const { language, t } = useI18n();
 
   if (!roadRail) {
@@ -345,13 +338,7 @@ export function RoadRailWorkspace({
 
   const activeTone = activeConditionTone(roadRail);
   const activeIncidents = roadRail.incidents.filter((incident) => incident.active);
-  const highlightedIncident = highlightedEventId
-    ? roadRail.incidents.find((incident) => incident.id === highlightedEventId)
-    : null;
-  const topIncidents = [
-    ...(highlightedIncident ? [highlightedIncident] : []),
-    ...roadRail.incidents.filter((incident) => incident.id !== highlightedIncident?.id),
-  ].slice(0, 8);
+  const topIncidents = roadRail.incidents.slice(0, 8);
   const topCorridors = roadRail.corridors.slice(0, 5);
   const maxCorridorEvents = Math.max(1, ...topCorridors.map((corridor) => corridor.event_count));
   const severityRows = severityDistribution(roadRail.incidents);
@@ -547,11 +534,7 @@ export function RoadRailWorkspace({
           <div className="road-rail-incident-list">
             {topIncidents.length > 0 ? (
               topIncidents.map((incident) => (
-                <article
-                  className={`road-rail-incident road-rail-incident-${severityTone(incident.severity)}`}
-                  id={eventAnchorId(incident.id)}
-                  key={incident.id}
-                >
+                <article className={`road-rail-incident road-rail-incident-${severityTone(incident.severity)}`} key={incident.id}>
                   <span className="road-rail-incident-dot" aria-hidden="true" />
                   <div className="road-rail-incident-main">
                     <div>

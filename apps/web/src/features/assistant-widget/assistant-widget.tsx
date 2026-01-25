@@ -3,46 +3,19 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-import { PlatformOverviewResponse } from "@/features/data-platform/types";
-import { LanguageMode } from "@/features/data-platform/i18n";
+import { formatTimestamp } from "@/features/shared/format";
+import { PlatformCategory, PlatformOverviewResponse } from "@/features/data-platform/types";
+import { LanguageMode, translateText } from "@/features/data-platform/i18n";
 
 type AssistantWidgetProps = {
   overview: PlatformOverviewResponse | null;
   language: LanguageMode;
-  city: string;
-  date: string | null;
-  userId: string;
 };
 
 type ChatMessage = {
   id: string;
   role: "assistant" | "user";
   text: string;
-  citations?: AssistantApiCitation[];
-  answerMode?: "deepseek" | "fallback";
-  errorMessage?: string | null;
-  model?: string | null;
-};
-
-type AssistantApiCitation = {
-  source: string;
-  checked_at: string | null;
-  detail: string;
-};
-
-type AssistantStreamPayload = {
-  content?: string;
-  message?: string;
-  citations?: AssistantApiCitation[];
-  model?: string | null;
-  answer_mode?: "deepseek" | "fallback";
-  error_message?: string | null;
-  answer?: string;
-};
-
-type AssistantStreamEvent = {
-  event: string;
-  data: AssistantStreamPayload;
 };
 
 const WIDGET_TRANSLATIONS = {
@@ -57,10 +30,6 @@ const WIDGET_TRANSLATIONS = {
     title: "AI Assistant",
     subtitle: "Data Explainer",
     tooltip: "💡 Need help with data?",
-    loading: "Reading ArkiWatch data...",
-    failure: "I could not reach the data assistant. Please try again after refreshing the page.",
-    basis: "Basis",
-    fallback: "Fallback",
     offlinePrompt: "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
   },
   zh: {
@@ -74,57 +43,96 @@ const WIDGET_TRANSLATIONS = {
     title: "AI 助手",
     subtitle: "数据解析器",
     tooltip: "💡 需要数据协助吗？",
-    loading: "正在读取 ArkiWatch 数据...",
-    failure: "暂时无法连接数据助手。请刷新页面后再试。",
-    basis: "依据",
-    fallback: "兜底回答",
     offlinePrompt: "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。"
   }
 };
 
-function parseAssistantStream(
-  buffer: string,
-): { events: AssistantStreamEvent[]; remainder: string } {
-  const normalizedBuffer = buffer.replace(/\r\n/g, "\n");
-  const parts = normalizedBuffer.split("\n\n");
-  const remainder = parts.pop() ?? "";
-  const events = parts
-    .map((part) => {
-      const lines = part.split("\n");
-      const eventLine = lines.find((line) => line.startsWith("event:"));
-      const dataLines = lines.filter((line) => line.startsWith("data:"));
-      if (!dataLines.length) {
-        return null;
-      }
 
-      try {
-        return {
-          event: eventLine?.replace("event:", "").trim() || "message",
-          data: JSON.parse(
-            dataLines.map((line) => line.replace("data:", "").trimStart()).join("\n"),
-          ) as AssistantStreamPayload,
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter((event): event is AssistantStreamEvent => event !== null);
 
-  return { events, remainder };
+function mostImportantCategory(categories: PlatformCategory[]): PlatformCategory | null {
+  const score = (category: PlatformCategory) => {
+    if (category.status === "alert" || category.status === "failing") {
+      return 4;
+    }
+    if (category.status === "watch" || category.status === "stale") {
+      return 3;
+    }
+    if (category.events.length > 0) {
+      return 2;
+    }
+    return 1;
+  };
+
+  return [...categories].sort((left, right) => score(right) - score(left))[0] ?? null;
 }
 
-function citationLabel(citation: AssistantApiCitation): string {
-  return citation.checked_at
-    ? `${citation.source} @ ${citation.checked_at}`
-    : citation.source;
+function buildAssistantReply(question: string, overview: PlatformOverviewResponse | null, language: LanguageMode): string {
+  if (!overview) {
+    return WIDGET_TRANSLATIONS[language].offlinePrompt;
+  }
+
+  const normalizedQuestion = question.toLowerCase();
+  const matchedCategory = overview.categories.find((category) =>
+    [category.key, category.title.toLowerCase()].some((token) =>
+      normalizedQuestion.includes(token)
+    )
+  );
+
+  if (normalizedQuestion.includes("source") || normalizedQuestion.includes("数据源")) {
+    const sourceSummary = overview.sources
+      .map((source) => `${source.source_code}: ${translateText(language, source.operational_status)}`)
+      .join("; ");
+    return language === "zh"
+      ? `当前数据源状态是：${sourceSummary || "暂无数据源状态"}。更新时间：${formatTimestamp(overview.checked_at, "dateTime", language)}。`
+      : `Current data sources are: ${sourceSummary || "No source status available"}. Updated at: ${formatTimestamp(overview.checked_at, "dateTime", language)}.`;
+  }
+
+  if (normalizedQuestion.includes("扩展") || normalizedQuestion.includes("规划") || normalizedQuestion.includes("expansion") || normalizedQuestion.includes("plan")) {
+    const plannedCategories = overview.categories
+      .filter((category) => (category.stage ?? "connected") !== "connected")
+      .map((category) => `${translateText(language, category.title)}: ${translateText(language, category.stage ?? "connected")}`)
+      .join("; ");
+    return language === "zh"
+      ? `当前扩展目录是：${plannedCategories || "暂无规划分类"}。这些分类已录入平台目录，后续可按优先级配置采集器和规则。`
+      : `Planned expansion categories are: ${plannedCategories || "No planned categories"}. These are in the catalog and will be integrated with high priority.`;
+  }
+
+  if (matchedCategory) {
+    const metrics = matchedCategory.summary_metrics
+      .slice(0, 4)
+      .map((metric) => `${translateText(language, metric.label)} ${metric.value}${metric.unit ? metric.unit : ""}`)
+      .join("; ");
+    const latestEvent = matchedCategory.events[0];
+    const translatedTitle = translateText(language, matchedCategory.title);
+    const translatedStatus = translateText(language, matchedCategory.status);
+    if (language === "zh") {
+      return latestEvent
+        ? `${translatedTitle}分类状态目前为 ${translatedStatus}。关键指标：${metrics}。最近事件：${latestEvent.title}，${latestEvent.body}`
+        : `${translatedTitle}分类状态目前为 ${translatedStatus}。关键指标：${metrics}。当前分类没有活跃事件，采集通道运转正常。`;
+    } else {
+      return latestEvent
+        ? `${translatedTitle} category status is currently ${translatedStatus}. Metrics: ${metrics}. Recent event: ${latestEvent.title} - ${latestEvent.body}`
+        : `${translatedTitle} category status is currently ${translatedStatus}. Metrics: ${metrics}. There are no active events for this channel, and telemetry pipeline is nominal.`;
+    }
+  }
+
+  const importantCategory = mostImportantCategory(overview.categories);
+  const categoryList = overview.categories.map((category) => `${translateText(language, category.title)} (${translateText(language, category.status)})`).join("; ");
+  const translatedHealthStatus = translateText(language, overview.health_status);
+  if (language === "zh") {
+    return importantCategory
+      ? `平台整体健康状态是 ${translatedHealthStatus}。当前最值得关注的分类是 ${translateText(language, importantCategory.title)}（状态为 ${translateText(language, importantCategory.status)}）。全部分类概览：${categoryList}。`
+      : `平台整体状态是 ${translatedHealthStatus}，但当前没有可展示的分类数据。`;
+  } else {
+    return importantCategory
+      ? `Platform health status is ${translatedHealthStatus}. The most critical category to inspect is ${translateText(language, importantCategory.title)} (${translateText(language, importantCategory.status)}). Category summary: ${categoryList}.`
+      : `Platform health status is ${translatedHealthStatus}, but no category metrics are loaded.`;
+  }
 }
 
 export function AssistantWidget({
   overview,
   language,
-  city,
-  date,
-  userId,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -209,16 +217,6 @@ export function AssistantWidget({
       text: t.welcome
     }
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setMessages((currentMessages) => {
-      if (currentMessages.length === 1 && currentMessages[0]?.id === "welcome") {
-        return [{ id: "welcome", role: "assistant", text: t.welcome }];
-      }
-      return currentMessages;
-    });
-  }, [t.welcome]);
 
   const suggestedQuestions = useMemo(() => {
     if (!overview) {
@@ -235,141 +233,31 @@ export function AssistantWidget({
       t.whichSourceAbnormal,
       t.whichExpansionPlanned
     ];
-  }, [overview, t]);
+  }, [overview, t, language]);
 
-  const submitQuestion = async (question: string) => {
+  const submitQuestion = (question: string) => {
     const normalizedQuestion = question.trim();
-    if (!normalizedQuestion || isLoading) {
+    if (!normalizedQuestion) {
       return;
     }
 
     const timestamp = Date.now();
-    const userMessage: ChatMessage = {
-      id: `user-${timestamp}`,
-      role: "user",
-      text: normalizedQuestion
-    };
-    const assistantMessageId = `assistant-${timestamp}`;
-    const requestMessages = [...messages, userMessage].slice(-10);
-
     setMessages((currentMessages) => [
       ...currentMessages,
-      userMessage,
+      { id: `user-${timestamp}`, role: `user`, text: normalizedQuestion },
       {
-        id: assistantMessageId,
-        role: "assistant",
-        text: ""
+        id: `assistant-${timestamp}`,
+        role: `assistant`,
+        text: buildAssistantReply(normalizedQuestion, overview, language)
       }
     ]);
     setInputValue("");
     setIsOpen(true);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/assistant/chat/stream", {
-        method: "POST",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          messages: requestMessages.map((message) => ({
-            role: message.role,
-            content: message.text
-          })),
-          language,
-          city,
-          date: date ?? undefined,
-          user_id: userId || undefined
-        })
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error("Assistant stream failed.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assistantText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const parsed = parseAssistantStream(buffer);
-        buffer = parsed.remainder;
-
-        for (const event of parsed.events) {
-          if (event.event === "token" && event.data.content) {
-            assistantText += event.data.content;
-            setMessages((currentMessages) =>
-              currentMessages.map((message) =>
-                message.id === assistantMessageId
-                  ? { ...message, text: assistantText }
-                  : message
-              )
-            );
-          }
-
-          if (event.event === "meta" || event.event === "done") {
-            setMessages((currentMessages) =>
-              currentMessages.map((message) =>
-                message.id === assistantMessageId
-                  ? {
-                      ...message,
-                      citations: event.data.citations ?? message.citations,
-                      answerMode: event.data.answer_mode ?? message.answerMode,
-                      errorMessage: event.data.error_message ?? message.errorMessage,
-                      model: event.data.model ?? message.model
-                    }
-                  : message
-              )
-            );
-          }
-
-          if (event.event === "error") {
-            setMessages((currentMessages) =>
-              currentMessages.map((message) =>
-                message.id === assistantMessageId
-                  ? {
-                      ...message,
-                      errorMessage:
-                        event.data.error_message ??
-                        event.data.message ??
-                        event.data.content ??
-                        t.failure
-                    }
-                  : message
-              )
-            );
-          }
-        }
-      }
-
-      if (!assistantText.trim()) {
-        setMessages((currentMessages) =>
-          currentMessages.map((message) =>
-            message.id === assistantMessageId ? { ...message, text: t.failure } : message
-          )
-        );
-      }
-    } catch {
-      setMessages((currentMessages) =>
-        currentMessages.map((message) =>
-          message.id === assistantMessageId ? { ...message, text: t.failure } : message
-        )
-      );
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void submitQuestion(inputValue);
+    submitQuestion(inputValue);
   };
 
   return (
@@ -404,45 +292,16 @@ export function AssistantWidget({
           </header>
           
           <div className="assistant-messages">
-            {messages.map((message) => {
-              if (message.role === "assistant" && !message.text.trim()) {
-                return null;
-              }
-
-              return (
-                <article className={`assistant-message assistant-message-${message.role}`} key={message.id}>
-                  <span>{message.text}</span>
-                  {message.role === "assistant" && message.citations?.length ? (
-                    <footer className="assistant-citations">
-                      <span>{t.basis}</span>
-                      {message.answerMode === "fallback" ? <em>{t.fallback}</em> : null}
-                      {message.citations.slice(0, 4).map((citation) => (
-                        <small key={`${message.id}-${citation.source}`}>
-                          {citationLabel(citation)}
-                        </small>
-                      ))}
-                    </footer>
-                  ) : null}
-                </article>
-              );
-            })}
-            {isLoading ? (
-              <article className="assistant-message assistant-message-assistant assistant-message-pending">
-                {t.loading}
+            {messages.map((message) => (
+              <article className={`assistant-message assistant-message-${message.role}`} key={message.id}>
+                {message.text}
               </article>
-            ) : null}
+            ))}
           </div>
           
           <div className="assistant-suggestions">
             {suggestedQuestions.map((question) => (
-              <button
-                disabled={isLoading}
-                key={question}
-                onClick={() => {
-                  void submitQuestion(question);
-                }}
-                type="button"
-              >
+              <button key={question} onClick={() => submitQuestion(question)} type="button">
                 {question}
               </button>
             ))}
@@ -451,12 +310,11 @@ export function AssistantWidget({
           <form className="assistant-form" onSubmit={onSubmit}>
             <input
               aria-label="Ask about platform data"
-              disabled={isLoading}
               onChange={(event) => setInputValue(event.target.value)}
               placeholder={t.askPlaceholder}
               value={inputValue}
             />
-            <button disabled={isLoading} type="submit">
+            <button type="submit">
               <span className="material-symbols-outlined">send</span>
             </button>
           </form>

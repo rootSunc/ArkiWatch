@@ -27,7 +27,18 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { key: "weather", label: "Weather", icon: "cloud", categoryKey: "weather" },
   { key: "air", label: "Air Quality", icon: "air", categoryKey: "air" },
   { key: "energy", label: "Energy", icon: "bolt", categoryKey: "energy" },
-  { key: "mobility", label: "Mobility", icon: "commute" },
+  {
+    key: "transit",
+    label: "Transit",
+    icon: "directions_bus",
+    categoryKey: "transit",
+  },
+  {
+    key: "traffic",
+    label: "Road and Rail",
+    icon: "traffic",
+    categoryKey: "traffic",
+  },
   {
     key: "water",
     label: "Water and Snow",
@@ -60,6 +71,10 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
   },
 ];
 
+export const SECONDARY_NAV_ITEMS: NavItem[] = [
+  { key: "system", label: "System Version", icon: "info" },
+];
+
 const THEME_STORAGE_KEY = "arkiwatch-theme";
 
 export function NotificationButton({
@@ -79,7 +94,7 @@ export function NotificationButton({
   const hasNotifications = count > 0;
   const label = translateText(
     language,
-    hasNotifications ? "Open recent events" : "Open notifications",
+    hasNotifications ? "Open overall notifications" : "Open notifications",
   );
 
   return (
@@ -210,7 +225,7 @@ export function CityScopeSelector({
   language: LanguageMode;
   onCityChange: (city: string) => void;
 }) {
-  const label = translateText(language, "City");
+  const label = translateText(language, "Current city");
 
   return (
     <label
@@ -223,6 +238,7 @@ export function CityScopeSelector({
       <span className="material-symbols-outlined" aria-hidden="true">
         location_on
       </span>
+      <span className="city-scope-label">{label}</span>
       <select
         aria-label={label}
         disabled={isPending}

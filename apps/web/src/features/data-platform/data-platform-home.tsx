@@ -17,7 +17,6 @@ import {
 } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
-import { categoryVisibleToCurrentUser } from "./category-access";
 import {
   categorySupportsCityScope,
   cityLabel,
@@ -29,6 +28,8 @@ import {
   HistoricalWarningBanner,
   NotificationButton,
   PRIMARY_NAV_ITEMS,
+  SECONDARY_NAV_ITEMS,
+  ThemeToggleButton,
   applyThemeMode,
   preferredThemeMode,
   saveCityValue,
@@ -61,22 +62,12 @@ import {
   TransitCurrentResponse,
   WeatherForecastResponse,
 } from "./types";
-import {
-  buildAirQualityRecentEvents,
-  buildWeatherRecentEvents,
-  curatedRecentEvents,
-  eventAnchorId,
-  eventNavigationId,
-  eventTarget,
-  recentEventDetails,
-  RECENT_EVENT_LIMIT,
-} from "./recent-events";
 import { AirQualityWorkspace } from "./air-quality-workspace";
 import { CityServicesWorkspace } from "./city-services-workspace";
 import { EnergyWorkspace } from "./energy-workspace";
 import { LinkedEventsWorkspace } from "./linked-events-workspace";
-import { MobilityWorkspace } from "./mobility-workspace";
-import type { MobilityTabKey } from "./mobility-workspace";
+import { RoadRailWorkspace } from "./road-rail-workspace";
+import { TransitWorkspace } from "./transit-workspace";
 import { WeatherDetailView } from "./weather-detail-view";
 import { WaterSnowWorkspace } from "./water-snow-workspace";
 import { GeospatialWorkspace } from "./geospatial-workspace";
@@ -87,7 +78,6 @@ import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 type DataPlatformHomeProps = {
   airQuality: AirQualityCurrentResponse | null;
   apiBaseUrl: string;
-  currentUserLabel: string;
   defaultUserId: string;
   initialCity: string;
   initialDate: string | null;
@@ -107,7 +97,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   energy: "bolt",
   events: "event",
   geospatial: "map",
-  mobility: "commute",
   regional_profile: "public",
   traffic: "traffic",
   transit: "directions_bus",
@@ -129,12 +118,6 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const BRAND_LOGO_SRC = "/brand/logo.png";
-const NAV_QUERY_KEY = "view";
-const MOBILITY_NAV_KEY = "mobility";
-const MOBILITY_TAB_QUERY_KEY = "mobilityTab";
-const EVENT_QUERY_KEY = "event";
-const FALLBACK_NAV_KEY = "overview";
-const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
 
 function titleCase(value: string): string {
   return value
@@ -143,145 +126,6 @@ function titleCase(value: string): string {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(" ");
-}
-
-function isMobilityCategoryKey(
-  key: string | null | undefined,
-): key is MobilityTabKey {
-  return key === "transit" || key === "traffic";
-}
-
-function resolveMobilityTab(
-  value: string | null | undefined,
-): MobilityTabKey {
-  return value === "traffic" ? "traffic" : "transit";
-}
-
-function mobilityAvailable(categories: PlatformCategory[]): boolean {
-  return categories.some((category) => isMobilityCategoryKey(category.key));
-}
-
-function uniqueValues(values: string[]): string[] {
-  return [...new Set(values.filter(Boolean))];
-}
-
-function mergeCategorySources(categories: PlatformCategory[]) {
-  const sources = new Map<string, PlatformCategory["sources"][number]>();
-
-  for (const category of categories) {
-    for (const source of category.sources) {
-      sources.set(source.id || source.source_code, source);
-    }
-  }
-
-  return [...sources.values()];
-}
-
-function buildMobilityCategory(
-  categories: PlatformCategory[],
-  transit: TransitCurrentResponse | null,
-  roadRail: RoadRailCurrentResponse | null,
-): PlatformCategory | null {
-  const mobilityCategories = categories.filter((category) =>
-    isMobilityCategoryKey(category.key),
-  );
-
-  if (mobilityCategories.length === 0) {
-    return null;
-  }
-
-  const activeTransitAlerts = transit?.quality.active_alert_count ?? 0;
-  const activeRoadRailEvents = roadRail?.quality.active_event_count ?? 0;
-  const activeEvents = activeTransitAlerts + activeRoadRailEvents;
-  const sourceCodes = uniqueValues(
-    mobilityCategories.flatMap((category) => category.source_codes),
-  );
-  const updatedAt =
-    transit?.observed_at ??
-    roadRail?.observed_at ??
-    mobilityCategories
-      .flatMap((category) => category.summary_metrics)
-      .find((metric) => metric.updated_at)?.updated_at ??
-    null;
-
-  return {
-    key: MOBILITY_NAV_KEY,
-    title: "Mobility",
-    description:
-      "Transit service alerts and Digitraffic road and rail operations.",
-    status: activeEvents > 0 ? "watch" : "connected",
-    stage: "connected",
-    priority: "P0",
-    source_codes: sourceCodes,
-    key_data_items: uniqueValues(
-      mobilityCategories.flatMap((category) => categoryKeyDataItems(category)),
-    ),
-    summary_metrics: [
-      {
-        key: "active_events",
-        label: "Active Events",
-        value: String(activeEvents),
-        tone: activeEvents > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: updatedAt,
-        source_codes: sourceCodes,
-      },
-      {
-        key: "transit_alerts",
-        label: "Transit",
-        value: String(activeTransitAlerts),
-        tone: activeTransitAlerts > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: transit?.observed_at ?? null,
-        source_codes: transit ? ["digitransit"] : [],
-      },
-      {
-        key: "road_rail_events",
-        label: "Road & Rail",
-        value: String(activeRoadRailEvents),
-        tone: activeRoadRailEvents > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: roadRail?.observed_at ?? null,
-        source_codes: roadRail ? ["digitraffic"] : [],
-      },
-    ],
-    visualizations: mobilityCategories.flatMap(
-      (category) => category.visualizations,
-    ),
-    events: mobilityCategories.flatMap((category) => category.events),
-    sources: mergeCategorySources(mobilityCategories),
-  };
-}
-
-function mergeMobilityCategories(
-  categories: PlatformCategory[],
-  mobilityCategory: PlatformCategory | null,
-): PlatformCategory[] {
-  if (!mobilityCategory) {
-    return categories;
-  }
-
-  const mergedCategories: PlatformCategory[] = [];
-  let mobilityInserted = false;
-
-  for (const category of categories) {
-    if (isMobilityCategoryKey(category.key)) {
-      if (!mobilityInserted) {
-        mergedCategories.push(mobilityCategory);
-        mobilityInserted = true;
-      }
-      continue;
-    }
-
-    mergedCategories.push(category);
-  }
-
-  return mobilityInserted
-    ? mergedCategories
-    : [...mergedCategories, mobilityCategory];
 }
 
 function statusLabel(
@@ -393,9 +237,6 @@ function displayTitle(
   category: PlatformCategory,
   language: LanguageMode,
 ): string {
-  if (category.key === MOBILITY_NAV_KEY) {
-    return translateText(language, "Mobility");
-  }
   if (category.key === "air") {
     return translateText(language, "Air Quality");
   }
@@ -500,32 +341,6 @@ function signalReadout(
           ? toneProgress(tone)
           : Math.max(12, (score / 5) * 100),
       tone: score !== null && score !== undefined && score >= 4 ? "bad" : tone,
-    };
-  }
-
-  if (category.key === MOBILITY_NAV_KEY) {
-    const activeTransitAlerts = transit?.quality.active_alert_count ?? 0;
-    const activeRoadRailEvents = roadRail?.quality.active_event_count ?? 0;
-    const activeEvents = activeTransitAlerts + activeRoadRailEvents;
-    const rawSignals =
-      (transit?.quality.raw_alert_count ?? 0) +
-      (roadRail?.quality.raw_message_count ?? 0);
-
-    return {
-      label: translateText(language, "Active Events"),
-      value:
-        rawSignals > 0 || activeEvents > 0
-          ? `${activeEvents}`
-          : category.events.length > 0
-            ? `${category.events.length}`
-            : translateText(language, "Nominal"),
-      progress:
-        rawSignals > 0
-          ? Math.max(12, Math.min(100, (activeEvents / rawSignals) * 100))
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
-      tone: activeEvents > 0 ? "warn" : tone,
     };
   }
 
@@ -667,24 +482,8 @@ function eventTimeLabel(
   categories: PlatformCategory[],
   event: PlatformEvent,
   language: LanguageMode,
-  t: (value: string) => string,
 ): string {
-  const startsAt = new Date(event.starts_at).getTime();
-  const endsAt = new Date(event.ends_at).getTime();
-  const now = Date.now();
-  const categoryLabel = eventCategoryLabel(categories, event, language);
-
-  if (Number.isFinite(startsAt) && Number.isFinite(endsAt)) {
-    if (startsAt <= now && endsAt >= now) {
-      return `${t("Ongoing until")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
-    }
-
-    if (endsAt < now) {
-      return `${t("Ended")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
-    }
-  }
-
-  return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${categoryLabel}`;
+  return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${eventCategoryLabel(categories, event, language)}`;
 }
 
 function eventSeverityRank(event: PlatformEvent): number {
@@ -700,6 +499,21 @@ function eventSeverityRank(event: PlatformEvent): number {
   }
 }
 
+function pickPriorityEvent(events: PlatformEvent[]): PlatformEvent | null {
+  return (
+    [...events].sort((left, right) => {
+      const severityDiff = eventSeverityRank(right) - eventSeverityRank(left);
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
+
+      return (
+        new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime()
+      );
+    })[0] ?? null
+  );
+}
+
 function notificationToneForEvents(events: PlatformEvent[]): DashboardTone {
   if (events.some((event) => eventSeverityRank(event) >= 3)) {
     return "bad";
@@ -712,87 +526,19 @@ function notificationToneForEvents(events: PlatformEvent[]): DashboardTone {
   return "neutral";
 }
 
-function loadReadRecentEventIds(): Set<string> {
-  if (typeof window === "undefined") {
-    return new Set();
-  }
-
-  try {
-    const value = window.localStorage.getItem(READ_RECENT_EVENTS_STORAGE_KEY);
-    const parsed = value ? JSON.parse(value) : [];
-    return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveReadRecentEventIds(ids: Set<string>): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(
-      READ_RECENT_EVENTS_STORAGE_KEY,
-      JSON.stringify([...ids].slice(-400)),
-    );
-  } catch {
-    // Notification read state is helpful, but navigation should still work without storage.
-  }
+function activeEventLabel(count: number, language: LanguageMode): string {
+  return `${count} ${translateText(language, count === 1 ? "active event" : "active events")}`;
 }
 
 function navItemAvailable(
   item: NavItem,
   categories: PlatformCategory[],
 ): boolean {
-  if (item.key === MOBILITY_NAV_KEY) {
-    return mobilityAvailable(categories);
-  }
-
-  if (!categoryVisibleToCurrentUser(item.categoryKey ?? item.key)) {
-    return false;
-  }
-
   if (!item.categoryKey) {
     return true;
   }
 
   return categories.some((category) => category.key === item.categoryKey);
-}
-
-function resolveNavKey(
-  requestedKey: string | null,
-  categories: PlatformCategory[],
-): string {
-  if (!requestedKey || requestedKey === FALLBACK_NAV_KEY) {
-    return FALLBACK_NAV_KEY;
-  }
-
-  if (requestedKey === MOBILITY_NAV_KEY || isMobilityCategoryKey(requestedKey)) {
-    return mobilityAvailable(categories) ? MOBILITY_NAV_KEY : FALLBACK_NAV_KEY;
-  }
-
-  if (!categoryVisibleToCurrentUser(requestedKey)) {
-    return FALLBACK_NAV_KEY;
-  }
-
-  const primaryNavItem = PRIMARY_NAV_ITEMS.find(
-    (item) => item.key === requestedKey,
-  );
-  if (primaryNavItem) {
-    if (!categoryVisibleToCurrentUser(primaryNavItem.categoryKey)) {
-      return FALLBACK_NAV_KEY;
-    }
-
-    return requestedKey;
-  }
-
-  return categories.some(
-    (category) =>
-      category.key === requestedKey && categoryVisibleToCurrentUser(category.key),
-  )
-    ? requestedKey
-    : FALLBACK_NAV_KEY;
 }
 
 function platformSignalStats(
@@ -819,7 +565,6 @@ function platformSignalStats(
 export function DataPlatformHome({
   airQuality,
   apiBaseUrl,
-  currentUserLabel,
   defaultUserId,
   initialCity,
   initialDate,
@@ -835,28 +580,12 @@ export function DataPlatformHome({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialNavCategories = (overview?.categories ?? []).filter((category) =>
-    categoryVisibleToCurrentUser(category.key),
-  );
-  const [selectedNavKey, setSelectedNavKey] = useState(() =>
-    resolveNavKey(searchParams.get(NAV_QUERY_KEY), initialNavCategories),
-  );
-  const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
-    () =>
-      resolveMobilityTab(
-        searchParams.get(MOBILITY_TAB_QUERY_KEY) ??
-          searchParams.get(NAV_QUERY_KEY),
-      ),
-  );
+  const [selectedNavKey, setSelectedNavKey] = useState("overview");
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
-  const [readRecentEventIds, setReadRecentEventIds] = useState<Set<string>>(
-    () => new Set(),
-  );
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSideNavHidden, setIsSideNavHidden] = useState(false);
   const [selectedCity, setSelectedCity] = useState(() =>
     normalizeCityValue(initialCity),
   );
@@ -866,7 +595,6 @@ export function DataPlatformHome({
   const [isCityRefreshPending, startCityRefresh] = useTransition();
   const [isDateRefreshPending, startDateRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
-  const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
     overview?.time_scope ??
     weather?.time_scope ??
@@ -905,159 +633,60 @@ export function DataPlatformHome({
     }
   }
 
-  async function signOut() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    }).catch(() => null);
-    router.replace("/login");
-    router.refresh();
-  }
-
-  const categories = useMemo(
-    () =>
-      (overview?.categories ?? []).filter((category) =>
-        categoryVisibleToCurrentUser(category.key),
-      ),
-    [overview],
-  );
-  const transitCategory = useMemo(
-    () => categoryByKey(categories, "transit"),
-    [categories],
-  );
-  const roadRailCategory = useMemo(
-    () => categoryByKey(categories, "traffic"),
-    [categories],
-  );
-  const mobilityCategory = useMemo(
-    () => buildMobilityCategory(categories, transit, roadRail),
-    [categories, roadRail, transit],
-  );
-  const displayCategories = useMemo(
-    () => mergeMobilityCategories(categories, mobilityCategory),
-    [categories, mobilityCategory],
-  );
-  const recentEventCandidates = useMemo(
-    () =>
-      [
-        ...buildWeatherRecentEvents(weather, { city: selectedCity }),
-        ...buildAirQualityRecentEvents(airQuality),
-        ...categories.flatMap((category) => category.events),
-        ...(overview?.recent_events ?? []),
-      ].filter((event) => categoryVisibleToCurrentUser(event.category_key)),
-    [airQuality, categories, overview, selectedCity, weather],
-  );
-  const recentEvents = useMemo(
-    () =>
-      curatedRecentEvents(recentEventCandidates, RECENT_EVENT_LIMIT, {
-        city: selectedCity,
-      }),
-    [recentEventCandidates, selectedCity],
-  );
-  const sources = useMemo(
-    () =>
-      (overview?.sources ?? []).filter((source) => {
-        const sourceCategories = source.categories ?? [];
-        return (
-          sourceCategories.length === 0 ||
-          sourceCategories.some(categoryVisibleToCurrentUser)
-        );
-      }),
-    [overview],
-  );
-  const visibleOverview = useMemo(
-    () =>
-      overview
-        ? {
-            ...overview,
-            categories: displayCategories,
-            recent_events: recentEvents,
-            sources,
-          }
-        : null,
-    [displayCategories, overview, recentEvents, sources],
-  );
-  const updateNavQuery = useCallback(
-    (
-      nextNavKey: string,
-      options: { mobilityTab?: MobilityTabKey } = {},
-    ): void => {
-      const nextParams = new URLSearchParams(searchParams.toString());
-      if (nextNavKey === FALLBACK_NAV_KEY) {
-        nextParams.delete(NAV_QUERY_KEY);
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-      } else if (nextNavKey === MOBILITY_NAV_KEY) {
-        nextParams.set(NAV_QUERY_KEY, MOBILITY_NAV_KEY);
-        nextParams.set(
-          MOBILITY_TAB_QUERY_KEY,
-          options.mobilityTab ?? selectedMobilityTab,
-        );
-      } else {
-        nextParams.set(NAV_QUERY_KEY, nextNavKey);
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-      }
-      nextParams.delete(EVENT_QUERY_KEY);
-
-      const nextPath = nextParams.toString();
-      router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
-    },
-    [pathname, router, searchParams, selectedMobilityTab],
-  );
-  const selectNav = useCallback(
-    (nextNavKey: string): void => {
-      const nextMobilityTab = isMobilityCategoryKey(nextNavKey)
-        ? nextNavKey
-        : selectedMobilityTab;
-      const resolvedNavKey = resolveNavKey(nextNavKey, categories);
-      if (resolvedNavKey === MOBILITY_NAV_KEY) {
-        setSelectedMobilityTab(nextMobilityTab);
-      }
-      setSelectedNavKey(resolvedNavKey);
-      updateNavQuery(resolvedNavKey, { mobilityTab: nextMobilityTab });
-    },
-    [categories, selectedMobilityTab, updateNavQuery],
-  );
-  const selectMobilityTab = useCallback(
-    (nextMobilityTab: MobilityTabKey): void => {
-      setSelectedMobilityTab(nextMobilityTab);
-      setSelectedNavKey(MOBILITY_NAV_KEY);
-      updateNavQuery(MOBILITY_NAV_KEY, { mobilityTab: nextMobilityTab });
-    },
-    [updateNavQuery],
-  );
+  const categories = useMemo(() => overview?.categories ?? [], [overview]);
   const selectedCategory =
     selectedNavKey === "overview"
       ? null
-      : categoryByKey(displayCategories, selectedNavKey);
+      : (categoryByKey(categories, selectedNavKey) ??
+        categoryByKey(
+          categories,
+          SECONDARY_NAV_ITEMS.find((item) => item.key === selectedNavKey)
+            ?.categoryKey,
+        ));
   const signalStats = useMemo(
-    () => platformSignalStats(displayCategories, visibleOverview),
-    [displayCategories, visibleOverview],
+    () => platformSignalStats(categories, overview),
+    [categories, overview],
   );
-  const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
+  const selectedCategories = selectedCategory ? [selectedCategory] : categories;
   const visibleCategories = selectedCategories.filter((category) =>
     matchesSearch(category, searchValue, languageMode),
   );
   const visibleEvents = (
-    selectedCategory
-      ? curatedRecentEvents(selectedCategory.events, RECENT_EVENT_LIMIT, {
-          city: selectedCity,
-        })
-      : recentEvents
-  ).filter((event) => eventMatchesSearch(event, searchValue, languageMode));
-  const unreadVisibleEvents = visibleEvents.filter(
-    (event) => !readRecentEventIds.has(event.id),
-  );
+    selectedCategory ? selectedCategory.events : (overview?.recent_events ?? [])
+  )
+    .filter((event) => eventMatchesSearch(event, searchValue, languageMode))
+    .sort(
+      (left, right) =>
+        new Date(right.starts_at).getTime() -
+        new Date(left.starts_at).getTime(),
+    )
+    .slice(0, 12);
   const latestVisibleEvent = visibleEvents[0] ?? null;
-  const latestUnreadEvent = unreadVisibleEvents[0] ?? latestVisibleEvent;
-  const latestEventTone = notificationToneForEvents(unreadVisibleEvents);
-  const unreadRecentEvents = recentEvents.filter(
-    (event) => !readRecentEventIds.has(event.id),
+  const latestEventTone = notificationToneForEvents(visibleEvents);
+  const overallNotificationEvents = overview?.recent_events ?? [];
+  const overallNotificationCount = overallNotificationEvents.length;
+  const overallNotificationTone = notificationToneForEvents(
+    overallNotificationEvents,
   );
-  const recentNotificationCount = unreadRecentEvents.length;
-  const recentNotificationTone = notificationToneForEvents(unreadRecentEvents);
+  const priorityVisibleEvent = pickPriorityEvent(visibleEvents);
+  const overallScopeLabel = selectedCategory
+    ? displayTitle(selectedCategory, languageMode)
+    : t("Overall");
+  const overallNotificationTitle =
+    visibleEvents.length > 0
+      ? `${overallScopeLabel} · ${activeEventLabel(visibleEvents.length, languageMode)}`
+      : `${overallScopeLabel} · ${t("No active events")}`;
+  const overallNotificationBody = priorityVisibleEvent
+    ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${priorityVisibleEvent.title}`
+    : t("No active cross-signal notifications in this view.");
+  const overallNotificationDetail =
+    priorityVisibleEvent?.body ??
+    t("Signal cards are nominal for the current view.");
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
   const isEnergyDetail = selectedCategory?.key === "energy";
-  const isMobilityDetail = selectedCategory?.key === MOBILITY_NAV_KEY;
+  const isTransitDetail = selectedCategory?.key === "transit";
+  const isRoadRailDetail = selectedCategory?.key === "traffic";
   const isWaterDetail = selectedCategory?.key === "water";
   const isCityServicesDetail = selectedCategory?.key === "city_services";
   const isLinkedEventsDetail = selectedCategory?.key === "events";
@@ -1067,73 +696,33 @@ export function DataPlatformHome({
     isWeatherDetail ||
     isAirDetail ||
     isEnergyDetail ||
-    isMobilityDetail ||
+    isTransitDetail ||
+    isRoadRailDetail ||
     isWaterDetail ||
     isCityServicesDetail ||
     isLinkedEventsDetail ||
     isGeospatialDetail ||
     isRegionalProfileDetail;
-  const showsWorkspaceTopbar = isDetailPage || selectedNavKey === FALLBACK_NAV_KEY;
 
   function selectNavItem(item: NavItem): void {
-    selectNav(item.categoryKey ?? item.key);
+    setSelectedNavKey(item.categoryKey ?? item.key);
     setIsMobileMenuOpen(false);
   }
 
-  function openRecentEventsPanel(): void {
+  function openOverallNotifications(): void {
     if (selectedNavKey === "overview" && isEventsExpanded) {
       setIsEventsExpanded(false);
     } else {
-      selectNav(FALLBACK_NAV_KEY);
+      setSelectedNavKey("overview");
       setSearchValue("");
       setIsEventsExpanded(true);
     }
-  }
-
-  function markRecentEventRead(eventId: string): void {
-    setReadRecentEventIds((currentIds) => {
-      if (currentIds.has(eventId)) {
-        return currentIds;
-      }
-
-      const nextIds = new Set(currentIds);
-      nextIds.add(eventId);
-      saveReadRecentEventIds(nextIds);
-      return nextIds;
-    });
-  }
-
-  function openRecentEvent(event: PlatformEvent): void {
-    const target = eventTarget(event);
-    const nextParams = new URLSearchParams(searchParams.toString());
-    markRecentEventRead(event.id);
-    setSearchValue("");
-    setIsEventsExpanded(false);
-
-    if (target.navKey === FALLBACK_NAV_KEY) {
-      nextParams.delete(NAV_QUERY_KEY);
-      nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-    } else {
-      nextParams.set(NAV_QUERY_KEY, target.navKey);
-      if (target.mobilityTab) {
-        nextParams.set(MOBILITY_TAB_QUERY_KEY, target.mobilityTab);
-        setSelectedMobilityTab(target.mobilityTab);
-      } else {
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-      }
-    }
-    nextParams.set(EVENT_QUERY_KEY, eventNavigationId(event));
-    setSelectedNavKey(target.navKey);
-
-    const nextPath = nextParams.toString();
-    router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
   }
 
   const replaceCityParam = useCallback(
     (nextCity: string): void => {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set("city", nextCity);
-      nextParams.delete(EVENT_QUERY_KEY);
       startCityRefresh(() => {
         router.replace(`${pathname}?${nextParams.toString()}`);
       });
@@ -1149,17 +738,12 @@ export function DataPlatformHome({
       } else {
         nextParams.delete("date");
       }
-      nextParams.delete(EVENT_QUERY_KEY);
       startDateRefresh(() => {
         router.replace(`${pathname}?${nextParams.toString()}`);
       });
     },
     [pathname, router, searchParams, startDateRefresh],
   );
-
-  useEffect(() => {
-    setReadRecentEventIds(loadReadRecentEventIds());
-  }, []);
 
   useEffect(() => {
     const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
@@ -1202,27 +786,6 @@ export function DataPlatformHome({
     }
   }, [replaceCityParam, searchParams, selectedCity]);
 
-  useEffect(() => {
-    if (!highlightedEventId || !isDetailPage) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      const element = document.getElementById(eventAnchorId(highlightedEventId));
-      if (!element) {
-        return;
-      }
-
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-      element.classList.add("event-anchor-active");
-      window.setTimeout(() => {
-        element.classList.remove("event-anchor-active");
-      }, 1800);
-    }, 180);
-
-    return () => window.clearTimeout(timeout);
-  }, [highlightedEventId, isDetailPage, selectedMobilityTab, selectedNavKey]);
-
   function toggleThemeMode(): void {
     setThemeMode((currentThemeMode) => {
       const nextThemeMode = currentThemeMode === "dark" ? "light" : "dark";
@@ -1252,40 +815,15 @@ export function DataPlatformHome({
     replaceDateParam(nextDate);
   }
 
-  const dashboardShellClassName = isSideNavHidden
-    ? "dashboard-shell dashboard-shell-nav-hidden"
-    : "dashboard-shell";
-  const sideNavClassName = [
-    isDetailPage
-      ? "dashboard-side-nav detail-side-nav"
-      : "dashboard-side-nav",
-    isMobileMenuOpen ? "mobile-side-nav-open" : "",
-    isSideNavHidden ? "dashboard-side-nav-hidden" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const restoreSideNavButton = isSideNavHidden ? (
-    <button
-      className="icon-button side-nav-restore-button"
-      aria-label={t("Show navigation")}
-      onClick={() => setIsSideNavHidden(false)}
-      title={t("Show navigation")}
-      type="button"
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        keyboard_double_arrow_right
-      </span>
-    </button>
-  ) : null;
-  const themeActionLabel = t(
-    themeMode === "light" ? "Switch to night theme" : "Switch to day theme",
-  );
-
   return (
     <I18nProvider language={languageMode}>
-      <div className={dashboardShellClassName}>
+      <div className="dashboard-shell">
         <aside
-          className={sideNavClassName}
+          className={`${
+            isDetailPage
+              ? "dashboard-side-nav detail-side-nav"
+              : "dashboard-side-nav"
+          } ${isMobileMenuOpen ? "mobile-side-nav-open" : ""}`}
           aria-label={t("Primary navigation")}
         >
           <div className="brand-panel">
@@ -1299,21 +837,10 @@ export function DataPlatformHome({
                 width={96}
               />
             </div>
-            <div className="brand-copy">
-              <h1 className="brand-title-main">ArkiWatch</h1>
-              <p className="brand-title-subtitle">{t("Data Platform")}</p>
+            <div>
+              <h1>{t("Data Platform")}</h1>
+              <p>{t("Operational Monitoring")}</p>
             </div>
-            <button
-              className="icon-button side-nav-collapse-button"
-              aria-label={t("Hide navigation")}
-              onClick={() => setIsSideNavHidden(true)}
-              title={t("Hide navigation")}
-              type="button"
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                keyboard_double_arrow_left
-              </span>
-            </button>
           </div>
 
           <nav className="side-nav-list" aria-label={t("Signal navigation")}>
@@ -1343,54 +870,29 @@ export function DataPlatformHome({
             })}
           </nav>
 
-          <nav className="side-nav-footer" aria-label={t("System controls")}>
-            <div className="side-nav-utility-group">
+          <nav
+            className="side-nav-footer"
+            aria-label={t("Secondary navigation")}
+          >
+            {SECONDARY_NAV_ITEMS.filter((item) =>
+              navItemAvailable(item, categories),
+            ).map((item) => (
               <button
-                className="nav-row side-nav-utility-row"
-                aria-label={t("Settings")}
-                title={t("Settings")}
+                className={
+                  selectedNavKey === (item.categoryKey ?? item.key)
+                    ? "nav-row nav-row-active"
+                    : "nav-row"
+                }
+                key={item.key}
+                onClick={() => selectNavItem(item)}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  settings
+                  {item.icon}
                 </span>
-                <span>{t("Settings")}</span>
+                <span>{t(item.label)}</span>
               </button>
-              <button
-                className="nav-row side-nav-utility-row"
-                aria-label={themeActionLabel}
-                onClick={toggleThemeMode}
-                title={themeActionLabel}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {themeMode === "light" ? "dark_mode" : "light_mode"}
-                </span>
-                <span>{t("Theme mode")}</span>
-              </button>
-              <div
-                className="nav-row side-nav-utility-row side-nav-user-row"
-                aria-label={t("Signed in")}
-                title={currentUserLabel}
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  manage_accounts
-                </span>
-                <span>{currentUserLabel}</span>
-              </div>
-              <button
-                className="nav-row side-nav-utility-row"
-                aria-label={t("Sign out")}
-                onClick={signOut}
-                title={t("Sign out")}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  logout
-                </span>
-                <span>{t("Sign out")}</span>
-              </button>
-            </div>
+            ))}
           </nav>
         </aside>
         {isMobileMenuOpen ? (
@@ -1442,6 +944,11 @@ export function DataPlatformHome({
                 language={languageMode}
                 onLanguageChange={selectLanguageMode}
               />
+              <ThemeToggleButton
+                language={languageMode}
+                themeMode={themeMode}
+                onToggle={toggleThemeMode}
+              />
               {!isDetailPage && !isHistorical ? (
                 <button
                   className="icon-button theme-toggle-button refresh-button"
@@ -1460,30 +967,30 @@ export function DataPlatformHome({
                 </button>
               ) : null}
               <NotificationButton
-                count={recentNotificationCount}
+                count={overallNotificationCount}
                 isActive={isEventsExpanded && !isDetailPage}
                 language={languageMode}
-                onClick={openRecentEventsPanel}
-                tone={recentNotificationTone}
+                onClick={openOverallNotifications}
+                tone={overallNotificationTone}
               />
               <button
                 className="icon-button"
-                aria-label={t("Sign out")}
-                onClick={signOut}
-                title={t("Sign out")}
+                aria-label={t("Settings")}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  logout
+                  settings
                 </span>
               </button>
+              <span className="profile-avatar" aria-label={t("User profile")}>
+                AW
+              </span>
             </div>
           </header>
 
-          {showsWorkspaceTopbar ? (
+          {isDetailPage ? (
             <header className="detail-topbar">
               <div className="detail-topbar-brand">
-                {restoreSideNavButton}
                 <span className="detail-topbar-mark" aria-hidden="true">
                   <Image
                     alt=""
@@ -1495,20 +1002,18 @@ export function DataPlatformHome({
                 </span>
                 <strong>ArkiWatch</strong>
               </div>
-              {isDetailPage ? (
-                <nav aria-label={t("Detail workspace navigation")}>
-                  <button
-                    onClick={() => selectNav(FALLBACK_NAV_KEY)}
-                    type="button"
-                  >
-                    {t("Overview")}
-                  </button>
-                  <button className="active" type="button">
-                    {t("Dashboard")}
-                  </button>
-                  <button type="button">{t("Analytics")}</button>
-                </nav>
-              ) : null}
+              <nav aria-label={t("Detail workspace navigation")}>
+                <button
+                  onClick={() => setSelectedNavKey("overview")}
+                  type="button"
+                >
+                  {t("Overview")}
+                </button>
+                <button className="active" type="button">
+                  {t("Dashboard")}
+                </button>
+                <button type="button">{t("Analytics")}</button>
+              </nav>
               <div className="detail-topbar-actions">
                 <CityScopeSelector
                   city={selectedCity}
@@ -1526,24 +1031,33 @@ export function DataPlatformHome({
                   language={languageMode}
                   onLanguageChange={selectLanguageMode}
                 />
+                <ThemeToggleButton
+                  language={languageMode}
+                  themeMode={themeMode}
+                  onToggle={toggleThemeMode}
+                />
                 <NotificationButton
-                  count={recentNotificationCount}
+                  count={overallNotificationCount}
                   isActive={isEventsExpanded && !isDetailPage}
                   language={languageMode}
-                  onClick={openRecentEventsPanel}
-                  tone={recentNotificationTone}
+                  onClick={openOverallNotifications}
+                  tone={overallNotificationTone}
                 />
                 <button
                   className="icon-button"
-                  aria-label={t("Sign out")}
-                  onClick={signOut}
-                  title={t("Sign out")}
+                  aria-label={t("Settings")}
                   type="button"
                 >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    logout
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
+                    settings
                   </span>
                 </button>
+                <span className="profile-avatar" aria-label={t("User profile")}>
+                  AW
+                </span>
               </div>
             </header>
           ) : null}
@@ -1563,20 +1077,19 @@ export function DataPlatformHome({
                 timeScope={activeTimeScope}
               />
             ) : null}
-            {!showsWorkspaceTopbar ? (
+            {!isDetailPage ? (
               <div className="desktop-dashboard-header">
-                <div className="desktop-dashboard-heading">
-                  {restoreSideNavButton}
-                  <div className="desktop-dashboard-heading-copy">
-                    <h2>
-                      {selectedCategory
-                        ? `${displayTitle(selectedCategory, languageMode)} ${t("Dashboard")}`
-                        : t("Overview")}
-                    </h2>
-                    {selectedCategory ? (
-                      <p>{selectedCategory.description}</p>
-                    ) : null}
-                  </div>
+                <div>
+                  <h2>
+                    {selectedCategory
+                      ? `${displayTitle(selectedCategory, languageMode)} ${t("Dashboard")}`
+                      : t("Overview Dashboard")}
+                  </h2>
+                  <p>
+                    {selectedCategory
+                      ? selectedCategory.description
+                      : t("Real-time system telemetry and signal status.")}
+                  </p>
                 </div>
                 <div className="desktop-controls">
                   <label className="dashboard-search">
@@ -1610,50 +1123,49 @@ export function DataPlatformHome({
                     language={languageMode}
                     onLanguageChange={selectLanguageMode}
                   />
-                  {!isHistorical ? (
-                    <button
-                      className="icon-button theme-toggle-button refresh-button"
-                      aria-label={t("Refresh data")}
-                      disabled={isRefreshing}
-                      onClick={triggerDataRefresh}
-                      title={t("Refresh data")}
-                      type="button"
-                    >
-                      <span
-                        className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
-                        aria-hidden="true"
-                      >
-                        refresh
-                      </span>
-                    </button>
-                  ) : null}
-                  <NotificationButton
-                    count={recentNotificationCount}
-                    isActive={isEventsExpanded && !isDetailPage}
+                  <ThemeToggleButton
                     language={languageMode}
-                    onClick={openRecentEventsPanel}
-                    tone={recentNotificationTone}
+                    themeMode={themeMode}
+                    onToggle={toggleThemeMode}
                   />
+                  {!isHistorical ? (
                   <button
-                    className="icon-button"
-                    aria-label={t("Sign out")}
-                    onClick={signOut}
-                    title={t("Sign out")}
+                    className="icon-button theme-toggle-button refresh-button"
+                    aria-label={t("Refresh data")}
+                    disabled={isRefreshing}
+                    onClick={triggerDataRefresh}
+                    title={t("Refresh data")}
                     type="button"
                   >
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      logout
+                    <span
+                      className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
+                      aria-hidden="true"
+                    >
+                      refresh
                     </span>
                   </button>
+                  ) : null}
+                  <NotificationButton
+                    count={overallNotificationCount}
+                    isActive={isEventsExpanded && !isDetailPage}
+                    language={languageMode}
+                    onClick={openOverallNotifications}
+                    tone={overallNotificationTone}
+                  />
+                  <span
+                    className="profile-avatar"
+                    aria-label={t("User profile")}
+                  >
+                    AW
+                  </span>
                 </div>
               </div>
             ) : null}
 
-            {visibleOverview ? (
+            {overview ? (
               isWeatherDetail ? (
                 <WeatherDetailView
                   category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
                   history={history.weather}
                   weather={weather}
                 />
@@ -1661,39 +1173,34 @@ export function DataPlatformHome({
                 <AirQualityWorkspace
                   airQuality={airQuality}
                   category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
                   history={history.airQuality}
                 />
               ) : isEnergyDetail ? (
                 <EnergyWorkspace
                   category={selectedCategory}
                   energy={energy}
-                  highlightedEventId={highlightedEventId}
                   history={history.energy}
                   householdEnergy={householdEnergy}
                   householdHistory={history.householdEnergy}
                 />
-              ) : isMobilityDetail ? (
-                <MobilityWorkspace
-                  activeTab={selectedMobilityTab}
-                  highlightedEventId={highlightedEventId}
-                  onTabChange={selectMobilityTab}
-                  roadRail={roadRail}
-                  roadRailCategory={roadRailCategory}
-                  roadRailHistory={history.roadRail}
+              ) : isTransitDetail ? (
+                <TransitWorkspace
+                  category={selectedCategory}
+                  history={history.transit}
                   transit={transit}
-                  transitCategory={transitCategory}
-                  transitHistory={history.transit}
+                />
+              ) : isRoadRailDetail ? (
+                <RoadRailWorkspace
+                  category={selectedCategory}
+                  history={history.roadRail}
+                  roadRail={roadRail}
                 />
               ) : isWaterDetail ? (
                 <WaterSnowWorkspace category={selectedCategory} />
               ) : isCityServicesDetail ? (
                 <CityServicesWorkspace category={selectedCategory} />
               ) : isLinkedEventsDetail ? (
-                <LinkedEventsWorkspace
-                  category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
-                />
+                <LinkedEventsWorkspace category={selectedCategory} />
               ) : isGeospatialDetail ? (
                 <GeospatialWorkspace category={selectedCategory} />
               ) : isRegionalProfileDetail ? (
@@ -1756,7 +1263,7 @@ export function DataPlatformHome({
                     </article>
                   </section>
 
-                  <SourceHealthStrip overview={visibleOverview} />
+                  <SourceHealthStrip overview={overview} />
 
                   <div
                     className={
@@ -1798,7 +1305,7 @@ export function DataPlatformHome({
                               <button
                                 className={`signal-card signal-card-${tone}`}
                                 key={category.key}
-                                onClick={() => selectNav(category.key)}
+                                onClick={() => setSelectedNavKey(category.key)}
                                 type="button"
                               >
                                 <span className="signal-card-top">
@@ -1896,12 +1403,12 @@ export function DataPlatformHome({
                                   {t("Recent Events")}
                                 </span>
                                 <span className="events-count-badge">
-                                  {unreadVisibleEvents.length}
+                                  {visibleEvents.length}
                                 </span>
                               </span>
                               <span className="events-panel-summary">
-                                {latestUnreadEvent
-                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode, t)} · ${latestUnreadEvent.title}`
+                                {latestVisibleEvent
+                                  ? `${eventTimeLabel(categories, latestVisibleEvent, languageMode)} · ${latestVisibleEvent.title}`
                                   : t("No recent events match the current view.")}
                               </span>
                             </span>
@@ -1918,33 +1425,59 @@ export function DataPlatformHome({
                           hidden={!isEventsExpanded}
                           id="recent-events-timeline"
                         >
+                          <section
+                            className={`overall-notification overall-notification-${latestEventTone}`}
+                            aria-label={t("Overall notification")}
+                            aria-live="polite"
+                          >
+                            <div className="overall-notification-main">
+                              <span
+                                className={`events-panel-icon events-panel-icon-${latestEventTone}`}
+                                aria-hidden="true"
+                              >
+                                <span className="material-symbols-outlined">
+                                  {visibleEvents.length > 0
+                                    ? "notifications_active"
+                                    : "notifications_off"}
+                                </span>
+                              </span>
+                              <div className="overall-notification-copy">
+                                <span className="overall-notification-kicker">
+                                  {t("Overall notification")} ·{" "}
+                                  {cityLabel(selectedCity)}
+                                </span>
+                                <strong>{overallNotificationTitle}</strong>
+                                <p>{overallNotificationBody}</p>
+                              </div>
+                            </div>
+                            <div className="overall-notification-meta">
+                              <span>
+                                {t("Updated")}{" "}
+                                {formatTimestamp(
+                                  overview.checked_at,
+                                  "dateTime",
+                                  languageMode,
+                                )}
+                              </span>
+                              <span
+                                className={`status-badge status-badge-${latestEventTone}`}
+                              >
+                                {visibleEvents.length > 0
+                                  ? t("Needs attention")
+                                  : t("Nominal")}
+                              </span>
+                            </div>
+                            <p className="overall-notification-detail">
+                              {overallNotificationDetail}
+                            </p>
+                          </section>
                           {visibleEvents.length > 0 ? (
                             visibleEvents.map((event) => {
                               const tone = severityTone(
                                 event.severity,
                               ) as DashboardTone;
-                              const isRead = readRecentEventIds.has(event.id);
-                              const details = recentEventDetails(
-                                event,
-                                languageMode,
-                                t,
-                              );
                               return (
-                                <button
-                                  className={[
-                                    "timeline-item",
-                                    "timeline-event-button",
-                                    `timeline-item-${tone}`,
-                                    isRead
-                                      ? "timeline-item-read"
-                                      : "timeline-item-unread",
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" ")}
-                                  key={event.id}
-                                  onClick={() => openRecentEvent(event)}
-                                  type="button"
-                                >
+                                <article className="timeline-item" key={event.id}>
                                   <span
                                     className={`timeline-dot timeline-dot-${tone}`}
                                     aria-hidden="true"
@@ -1954,38 +1487,16 @@ export function DataPlatformHome({
                                       categories,
                                       event,
                                       languageMode,
-                                      t,
                                     )}
                                   </time>
-                                  <span className="timeline-item-heading">
-                                    <h4>{event.title}</h4>
-                                    <span
-                                      className={
-                                        isRead
-                                          ? "timeline-read-state timeline-read-state-read"
-                                          : "timeline-read-state timeline-read-state-unread"
-                                      }
-                                    >
-                                      {isRead ? t("Read") : t("Unread")}
-                                    </span>
-                                  </span>
+                                  <h4>{event.title}</h4>
                                   <p>{event.body}</p>
-                                  {details.length > 0 ? (
-                                    <div className="event-detail-chips">
-                                      {details.map((detail) => (
-                                        <span key={detail.key}>
-                                          <strong>{detail.label}</strong>
-                                          {detail.value}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  ) : null}
                                   {event.evidence.length > 0 ? (
                                     <div className="event-tags">
                                       <span>{event.evidence[0]}</span>
                                     </div>
                                   ) : null}
-                                </button>
+                                </article>
                               );
                             })
                           ) : (
@@ -2036,11 +1547,8 @@ export function DataPlatformHome({
             </footer>
           )}
           <AssistantWidget
-            city={selectedCity}
-            date={historicalDate}
             overview={overview}
             language={languageMode}
-            userId={defaultUserId}
           />
         </div>
       </div>

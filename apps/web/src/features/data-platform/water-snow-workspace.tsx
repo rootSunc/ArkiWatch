@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 
+import type { SourceDatasetStructure, SourceNormalizedEventStructure } from "@/features/public-dashboard/types";
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
@@ -12,11 +13,8 @@ import {
   PlatformMetric,
   PlatformTone,
   PlatformVisualizationPoint,
-  PlatformVisualizationTimelineItem,
-  SourceDatasetStructure,
-  SourceNormalizedEventStructure
+  PlatformVisualizationTimelineItem
 } from "./types";
-import { eventAnchorId } from "./recent-events";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
@@ -748,11 +746,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 ) : null}
                 <div className="water-event-list">
                   {timeline.map((item) => (
-	                    <article
-	                      className={`water-event water-event-${eventTone(item)}`}
-	                      id={eventAnchorId(item.id)}
-	                      key={item.id}
-	                    >
+                    <article className={`water-event water-event-${eventTone(item)}`} key={item.id}>
                       <span className="water-event-dot" aria-hidden="true" />
                       <div>
                         <time>{formatCompactTime(item.starts_at, language, t)}</time>

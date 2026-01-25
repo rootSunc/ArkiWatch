@@ -17,11 +17,9 @@ import {
   WeatherWarning
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
-import { eventAnchorId } from "./recent-events";
 
 type WeatherDetailViewProps = {
   category: PlatformCategory | null;
-  highlightedEventId?: string | null;
   history: PlatformHistoricalSnapshot<WeatherForecastResponse>[];
   weather: WeatherForecastResponse | null;
 };
@@ -91,8 +89,6 @@ type ForecastChartScale = {
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const OUTDOOR_MAX_GUST_MS = 14;
 const OUTDOOR_MIN_VISIBILITY_M = 5000;
-const HEAVY_RAIN_PEAK_MM = 5;
-const HEAVY_RAIN_TOTAL_MM = 15;
 const FORECAST_CHART_WIDTH = 1000;
 const FORECAST_CHART_HEIGHT = 220;
 const FORECAST_CHART_TOP = 18;
@@ -408,53 +404,14 @@ function eventTone(event: PlatformEvent): TimelineItem["tone"] {
   return "neutral";
 }
 
-function peakGustPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
-  return (
-    [...points]
-      .filter((point) => point.wind_gust_ms !== null || point.wind_speed_ms !== null)
-      .sort(
-        (left, right) =>
-          (right.wind_gust_ms ?? right.wind_speed_ms ?? 0) -
-          (left.wind_gust_ms ?? left.wind_speed_ms ?? 0),
-      )[0] ?? null
-  );
-}
-
-function lowestVisibilityPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
-  return (
-    [...points]
-      .filter((point) => point.visibility_m !== null)
-      .sort(
-        (left, right) =>
-          (left.visibility_m ?? Number.MAX_SAFE_INTEGER) -
-          (right.visibility_m ?? Number.MAX_SAFE_INTEGER),
-      )[0] ?? null
-  );
-}
-
-function strongestRainWindow(windows: WeatherRainWindow[]): WeatherRainWindow | null {
-  return (
-    [...windows].sort(
-      (left, right) =>
-        Math.max(right.peak_precip_mm, right.total_precip_mm / Math.max(right.hours, 1)) -
-        Math.max(left.peak_precip_mm, left.total_precip_mm / Math.max(left.hours, 1)),
-    )[0] ?? null
-  );
-}
-
 function buildTimelineItems(
   weather: WeatherForecastResponse | null,
   category: PlatformCategory | null,
+  current: WeatherForecastPoint | null,
   language: LanguageMode,
-  t: (value: string) => string,
-  highlightedEventId?: string | null
+  t: (value: string) => string
 ): TimelineItem[] {
   const now = Date.now();
-  const isActiveWindow = (startsAt: string, endsAt: string): boolean => {
-    const startTime = new Date(startsAt).getTime();
-    const endTime = new Date(endsAt).getTime();
-    return Number.isFinite(startTime) && Number.isFinite(endTime) && startTime <= now && endTime >= now;
-  };
   const warningItems =
     weather?.warnings.map((warning, index) => ({
       id: `warning-${index}-${warning.title}`,
@@ -482,46 +439,24 @@ function buildTimelineItems(
       }) ?? [];
 
   const syntheticItems: TimelineItem[] = [];
-  const gustPoint = peakGustPoint(weather?.points ?? []);
-  const peakGust = gustPoint?.wind_gust_ms ?? gustPoint?.wind_speed_ms ?? null;
-  const visibilityPoint = lowestVisibilityPoint(weather?.points ?? []);
-  const minVisibility = visibilityPoint?.visibility_m ?? null;
-  const rainWindow = strongestRainWindow(weather?.rain_windows ?? []);
-
-  if (gustPoint && peakGust !== null && peakGust >= OUTDOOR_MAX_GUST_MS) {
-    const gustEndsAt = new Date(new Date(gustPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
+  if (current && (current.wind_gust_ms ?? current.wind_speed_ms ?? 0) >= OUTDOOR_MAX_GUST_MS) {
     syntheticItems.push({
       id: "gust-advisory",
-      time: formatTimelineTime(gustPoint.timestamp, language),
+      time: formatTimelineTime(current.timestamp, language),
       title: t("High Wind Advisory"),
-      body: `${t("Gusts near")} ${formatNumber(peakGust)} m/s ${t("across the forecast window.")}`,
+      body: `${t("Gusts near")} ${formatNumber(current.wind_gust_ms ?? current.wind_speed_ms)} m/s ${t("across the forecast window.")}`,
       tone: "warn",
-      active: isActiveWindow(gustPoint.timestamp, gustEndsAt)
+      active: true
     });
   }
-  if (visibilityPoint && minVisibility !== null && minVisibility < OUTDOOR_MIN_VISIBILITY_M) {
-    const visibilityEndsAt = new Date(new Date(visibilityPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
+  if (current && current.visibility_m !== null && current.visibility_m < OUTDOOR_MIN_VISIBILITY_M) {
     syntheticItems.push({
       id: "visibility-advisory",
-      time: formatTimelineTime(visibilityPoint.timestamp, language),
+      time: t("ACTIVE NOW"),
       title: t("Reduced Visibility"),
-      body: `${t("Visibility is")} ${formatNumber(minVisibility / 1000)} km. ${t("Slow movement windows may need extra margin.")}`,
+      body: `${t("Visibility is")} ${formatNumber(current.visibility_m / 1000)} km. ${t("Slow movement windows may need extra margin.")}`,
       tone: "bad",
-      active: isActiveWindow(visibilityPoint.timestamp, visibilityEndsAt)
-    });
-  }
-  if (
-    rainWindow &&
-    (rainWindow.peak_precip_mm >= HEAVY_RAIN_PEAK_MM ||
-      rainWindow.total_precip_mm >= HEAVY_RAIN_TOTAL_MM)
-  ) {
-    syntheticItems.push({
-      id: "rain-advisory",
-      time: formatTimelineTime(rainWindow.starts_at, language),
-      title: t("Heavy Rain Advisory"),
-      body: `${t("Peak rain")} ${formatNumber(rainWindow.peak_precip_mm)} mm/h · ${t("Rain total")} ${formatNumber(rainWindow.total_precip_mm)} mm.`,
-      tone: "warn",
-      active: isActiveWindow(rainWindow.starts_at, rainWindow.ends_at)
+      active: true
     });
   }
 
@@ -536,16 +471,7 @@ function buildTimelineItems(
     });
   }
 
-  const items = [...warningItems, ...syntheticItems, ...eventItems];
-  const visibleItems = items.slice(0, 5);
-  const highlightedItem = highlightedEventId
-    ? items.find((item) => item.id === highlightedEventId)
-    : null;
-  if (highlightedItem && !visibleItems.some((item) => item.id === highlightedItem.id)) {
-    return [highlightedItem, ...visibleItems].slice(0, 5);
-  }
-
-  return visibleItems;
+  return [...warningItems, ...syntheticItems, ...eventItems].slice(0, 5);
 }
 
 function chartConfig(mode: ChartMode): ForecastChartConfig {
@@ -1065,12 +991,7 @@ function weatherHistoryPoints(
   });
 }
 
-export function WeatherDetailView({
-  category,
-  highlightedEventId,
-  history,
-  weather,
-}: WeatherDetailViewProps) {
+export function WeatherDetailView({ category, history, weather }: WeatherDetailViewProps) {
   const { language, t } = useI18n();
   const [chartMode, setChartMode] = useState<ChartMode>("temperature");
   const points = useMemo(() => forecastWindow(weather?.points ?? []), [weather]);
@@ -1089,13 +1010,7 @@ export function WeatherDetailView({
         : (nextTrendPoint?.temperature_c ?? current.temperature_c) - current.temperature_c
       : null;
   const trendLabel = previous ? t("Trend 3H") : t("Next 3H");
-  const timelineItems = buildTimelineItems(
-    weather,
-    category,
-    language,
-    t,
-    highlightedEventId,
-  );
+  const timelineItems = buildTimelineItems(weather, category, current, language, t);
   const activeChartConfig = chartConfig(chartMode);
   const chartData = chartPoints(points, chartMode, language);
   const secondaryChartData = activeChartConfig.pairedKey
@@ -1274,11 +1189,7 @@ export function WeatherDetailView({
           <h3>{t("Event Timeline")}</h3>
           <div className="weather-event-list">
             {timelineItems.map((item) => (
-              <article
-                className={`weather-event-item weather-event-${item.tone}`}
-                id={eventAnchorId(item.id)}
-                key={item.id}
-              >
+              <article className={`weather-event-item weather-event-${item.tone}`} key={item.id}>
                 <span className="weather-event-dot" aria-hidden="true" />
                 <time>{item.active ? t("ACTIVE NOW") : item.time}</time>
                 <div>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { SourceDatasetStructure } from "@/features/public-dashboard/types";
 import { formatRelativeAge } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
@@ -8,8 +9,7 @@ import {
   PlatformCategory,
   PlatformMetric,
   PlatformTone,
-  PlatformVisualizationPoint,
-  SourceDatasetStructure
+  PlatformVisualizationPoint
 } from "./types";
 
 type GeospatialWorkspaceProps = {

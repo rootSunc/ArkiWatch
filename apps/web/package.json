@@ -12,15 +12,11 @@
     "check": "pnpm run lint && pnpm run typecheck"
   },
   "dependencies": {
-    "leaflet": "^1.9.4",
     "next": "^14.2.0",
-    "proj4": "^2.20.8",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-leaflet": "^4.2.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.21",
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

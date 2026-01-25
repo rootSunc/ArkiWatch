@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 
@@ -16,24 +15,10 @@ import {
   PlatformHistoricalSnapshot
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
-import { eventAnchorId } from "./recent-events";
-
-const AirQualityStationMap = dynamic(
-  () => import("./air-quality-station-map").then((module) => module.AirQualityStationMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="air-map-frame air-map-frame--loading" aria-busy="true">
-        <span className="air-map-loading-label">…</span>
-      </div>
-    )
-  }
-);
 
 type AirQualityWorkspaceProps = {
   airQuality: AirQualityCurrentResponse | null;
   category: PlatformCategory | null;
-  highlightedEventId?: string | null;
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[];
 };
 
@@ -389,25 +374,61 @@ function renderStationMap(
   language: LanguageMode,
   t: (value: string) => string
 ) {
+  const mappedStations = stations.filter((station) => hasNumber(station.lat) && hasNumber(station.lon));
+  if (mappedStations.length === 0) {
+    return <p>{t("No station coordinates were returned in the latest HSY payload.")}</p>;
+  }
+
+  const latValues = mappedStations.map((station) => station.lat).filter(hasNumber);
+  const lonValues = mappedStations.map((station) => station.lon).filter(hasNumber);
+  const minLat = Math.min(...latValues);
+  const maxLat = Math.max(...latValues);
+  const minLon = Math.min(...lonValues);
+  const maxLon = Math.max(...lonValues);
+  const latRange = maxLat - minLat || 0.01;
+  const lonRange = maxLon - minLon || 0.01;
+
   return (
-    <AirQualityStationMap
-      formatNumber={formatNumber}
-      language={language}
-      scoreLabel={scoreLabel}
-      scoreTone={scoreTone}
-      stationDisplayName={stationDisplayName}
-      stations={stations}
-      t={t}
-    />
+    <>
+      <div className="air-map-frame">
+        <svg aria-hidden="true" className="air-map-svg" focusable="false" viewBox="0 0 100 100">
+          {[25, 50, 75].map((position) => (
+            <g key={position}>
+              <line className="air-map-grid-line" x1={position} x2={position} y1="4" y2="96" />
+              <line className="air-map-grid-line" x1="4" x2="96" y1={position} y2={position} />
+            </g>
+          ))}
+          {mappedStations.map((station) => {
+            const score = station.score ?? 0;
+            const x = 8 + (((station.lon ?? minLon) - minLon) / lonRange) * 84;
+            const y = 92 - (((station.lat ?? minLat) - minLat) / latRange) * 84;
+            const radius = 3.8 + score * 1.2;
+            return (
+              <circle
+                className={`air-map-dot air-map-dot-${scoreTone(station.score)}`}
+                cx={x}
+                cy={y}
+                key={station.station}
+                r={radius}
+              >
+                <title>
+                  {stationDisplayName(station)} · {scoreLabel(station.score, station.label, language, t)}
+                </title>
+              </circle>
+            );
+          })}
+        </svg>
+      </div>
+      <div className="air-map-meta">
+        <span>{mappedStations.length}/{stations.length} {t("mapped")}</span>
+        <span>{formatNumber(minLat, 3)}-{formatNumber(maxLat, 3)} lat</span>
+        <span>{formatNumber(minLon, 3)}-{formatNumber(maxLon, 3)} lon</span>
+      </div>
+    </>
   );
 }
 
-export function AirQualityWorkspace({
-  airQuality,
-  category,
-  highlightedEventId,
-  history,
-}: AirQualityWorkspaceProps) {
+export function AirQualityWorkspace({ airQuality, category, history }: AirQualityWorkspaceProps) {
   const { language, t } = useI18n();
   const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
@@ -434,13 +455,6 @@ export function AirQualityWorkspace({
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const historyPoints = airHistoryPoints(history, t);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
-  const highlightedCategoryEvent =
-    (highlightedEventId
-      ? category?.events.find((event) => event.id === highlightedEventId)
-      : null) ??
-    category?.events[0] ??
-    null;
-  const heroEventAnchorId = highlightedEventId ?? highlightedCategoryEvent?.id ?? null;
 
   return (
     <section className="air-detail-page" aria-label={t("Air-quality detail")}>
@@ -456,10 +470,7 @@ export function AirQualityWorkspace({
       </div>
 
       <section className="air-bento-grid" aria-label={t("Air-quality current condition")}>
-        <article
-          className={`air-glass-panel air-hero air-hero-${currentTone}`}
-          id={heroEventAnchorId ? eventAnchorId(heroEventAnchorId) : undefined}
-        >
+        <article className={`air-glass-panel air-hero air-hero-${currentTone}`}>
           <div className="air-card-kicker">
             <span>{t("Current Network Condition")}</span>
             <time>{airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}</time>
