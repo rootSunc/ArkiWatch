@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -488,7 +489,15 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
 
         <article className="transit-glass-panel transit-severity-panel">
           <header>
-            <span>{t("Severity Mix")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "severity_mix",
+                label: "Severity Mix",
+                t,
+              })}
+            >
+              {t("Severity Mix")}
+            </DataLabelWithHelp>
             <strong>{transit.alerts.length}</strong>
           </header>
           <div className="transit-severity-bars">
@@ -506,27 +515,67 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
 
         <article className="transit-glass-panel transit-scope-panel">
           <header>
-            <span>{t("Alert Scope")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "alert_scope",
+                label: "Alert Scope",
+                t,
+              })}
+            >
+              {t("Alert Scope")}
+            </DataLabelWithHelp>
             <strong>{transit.quality.field_coverage_pct.toFixed(0)}%</strong>
           </header>
           <div className="transit-scope-grid">
             <article>
-              <span>{t("Route scoped")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "route_scoped",
+                  label: "Route scoped",
+                  t,
+                })}
+              >
+                {t("Route scoped")}
+              </DataLabelWithHelp>
               <strong>{transit.quality.route_alert_count}</strong>
               <small>{t("alerts include route ids")}</small>
             </article>
             <article>
-              <span>{t("Stop scoped")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "stop_scoped",
+                  label: "Stop scoped",
+                  t,
+                })}
+              >
+                {t("Stop scoped")}
+              </DataLabelWithHelp>
               <strong>{transit.quality.stop_alert_count}</strong>
               <small>{t("alerts include stop ids")}</small>
             </article>
             <article>
-              <span>{t("Raw decoded")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "raw_decoded",
+                  label: "Raw decoded",
+                  t,
+                })}
+              >
+                {t("Raw decoded")}
+              </DataLabelWithHelp>
               <strong>{transit.quality.raw_alert_count}</strong>
               <small>{t("GTFS-RT alert entities")}</small>
             </article>
             <article>
-              <span>{t("Normalized")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "normalized",
+                  label: "Normalized",
+                  t,
+                })}
+              >
+                {t("Normalized")}
+              </DataLabelWithHelp>
               <strong>{transit.quality.normalized_event_count}</strong>
               <small>{t("stored event rows")}</small>
             </article>
@@ -558,7 +607,15 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
           ["raw_alerts", "Raw Feed"]
         ].map(([key, label]) => (
           <article className="transit-glass-panel" key={key}>
-            <span>{t(label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key,
+                label,
+                t,
+              })}
+            >
+              {t(label)}
+            </DataLabelWithHelp>
             <strong>{metricValue(transit, key)}</strong>
           </article>
         ))}
@@ -670,7 +727,15 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
         <div className="transit-side-grid">
           <article className="transit-glass-panel transit-quality-panel transit-quality-summary">
             <header>
-              <span>{t("Feed Coverage")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "feed_coverage",
+                  label: "Feed Coverage",
+                  t,
+                })}
+              >
+                {t("Feed Coverage")}
+              </DataLabelWithHelp>
               <strong>{formatNumber(transit.quality.field_coverage_pct)}%</strong>
             </header>
             <span className="transit-quality-meter" aria-hidden="true">
@@ -701,7 +766,15 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
             <div className="transit-diagnostics-body">
               <section className="transit-diagnostic-section transit-pipeline-panel">
                 <header>
-                  <span>{t("Pipeline")}</span>
+                  <DataLabelWithHelp
+                    helpText={dataHelpText({
+                      key: "pipeline",
+                      label: "Pipeline",
+                      t,
+                    })}
+                  >
+                    {t("Pipeline")}
+                  </DataLabelWithHelp>
                   <strong>{readyPipelineCount}/{transit.data_pipeline.length}</strong>
                 </header>
                 <div>
@@ -725,7 +798,15 @@ export function TransitWorkspace({ category, history, transit }: TransitWorkspac
 
               <section className="transit-diagnostic-section transit-source-panel">
                 <header>
-                  <span>{t("Source Request")}</span>
+                  <DataLabelWithHelp
+                    helpText={dataHelpText({
+                      key: "source_request",
+                      label: "Source Request",
+                      t,
+                    })}
+                  >
+                    {t("Source Request")}
+                  </DataLabelWithHelp>
                   <strong>{fetchedSourceCount}/{transit.source_requests.length}</strong>
                 </header>
                 <div>

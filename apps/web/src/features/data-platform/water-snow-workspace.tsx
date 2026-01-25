@@ -6,6 +6,7 @@ import type { SourceDatasetStructure, SourceNormalizedEventStructure } from "@/f
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -485,7 +486,15 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
         <article className="water-glass-panel water-coverage-panel">
           <header>
-            <span>{t("Catalog Coverage")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "catalog_coverage",
+                label: "Catalog Coverage",
+                t,
+              })}
+            >
+              {t("Catalog Coverage")}
+            </DataLabelWithHelp>
             <strong>{coverageRows.length || 3}</strong>
           </header>
           <div className="water-coverage-list">
@@ -511,7 +520,15 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
         <article className="water-glass-panel water-field-panel">
           <header>
-            <span>{t("Tracked Fields")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "tracked_fields",
+                label: "Tracked Fields",
+                t,
+              })}
+            >
+              {t("Tracked Fields")}
+            </DataLabelWithHelp>
             <strong>{keyDataItems.length}</strong>
           </header>
           <div className="water-field-grid">
@@ -559,7 +576,16 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
       <section className="water-summary-strip" aria-label={t("Water and snow summary metrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, t)}</strong>
           </article>
         ))}
@@ -681,7 +707,15 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
           <article className="water-glass-panel water-volume-panel">
             <header>
-              <span>{t("Collection Volume")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "collection_volume",
+                  label: "Collection Volume",
+                  t,
+                })}
+              >
+                {t("Collection Volume")}
+              </DataLabelWithHelp>
               <strong>{sourceRows.length}</strong>
             </header>
             <div>
@@ -702,7 +736,15 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
           <article className="water-glass-panel water-event-panel">
             <header>
-              <span>{t("Event Readiness")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "event_readiness",
+                  label: "Event Readiness",
+                  t,
+                })}
+              >
+                {t("Event Readiness")}
+              </DataLabelWithHelp>
               <strong>{events.length}</strong>
             </header>
             {timeline.length > 0 ? (

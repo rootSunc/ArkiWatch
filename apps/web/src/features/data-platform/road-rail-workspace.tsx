@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -396,7 +397,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
 
         <article className="road-rail-glass-panel road-rail-severity-panel">
           <header>
-            <span>{t("Severity Mix")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "severity_mix",
+                label: "Severity Mix",
+                t,
+              })}
+            >
+              {t("Severity Mix")}
+            </DataLabelWithHelp>
             <strong>{roadRail.incidents.length}</strong>
           </header>
           <div className="road-rail-severity-bars">
@@ -414,7 +423,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
 
         <article className="road-rail-glass-panel road-rail-network-panel">
           <header>
-            <span>{t("Network Scope")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "alert_scope",
+                label: "Network Scope",
+                t,
+              })}
+            >
+              {t("Network Scope")}
+            </DataLabelWithHelp>
             <strong>{roadRail.quality.field_coverage_pct.toFixed(0)}%</strong>
           </header>
           <div className="road-rail-network-grid">
@@ -464,7 +481,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
           ["rail_events", "Rail Events"]
         ].map(([key, label]) => (
           <article className="road-rail-glass-panel" key={key}>
-            <span>{t(label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key,
+                label,
+                t,
+              })}
+            >
+              {t(label)}
+            </DataLabelWithHelp>
             <strong>{metricValue(roadRail, key)}</strong>
           </article>
         ))}
@@ -574,7 +599,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
 
           <article className="road-rail-glass-panel road-rail-quality-panel">
             <header>
-              <span>{t("Data Quality")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "data_quality",
+                  label: "Data Quality",
+                  t,
+                })}
+              >
+                {t("Data Quality")}
+              </DataLabelWithHelp>
               <strong>{formatNumber(roadRail.quality.field_coverage_pct)}%</strong>
             </header>
             <span className="road-rail-quality-meter" aria-hidden="true">
@@ -597,7 +630,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
 
           <article className="road-rail-glass-panel road-rail-pipeline-panel">
             <header>
-              <span>{t("Pipeline")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "pipeline",
+                  label: "Pipeline",
+                  t,
+                })}
+              >
+                {t("Pipeline")}
+              </DataLabelWithHelp>
               <strong>
                 {roadRail.data_pipeline.filter((stage) => stage.status === "ready").length}/
                 {roadRail.data_pipeline.length}
@@ -624,7 +665,15 @@ export function RoadRailWorkspace({ category, history, roadRail }: RoadRailWorks
 
           <article className="road-rail-glass-panel road-rail-source-panel">
             <header>
-              <span>{t("Source Requests")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "source_request",
+                  label: "Source Requests",
+                  t,
+                })}
+              >
+                {t("Source Requests")}
+              </DataLabelWithHelp>
               <strong>
                 {roadRail.source_requests.filter((request) => request.status === "fetched").length}/
                 {roadRail.source_requests.length}

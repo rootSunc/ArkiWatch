@@ -4,6 +4,7 @@ import type { SourceDatasetStructure } from "@/features/public-dashboard/types";
 import { formatRelativeAge } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -376,7 +377,16 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
       <section className="water-summary-strip" aria-label={t("Geospatial summary metrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, t)}</strong>
           </article>
         ))}
@@ -498,7 +508,15 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
 
           <article className="water-glass-panel water-volume-panel">
             <header>
-              <span>{t("Ingested Layers Volume")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "collection_volume",
+                  label: "Ingested Layers Volume",
+                  t,
+                })}
+              >
+                {t("Ingested Layers Volume")}
+              </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
             <div>

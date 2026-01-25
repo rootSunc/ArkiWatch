@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -1091,7 +1092,16 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
                 <span className="material-symbols-outlined" aria-hidden="true">
                   {card.icon}
                 </span>
-                {card.label}
+                <DataLabelWithHelp
+                  helpText={dataHelpText({
+                    key: card.key,
+                    label: card.label,
+                    detail: card.detail,
+                    t,
+                  })}
+                >
+                  {card.label}
+                </DataLabelWithHelp>
               </div>
               <div>
                 <strong>
@@ -1121,7 +1131,15 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
           return value ? [{ key, label, value }] : [];
         }).map((item) => (
           <article className="weather-glass-panel" key={item.key}>
-            <span>{t(item.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: item.key,
+                label: item.label,
+                t,
+              })}
+            >
+              {t(item.label)}
+            </DataLabelWithHelp>
             <strong>{item.value}</strong>
           </article>
         ))}
@@ -1205,7 +1223,15 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
       <section className="weather-ops-grid" aria-label={t("Weather operations data")}>
         <article className="weather-glass-panel weather-rain-window-panel">
           <header>
-            <span>{t("Rain Windows")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "rain_windows",
+                label: "Rain Windows",
+                t,
+              })}
+            >
+              {t("Rain Windows")}
+            </DataLabelWithHelp>
             <strong>{weather.rain_windows.length}</strong>
           </header>
           <div>
@@ -1234,7 +1260,15 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
 
         <article className="weather-glass-panel weather-quality-panel">
           <header>
-            <span>{t("Data Quality")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "data_quality",
+                label: "Data Quality",
+                t,
+              })}
+            >
+              {t("Data Quality")}
+            </DataLabelWithHelp>
             <strong>{formatNumber(weather.quality.field_coverage_pct, 0)}%</strong>
           </header>
           <span className="weather-quality-meter" aria-hidden="true">
@@ -1253,7 +1287,15 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
 
         <article className="weather-glass-panel weather-pipeline-panel">
           <header>
-            <span>{t("Pipeline")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "pipeline",
+                label: "Pipeline",
+                t,
+              })}
+            >
+              {t("Pipeline")}
+            </DataLabelWithHelp>
             <strong>
               {weather.data_pipeline.filter((stage) => stage.status === "ready").length}/
               {weather.data_pipeline.length}
@@ -1280,7 +1322,15 @@ export function WeatherDetailView({ category, history, weather }: WeatherDetailV
 
         <article className="weather-glass-panel weather-source-panel">
           <header>
-            <span>{t("Source Layers")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "source_layers",
+                label: "Source Layers",
+                t,
+              })}
+            >
+              {t("Source Layers")}
+            </DataLabelWithHelp>
             <strong>
               {weather.source_layers.filter((layer) => layer.status === "ready").length}/
               {weather.source_layers.length}

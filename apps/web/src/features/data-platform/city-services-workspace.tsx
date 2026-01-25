@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 
 import { formatRelativeAge, formatTimestamp, severityTone } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -276,7 +277,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
 
         <article className="city-glass-panel city-readiness-panel">
           <header>
-            <span>{t("Source Readiness")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "source_readiness",
+                label: "Source Readiness",
+                t,
+              })}
+            >
+              {t("Source Readiness")}
+            </DataLabelWithHelp>
             <strong>{readySources}/{category.sources.length}</strong>
           </header>
           <div className="city-readiness-stack">
@@ -299,7 +308,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
 
         <article className="city-glass-panel city-field-panel">
           <header>
-            <span>{t("Service Model")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "tracked_fields",
+                label: "Service Model",
+                t,
+              })}
+            >
+              {t("Service Model")}
+            </DataLabelWithHelp>
             <strong>{fieldCount}</strong>
           </header>
           <div className="city-field-grid">
@@ -316,7 +333,16 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
       <section className="city-summary-strip" aria-label={t("City service summary metrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`city-glass-panel city-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, t)}</strong>
           </article>
         ))}
@@ -382,7 +408,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
         <div className="city-side-grid">
           <article className="city-glass-panel city-source-panel">
             <header>
-              <span>{t("Catalog Sources")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "data_sources",
+                  label: "Catalog Sources",
+                  t,
+                })}
+              >
+                {t("Catalog Sources")}
+              </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
             <div className="city-source-stack">
@@ -405,7 +439,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
 
           <article className="city-glass-panel city-coverage-panel">
             <header>
-              <span>{t("Coverage Lattice")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "catalog_coverage",
+                  label: "Coverage Lattice",
+                  t,
+                })}
+              >
+                {t("Coverage Lattice")}
+              </DataLabelWithHelp>
               <strong>{CITY_SERVICE_FIELDS.length}</strong>
             </header>
             <div className="city-coverage-grid">
@@ -421,7 +463,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
 
           <article className="city-glass-panel city-event-model-panel">
             <header>
-              <span>{t("Event Model")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "normalized_event",
+                  label: "Event Model",
+                  t,
+                })}
+              >
+                {t("Event Model")}
+              </DataLabelWithHelp>
               <strong>{eventModels.length || visualizations.length}</strong>
             </header>
             <div>

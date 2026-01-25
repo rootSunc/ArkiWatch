@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatRelativeAge } from "@/features/shared/format";
 import type { DashboardSource } from "@/features/public-dashboard/types";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   EnergyCurrentResponse,
@@ -668,7 +669,15 @@ export function EnergyWorkspace({
 
         <article className="energy-glass-panel energy-window-panel">
           <header>
-            <span>{t("Window State")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "window_state",
+                label: "Window State",
+                t,
+              })}
+            >
+              {t("Window State")}
+            </DataLabelWithHelp>
             <strong>{hasActiveWindow ? t("Ready") : t("Pending")}</strong>
           </header>
           <div className="energy-window-stack">
@@ -711,7 +720,15 @@ export function EnergyWorkspace({
 
         <article className="energy-glass-panel energy-field-panel">
           <header>
-            <span>{t("Tracked Fields")}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "tracked_fields",
+                label: "Tracked Fields",
+                t,
+              })}
+            >
+              {t("Tracked Fields")}
+            </DataLabelWithHelp>
             <strong>{fieldCount}</strong>
           </header>
           <div className="energy-field-grid">
@@ -728,7 +745,16 @@ export function EnergyWorkspace({
       <section className="energy-summary-strip" aria-label={t("Energy summary metrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`energy-glass-panel energy-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: "detail" in metric ? metric.detail : null,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, t)}</strong>
           </article>
         ))}
@@ -749,7 +775,15 @@ export function EnergyWorkspace({
         <article className="energy-glass-panel energy-signal-panel">
           <header>
             <div>
-              <span>{isPricePanel ? t("Household Price Forecast") : t("Fingrid System Timeseries")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: isPricePanel ? "best_price" : "best_window",
+                  label: isPricePanel ? "Household Price Forecast" : "Fingrid System Timeseries",
+                  t,
+                })}
+              >
+                {isPricePanel ? t("Household Price Forecast") : t("Fingrid System Timeseries")}
+              </DataLabelWithHelp>
               <h3>{isPricePanel
                 ? t("Spot price by time and estimated flexible-use cost")
                 : t("Configured Fingrid dataset by time and selected low-value window")}</h3>
@@ -916,7 +950,15 @@ export function EnergyWorkspace({
 
           <article className="energy-glass-panel energy-volume-panel">
             <header>
-              <span>{t("Collection Volume")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "collection_volume",
+                  label: "Collection Volume",
+                  t,
+                })}
+              >
+                {t("Collection Volume")}
+              </DataLabelWithHelp>
               <strong>{activeVolumePoints.length}</strong>
             </header>
             <div>
@@ -937,7 +979,15 @@ export function EnergyWorkspace({
 
           <article className="energy-glass-panel energy-severity-panel">
             <header>
-              <span>{t("Data Quality")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "data_quality",
+                  label: "Data Quality",
+                  t,
+                })}
+              >
+                {t("Data Quality")}
+              </DataLabelWithHelp>
               <strong>{activeEnergy ? `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%` : severityRows.length}</strong>
             </header>
             {activeEnergy ? (

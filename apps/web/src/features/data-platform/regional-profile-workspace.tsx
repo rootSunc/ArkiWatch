@@ -3,6 +3,7 @@
 import { formatRelativeAge } from "@/features/shared/format";
 
 import { formatDataItemLabel } from "./category-metadata";
+import { DataHelpIcon, DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -366,7 +367,16 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
       <section className="water-summary-strip" aria-label={t("Regional profile summary metrics")}>
         {signalMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
-            <span>{t(metric.label)}</span>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, t)}</strong>
           </article>
         ))}
@@ -394,7 +404,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                   <th>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                       {t("Morbidity Score")}
-                      <span className="material-symbols-outlined" style={{ fontSize: "0.95rem" }} title={t("lower is healthier")}>info</span>
+                      <DataHelpIcon text={t("lower is healthier")} />
                     </div>
                   </th>
                 </tr>
@@ -474,7 +484,15 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
 
           <article className="water-glass-panel water-volume-panel">
             <header>
-              <span>{t("Indicators Table Volume")}</span>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "collection_volume",
+                  label: "Indicators Table Volume",
+                  t,
+                })}
+              >
+                {t("Indicators Table Volume")}
+              </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
             <div>
