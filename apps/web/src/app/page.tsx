@@ -9,6 +9,7 @@ type PageProps = {
   searchParams?: {
     city?: string;
     date?: string;
+    view?: string;
   };
 };
 
@@ -25,6 +26,7 @@ export default async function Page({ searchParams }: PageProps) {
       defaultUserId={defaultUserId}
       initialCity={selectedCity}
       initialDate={selectedDate}
+      initialView={searchParams?.view ?? null}
       energy={energy}
       householdEnergy={householdEnergy}
       history={history}

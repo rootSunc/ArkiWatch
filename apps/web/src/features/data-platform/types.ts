@@ -24,6 +24,7 @@ export type PlatformMetric = {
 export type PlatformEvent = {
   id: string;
   category_key: string;
+  event_type: string;
   title: string;
   body: string;
   severity: string;
@@ -221,6 +222,7 @@ export type AirQualityStation = {
   station: string;
   label: string;
   score: number | null;
+  european_aqi: number | null;
   pm2_5: number | null;
   pm10: number | null;
   no2: number | null;

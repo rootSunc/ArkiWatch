@@ -1,4 +1,5 @@
 import { categoryKeyDataItems, formatDataItemLabel } from "./category-metadata";
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { PlatformCategory, PlatformMetric } from "./types";
 
 type CategoryOverviewGridProps = {
@@ -74,7 +75,15 @@ export function CategoryOverviewGrid({ categories, onSelect }: CategoryOverviewG
             <div className="category-metric-preview" aria-label={`${category.title} key metrics`}>
               {metrics.map((metric) => (
                 <div className={`metric-preview metric-preview-${metric.tone}`} key={metric.key}>
-                  <span>{metric.label}</span>
+                  <DataLabelWithHelp
+                    helpText={dataHelpText({
+                      key: metric.key,
+                      label: metric.label,
+                      detail: metric.detail,
+                    })}
+                  >
+                    {metric.label}
+                  </DataLabelWithHelp>
                   <strong>{metricValue(metric)}</strong>
                 </div>
               ))}

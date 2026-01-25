@@ -1,5 +1,6 @@
 import { formatTimestamp } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { PlatformMetric } from "./types";
 
 type MetricCardProps = {
@@ -10,7 +11,16 @@ export function MetricCard({ metric }: MetricCardProps) {
   return (
     <article className={`metric-card metric-card-${metric.tone}`}>
       <div>
-        <span className="label-text">{metric.label}</span>
+        <DataLabelWithHelp
+          className="label-text"
+          helpText={dataHelpText({
+            key: metric.key,
+            label: metric.label,
+            detail: metric.detail,
+          })}
+        >
+          {metric.label}
+        </DataLabelWithHelp>
         <strong>
           {metric.value}
           {metric.unit ? <small>{metric.unit}</small> : null}

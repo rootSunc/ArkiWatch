@@ -11,7 +11,7 @@ const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
     "radar_nowcast",
     "validity_window"
   ],
-  air: ["air_quality_index", "pm2_5", "pm10", "no2", "station_location"],
+  air: ["air_quality_index", "european_aqi", "pm2_5", "pm10", "no2", "station_location"],
   transit: ["route_id", "trip_id", "stop_id", "arrival_prediction", "service_alert"],
   energy: ["spot_price", "price_forecast", "consumption", "generation_forecast", "low_value_window"],
   traffic: ["traffic_message", "road_weather", "traffic_volume", "average_speed", "train_status"],
