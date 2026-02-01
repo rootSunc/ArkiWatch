@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
@@ -11,9 +11,11 @@ import {
   PlatformTimeScope,
   PlatformTone,
 } from "./types";
+import { eventAnchorId } from "./recent-events";
 
 type LinkedEventsWorkspaceProps = {
   category: PlatformCategory | null;
+  highlightedEventId?: string | null;
   checkedAt?: string | null;
   timeScope?: PlatformTimeScope | null;
 };
@@ -439,7 +441,12 @@ function eventLinks(event: PlatformEvent | null, t: (value: string) => string): 
   });
 }
 
-export function LinkedEventsWorkspace({ category, checkedAt, timeScope }: LinkedEventsWorkspaceProps) {
+export function LinkedEventsWorkspace({
+  category,
+  checkedAt,
+  highlightedEventId,
+  timeScope,
+}: LinkedEventsWorkspaceProps) {
   const { language, t } = useI18n();
   const [filter, setFilter] = useState<EventFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<EventCategoryKey>("all");
@@ -486,6 +493,22 @@ export function LinkedEventsWorkspace({ category, checkedAt, timeScope }: Linked
     }
     return result;
   }, [filter, sortedEvents, categoryFilter, activeKeyword, activeVenue, searchText, referenceDate, t]);
+
+  useEffect(() => {
+    if (!highlightedEventId) {
+      return;
+    }
+
+    const highlighted = sortedEvents.find((event) => event.id === highlightedEventId);
+    if (!highlighted) {
+      return;
+    }
+
+    setFilter("all");
+    setActiveKeyword(null);
+    setActiveVenue(null);
+    setSelectedEventId(highlighted.id);
+  }, [highlightedEventId, sortedEvents]);
 
   const selectedEvent =
     filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? sortedEvents[0] ?? null;
@@ -762,14 +785,15 @@ export function LinkedEventsWorkspace({ category, checkedAt, timeScope }: Linked
                 const tone = severityTone(event.severity) as EventTone;
                 const keywords = attributeList(event, "keywords").slice(0, 3);
                 return (
-                  <button
-                    className={
-                      isSelected
-                        ? `linked-events-row linked-events-row-${tone} linked-events-row-selected`
-                        : `linked-events-row linked-events-row-${tone}`
-                    }
-                    key={event.id}
-                    onClick={() => setSelectedEventId(event.id)}
+	                  <button
+	                    className={
+	                      isSelected
+	                        ? `linked-events-row linked-events-row-${tone} linked-events-row-selected`
+	                        : `linked-events-row linked-events-row-${tone}`
+	                    }
+	                    id={eventAnchorId(event.id)}
+	                    key={event.id}
+	                    onClick={() => setSelectedEventId(event.id)}
                     type="button"
                   >
                     <span className="linked-events-date-rail">

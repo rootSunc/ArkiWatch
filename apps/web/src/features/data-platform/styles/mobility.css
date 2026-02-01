@@ -1,0 +1,53 @@
+.mobility-detail-page {
+  display: grid;
+  gap: 16px;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+
+.mobility-tab-list {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  background: var(--surface-container-low);
+  overflow-x: auto;
+}
+
+.mobility-tab {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 16px;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.mobility-tab:hover {
+  background: var(--surface-variant);
+  color: var(--on-surface);
+}
+
+.mobility-tab-active {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.mobility-tab .material-symbols-outlined {
+  flex: 0 0 auto;
+  font-size: 20px;
+}

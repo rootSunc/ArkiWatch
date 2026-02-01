@@ -560,13 +560,138 @@
 
 .air-map-frame {
   position: relative;
-  min-height: 210px;
+  min-height: 260px;
   overflow: hidden;
   border: 1px solid var(--detail-panel-border-strong);
   border-radius: 4px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--success) 12%, transparent), transparent 52%),
     var(--detail-panel-bg);
+}
+
+.air-map-frame--leaflet {
+  background: var(--detail-panel-bg);
+}
+
+.air-map-frame--loading {
+  display: grid;
+  place-items: center;
+}
+
+.air-map-loading-label {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.air-map-leaflet {
+  width: 100%;
+  height: 260px;
+  z-index: 0;
+}
+
+.air-map-leaflet .leaflet-tooltip.air-map-station-tooltip {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--detail-panel-bg) 94%, transparent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  color: var(--on-background);
+  padding: 5px 7px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.air-map-station-tooltip-name {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.air-map-station-tooltip-coords {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.air-map-station-popup-body {
+  display: grid;
+  gap: 6px;
+}
+
+.air-map-station-popup-body strong {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.air-map-station-popup-id {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.air-map-station-popup-quality {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+}
+
+.air-map-station-popup-coords {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.air-map-station-popup-coords div {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+}
+
+.air-map-station-popup-coords dt {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.air-map-station-popup-coords dd {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 16px;
+  margin: 0;
+}
+
+.air-map-leaflet .leaflet-control-attribution {
+  margin: 0;
+  border-radius: 4px 0 0 0;
+  background: color-mix(in srgb, var(--detail-panel-bg) 88%, transparent);
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.air-map-leaflet .leaflet-control-attribution a {
+  color: var(--primary);
+}
+
+.air-map-leaflet .leaflet-popup-content-wrapper,
+.air-map-leaflet .leaflet-popup-tip {
+  background: var(--detail-panel-bg);
+  color: var(--on-background);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.air-map-leaflet .leaflet-popup-content {
+  margin: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .air-map-svg {

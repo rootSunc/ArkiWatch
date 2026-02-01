@@ -12,6 +12,7 @@ import {
   PlatformMetric,
   PlatformTone
 } from "./types";
+import { eventAnchorId } from "./recent-events";
 
 type CityServicesWorkspaceProps = {
   category: PlatformCategory | null;
@@ -363,7 +364,11 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
               category.events.slice(0, 8).map((event) => {
                 const tone = severityTone(event.severity) as CityTone;
                 return (
-                  <article className={`city-service-row city-service-row-${tone}`} key={event.id}>
+	                  <article
+	                    className={`city-service-row city-service-row-${tone}`}
+	                    id={eventAnchorId(event.id)}
+	                    key={event.id}
+	                  >
                     <span className="city-service-dot" aria-hidden="true" />
                     <div className="city-service-main">
                       <div>

@@ -49,6 +49,26 @@
     z-index: 2;
   }
 
+  .dashboard-side-nav.dashboard-side-nav-hidden {
+    display: none;
+  }
+
+  .side-nav-collapse-button,
+  .side-nav-restore-button {
+    display: inline-flex;
+  }
+
+  .side-nav-restore-button {
+    background: var(--surface-container);
+    color: var(--primary);
+  }
+
+  .side-nav-restore-button:hover,
+  .side-nav-restore-button:focus-visible {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+
   .mobile-dashboard-header,
   .mobile-dashboard-footer {
     display: none;
@@ -56,10 +76,17 @@
 
   .desktop-dashboard-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 24px;
     margin-bottom: 24px;
+  }
+
+  .desktop-controls {
+    flex: 0 1 auto;
+    justify-content: flex-start;
+    padding-bottom: 2px;
   }
 
   .detail-topbar {
@@ -78,6 +105,7 @@
   .air-bento-grid,
   .air-main-grid,
   .energy-bento-grid,
+  .energy-overview-grid,
   .energy-main-grid,
   .road-rail-bento-grid,
   .road-rail-main-grid,
@@ -119,6 +147,15 @@
 
   .energy-field-panel {
     grid-column: span 4;
+  }
+
+  .energy-overview-grid {
+    grid-template-columns: minmax(0, 7fr) minmax(288px, 5fr);
+  }
+
+  .energy-overview-grid .energy-hero,
+  .energy-overview-grid .energy-summary-stack {
+    grid-column: auto;
   }
 
   .road-rail-hero {
@@ -211,7 +248,7 @@
   }
 
   .energy-signal-panel {
-    grid-column: span 8;
+    grid-column: span 12;
   }
 
   .energy-side-grid {
@@ -227,7 +264,7 @@
   }
 
   .transit-alert-panel {
-    grid-column: span 8;
+    grid-column: span 12;
   }
 
   .transit-side-grid {
@@ -317,12 +354,57 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1199px) {
+  .detail-topbar {
+    justify-content: flex-start;
+    gap: 8px 16px;
+    padding: 10px 16px;
+  }
+
+  .detail-topbar-brand strong {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .detail-topbar nav {
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .detail-topbar nav button {
+    padding: 6px 8px;
+  }
+
+  .detail-topbar-actions {
+    width: 100%;
+    flex: 0 0 100%;
+    padding-bottom: 2px;
+  }
+
+  .desktop-controls {
+    width: 100%;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (min-width: 1024px) and (max-width: 1199px) {
   .linked-events-hero,
   .linked-events-filter-panel,
   .linked-events-category-panel,
   .linked-events-source-panel {
     grid-column: span 6;
+  }
+}
+
+@media (min-width: 1200px) {
+  .desktop-dashboard-header {
+    align-items: center;
+  }
+
+  .desktop-controls {
+    width: auto;
+    flex: 0 1 auto;
   }
 }
 
@@ -362,11 +444,11 @@
   }
 
   .energy-signal-panel {
-    grid-column: span 7;
+    grid-column: span 12;
   }
 
   .energy-side-grid {
-    grid-column: span 5;
+    grid-column: span 3;
   }
 
   .road-rail-incident-panel {
@@ -378,7 +460,7 @@
   }
 
   .transit-alert-panel {
-    grid-column: span 7;
+    grid-column: span 12;
   }
 
   .transit-side-grid {
@@ -411,6 +493,14 @@
 }
 
 @media (min-width: 1280px) {
+  .energy-signal-panel {
+    grid-column: span 12;
+  }
+
+  .energy-side-grid {
+    grid-column: span 2;
+  }
+
   .signal-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -435,7 +525,7 @@
     padding: 0 0 16px;
   }
 
-  .brand-panel > div:last-child,
+  .brand-panel .brand-copy,
   .nav-row span:last-child {
     position: absolute;
     width: 1px;
@@ -481,6 +571,8 @@
     display: grid;
     width: 100%;
     min-width: 0;
+    align-items: center;
+    flex-wrap: nowrap;
     gap: 6px;
     overflow: visible;
     padding-bottom: 0;
@@ -516,8 +608,6 @@
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     padding-bottom: 2px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
   }
 
   .mobile-utility-actions::-webkit-scrollbar {
@@ -543,10 +633,6 @@
     gap: 2px;
     padding: 3px;
     border-radius: 10px;
-  }
-
-  .language-switcher > .material-symbols-outlined {
-    display: none;
   }
 
   .language-option {
@@ -700,6 +786,10 @@
     gap: 10px;
   }
 
+  .source-health-panel {
+    padding: 10px 46px 10px 10px;
+  }
+
   .source-health-strip {
     display: flex;
     flex-wrap: nowrap;
@@ -828,6 +918,7 @@
   .air-pollutant-row,
   .air-quality-facts,
   .energy-chart-context,
+  .energy-summary-stack,
   .energy-secondary-tabs,
   .energy-field-grid,
   .energy-source-facts,
@@ -839,6 +930,8 @@
   .transit-scope-bar,
   .transit-scope-grid,
   .transit-timeband-row,
+  .transit-alert-detail-meta,
+  .transit-alert-detail-scope,
   .transit-quality-facts,
   .water-field-grid,
   .water-guidance-row,
@@ -942,6 +1035,20 @@
     flex-direction: column;
   }
 
+  .transit-alert-pager,
+  .transit-alert-detail header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .transit-alert-list {
+    grid-auto-columns: minmax(240px, 86vw);
+  }
+
+  .transit-timeband-list {
+    grid-auto-columns: minmax(220px, 82vw);
+  }
+
   .city-current-cluster {
     align-items: flex-start;
     flex-direction: column;
@@ -1034,6 +1141,7 @@
     left: 0;
     width: min(82vw, 304px);
     height: 100dvh;
+    flex-direction: column;
     background: var(--surface-container-lowest);
     border-right: 1px solid var(--outline-variant);
     z-index: 1100;
@@ -1042,7 +1150,7 @@
     animation: sideNavSlideIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .dashboard-side-nav.mobile-side-nav-open .brand-panel > div:last-child,
+  .dashboard-side-nav.mobile-side-nav-open .brand-panel .brand-copy,
   .dashboard-side-nav.mobile-side-nav-open .nav-row span:last-child {
     position: static;
     width: auto;

@@ -41,6 +41,10 @@ function formatValue(
   unit: string | null | undefined,
   maximumFractionDigits: number
 ): string {
+  if (unit?.toUpperCase() === "EUR") {
+    return `EUR ${formatNumber(value, maximumFractionDigits)}`;
+  }
+
   const suffix = unit ? ` ${unit}` : "";
   return `${formatNumber(value, maximumFractionDigits)}${suffix}`;
 }
