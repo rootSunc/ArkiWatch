@@ -582,3 +582,57 @@ export type PlatformHistoryApiResponse = {
   road_rail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
   transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
 };
+
+export type PublicActionRead = {
+  id: string;
+  scenario_key: string;
+  title: string;
+  body: string;
+  severity: string;
+  area_scope: string;
+  freshness_state: string;
+  valid_from: string;
+  valid_to: string;
+  evidence: string[];
+};
+
+export type PublicScenarioSectionRead = {
+  key: string;
+  title: string;
+  description: string;
+  status_label: string;
+  area_scope: string;
+  freshness_state: string;
+  valid_from: string;
+  valid_to: string;
+  evidence: string[];
+  source_codes: string[];
+  recommendation: PublicActionRead;
+};
+
+export type PublicTimelineItemRead = {
+  scenario_key: string;
+  label: string;
+  severity: string;
+  starts_at: string;
+  ends_at: string;
+};
+
+export type ScenarioChannelRead = {
+  scenario_key: string;
+  title: string;
+  description: string;
+};
+
+export type PublicDashboardRead = {
+  checked_at: string;
+  app_name: string;
+  timezone: string;
+  coverage_area: string;
+  top_actions: PublicActionRead[];
+  scenario_channels: ScenarioChannelRead[];
+  scenario_sections: PublicScenarioSectionRead[];
+  timeline: PublicTimelineItemRead[];
+  broadcasts: PublicActionRead[];
+  sources: DashboardSource[];
+};

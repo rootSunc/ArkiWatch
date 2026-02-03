@@ -7,6 +7,7 @@ import {
   PlatformHistoryApiResponse,
   PlatformHistoryResponse,
   PlatformOverviewResponse,
+  PublicDashboardRead,
   RoadRailCurrentResponse,
   TransitCurrentResponse,
   WeatherForecastResponse
@@ -18,6 +19,7 @@ export type PlatformFetchResult = {
   apiBaseUrl: string;
   defaultUserId: string;
   overview: PlatformOverviewResponse | null;
+  publicDashboard: PublicDashboardRead | null;
   weather: WeatherForecastResponse | null;
   airQuality: AirQualityCurrentResponse | null;
   energy: EnergyCurrentResponse | null;
@@ -119,6 +121,7 @@ export async function fetchPlatformHome(
   const roadRailUrl = new URL(`${apiBaseUrl}/traffic/current`);
   const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
   const historyUrl = new URL(`${apiBaseUrl}/platform/history`);
+  const publicDashboardUrl = new URL(`${apiBaseUrl}/public/dashboard`);
 
   if (userId) {
     overviewUrl.searchParams.set("user_id", userId);
@@ -139,22 +142,33 @@ export async function fetchPlatformHome(
     }
   }
 
-  const [overviewResult, weatherResult, airQualityResult, energyResult, householdEnergyResult, roadRailResult, transitResult, historyResult] =
-    await Promise.all([
-      fetchJson<PlatformOverviewResponse>(overviewUrl, options.authToken),
-      fetchJson<WeatherForecastResponse>(weatherUrl, options.authToken),
-      fetchJson<AirQualityCurrentResponse>(airQualityUrl, options.authToken),
-      fetchJson<EnergyCurrentResponse>(energyUrl, options.authToken),
-      fetchJson<EnergyCurrentResponse>(householdEnergyUrl, options.authToken),
-      fetchJson<RoadRailCurrentResponse>(roadRailUrl, options.authToken),
-      fetchJson<TransitCurrentResponse>(transitUrl, options.authToken),
-      fetchJson<PlatformHistoryApiResponse>(historyUrl, options.authToken)
-    ]);
+  const [
+    overviewResult,
+    publicDashboardResult,
+    weatherResult,
+    airQualityResult,
+    energyResult,
+    householdEnergyResult,
+    roadRailResult,
+    transitResult,
+    historyResult
+  ] = await Promise.all([
+    fetchJson<PlatformOverviewResponse>(overviewUrl, options.authToken),
+    fetchJson<PublicDashboardRead>(publicDashboardUrl, options.authToken),
+    fetchJson<WeatherForecastResponse>(weatherUrl, options.authToken),
+    fetchJson<AirQualityCurrentResponse>(airQualityUrl, options.authToken),
+    fetchJson<EnergyCurrentResponse>(energyUrl, options.authToken),
+    fetchJson<EnergyCurrentResponse>(householdEnergyUrl, options.authToken),
+    fetchJson<RoadRailCurrentResponse>(roadRailUrl, options.authToken),
+    fetchJson<TransitCurrentResponse>(transitUrl, options.authToken),
+    fetchJson<PlatformHistoryApiResponse>(historyUrl, options.authToken)
+  ]);
 
   return {
     apiBaseUrl,
     defaultUserId: userId,
     overview: filterPlatformOverviewForCurrentUser(overviewResult.data),
+    publicDashboard: publicDashboardResult.data,
     weather: weatherResult.data,
     airQuality: airQualityResult.data,
     energy: energyResult.data,
@@ -164,6 +178,7 @@ export async function fetchPlatformHome(
     transit: transitResult.data,
     error:
       overviewResult.error ??
+      publicDashboardResult.error ??
       weatherResult.error ??
       airQualityResult.error ??
       energyResult.error ??
