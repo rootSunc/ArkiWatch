@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode } from "@/features/data-platform/i18n";
 
@@ -47,12 +48,13 @@ type AssistantStreamEvent = {
 
 const WIDGET_TRANSLATIONS = {
   en: {
-    welcome: "Hello! I am your AI Data Assistant. I can help explain telemetry records, sensor statuses, and system alerts.",
+    welcome:
+      "Hello! I am your ArkiWatch Data Explainer. Ask about weather, air quality, energy, traffic, sources, or what the current snapshot means — I answer from live platform data and stay on topic.",
     explainCurrent: "Explain the current page's data",
     analyzeCategory: (category: string) => `Analyze ${category} data`,
     whichSourceAbnormal: "Which data source is abnormal recently?",
     whichExpansionPlanned: "What expansion directions are being planned?",
-    askPlaceholder: "Ask about the current data...",
+    askPlaceholder: "Ask about current conditions, sources, or this page...",
     send: "Send",
     title: "AI Assistant",
     subtitle: "Data Explainer",
@@ -64,12 +66,13 @@ const WIDGET_TRANSLATIONS = {
     offlinePrompt: "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
   },
   zh: {
-    welcome: "您好！我是您的 AI 数据助手。我可以帮您解释当前平台的遥测数据、传感器运行状态以及系统警报。",
+    welcome:
+      "您好！我是 ArkiWatch 数据解析助手。可询问天气、空气质量、能源、交通、数据源状态，或当前快照的含义；我会结合平台数据直接作答。",
     explainCurrent: "解释当前页面的数据",
     analyzeCategory: (category: string) => `分析 ${category} 数据`,
     whichSourceAbnormal: "哪个数据源最近异常？",
     whichExpansionPlanned: "哪些扩展方向还在规划？",
-    askPlaceholder: "询问关于当前数据的任何问题...",
+    askPlaceholder: "询问当前状况、数据源或本页数据…",
     send: "发送",
     title: "AI 助手",
     subtitle: "数据解析器",
@@ -219,6 +222,11 @@ export function AssistantWidget({
       return currentMessages;
     });
   }, [t.welcome]);
+
+  const hasUserMessages = useMemo(
+    () => messages.some((message) => message.role === "user"),
+    [messages],
+  );
 
   const suggestedQuestions = useMemo(() => {
     if (!overview) {
@@ -411,7 +419,11 @@ export function AssistantWidget({
 
               return (
                 <article className={`assistant-message assistant-message-${message.role}`} key={message.id}>
-                  <span>{message.text}</span>
+                  {message.role === "assistant" ? (
+                    <AssistantMessageBody text={message.text} />
+                  ) : (
+                    <span>{message.text}</span>
+                  )}
                   {message.role === "assistant" && message.citations?.length ? (
                     <footer className="assistant-citations">
                       <span>{t.basis}</span>
@@ -433,20 +445,22 @@ export function AssistantWidget({
             ) : null}
           </div>
           
-          <div className="assistant-suggestions">
-            {suggestedQuestions.map((question) => (
-              <button
-                disabled={isLoading}
-                key={question}
-                onClick={() => {
-                  void submitQuestion(question);
-                }}
-                type="button"
-              >
-                {question}
-              </button>
-            ))}
-          </div>
+          {!hasUserMessages ? (
+            <div className="assistant-suggestions">
+              {suggestedQuestions.map((question) => (
+                <button
+                  disabled={isLoading}
+                  key={question}
+                  onClick={() => {
+                    void submitQuestion(question);
+                  }}
+                  type="button"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          ) : null}
           
           <form className="assistant-form" onSubmit={onSubmit}>
             <input

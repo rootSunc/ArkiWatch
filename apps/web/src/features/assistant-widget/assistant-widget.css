@@ -1,4 +1,4 @@
-/* ==========================================================================
+  /* ==========================================================================
    AI DATA ASSISTANT MASCOT & DRAWERS
    ========================================================================== */
 
@@ -217,7 +217,56 @@
   line-height: 1.45;
   letter-spacing: -0.1px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  white-space: pre-wrap;
+}
+
+.assistant-message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.assistant-message-paragraph {
+  margin: 0;
+}
+
+.assistant-message-heading {
+  margin: 0;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.assistant-message-heading-1 {
+  font-size: 14px;
+}
+
+.assistant-message-heading-2,
+.assistant-message-heading-3 {
+  font-size: 13.5px;
+}
+
+.assistant-message-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.assistant-message-list li {
+  padding-left: 0.1rem;
+}
+
+.assistant-message-body strong {
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.assistant-message-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  background: var(--surface-container-highest);
 }
 
 .assistant-message-assistant {
@@ -234,6 +283,7 @@
   color: var(--on-primary-container);
   border-radius: 16px 16px 4px 16px;
   font-weight: 500;
+  white-space: pre-wrap;
 }
 
 .assistant-message-pending {
