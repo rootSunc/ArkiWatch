@@ -1,0 +1,97 @@
+import type { MobilityTabKey } from "./mobility-workspace";
+import type { ScenarioLiveSignals } from "./scenario-live-hints";
+import {
+  defaultEnergyTabForScenario,
+  type EnergyPanelKey,
+} from "./workspace-query-params";
+
+export const SCENARIO_NAV_KEYS: Record<string, string> = {
+  outdoor: "weather",
+  home_air: "air",
+  commute: "mobility",
+  energy: "energy",
+};
+
+export const SUMMARY_TILE_NAV_KEYS: Record<string, string> = {
+  outdoor: "weather",
+  air: "air",
+  commute: "mobility",
+  energy: "energy",
+};
+
+export type ScenarioNavigationTarget = {
+  navKey: string;
+  mobilityTab?: MobilityTabKey;
+  energyTab?: EnergyPanelKey;
+};
+
+export const TODAY_QUICK_LINKS: Array<{
+  scenarioKey: string;
+  label: string;
+  icon: string;
+}> = [
+  { scenarioKey: "outdoor", label: "Outdoor", icon: "wb_sunny" },
+  { scenarioKey: "home_air", label: "Home air", icon: "air" },
+  { scenarioKey: "commute", label: "Commute", icon: "commute" },
+  { scenarioKey: "energy", label: "Energy", icon: "bolt" },
+];
+
+export function resolveMobilityTabForSignals(
+  signals: ScenarioLiveSignals,
+): MobilityTabKey {
+  const transitAlerts = signals.transit?.quality.active_alert_count ?? 0;
+  const roadEvents = signals.roadRail?.quality.active_event_count ?? 0;
+  return roadEvents > transitAlerts ? "traffic" : "transit";
+}
+
+export function resolveScenarioTarget(
+  scenarioKey: string,
+  signals?: ScenarioLiveSignals,
+): ScenarioNavigationTarget | null {
+  const navKey = SCENARIO_NAV_KEYS[scenarioKey];
+  if (!navKey) {
+    return null;
+  }
+
+  if (navKey === "mobility" && signals) {
+    return {
+      navKey,
+      mobilityTab: resolveMobilityTabForSignals(signals),
+    };
+  }
+
+  if (navKey === "energy") {
+    return {
+      navKey,
+      energyTab: defaultEnergyTabForScenario(),
+    };
+  }
+
+  return { navKey };
+}
+
+export function resolveSummaryTileTarget(
+  tileKey: string,
+  signals?: ScenarioLiveSignals,
+): ScenarioNavigationTarget | null {
+  const navKey = SUMMARY_TILE_NAV_KEYS[tileKey];
+  if (!navKey) {
+    return null;
+  }
+
+  if (navKey === "mobility" && signals) {
+    return {
+      navKey,
+      mobilityTab: resolveMobilityTabForSignals(signals),
+    };
+  }
+
+  if (navKey === "energy") {
+    return {
+      navKey,
+      energyTab: defaultEnergyTabForScenario(),
+    };
+  }
+
+  return { navKey };
+}
