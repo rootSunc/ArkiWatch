@@ -15,6 +15,11 @@ import {
   TransitDataStage,
   TransitSourceRequest
 } from "./types";
+import {
+  IncidentTimelinePager,
+  INCIDENT_TIMELINE_PAGE_SIZE,
+  paginateTimelineItems,
+} from "./incident-timeline-pager";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
 import { eventAnchorId } from "./recent-events";
 
@@ -56,7 +61,7 @@ type TransitScopeMetric = {
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
-const ALERTS_PER_PAGE = 8;
+const ALERTS_PER_PAGE = INCIDENT_TIMELINE_PAGE_SIZE;
 const HSL_STOP_DETAILS: Record<string, { address: string; code: string; name: string; zone: string }> = {
   "4180227": {
     address: "Martinkyläntie",
@@ -653,13 +658,12 @@ export function TransitWorkspace({
   const nowTimestamp = transitReferenceTimestamp(transit);
   const activeTone = activeAlertTone(activeAlerts, transit.alerts);
   const riskState = transitRiskState(activeAlerts, transit.alerts, t);
-  const alertPageCount = Math.max(1, Math.ceil(filteredAlerts.length / ALERTS_PER_PAGE));
-  const currentAlertPage = Math.min(alertPage, alertPageCount - 1);
-  const pageStartIndex = currentAlertPage * ALERTS_PER_PAGE;
-  const pagedAlerts = filteredAlerts.slice(pageStartIndex, pageStartIndex + ALERTS_PER_PAGE);
-  const pageRangeLabel = filteredAlerts.length > 0
-    ? `${pageStartIndex + 1}-${pageStartIndex + pagedAlerts.length}/${filteredAlerts.length}`
-    : "0/0";
+  const {
+    currentPage: currentAlertPage,
+    pageCount: alertPageCount,
+    startIndex: pageStartIndex,
+    items: pagedAlerts,
+  } = paginateTimelineItems(filteredAlerts, alertPage, ALERTS_PER_PAGE);
   const selectedAlert = (selectedAlertId
     ? pagedAlerts.find((alert) => alert.id === selectedAlertId)
     : null) ?? pagedAlerts[0] ?? null;
@@ -857,7 +861,7 @@ export function TransitWorkspace({
               <span>{t("Incident Timeline")}</span>
               <h3>{t("Active and upcoming service alerts")}</h3>
             </div>
-            <strong>{pageRangeLabel}</strong>
+            <strong>{filteredAlerts.length} {t("alerts")}</strong>
           </header>
           <div className="transit-alert-toolbar">
             <div className="transit-alert-filters" aria-label={t("Transit alert filters")}>
@@ -875,33 +879,6 @@ export function TransitWorkspace({
                   <span>{t(filter.label)}</span>
                 </button>
               ))}
-            </div>
-            <div className="transit-alert-pager" aria-label={t("Transit alert pagination")}>
-              <span>
-                {t("Page")} {filteredAlerts.length > 0 ? currentAlertPage + 1 : 0}/{filteredAlerts.length > 0 ? alertPageCount : 0}
-              </span>
-              <div>
-                <button
-                  aria-label={t("Previous alert page")}
-                  disabled={currentAlertPage === 0}
-                  onClick={() => setAlertPage((page) => Math.max(0, page - 1))}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    chevron_left
-                  </span>
-                </button>
-                <button
-                  aria-label={t("Next alert page")}
-                  disabled={currentAlertPage >= alertPageCount - 1 || filteredAlerts.length === 0}
-                  onClick={() => setAlertPage((page) => Math.min(alertPageCount - 1, page + 1))}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    chevron_right
-                  </span>
-                </button>
-              </div>
             </div>
           </div>
           <div className="transit-alert-layout">
@@ -978,6 +955,14 @@ export function TransitWorkspace({
                   <p>{filterEmptyMessage(alertFilter, t)}</p>
                 )}
               </div>
+              <IncidentTimelinePager
+                currentPage={currentAlertPage}
+                onPageChange={setAlertPage}
+                pageCount={alertPageCount}
+                startIndex={pageStartIndex}
+                totalCount={filteredAlerts.length}
+                visibleCount={pagedAlerts.length}
+              />
             </div>
             <aside className="transit-alert-inspector" aria-label={t("Incident details")}>
               {selectedAlert ? (

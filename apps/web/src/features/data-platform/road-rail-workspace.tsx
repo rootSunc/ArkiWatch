@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 
@@ -15,6 +16,11 @@ import {
   RoadRailIncident,
   RoadRailSourceRequest
 } from "./types";
+import {
+  IncidentTimelinePager,
+  INCIDENT_TIMELINE_PAGE_SIZE,
+  paginateTimelineItems,
+} from "./incident-timeline-pager";
 import { TrendChart, TrendChartPoint } from "./trend-chart";
 import { eventAnchorId } from "./recent-events";
 
@@ -333,6 +339,25 @@ export function RoadRailWorkspace({
   roadRail,
 }: RoadRailWorkspaceProps) {
   const { language, t } = useI18n();
+  const [incidentPage, setIncidentPage] = useState(0);
+  const timelineIncidents = useMemo(() => roadRail?.incidents ?? [], [roadRail?.incidents]);
+
+  useEffect(() => {
+    setIncidentPage(0);
+  }, [roadRail?.checked_at, timelineIncidents.length]);
+
+  useEffect(() => {
+    if (!highlightedEventId || timelineIncidents.length === 0) {
+      return;
+    }
+
+    const incidentIndex = timelineIncidents.findIndex((incident) => incident.id === highlightedEventId);
+    if (incidentIndex < 0) {
+      return;
+    }
+
+    setIncidentPage(Math.floor(incidentIndex / INCIDENT_TIMELINE_PAGE_SIZE));
+  }, [highlightedEventId, timelineIncidents]);
 
   if (!roadRail) {
     return (
@@ -346,19 +371,19 @@ export function RoadRailWorkspace({
 
   const activeTone = activeConditionTone(roadRail);
   const activeIncidents = roadRail.incidents.filter((incident) => incident.active);
-  const highlightedIncident = highlightedEventId
-    ? roadRail.incidents.find((incident) => incident.id === highlightedEventId)
-    : null;
-  const topIncidents = [
-    ...(highlightedIncident ? [highlightedIncident] : []),
-    ...roadRail.incidents.filter((incident) => incident.id !== highlightedIncident?.id),
-  ].slice(0, 8);
+  const {
+    currentPage: currentIncidentPage,
+    pageCount: incidentPageCount,
+    startIndex: incidentStartIndex,
+    items: pagedIncidents,
+  } = paginateTimelineItems(timelineIncidents, incidentPage, INCIDENT_TIMELINE_PAGE_SIZE);
+  const topIncidents = timelineIncidents.slice(0, 5);
   const topCorridors = roadRail.corridors.slice(0, 5);
   const maxCorridorEvents = Math.max(1, ...topCorridors.map((corridor) => corridor.event_count));
   const severityRows = severityDistribution(roadRail.incidents);
   const networkRows = networkCompositionRows(roadRail, t);
   const historyPoints = roadRailHistoryPoints(history, t);
-  const timebandIncidents = topIncidents.slice(0, 5);
+  const timebandIncidents = pagedIncidents.slice(0, 5);
   const timelineBounds = incidentTimelineBounds(timebandIncidents, Date.now());
 
   return (
@@ -526,7 +551,7 @@ export function RoadRailWorkspace({
               <span>{t("Incident Timeline")}</span>
               <h3>{t("Active and upcoming road events")}</h3>
             </div>
-            <strong>{topIncidents.length} {t("rows")}</strong>
+            <strong>{timelineIncidents.length} {t("rows")}</strong>
           </header>
           {timelineBounds ? (
             <div className="road-rail-timeband-panel" aria-label={t("Incident time windows")}>
@@ -570,8 +595,8 @@ export function RoadRailWorkspace({
             </div>
           ) : null}
           <div className="road-rail-incident-list">
-            {topIncidents.length > 0 ? (
-              topIncidents.map((incident) => (
+            {pagedIncidents.length > 0 ? (
+              pagedIncidents.map((incident) => (
                 <article
                   className={`road-rail-incident road-rail-incident-${severityTone(incident.severity)}`}
                   id={eventAnchorId(incident.id)}
@@ -597,6 +622,14 @@ export function RoadRailWorkspace({
               <p>{t("No road or rail events were normalized from the latest Digitraffic payload.")}</p>
             )}
           </div>
+          <IncidentTimelinePager
+            currentPage={currentIncidentPage}
+            onPageChange={setIncidentPage}
+            pageCount={incidentPageCount}
+            startIndex={incidentStartIndex}
+            totalCount={timelineIncidents.length}
+            visibleCount={pagedIncidents.length}
+          />
         </article>
 
         <div className="road-rail-side-grid">

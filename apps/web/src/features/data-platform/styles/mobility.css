@@ -51,3 +51,102 @@
   flex: 0 0 auto;
   font-size: 20px;
 }
+
+.mobility-tab-count {
+  display: inline-flex;
+  min-width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--error-container, #f9dedc);
+  color: var(--on-error-container, #410e0b);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mobility-tab-active .mobility-tab-count {
+  background: color-mix(in srgb, var(--on-secondary-container) 18%, transparent);
+  color: var(--on-secondary-container);
+}
+
+.incident-timeline-pager {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.incident-timeline-pager-button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.incident-timeline-pager-button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.incident-timeline-pager-button:hover:not(:disabled),
+.incident-timeline-pager-button:focus-visible {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  outline: none;
+}
+
+.incident-timeline-pager-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.incident-timeline-pager-status {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+  text-align: center;
+}
+
+.incident-timeline-pager-status strong,
+.incident-timeline-pager-status span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.incident-timeline-pager-status strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.incident-timeline-pager-status span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 13px;
+  text-transform: uppercase;
+}
