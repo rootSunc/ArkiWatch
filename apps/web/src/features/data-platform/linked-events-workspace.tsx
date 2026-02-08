@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
+import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -12,6 +14,26 @@ import {
   PlatformTone,
 } from "./types";
 import { eventAnchorId } from "./recent-events";
+
+const LinkedEventsCoordinateMap = dynamic(
+  () => import("./linked-events-coordinate-map").then((module) => module.LinkedEventsCoordinateMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="air-map-frame air-map-frame--loading" aria-busy="true">
+        <span className="air-map-loading-label">…</span>
+      </div>
+    )
+  }
+);
+
+function formatCoordinateNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "n/a";
+  }
+
+  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
+}
 
 type LinkedEventsWorkspaceProps = {
   category: PlatformCategory | null;
@@ -537,6 +559,22 @@ export function LinkedEventsWorkspace({
       .slice(0, 12);
   }, [sortedEvents]);
 
+  const mappedEventCount = useMemo(
+    () =>
+      sortedEvents.filter((event) => {
+        const lat = attributeNumber(event, "latitude");
+        const lon = attributeNumber(event, "longitude");
+        return lat !== null && lon !== null;
+      }).length,
+    [sortedEvents]
+  );
+
+  const placeLabel = useCallback((event: PlatformEvent) => eventPlace(event, t), [t]);
+
+  const handleEventMapSelect = useCallback((eventId: string) => {
+    setSelectedEventId(eventId);
+  }, []);
+
   if (!category) {
     return (
       <section className="linked-events-empty" aria-label={t("Linked Events data unavailable")}>
@@ -904,6 +942,32 @@ export function LinkedEventsWorkspace({
                 )}
               </section>
             </div>
+          </article>
+
+          <article className="linked-events-panel linked-events-map-panel">
+            <header>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "event_map_geometry",
+                  label: "Event Map Geometry",
+                  t
+                })}
+              >
+                {t("Event Map Geometry")}
+              </DataLabelWithHelp>
+              <strong>{mappedEventCount}</strong>
+            </header>
+            <p className="linked-events-chart-description">
+              {t("Geographical event distribution in the expansion area.")}
+            </p>
+            <LinkedEventsCoordinateMap
+              events={sortedEvents}
+              formatNumber={formatCoordinateNumber}
+              onEventSelect={handleEventMapSelect}
+              placeLabel={placeLabel}
+              selectedEventId={selectedEvent?.id ?? null}
+              t={t}
+            />
           </article>
 
           {renderVenueDensityChart()}
