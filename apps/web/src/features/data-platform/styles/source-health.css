@@ -1,4 +1,36 @@
 /* Premium Data Source Health Strip & Source Chips */
+.source-health-summary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.source-health-summary:hover {
+  opacity: 0.9;
+}
+
+.source-health-summary .material-symbols-outlined {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+
+.source-health-chevron {
+  margin-left: auto;
+}
+
+.source-health-panel:not(.source-health-panel-expanded) {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 .source-health-panel {
   position: relative;
   margin-top: 8px;
