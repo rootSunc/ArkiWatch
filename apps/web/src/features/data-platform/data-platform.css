@@ -11,6 +11,8 @@
 @import "./styles/geospatial.css";
 @import "./styles/regional-profile.css";
 @import "./styles/source-health.css";
+@import "./styles/scenario-overview.css";
+@import "./styles/cross-domain-timeline.css";
 @import "./styles/overview-polish.css";
 @import "./styles/motion.css";
 @import "./styles/responsive.css";
