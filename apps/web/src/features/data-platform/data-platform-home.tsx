@@ -30,7 +30,9 @@ import {
   DateScopeSelector,
   HistoricalWarningBanner,
   NotificationButton,
+  CATALOG_NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
+  RefreshDataButton,
   ThemeToggleButton,
   applyThemeMode,
   preferredThemeMode,
@@ -60,6 +62,7 @@ import {
   PlatformHistoryResponse,
   PlatformMetric,
   PlatformOverviewResponse,
+  PublicDashboardRead,
   RoadRailCurrentResponse,
   TransitCurrentResponse,
   WeatherForecastResponse,
@@ -84,7 +87,28 @@ import { WeatherDetailView } from "./weather-detail-view";
 import { WaterSnowWorkspace } from "./water-snow-workspace";
 import { GeospatialWorkspace } from "./geospatial-workspace";
 import { RegionalProfileWorkspace } from "./regional-profile-workspace";
+import {
+  resolveScenarioTarget,
+  resolveSummaryTileTarget,
+} from "./scenario-navigation";
+import { buildCrossDomainTimeline } from "./cross-domain-timeline";
+import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
+import { ScenarioOverview } from "./scenario-overview";
+import { ShareViewLinkButton } from "./share-view-link-button";
+import type { ScenarioLiveSignals } from "./scenario-live-hints";
+import {
+  categorySignalAttribution,
+  formatSignalAttributionLine,
+} from "./signal-attribution";
 import { SourceHealthStrip } from "./source-health-strip";
+import { buildUserSummaryTiles } from "./user-summary-stats";
+import {
+  ENERGY_TAB_QUERY_KEY,
+  MOBILITY_TAB_QUERY_KEY,
+  resolveEnergyTabParam,
+  resolveMobilityTabParam,
+  type EnergyPanelKey,
+} from "./workspace-query-params";
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
 type DataPlatformHomeProps = {
@@ -99,6 +123,7 @@ type DataPlatformHomeProps = {
   householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
   overview: PlatformOverviewResponse | null;
+  publicDashboard: PublicDashboardRead | null;
   roadRail: RoadRailCurrentResponse | null;
   transit: TransitCurrentResponse | null;
   weather: WeatherForecastResponse | null;
@@ -135,10 +160,11 @@ const STATUS_LABELS: Record<string, string> = {
 const BRAND_LOGO_SRC = "/brand/logo.png";
 const NAV_QUERY_KEY = "view";
 const MOBILITY_NAV_KEY = "mobility";
-const MOBILITY_TAB_QUERY_KEY = "mobilityTab";
 const EVENT_QUERY_KEY = "event";
+const TODAY_NAV_KEY = "today";
 const FALLBACK_NAV_KEY = "overview";
 const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
+const CROSS_TIMELINE_LIMIT = 10;
 
 function currentSearchParams(
   fallbackParams: { toString: () => string },
@@ -168,12 +194,6 @@ function isMobilityCategoryKey(
   key: string | null | undefined,
 ): key is MobilityTabKey {
   return key === "transit" || key === "traffic";
-}
-
-function resolveMobilityTab(
-  value: string | null | undefined,
-): MobilityTabKey {
-  return value === "traffic" ? "traffic" : "transit";
 }
 
 function mobilityAvailable(categories: PlatformCategory[]): boolean {
@@ -890,16 +910,20 @@ function navItemAvailable(
   item: NavItem,
   categories: PlatformCategory[],
 ): boolean {
+  if (item.key === TODAY_NAV_KEY) {
+    return true;
+  }
+
   if (item.key === MOBILITY_NAV_KEY) {
     return mobilityAvailable(categories);
   }
 
-  if (!categoryVisibleToCurrentUser(item.categoryKey ?? item.key)) {
-    return false;
-  }
-
   if (!item.categoryKey) {
     return true;
+  }
+
+  if (!categoryVisibleToCurrentUser(item.categoryKey)) {
+    return false;
   }
 
   return categories.some((category) => category.key === item.categoryKey);
@@ -909,56 +933,44 @@ function resolveNavKey(
   requestedKey: string | null,
   categories: PlatformCategory[],
 ): string {
-  if (!requestedKey || requestedKey === FALLBACK_NAV_KEY) {
+  const normalized = requestedKey?.trim() || null;
+
+  if (!normalized || normalized === TODAY_NAV_KEY) {
+    return TODAY_NAV_KEY;
+  }
+
+  if (normalized === FALLBACK_NAV_KEY) {
     return FALLBACK_NAV_KEY;
   }
 
-  if (requestedKey === MOBILITY_NAV_KEY || isMobilityCategoryKey(requestedKey)) {
-    return mobilityAvailable(categories) ? MOBILITY_NAV_KEY : FALLBACK_NAV_KEY;
+  if (normalized === MOBILITY_NAV_KEY || isMobilityCategoryKey(normalized)) {
+    return mobilityAvailable(categories) ? MOBILITY_NAV_KEY : TODAY_NAV_KEY;
   }
 
-  if (!categoryVisibleToCurrentUser(requestedKey)) {
-    return FALLBACK_NAV_KEY;
+  if (!categoryVisibleToCurrentUser(normalized)) {
+    return TODAY_NAV_KEY;
   }
 
   const primaryNavItem = PRIMARY_NAV_ITEMS.find(
-    (item) => item.key === requestedKey,
+    (item) => item.key === normalized,
   );
   if (primaryNavItem) {
-    if (!categoryVisibleToCurrentUser(primaryNavItem.categoryKey)) {
-      return FALLBACK_NAV_KEY;
+    if (
+      primaryNavItem.categoryKey &&
+      !categoryVisibleToCurrentUser(primaryNavItem.categoryKey)
+    ) {
+      return TODAY_NAV_KEY;
     }
 
-    return requestedKey;
+    return normalized;
   }
 
   return categories.some(
     (category) =>
-      category.key === requestedKey && categoryVisibleToCurrentUser(category.key),
+      category.key === normalized && categoryVisibleToCurrentUser(category.key),
   )
-    ? requestedKey
-    : FALLBACK_NAV_KEY;
-}
-
-function platformSignalStats(
-  categories: PlatformCategory[],
-  overview: PlatformOverviewResponse | null,
-) {
-  const keyFields = categories.reduce(
-    (total, category) => total + categoryKeyDataItems(category).length,
-    0,
-  );
-  const activeEvents = categories.reduce(
-    (total, category) => total + category.events.length,
-    0,
-  );
-
-  return {
-    dataStreams: categories.length,
-    activeEvents,
-    dataSources: overview?.sources.length ?? 0,
-    keyFields,
-  };
+    ? normalized
+    : TODAY_NAV_KEY;
 }
 
 export function DataPlatformHome({
@@ -973,6 +985,7 @@ export function DataPlatformHome({
   householdEnergy,
   history,
   overview,
+  publicDashboard,
   roadRail,
   transit,
   weather,
@@ -989,10 +1002,13 @@ export function DataPlatformHome({
   );
   const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
     () =>
-      resolveMobilityTab(
+      resolveMobilityTabParam(
         searchParams.get(MOBILITY_TAB_QUERY_KEY) ??
           searchParams.get(NAV_QUERY_KEY),
       ),
+  );
+  const [selectedEnergyTab, setSelectedEnergyTab] = useState<EnergyPanelKey>(() =>
+    resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY)),
   );
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
@@ -1127,43 +1143,110 @@ export function DataPlatformHome({
   const updateNavQuery = useCallback(
     (
       nextNavKey: string,
-      options: { mobilityTab?: MobilityTabKey } = {},
+      options: { mobilityTab?: MobilityTabKey; energyTab?: EnergyPanelKey } = {},
     ): void => {
       const nextParams = new URLSearchParams(searchParams.toString());
-      if (nextNavKey === FALLBACK_NAV_KEY) {
+      if (nextNavKey === TODAY_NAV_KEY) {
         nextParams.delete(NAV_QUERY_KEY);
         nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+        nextParams.delete(ENERGY_TAB_QUERY_KEY);
+      } else if (nextNavKey === FALLBACK_NAV_KEY) {
+        nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
+        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+        nextParams.delete(ENERGY_TAB_QUERY_KEY);
       } else if (nextNavKey === MOBILITY_NAV_KEY) {
         nextParams.set(NAV_QUERY_KEY, MOBILITY_NAV_KEY);
         nextParams.set(
           MOBILITY_TAB_QUERY_KEY,
           options.mobilityTab ?? selectedMobilityTab,
         );
+        nextParams.delete(ENERGY_TAB_QUERY_KEY);
+      } else if (nextNavKey === "energy") {
+        nextParams.set(NAV_QUERY_KEY, "energy");
+        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+        nextParams.set(ENERGY_TAB_QUERY_KEY, options.energyTab ?? selectedEnergyTab);
       } else {
         nextParams.set(NAV_QUERY_KEY, nextNavKey);
         nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+        nextParams.delete(ENERGY_TAB_QUERY_KEY);
       }
       nextParams.delete(EVENT_QUERY_KEY);
 
       const nextPath = nextParams.toString();
       router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
     },
-    [pathname, router, searchParams, selectedMobilityTab],
+    [pathname, router, searchParams, selectedEnergyTab, selectedMobilityTab],
   );
-  const selectNav = useCallback(
-    (nextNavKey: string): void => {
-      const nextMobilityTab = isMobilityCategoryKey(nextNavKey)
-        ? nextNavKey
-        : selectedMobilityTab;
-      const resolvedNavKey = resolveNavKey(nextNavKey, categories);
+  const scenarioLiveSignals = useMemo<ScenarioLiveSignals>(
+    () => ({
+      weather,
+      airQuality,
+      transit,
+      roadRail,
+      householdEnergy,
+      systemEnergy: energy,
+    }),
+    [airQuality, energy, householdEnergy, roadRail, transit, weather],
+  );
+
+  const openNavigationTarget = useCallback(
+    (target: {
+      navKey: string;
+      mobilityTab?: MobilityTabKey;
+      energyTab?: EnergyPanelKey;
+    }): void => {
+      const mobilityTab =
+        target.mobilityTab ??
+        (isMobilityCategoryKey(target.navKey) ? target.navKey : selectedMobilityTab);
+      const energyTab = target.energyTab ?? selectedEnergyTab;
+      const resolvedNavKey = resolveNavKey(target.navKey, categories);
       if (resolvedNavKey === MOBILITY_NAV_KEY) {
-        setSelectedMobilityTab(nextMobilityTab);
+        setSelectedMobilityTab(mobilityTab);
+      }
+      if (resolvedNavKey === "energy") {
+        setSelectedEnergyTab(energyTab);
       }
       setSelectedNavKey(resolvedNavKey);
-      updateNavQuery(resolvedNavKey, { mobilityTab: nextMobilityTab });
+      updateNavQuery(resolvedNavKey, { mobilityTab, energyTab });
+      setIsMobileMenuOpen(false);
     },
-    [categories, selectedMobilityTab, updateNavQuery],
+    [categories, selectedEnergyTab, selectedMobilityTab, updateNavQuery],
   );
+
+  const selectNav = useCallback(
+    (
+      nextNavKey: string,
+      options: { mobilityTab?: MobilityTabKey; energyTab?: EnergyPanelKey } = {},
+    ): void => {
+      openNavigationTarget({
+        navKey: nextNavKey,
+        mobilityTab: options.mobilityTab,
+        energyTab: options.energyTab,
+      });
+    },
+    [openNavigationTarget],
+  );
+
+  const openScenario = useCallback(
+    (scenarioKey: string): void => {
+      const target = resolveScenarioTarget(scenarioKey, scenarioLiveSignals);
+      if (target) {
+        openNavigationTarget(target);
+      }
+    },
+    [openNavigationTarget, scenarioLiveSignals],
+  );
+
+  const openSummaryTile = useCallback(
+    (tileKey: string): void => {
+      const target = resolveSummaryTileTarget(tileKey, scenarioLiveSignals);
+      if (target) {
+        openNavigationTarget(target);
+      }
+    },
+    [openNavigationTarget, scenarioLiveSignals],
+  );
+
   const selectMobilityTab = useCallback(
     (nextMobilityTab: MobilityTabKey): void => {
       setSelectedMobilityTab(nextMobilityTab);
@@ -1172,13 +1255,43 @@ export function DataPlatformHome({
     },
     [updateNavQuery],
   );
+
+  const selectEnergyTab = useCallback(
+    (nextEnergyTab: EnergyPanelKey): void => {
+      setSelectedEnergyTab(nextEnergyTab);
+      setSelectedNavKey("energy");
+      updateNavQuery("energy", { energyTab: nextEnergyTab });
+    },
+    [updateNavQuery],
+  );
   const selectedCategory =
-    selectedNavKey === FALLBACK_NAV_KEY
+    selectedNavKey === FALLBACK_NAV_KEY || selectedNavKey === TODAY_NAV_KEY
       ? null
       : categoryByKey(displayCategories, selectedNavKey);
-  const signalStats = useMemo(
-    () => platformSignalStats(displayCategories, visibleOverview),
-    [displayCategories, visibleOverview],
+  const userSummaryTiles = useMemo(
+    () =>
+      buildUserSummaryTiles(
+        {
+          weather,
+          airQuality,
+          transit,
+          roadRail,
+          householdEnergy,
+        },
+        languageMode,
+      ),
+    [airQuality, householdEnergy, languageMode, roadRail, transit, weather],
+  );
+  const crossDomainTimeline = useMemo(
+    () =>
+      buildCrossDomainTimeline(
+        curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
+          city: selectedCity,
+        }),
+        publicDashboard,
+        CROSS_TIMELINE_LIMIT,
+      ),
+    [publicDashboard, recentEventCandidates, selectedCity],
   );
   const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
   const visibleCategories = selectedCategories.filter((category) =>
@@ -1252,7 +1365,10 @@ export function DataPlatformHome({
     isLinkedEventsDetail ||
     isGeospatialDetail ||
     isRegionalProfileDetail;
-  const showsWorkspaceTopbar = isDetailPage || selectedNavKey === FALLBACK_NAV_KEY;
+  const showsWorkspaceTopbar =
+    isDetailPage ||
+    selectedNavKey === FALLBACK_NAV_KEY ||
+    selectedNavKey === TODAY_NAV_KEY;
 
   function selectNavItem(item: NavItem): void {
     selectNav(item.categoryKey ?? item.key);
@@ -1290,7 +1406,7 @@ export function DataPlatformHome({
     setIsEventsExpanded(false);
 
     if (target.navKey === FALLBACK_NAV_KEY) {
-      nextParams.delete(NAV_QUERY_KEY);
+      nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
       nextParams.delete(MOBILITY_TAB_QUERY_KEY);
     } else {
       nextParams.set(NAV_QUERY_KEY, target.navKey);
@@ -1369,17 +1485,38 @@ export function DataPlatformHome({
     }
 
     const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
-    const nextMobilityTab = resolveMobilityTab(
+    const nextMobilityTab = resolveMobilityTabParam(
       searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
     );
+    const nextEnergyTab = resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY));
     const nextNavKey = resolveNavKey(nextRequestedKey, categories);
     if (nextNavKey === MOBILITY_NAV_KEY) {
       setSelectedMobilityTab(nextMobilityTab);
+    }
+    if (nextNavKey === "energy") {
+      setSelectedEnergyTab(nextEnergyTab);
     }
     setSelectedNavKey((currentNavKey) =>
       currentNavKey === nextNavKey ? currentNavKey : nextNavKey,
     );
   }, [categories, searchParams]);
+
+  useEffect(() => {
+    const desktopNavQuery = window.matchMedia("(min-width: 1024px)");
+
+    function closeMobileMenuOnDesktop(): void {
+      if (desktopNavQuery.matches) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+
+    closeMobileMenuOnDesktop();
+    desktopNavQuery.addEventListener("change", closeMobileMenuOnDesktop);
+
+    return () => {
+      desktopNavQuery.removeEventListener("change", closeMobileMenuOnDesktop);
+    };
+  }, []);
 
   useEffect(() => {
     if (searchParams.has("date") && selectedDate === null) {
@@ -1520,8 +1657,8 @@ export function DataPlatformHome({
             ).map((item) => {
               const isActive =
                 selectedNavKey === item.key ||
-                selectedNavKey === item.categoryKey ||
-                (item.key === "overview" && !selectedCategory);
+                (item.categoryKey != null &&
+                  selectedNavKey === item.categoryKey);
               return (
                 <button
                   className={isActive ? "nav-row nav-row-active" : "nav-row"}
@@ -1541,6 +1678,33 @@ export function DataPlatformHome({
               );
             })}
           </nav>
+
+          {CATALOG_NAV_ITEMS.some((item) => navItemAvailable(item, categories)) ? (
+            <nav className="side-nav-catalog" aria-label={t("Data catalog navigation")}>
+              <span className="side-nav-catalog-label">{t("Data catalog")}</span>
+              {CATALOG_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map(
+                (item) => {
+                  const isActive =
+                    selectedNavKey === item.key ||
+                    (item.categoryKey != null && selectedNavKey === item.categoryKey);
+                  return (
+                    <button
+                      className={isActive ? "nav-row nav-row-active" : "nav-row"}
+                      key={item.key}
+                      onClick={() => selectNavItem(item)}
+                      title={t(item.label)}
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                      <span>{t(item.label)}</span>
+                    </button>
+                  );
+                },
+              )}
+            </nav>
+          ) : null}
 
           <nav className="side-nav-footer" aria-label={t("System controls")}>
             <div className="side-nav-utility-group">
@@ -1650,22 +1814,13 @@ export function DataPlatformHome({
                   onToggle={toggleThemeMode}
                 />
                 {!isDetailPage && !isHistorical ? (
-                  <button
-                    className="icon-button theme-toggle-button refresh-button"
-                    aria-label={t("Refresh data")}
-                    disabled={isRefreshing}
-                    onClick={triggerDataRefresh}
-                    title={t("Refresh data")}
-                    type="button"
-                  >
-                    <span
-                      className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
-                      aria-hidden="true"
-                    >
-                      refresh
-                    </span>
-                  </button>
+                  <RefreshDataButton
+                    isRefreshing={isRefreshing}
+                    language={languageMode}
+                    onRefresh={triggerDataRefresh}
+                  />
                 ) : null}
+                <ShareViewLinkButton language={languageMode} />
                 <NotificationButton
                   count={recentNotificationCount}
                   isActive={isEventsExpanded && !isDetailPage}
@@ -1724,16 +1879,12 @@ export function DataPlatformHome({
               </div>
               {isDetailPage ? (
                 <nav aria-label={t("Detail workspace navigation")}>
-                  <button
-                    onClick={() => selectNav(FALLBACK_NAV_KEY)}
-                    type="button"
-                  >
-                    {t("Overview")}
+                  <button onClick={() => selectNav(TODAY_NAV_KEY)} type="button">
+                    {t("Back to Today")}
                   </button>
-                  <button className="active" type="button">
-                    {t("Dashboard")}
+                  <button onClick={() => selectNav(FALLBACK_NAV_KEY)} type="button">
+                    {t("All signals")}
                   </button>
-                  <button type="button">{t("Analytics")}</button>
                 </nav>
               ) : null}
               <div className="detail-topbar-actions">
@@ -1753,6 +1904,14 @@ export function DataPlatformHome({
                   language={languageMode}
                   onLanguageChange={selectLanguageMode}
                 />
+                {!isHistorical ? (
+                  <RefreshDataButton
+                    isRefreshing={isRefreshing}
+                    language={languageMode}
+                    onRefresh={triggerDataRefresh}
+                  />
+                ) : null}
+                <ShareViewLinkButton language={languageMode} />
                 <NotificationButton
                   count={recentNotificationCount}
                   isActive={isEventsExpanded && !isDetailPage}
@@ -1798,7 +1957,9 @@ export function DataPlatformHome({
                     <h2>
                       {selectedCategory
                         ? `${displayTitle(selectedCategory, languageMode)} ${t("Dashboard")}`
-                        : t("Overview")}
+                        : selectedNavKey === FALLBACK_NAV_KEY
+                          ? t("Signals")
+                          : t("Today")}
                     </h2>
                     {selectedCategory ? (
                       <p>{selectedCategory.description}</p>
@@ -1838,22 +1999,13 @@ export function DataPlatformHome({
                     onLanguageChange={selectLanguageMode}
                   />
                   {!isHistorical ? (
-                    <button
-                      className="icon-button theme-toggle-button refresh-button"
-                      aria-label={t("Refresh data")}
-                      disabled={isRefreshing}
-                      onClick={triggerDataRefresh}
-                      title={t("Refresh data")}
-                      type="button"
-                    >
-                      <span
-                        className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
-                        aria-hidden="true"
-                      >
-                        refresh
-                      </span>
-                    </button>
+                    <RefreshDataButton
+                      isRefreshing={isRefreshing}
+                      language={languageMode}
+                      onRefresh={triggerDataRefresh}
+                    />
                   ) : null}
+                  <ShareViewLinkButton language={languageMode} />
                   <NotificationButton
                     count={recentNotificationCount}
                     isActive={isEventsExpanded && !isDetailPage}
@@ -1876,7 +2028,25 @@ export function DataPlatformHome({
               </div>
             ) : null}
 
-            {visibleOverview ? (
+            {selectedNavKey === TODAY_NAV_KEY ? (
+              <>
+                <ScenarioOverview
+                  isHistorical={isHistorical}
+                  language={languageMode}
+                  liveSignals={scenarioLiveSignals}
+                  publicDashboard={publicDashboard}
+                  onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
+                  onOpenScenario={openScenario}
+                  onOpenTopAction={openScenario}
+                />
+                <CrossDomainTimelinePanel
+                  items={crossDomainTimeline}
+                  language={languageMode}
+                  onOpenEvent={openRecentEvent}
+                  onOpenScenario={openScenario}
+                />
+              </>
+            ) : visibleOverview ? (
               isWeatherDetail ? (
                 <WeatherDetailView
                   category={selectedCategory}
@@ -1893,12 +2063,14 @@ export function DataPlatformHome({
                 />
               ) : isEnergyDetail ? (
                 <EnergyWorkspace
+                  activePanel={selectedEnergyTab}
                   category={selectedCategory}
                   energy={energy}
                   highlightedEventId={highlightedEventId}
                   history={history.energy}
                   householdEnergy={householdEnergy}
                   householdHistory={history.householdEnergy}
+                  onPanelChange={selectEnergyTab}
                 />
               ) : isMobilityDetail ? (
                 <MobilityWorkspace
@@ -1930,94 +2102,45 @@ export function DataPlatformHome({
               ) : (
                 <>
                   <section
-                    className="summary-grid"
-                    aria-label={t("Platform summary")}
+                    className="summary-grid summary-grid-user"
+                    aria-label={t("Today's snapshot")}
                   >
-                    <article className="metric-tile metric-tile-live">
-                      <div>
-                        <DataLabelWithHelp
-                          helpText={dataHelpText({
-                            key: "live_data_streams",
-                            label: "Live Data Streams",
-                            t,
-                          })}
+                    {userSummaryTiles.map((tile) => (
+                      <button
+                        className={`metric-tile metric-tile-${tile.tone} metric-tile-link`}
+                        key={tile.key}
+                        onClick={() => openSummaryTile(tile.key)}
+                        type="button"
+                      >
+                        <div>
+                          <span>{tile.label}</span>
+                          <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                          >
+                            {tile.icon}
+                          </span>
+                        </div>
+                        <strong
+                          className={
+                            tile.valueStyle === "emphasis"
+                              ? "metric-tile-value-emphasis"
+                              : "metric-tile-value-body"
+                          }
                         >
-                          {t("Live Data Streams")}
-                        </DataLabelWithHelp>
-                        <i aria-hidden="true" />
-                      </div>
-                      <strong>
-                        {signalStats.dataStreams}
-                        <small>{t("active")}</small>
-                      </strong>
-                    </article>
-                    <article className="metric-tile">
-                      <div>
-                        <DataLabelWithHelp
-                          helpText={dataHelpText({
-                            key: "active_fields",
-                            label: "Active Fields",
-                            t,
-                          })}
-                        >
-                          {t("Active Fields")}
-                        </DataLabelWithHelp>
-                        <span
-                          className="material-symbols-outlined"
-                          aria-hidden="true"
-                        >
-                          data_array
-                        </span>
-                      </div>
-                      <strong>
-                        {signalStats.keyFields}
-                        <small>{t("monitored")}</small>
-                      </strong>
-                    </article>
-                    <article className="metric-tile metric-tile-events">
-                      <div>
-                        <DataLabelWithHelp
-                          helpText={dataHelpText({
-                            key: "active_events",
-                            label: "Active Events",
-                            t,
-                          })}
-                        >
-                          {t("Active Events")}
-                        </DataLabelWithHelp>
-                        <i aria-hidden="true" />
-                      </div>
-                      <strong>
-                        {signalStats.activeEvents}
-                        <small>{t("unresolved")}</small>
-                      </strong>
-                    </article>
-                    <article className="metric-tile">
-                      <div>
-                        <DataLabelWithHelp
-                          helpText={dataHelpText({
-                            key: "data_sources",
-                            label: "Data Sources",
-                            t,
-                          })}
-                        >
-                          {t("Data Sources")}
-                        </DataLabelWithHelp>
-                        <span
-                          className="material-symbols-outlined"
-                          aria-hidden="true"
-                        >
-                          hub
-                        </span>
-                      </div>
-                      <strong>
-                        {signalStats.dataSources}
-                        <small>{t("connected")}</small>
-                      </strong>
-                    </article>
+                          {tile.value}
+                        </strong>
+                        <small className="metric-tile-detail">{tile.detail}</small>
+                      </button>
+                    ))}
                   </section>
 
-                  <SourceHealthStrip overview={visibleOverview} />
+                  <CrossDomainTimelinePanel
+                    items={crossDomainTimeline}
+                    language={languageMode}
+                    onOpenEvent={openRecentEvent}
+                    onOpenScenario={openScenario}
+                  />
 
                   <div
                     className={
@@ -2037,7 +2160,7 @@ export function DataPlatformHome({
                         >
                           sensors
                         </span>
-                        {t("Signal Status Array")}
+                        {t("All signals")}
                       </h3>
 
                       <div className="signal-grid">
@@ -2050,6 +2173,18 @@ export function DataPlatformHome({
                               energy,
                               roadRail,
                               transit,
+                              languageMode,
+                            );
+                            const attribution = formatSignalAttributionLine(
+                              categorySignalAttribution(
+                                category,
+                                weather,
+                                airQuality,
+                                energy,
+                                householdEnergy,
+                                roadRail,
+                                transit,
+                              ),
                               languageMode,
                             );
                             const tone = readout.tone;
@@ -2123,6 +2258,9 @@ export function DataPlatformHome({
                                       style={{ width: `${readout.progress}%` }}
                                     />
                                   </span>
+                                  <span className="signal-card-attribution">
+                                    {attribution}
+                                  </span>
                                 </span>
                               </button>
                             );
@@ -2134,6 +2272,8 @@ export function DataPlatformHome({
                         )}
                       </div>
                     </section>
+
+                    <SourceHealthStrip overview={visibleOverview} />
 
                     {isEventsExpanded ? (
                       <aside
@@ -2442,7 +2582,7 @@ export function DataPlatformHome({
 
           {isDetailPage ? (
             <footer className="detail-footer">
-              <span>ArkiWatch v1.2.0-8010/API</span>
+              <span>ArkiWatch designed by Chao</span>
               <div>
                 <a href="/privacy">{t("Privacy Policy")}</a>
                 <a href="/regional-settings">{t("Regional Settings")}</a>
@@ -2451,7 +2591,7 @@ export function DataPlatformHome({
             </footer>
           ) : (
             <footer className="mobile-dashboard-footer">
-              <span>ArkiWatch v1.2.0-8010/API</span>
+              <span>ArkiWatch designed by Chao</span>
               <div>
                 <a href="/privacy">{t("Privacy Policy")}</a>
                 <a href="/api">{t("API Docs")}</a>

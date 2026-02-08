@@ -11,6 +11,8 @@ type PageProps = {
     city?: string;
     date?: string;
     view?: string;
+    mobilityTab?: string;
+    energyTab?: string;
   };
 };
 
@@ -18,7 +20,20 @@ export default async function Page({ searchParams }: PageProps) {
   const session = await requireSession();
   const selectedCity = normalizeCityValue(searchParams?.city);
   const selectedDate = normalizeSourceDateValue(searchParams?.date);
-  const { apiBaseUrl, defaultUserId, overview, weather, airQuality, energy, householdEnergy, history, roadRail, transit, error } =
+  const {
+    apiBaseUrl,
+    defaultUserId,
+    overview,
+    publicDashboard,
+    weather,
+    airQuality,
+    energy,
+    householdEnergy,
+    history,
+    roadRail,
+    transit,
+    error,
+  } =
     await fetchPlatformHome(selectedCity, selectedDate, {
       authToken: session.token,
       userId: session.user.id,
@@ -38,6 +53,7 @@ export default async function Page({ searchParams }: PageProps) {
       history={history}
       error={error}
       overview={overview}
+      publicDashboard={publicDashboard}
       roadRail={roadRail}
       transit={transit}
       weather={weather}
