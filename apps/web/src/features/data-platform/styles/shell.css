@@ -46,6 +46,8 @@
   gap: 12px;
   padding: 0 12px 24px;
   border-bottom: 1px solid var(--outline-variant);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .brand-icon {
@@ -112,6 +114,24 @@
   overflow-y: auto;
 }
 
+.side-nav-catalog {
+  display: grid;
+  gap: 4px;
+  padding: 0 0 12px;
+  border-top: 1px solid var(--outline-variant);
+  margin-top: 4px;
+}
+
+.side-nav-catalog-label {
+  padding: 12px 12px 4px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  opacity: 0.85;
+}
+
 .side-nav-footer {
   border-top: 1px solid var(--outline-variant);
 }
@@ -139,6 +159,10 @@
   transition:
     background-color 150ms ease,
     color 150ms ease;
+}
+
+.share-view-link-button-copied {
+  color: var(--good-color, #15803d);
 }
 
 .nav-row:hover {
@@ -180,6 +204,7 @@
 
 .side-nav-collapse-button {
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .mobile-dashboard-header {

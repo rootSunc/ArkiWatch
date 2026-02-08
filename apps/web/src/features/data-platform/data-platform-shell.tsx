@@ -23,7 +23,8 @@ export type NavItem = {
 };
 
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { key: "overview", label: "Overview", icon: "dashboard" },
+  { key: "today", label: "Today", icon: "calendar_today" },
+  { key: "overview", label: "Signals", icon: "hub" },
   { key: "weather", label: "Weather", icon: "cloud", categoryKey: "weather" },
   { key: "air", label: "Air Quality", icon: "air", categoryKey: "air" },
   { key: "energy", label: "Energy", icon: "bolt", categoryKey: "energy" },
@@ -35,16 +36,19 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     categoryKey: "water",
   },
   {
-    key: "city_services",
-    label: "City Services",
-    icon: "location_city",
-    categoryKey: "city_services",
-  },
-  {
     key: "events",
     label: "Linked Events",
     icon: "event",
     categoryKey: "events",
+  },
+];
+
+export const CATALOG_NAV_ITEMS: NavItem[] = [
+  {
+    key: "city_services",
+    label: "City Services",
+    icon: "location_city",
+    categoryKey: "city_services",
   },
   {
     key: "geospatial",
@@ -146,6 +150,36 @@ export function applyThemeMode(themeMode: ThemeMode): void {
   document.documentElement.dataset.theme = themeMode;
   document.documentElement.classList.toggle("dark", themeMode === "dark");
   document.documentElement.classList.toggle("light", themeMode === "light");
+}
+
+export function RefreshDataButton({
+  isRefreshing,
+  language,
+  onRefresh,
+}: {
+  isRefreshing: boolean;
+  language: LanguageMode;
+  onRefresh: () => void;
+}) {
+  const label = translateText(language, "Refresh data");
+
+  return (
+    <button
+      className="icon-button theme-toggle-button refresh-button"
+      aria-label={label}
+      disabled={isRefreshing}
+      onClick={onRefresh}
+      title={label}
+      type="button"
+    >
+      <span
+        className={`material-symbols-outlined ${isRefreshing ? "spin-animation" : ""}`}
+        aria-hidden="true"
+      >
+        refresh
+      </span>
+    </button>
+  );
 }
 
 export function ThemeToggleButton({
