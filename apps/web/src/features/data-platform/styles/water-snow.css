@@ -2,22 +2,38 @@
   display: grid;
   gap: 16px;
   width: min(1280px, 100%);
+  max-width: 100%;
   margin: 0 auto;
+  min-width: 0;
 }
 
 .water-detail-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 8px;
+  min-width: 0;
+}
+
+.water-detail-header > div:first-child {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.water-detail-header > div:last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
 }
 
 .water-detail-header h2 {
   color: var(--on-background);
-  font-size: 18px;
+  font-size: clamp(16px, 2.4vw, 18px);
   font-weight: 700;
   line-height: 24px;
+  overflow-wrap: anywhere;
 }
 
 .water-detail-header > div:last-child,
@@ -84,6 +100,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  align-items: start;
 }
 
 .water-hero,
@@ -100,8 +117,11 @@
 }
 
 .water-hero {
-  min-height: 260px;
-  justify-content: space-between;
+  align-self: start;
+  width: 100%;
+  min-height: 0;
+  justify-content: flex-start;
+  gap: 16px;
 }
 
 .water-card-kicker,

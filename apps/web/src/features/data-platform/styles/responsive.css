@@ -35,7 +35,7 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .dashboard-side-nav {
     display: flex;
     width: 256px;
@@ -47,6 +47,7 @@
     color: var(--primary-fixed-dim);
     padding: 24px 12px;
     z-index: 2;
+    overflow: hidden;
   }
 
   .dashboard-side-nav.dashboard-side-nav-hidden {
@@ -96,12 +97,11 @@
   .detail-content-shell {
     padding: 24px;
   }
+}
 
+@media (min-width: 768px) {
   .weather-bento-grid,
-  .weather-lower-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
+  .weather-lower-grid,
   .air-bento-grid,
   .air-main-grid,
   .energy-bento-grid,
@@ -119,6 +119,7 @@
   .linked-events-command,
   .linked-events-main-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: start;
   }
 
   .weather-hero-card {
@@ -142,11 +143,7 @@
   }
 
   .energy-window-panel {
-    grid-column: span 3;
-  }
-
-  .energy-field-panel {
-    grid-column: span 4;
+    grid-column: span 7;
   }
 
   .energy-overview-grid {
@@ -313,37 +310,72 @@
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .dashboard-side-nav {
-    width: 72px;
-    flex: 0 0 72px;
-    padding: 24px 8px;
-    align-items: center;
+  .water-hero,
+  .water-coverage-panel,
+  .water-field-panel,
+  .city-hero,
+  .city-readiness-panel,
+  .city-field-panel,
+  .air-hero,
+  .air-distribution-panel,
+  .air-field-panel,
+  .energy-hero,
+  .energy-window-panel,
+  .road-rail-hero,
+  .road-rail-severity-panel,
+  .road-rail-network-panel,
+  .transit-hero,
+  .transit-severity-panel,
+  .transit-scope-panel,
+  .linked-events-hero,
+  .linked-events-filter-panel,
+  .linked-events-category-panel,
+  .linked-events-source-panel {
+    grid-column: span 12;
   }
 
-  .brand-panel {
-    justify-content: center;
-    padding: 0 0 16px;
-    width: 100%;
+  .water-detail-header,
+  .air-detail-header,
+  .energy-detail-header,
+  .road-rail-detail-header,
+  .transit-detail-header,
+  .city-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .brand-panel > div:last-child {
-    display: none;
+  .water-current-cluster {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
   }
 
-  .side-nav-list,
-  .side-nav-footer {
-    width: 100%;
-    justify-items: center;
+  .water-condition-icon {
+    font-size: 56px;
   }
 
-  .nav-row {
-    justify-content: center;
-    padding: 8px;
-    border-radius: 8px;
+  .water-current-cluster strong {
+    font-size: clamp(22px, 4.5vw, 32px);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
   }
 
-  .nav-row span:last-child {
-    display: none;
+  .water-hero {
+    min-height: 0;
+  }
+
+  .water-hero-footer {
+    flex-wrap: wrap;
+  }
+
+  .water-signal-panel header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .water-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .linked-events-hero,
@@ -354,7 +386,7 @@
   }
 }
 
-@media (min-width: 768px) and (max-width: 1199px) {
+@media (min-width: 1024px) and (max-width: 1199px) {
   .detail-topbar {
     justify-content: flex-start;
     gap: 8px 16px;
@@ -394,6 +426,22 @@
   .linked-events-category-panel,
   .linked-events-source-panel {
     grid-column: span 6;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1149px) {
+  .water-hero,
+  .water-coverage-panel,
+  .water-field-panel,
+  .city-hero,
+  .city-readiness-panel,
+  .city-field-panel {
+    grid-column: span 12;
+  }
+
+  .water-current-cluster strong {
+    font-size: clamp(24px, 3.2vw, 34px);
+    overflow-wrap: anywhere;
   }
 }
 
@@ -494,11 +542,11 @@
 
 @media (min-width: 1280px) {
   .energy-signal-panel {
-    grid-column: span 12;
+    grid-column: span 8;
   }
 
   .energy-side-grid {
-    grid-column: span 2;
+    grid-column: span 4;
   }
 
   .signal-grid {
@@ -506,7 +554,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   body {
     overflow: hidden;
   }
@@ -516,17 +564,45 @@
     height: 100dvh;
   }
 
-  .dashboard-side-nav {
-    display: none;
+  .dashboard-side-nav:not(.mobile-side-nav-open) {
+    display: none !important;
+  }
+
+  .detail-topbar {
+    display: none !important;
+  }
+
+  .mobile-dashboard-header {
+    display: flex !important;
+  }
+
+  .mobile-dashboard-footer {
+    display: flex;
+  }
+
+  .dashboard-side-nav .side-nav-collapse-button {
+    display: none !important;
   }
 
   .brand-panel {
     justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 12px;
     padding: 0 0 16px;
+    overflow: hidden;
   }
 
-  .brand-panel .brand-copy,
-  .nav-row span:last-child {
+  .brand-panel .brand-icon {
+    flex: 0 0 auto;
+  }
+
+  .brand-panel .brand-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .dashboard-side-nav:not(.mobile-side-nav-open) .brand-panel .brand-copy,
+  .dashboard-side-nav:not(.mobile-side-nav-open) .nav-row span:last-child {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -870,6 +946,88 @@
     flex-direction: column;
   }
 
+  .water-detail-page {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .water-detail-header h2 {
+    font-size: 16px;
+    line-height: 22px;
+    overflow-wrap: anywhere;
+  }
+
+  .water-detail-header > div:last-child {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .water-summary-strip {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .water-summary-strip article {
+    min-height: 68px;
+    padding: 10px;
+  }
+
+  .water-summary-strip article strong {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .water-signal-panel header h3 {
+    font-size: 16px;
+    line-height: 22px;
+    overflow-wrap: anywhere;
+  }
+
+  .water-glass-panel:hover,
+  .water-summary-strip article:hover {
+    transform: none;
+  }
+
+  .regional-coverage-row-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .regional-coverage-row-meta span {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .regional-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .regional-source-status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .regional-morbidity-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .regional-morbidity-header span:first-child {
+    font-size: 1.75rem;
+  }
+
+  .air-map-frame,
+  .linked-events-map-panel {
+    min-height: 200px;
+  }
+
+  .air-map-leaflet {
+    height: 200px;
+  }
+
   .weather-detail-metrics {
     grid-template-columns: 1fr;
   }
@@ -919,8 +1077,7 @@
   .air-quality-facts,
   .energy-chart-context,
   .energy-summary-stack,
-  .energy-secondary-tabs,
-  .energy-field-grid,
+  .energy-tab-list,
   .energy-source-facts,
   .energy-quality-facts,
   .road-rail-network-bar,
@@ -1035,7 +1192,19 @@
     flex-direction: column;
   }
 
-  .transit-alert-pager,
+  .incident-timeline-pager {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .incident-timeline-pager-button {
+    width: 100%;
+  }
+
+  .incident-timeline-pager-status {
+    order: -1;
+  }
+
   .transit-alert-detail header {
     align-items: flex-start;
     flex-direction: column;
@@ -1132,8 +1301,8 @@
   }
 }
 
-/* Mobile Side Navigation Menu Drawer Overlay & Backdrop */
-@media (max-width: 767px) {
+/* Mobile / tablet drawer navigation */
+@media (max-width: 1023px) {
   .dashboard-side-nav.mobile-side-nav-open {
     display: flex !important;
     position: fixed;
@@ -1141,7 +1310,11 @@
     left: 0;
     width: min(82vw, 304px);
     height: 100dvh;
+    flex: 0 0 auto;
     flex-direction: column;
+    align-items: stretch;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: var(--surface-container-lowest);
     border-right: 1px solid var(--outline-variant);
     z-index: 1100;
@@ -1163,6 +1336,8 @@
 
   .dashboard-side-nav.mobile-side-nav-open .brand-panel {
     justify-content: flex-start;
+    align-items: center;
+    flex-wrap: nowrap;
     gap: 12px;
     padding: 0 4px 18px;
   }
@@ -1222,8 +1397,22 @@
     line-height: 20px;
   }
 
-  .dashboard-content {
+  .dashboard-content,
+  .detail-content-shell {
     padding-inline: 10px;
+  }
+
+  .regional-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .regional-table {
+    font-size: 0.78rem;
+  }
+
+  .regional-table th,
+  .regional-table td {
+    padding: 10px 6px;
   }
 
   .metric-tile {

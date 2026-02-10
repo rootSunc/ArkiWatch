@@ -229,3 +229,35 @@
   background-color: var(--success, #10b981);
   border-radius: 2px;
 }
+
+.regional-coverage-row-meta span {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.regional-field-card-text strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .regional-coverage-row-meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .regional-coverage-row-meta span {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .regional-field-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .regional-coverage-row-meta span {
+    font-size: 0.8rem;
+  }
+}
