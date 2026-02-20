@@ -90,6 +90,10 @@
   gap: 16px;
 }
 
+.linked-events-side-grid {
+  min-width: 0;
+}
+
 .linked-events-hero,
 .linked-events-filter-panel,
 .linked-events-source-panel,
@@ -458,7 +462,7 @@
 
 .linked-events-row {
   display: grid;
-  grid-template-columns: minmax(74px, 0.22fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(136px, 0.2fr) minmax(0, 1fr) fit-content(220px);
   align-items: center;
   gap: 12px;
   min-height: 76px;
@@ -505,6 +509,9 @@
 }
 
 .linked-events-row-meta {
+  min-width: 0;
+  max-width: min(220px, 28vw);
+  overflow: hidden;
   justify-self: end;
   border: 1px solid var(--separator-border);
   border-radius: 999px;
@@ -513,6 +520,7 @@
   font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
   line-height: 12px;
+  text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -528,6 +536,12 @@
 .linked-events-inspector-body {
   display: grid;
   gap: 12px;
+}
+
+.linked-events-inspector header strong {
+  overflow-wrap: normal;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .linked-events-inspector-body h3 {
@@ -546,7 +560,7 @@
 
 .linked-events-inspector-body dl div {
   display: grid;
-  grid-template-columns: minmax(88px, 0.34fr) minmax(0, 1fr);
+  grid-template-columns: minmax(76px, 0.3fr) minmax(0, 1fr);
   gap: 10px;
   border-bottom: 1px solid var(--separator-border);
   padding-bottom: 8px;
@@ -576,6 +590,9 @@
 
 .linked-events-detail-tags span,
 .linked-events-meta-list span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   border: 1px solid var(--separator-border);
   border-radius: 999px;
   background: var(--detail-panel-bg);
@@ -584,7 +601,9 @@
   font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
   line-height: 12px;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .linked-events-detail-section {
@@ -623,6 +642,11 @@
   text-decoration: none;
 }
 
+.linked-events-link-stack a span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .linked-events-link-stack a:hover,
 .linked-events-link-stack a:focus-visible {
   border-color: rgba(142, 213, 255, 0.48);
@@ -631,6 +655,7 @@
 }
 
 .linked-events-link-stack .material-symbols-outlined {
+  flex: 0 0 auto;
   font-size: 15px;
 }
 

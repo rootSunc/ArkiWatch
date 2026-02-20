@@ -58,9 +58,16 @@ type EventLink = {
   label: string;
   url: string;
 };
+type EventTextLanguage = "auto" | "en" | "fi" | "sv" | "zh";
+type EventDescriptionSource = {
+  text: string;
+  sourceLanguage: EventTextLanguage;
+  shouldTranslate: boolean;
+};
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const DESCRIPTION_MAX_LENGTH = 520;
+const TRANSLATION_TEXT_MAX_LENGTH = 1800;
 
 const EVENT_CATEGORY_DEFINITIONS: Array<{
   key: EventCategoryKey;
@@ -117,6 +124,25 @@ function attributeText(event: PlatformEvent | null, key: string): string | null 
     return String(value);
   }
   return null;
+}
+
+function attributeTextRecord(event: PlatformEvent | null, key: string): Partial<Record<EventTextLanguage, string>> {
+  const value = event?.attributes?.[key];
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const record = value as Record<string, unknown>;
+  return (["en", "fi", "sv", "zh"] as const).reduce<Partial<Record<EventTextLanguage, string>>>(
+    (result, language) => {
+      const candidate = record[language];
+      if (typeof candidate === "string" && candidate.trim()) {
+        result[language] = candidate.trim();
+      }
+      return result;
+    },
+    {},
+  );
 }
 
 function attributeNumber(event: PlatformEvent | null, key: string): number | null {
@@ -350,13 +376,105 @@ function eventCoordinate(event: PlatformEvent | null): string | null {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
 }
 
-function eventDescription(event: PlatformEvent | null, t: (value: string) => string): string {
-  return (
+function containsChineseText(value: string): boolean {
+  return Array.from(value).some((char) => char >= "\u4e00" && char <= "\u9fff");
+}
+
+function looksFinnishOrSwedish(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return /[åäö]/i.test(value) || [
+    " ja ",
+    " sekä ",
+    " joka ",
+    " tämä ",
+    " ovat ",
+    " klo ",
+    " kirjast",
+    " laps",
+    " nuor",
+    " tervetulo",
+    " ohjelma",
+    " näyttely",
+    " tapahtuma",
+    " och ",
+    " det ",
+    " till ",
+  ].some((hint) => normalized.includes(hint));
+}
+
+function descriptionNeedsTranslation(text: string, sourceLanguage: EventTextLanguage, language: LanguageMode): boolean {
+  if (language === "zh") {
+    return sourceLanguage !== "zh" && !containsChineseText(text);
+  }
+  if (sourceLanguage === "en") {
+    return false;
+  }
+  if (sourceLanguage === "fi" || sourceLanguage === "sv" || sourceLanguage === "zh") {
+    return true;
+  }
+  return looksFinnishOrSwedish(text);
+}
+
+function pickLocalizedText(
+  values: Partial<Record<EventTextLanguage, string>>,
+  language: LanguageMode,
+): { text: string; sourceLanguage: EventTextLanguage } | null {
+  const preferredLanguages: EventTextLanguage[] =
+    language === "zh" ? ["zh", "en", "fi", "sv"] : ["en", "fi", "sv", "zh"];
+
+  for (const sourceLanguage of preferredLanguages) {
+    const text = values[sourceLanguage];
+    if (text) {
+      return { text, sourceLanguage };
+    }
+  }
+
+  return null;
+}
+
+function eventDescriptionSource(
+  event: PlatformEvent | null,
+  language: LanguageMode,
+  t: (value: string) => string,
+): EventDescriptionSource {
+  if (!event) {
+    return {
+      text: t("Select an activity to inspect its schedule, tickets, address, and source links."),
+      sourceLanguage: language,
+      shouldTranslate: false,
+    };
+  }
+
+  for (const key of ["description_i18n", "short_description_i18n"]) {
+    const localized = pickLocalizedText(attributeTextRecord(event, key), language);
+    if (localized) {
+      return {
+        ...localized,
+        shouldTranslate: descriptionNeedsTranslation(localized.text, localized.sourceLanguage, language),
+      };
+    }
+  }
+
+  const text =
     attributeText(event, "description") ??
     attributeText(event, "short_description") ??
-    event?.body ??
-    t("Select an activity to inspect its schedule, tickets, address, and source links.")
-  );
+    event.body ??
+    t("Select an activity to inspect its schedule, tickets, address, and source links.");
+  const sourceLanguage: EventTextLanguage = containsChineseText(text)
+    ? "zh"
+    : looksFinnishOrSwedish(text)
+      ? "fi"
+      : "auto";
+
+  return {
+    text,
+    sourceLanguage,
+    shouldTranslate: descriptionNeedsTranslation(text, sourceLanguage, language),
+  };
+}
+
+function descriptionTranslationKey(eventId: string, language: LanguageMode, text: string): string {
+  return `${eventId}:${language}:${text.slice(0, 80)}:${text.length}`;
 }
 
 function truncateDescription(value: string): string {
@@ -476,6 +594,7 @@ export function LinkedEventsWorkspace({
   const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   const [activeVenue, setActiveVenue] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
+  const [translatedDescriptions, setTranslatedDescriptions] = useState<Record<string, string>>({});
 
   const referenceDate = useMemo(
     () => selectedReferenceDate(timeScope, checkedAt),
@@ -534,6 +653,76 @@ export function LinkedEventsWorkspace({
 
   const selectedEvent =
     filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? sortedEvents[0] ?? null;
+  const selectedDescriptionSource = useMemo(
+    () => eventDescriptionSource(selectedEvent, language, t),
+    [language, selectedEvent, t],
+  );
+  const selectedDescriptionTranslationKey = selectedEvent
+    ? descriptionTranslationKey(selectedEvent.id, language, selectedDescriptionSource.text)
+    : null;
+  const translatedSelectedDescription = selectedDescriptionTranslationKey
+    ? translatedDescriptions[selectedDescriptionTranslationKey]
+    : null;
+
+  useEffect(() => {
+    if (
+      !selectedEvent ||
+      !selectedDescriptionTranslationKey ||
+      !selectedDescriptionSource.shouldTranslate ||
+      translatedDescriptions[selectedDescriptionTranslationKey]
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const translationKey = selectedDescriptionTranslationKey;
+
+    async function translateSelectedDescription() {
+      try {
+        const response = await fetch("/api/assistant/translate", {
+          body: JSON.stringify({
+            context: selectedEvent?.title,
+            source_language: selectedDescriptionSource.sourceLanguage,
+            target_language: language,
+            text: selectedDescriptionSource.text.slice(0, TRANSLATION_TEXT_MAX_LENGTH),
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          return;
+        }
+        const body = (await response.json().catch(() => null)) as { translated_text?: unknown } | null;
+        const translatedText = typeof body?.translated_text === "string" ? body.translated_text.trim() : "";
+        if (!translatedText || controller.signal.aborted) {
+          return;
+        }
+        setTranslatedDescriptions((current) => ({
+          ...current,
+          [translationKey]: translatedText,
+        }));
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.debug("Linked Events description translation failed", error);
+        }
+      }
+    }
+
+    void translateSelectedDescription();
+
+    return () => controller.abort();
+  }, [
+    language,
+    selectedDescriptionSource.shouldTranslate,
+    selectedDescriptionSource.sourceLanguage,
+    selectedDescriptionSource.text,
+    selectedDescriptionTranslationKey,
+    selectedEvent,
+    translatedDescriptions,
+  ]);
 
   const venueCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -592,7 +781,7 @@ export function LinkedEventsWorkspace({
   const provider = attributeText(selectedEvent, "provider") ?? t("provider unavailable");
   const eventDetailLinks = eventLinks(selectedEvent, t);
   const selectedDescription = selectedEvent
-    ? truncateDescription(eventDescription(selectedEvent, t))
+    ? truncateDescription(translatedSelectedDescription ?? selectedDescriptionSource.text)
     : t("No activities are available for the selected city yet. The city-specific feed may need a fresh collection.");
   const filterOptions: Array<{ key: EventFilter; label: string; count: number }> = [
     { key: "all", label: "All", count: sortedEvents.length },
@@ -932,7 +1121,7 @@ export function LinkedEventsWorkspace({
                   <div className="linked-events-link-stack">
                     {eventDetailLinks.map((link) => (
                       <a href={link.url} key={`${link.label}-${link.url}`} rel="noreferrer" target="_blank">
-                        {link.label}
+                        <span>{link.label}</span>
                         <span className="material-symbols-outlined" aria-hidden="true">open_in_new</span>
                       </a>
                     ))}
