@@ -35,7 +35,7 @@ export type DashboardSource = {
   auth_type: string;
   poll_interval_seconds: number;
   operational_status: string;
-  stage?: string;
+  stage: string;
   categories?: string[];
   datasets?: string[];
   key_data_items?: string[];
@@ -137,8 +137,8 @@ export type PlatformCategory = {
   title: string;
   description: string;
   status: string;
-  stage?: string;
-  priority?: string;
+  stage: string;
+  priority: string;
   source_codes: string[];
   key_data_items?: string[];
   summary_metrics: PlatformMetric[];
@@ -501,6 +501,10 @@ export type EnergyWindow = {
   source: string;
   estimated_cost_eur: number | null;
   usage_kwh: number | null;
+  threshold_value: number | null;
+  horizon_average_value: number | null;
+  savings_vs_average_pct: number | null;
+  selection_strategy: string | null;
 };
 
 export type EnergyMetric = {
@@ -581,6 +585,21 @@ export type PlatformHistoryApiResponse = {
   household_energy: PlatformHistoricalSnapshot<EnergyCurrentResponse>[];
   road_rail: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[];
   transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
+};
+
+export type PlatformHistoryAvailabilityDay = {
+  date: string;
+  has_data: boolean;
+  record_count: number;
+  source_codes: string[];
+  categories: string[];
+  datasets: string[];
+};
+
+export type PlatformHistoryAvailabilityResponse = {
+  checked_at: string;
+  city: string;
+  days: PlatformHistoryAvailabilityDay[];
 };
 
 export type PublicActionRead = {

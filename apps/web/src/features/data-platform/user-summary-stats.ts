@@ -40,6 +40,7 @@ export function buildUserSummaryTiles(
     transit: TransitCurrentResponse | null;
     roadRail: RoadRailCurrentResponse | null;
     householdEnergy: EnergyCurrentResponse | null;
+    systemEnergy?: EnergyCurrentResponse | null;
   },
   language: LanguageMode,
 ): UserSummaryTile[] {
@@ -76,10 +77,14 @@ export function buildUserSummaryTiles(
     commuteTotal > 0 ? "warn" : signals.transit || signals.roadRail ? "good" : "neutral";
 
   const priceWindow = signals.householdEnergy?.current_window;
+  const systemWindow = signals.systemEnergy?.current_window;
+  const energyWindow = priceWindow ?? systemWindow;
   const energyValue = priceWindow
     ? `${priceWindow.average_value.toFixed(2)}${priceWindow.unit ? ` ${priceWindow.unit}` : ""}`
+    : systemWindow
+      ? `${systemWindow.average_value.toFixed(2)}${systemWindow.unit ? ` ${systemWindow.unit}` : ""}`
     : t("n/a");
-  const energyTone: UserSummaryTile["tone"] = priceWindow ? "good" : "neutral";
+  const energyTone: UserSummaryTile["tone"] = energyWindow ? "good" : "neutral";
 
   return [
     {
@@ -118,6 +123,8 @@ export function buildUserSummaryTiles(
       value: energyValue,
       detail: priceWindow
         ? t("Current household price window")
+        : systemWindow
+          ? t("Current system energy window")
         : t("No price window"),
       tone: energyTone,
       icon: "bolt",
