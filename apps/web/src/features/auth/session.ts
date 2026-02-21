@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
-  normalizeApiBaseUrl,
+  resolveServerApiBaseUrl,
   SESSION_COOKIE_NAME,
 } from "./config";
 import type { AuthSession, SessionUser } from "./config";
@@ -15,7 +15,7 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
     return null;
   }
 
-  const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const apiBaseUrl = resolveServerApiBaseUrl();
   try {
     const response = await fetch(`${apiBaseUrl}/auth/me`, {
       cache: "no-store",

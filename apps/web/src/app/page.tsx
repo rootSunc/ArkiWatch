@@ -30,6 +30,7 @@ export default async function Page({ searchParams }: PageProps) {
     energy,
     householdEnergy,
     history,
+    historyAvailability,
     roadRail,
     transit,
     error,
@@ -51,6 +52,7 @@ export default async function Page({ searchParams }: PageProps) {
       energy={energy}
       householdEnergy={householdEnergy}
       history={history}
+      historyAvailability={historyAvailability}
       error={error}
       overview={overview}
       publicDashboard={publicDashboard}

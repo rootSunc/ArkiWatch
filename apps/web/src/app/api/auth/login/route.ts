@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { normalizeApiBaseUrl, SESSION_COOKIE_NAME } from "@/features/auth/config";
+import { resolveServerApiBaseUrl, SESSION_COOKIE_NAME } from "@/features/auth/config";
+import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
 
 type BackendLoginResponse = {
   access_token: string;
@@ -9,12 +10,17 @@ type BackendLoginResponse = {
 };
 
 export async function POST(request: NextRequest) {
+  const crossSiteResponse = rejectCrossSiteRequest(request);
+  if (crossSiteResponse) {
+    return crossSiteResponse;
+  }
+
   const credentials = await request.json().catch(() => null);
   if (!credentials) {
     return NextResponse.json({ detail: "Invalid login payload." }, { status: 400 });
   }
 
-  const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const apiBaseUrl = resolveServerApiBaseUrl();
   const backendResponse = await fetch(`${apiBaseUrl}/auth/login`, {
     method: "POST",
     cache: "no-store",

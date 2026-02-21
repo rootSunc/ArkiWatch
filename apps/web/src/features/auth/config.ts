@@ -20,3 +20,9 @@ export function normalizeApiBaseUrl(rawValue: string | undefined): string {
 
   return normalizedValue.endsWith("/") ? normalizedValue.slice(0, -1) : normalizedValue;
 }
+
+export function resolveServerApiBaseUrl(): string {
+  return normalizeApiBaseUrl(
+    process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL,
+  );
+}

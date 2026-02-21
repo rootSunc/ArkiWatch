@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  normalizeApiBaseUrl,
+  resolveServerApiBaseUrl,
   SESSION_COOKIE_NAME,
 } from "@/features/auth/config";
+import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
 
 export async function POST(request: NextRequest) {
+  const crossSiteResponse = rejectCrossSiteRequest(request);
+  if (crossSiteResponse) {
+    return crossSiteResponse;
+  }
+
   const payload = await request.json().catch(() => null);
   if (!payload) {
     return NextResponse.json({ detail: "Invalid assistant payload." }, { status: 400 });
   }
 
-  const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const apiBaseUrl = resolveServerApiBaseUrl();
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const backendResponse = await fetch(`${apiBaseUrl}/assistant/chat`, {
     method: "POST",
