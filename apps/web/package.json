@@ -8,8 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm run lint && pnpm run typecheck"
+    "generate:api-types": "openapi-typescript ../../apps/api/openapi.json -o src/lib/api-contract.ts",
+    "check": "pnpm run lint && pnpm run test && pnpm run typecheck"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -20,12 +22,18 @@
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.0",
-    "typescript": "^5.5.4"
+    "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.7"
   }
 }
