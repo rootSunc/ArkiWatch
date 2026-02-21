@@ -71,11 +71,33 @@
   box-shadow: 0 0 8px rgba(142, 213, 255, 0.6);
 }
 
+.weather-live-status-ready span,
+.weather-provider-status-ready > div:first-child span {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+.weather-live-status-stale span,
+.weather-provider-status-stale > div:first-child span {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+
+.weather-live-status-empty span,
+.weather-provider-status-empty > div:first-child span {
+  background: var(--on-surface-variant);
+  box-shadow: none;
+}
+
 .weather-bento-grid,
 .weather-lower-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+}
+
+.weather-detail-page .weather-lower-grid {
+  align-items: stretch;
 }
 
 .weather-glass-panel,

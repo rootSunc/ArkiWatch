@@ -74,6 +74,27 @@
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
+.road-rail-live-status-ready span,
+.road-rail-provider-status-ready > div:first-child span {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.road-rail-live-status-stale span,
+.road-rail-provider-status-stale > div:first-child span {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  animation: none;
+}
+
+.road-rail-live-status-empty span,
+.road-rail-provider-status-empty > div:first-child span {
+  background: var(--on-surface-variant);
+  box-shadow: none;
+  animation: none;
+}
+
 .road-rail-glass-panel,
 .road-rail-detail-empty {
   min-width: 0;
@@ -108,6 +129,98 @@
   justify-content: space-between;
 }
 
+.road-rail-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+}
+
+.road-rail-command-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.road-rail-command-status > div {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.road-rail-command-status .road-rail-card-kicker {
+  justify-content: flex-start;
+}
+
+.road-rail-command-status strong {
+  color: var(--on-background);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.road-rail-command-status p {
+  display: grid;
+  gap: 3px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-command-status p span {
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.road-rail-command-panel-bad .road-rail-command-status p span {
+  color: var(--error);
+}
+
+.road-rail-command-panel-warn .road-rail-command-status p span {
+  color: var(--tertiary);
+}
+
+.road-rail-command-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.road-rail-command-facts div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 9px 10px;
+}
+
+.road-rail-command-facts span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-command-facts strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
 .road-rail-card-kicker,
 .road-rail-severity-panel header,
 .road-rail-network-panel header,
@@ -139,6 +252,19 @@
   color: var(--primary);
   font-size: 86px;
   font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.road-rail-command-panel .road-rail-condition-icon {
+  flex: 0 0 auto;
+  font-size: 48px;
+}
+
+.road-rail-command-panel-bad .road-rail-condition-icon {
+  color: var(--error);
+}
+
+.road-rail-command-panel-warn .road-rail-condition-icon {
+  color: var(--tertiary);
 }
 
 .road-rail-hero-bad .road-rail-condition-icon {
@@ -363,16 +489,21 @@
 
 .road-rail-summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
 }
 
 .road-rail-summary-strip article {
   display: grid;
-  min-height: 76px;
+  min-height: 62px;
   align-content: space-between;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
+}
+
+.road-rail-summary-strip article strong {
+  font-size: 18px;
+  line-height: 24px;
 }
 
 .road-rail-incident-panel header div {
@@ -382,9 +513,64 @@
 .road-rail-incident-panel h3 {
   margin-top: 2px;
   color: var(--on-background);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 22px;
+}
+
+.road-rail-insight-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.road-rail-incident-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.road-rail-incident-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.road-rail-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 6px 14px;
+  text-transform: uppercase;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.road-rail-filter-chip:hover {
+  border-color: var(--outline);
+  background: var(--surface-container-highest);
+  color: var(--on-surface);
+}
+
+.road-rail-filter-chip-active {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.road-rail-filter-chip .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .road-rail-timeband-panel {
@@ -413,9 +599,54 @@
   gap: 7px;
 }
 
+.road-rail-incident-status {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 24px;
+  width: fit-content;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 999px;
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  padding: 3px 8px 3px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-status .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: currentColor;
+  font-family: "Material Symbols Outlined";
+  font-size: 14px;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+  font-variation-settings: "FILL" 1, "wght" 500;
+}
+
+.road-rail-incident-status span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.road-rail-incident-status-active {
+  border-color: color-mix(in srgb, var(--tertiary) 52%, var(--detail-panel-border-medium));
+  background: color-mix(in srgb, var(--tertiary) 12%, var(--surface-container-low));
+  color: var(--tertiary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tertiary) 10%, transparent);
+}
+
 .road-rail-timeband-row {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) minmax(120px, 0.9fr);
+  grid-template-columns: minmax(118px, 0.38fr) minmax(0, 1fr) minmax(120px, 0.9fr);
   align-items: center;
   gap: 10px;
 }
@@ -462,6 +693,7 @@
 }
 
 .road-rail-incident-list,
+.road-rail-incident-list-column,
 .road-rail-side-grid,
 .road-rail-corridor-panel > div,
 .road-rail-pipeline-panel > div,
@@ -470,11 +702,66 @@
   gap: 10px;
 }
 
+.road-rail-incident-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.15fr) minmax(320px, 0.85fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.road-rail-incident-list-column,
+.road-rail-incident-inspector {
+  min-width: 0;
+}
+
+.road-rail-incident-list {
+  max-height: 720px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.road-rail-incident-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.road-rail-incident-list {
+  scrollbar-width: none;
+}
+
+.road-rail-incident-inspector {
+  display: grid;
+  align-self: start;
+  gap: 10px;
+  position: sticky;
+  top: 8px;
+}
+
 .road-rail-incident {
   position: relative;
   display: grid;
   gap: 9px;
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
   padding: 10px 10px 10px 28px;
+  scroll-snap-align: start;
+  text-align: left;
+}
+
+.road-rail-incident-card {
+  min-width: 0;
+}
+
+.road-rail-incident-card:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  outline: none;
+}
+
+.road-rail-incident-selected {
+  border-color: var(--primary);
+  background: var(--surface-container-low);
 }
 
 .road-rail-incident-dot {
@@ -516,6 +803,24 @@
   min-width: 0;
 }
 
+.road-rail-incident-time-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.road-rail-incident-time-row > span:not(.road-rail-incident-status) {
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  padding: 2px 5px;
+}
+
 .road-rail-incident-main strong,
 .road-rail-stage strong,
 .road-rail-request strong,
@@ -533,6 +838,7 @@
 }
 
 .road-rail-incident-main p,
+.road-rail-incident-scope-preview,
 .road-rail-quality-panel p,
 .road-rail-quality-panel small,
 .road-rail-stage p,
@@ -548,6 +854,10 @@
   overflow-wrap: anywhere;
 }
 
+.road-rail-incident-scope-preview {
+  display: block;
+}
+
 .road-rail-incident-main em {
   flex: 0 0 auto;
   border: 1px solid var(--detail-panel-border-stronger);
@@ -559,6 +869,33 @@
   line-height: 12px;
   padding: 4px 6px;
   text-transform: uppercase;
+}
+
+.road-rail-incident-window {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.road-rail-incident-window span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.road-rail-incident-bad .road-rail-incident-window span {
+  background: var(--error);
+}
+
+.road-rail-incident-warn .road-rail-incident-window span {
+  background: var(--tertiary);
+}
+
+.road-rail-incident-good .road-rail-incident-window span {
+  background: var(--success);
 }
 
 .road-rail-incident-meta,
@@ -576,6 +913,287 @@
   color: var(--on-background);
   padding: 4px 6px;
   text-transform: uppercase;
+}
+
+.road-rail-incident-detail {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--detail-panel-border);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 12px;
+}
+
+.road-rail-incident-detail header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.road-rail-incident-detail header div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.road-rail-incident-detail header > div > span:not(.road-rail-incident-status),
+.road-rail-incident-detail-meta span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-detail header strong {
+  color: var(--on-background);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-detail header em {
+  flex: 0 0 auto;
+  border: 1px solid var(--detail-panel-border-stronger);
+  border-radius: 4px;
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 12px;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-detail-bad header em {
+  color: var(--error);
+}
+
+.road-rail-incident-detail-warn header em {
+  color: var(--tertiary);
+}
+
+.road-rail-incident-detail-good header em {
+  color: var(--success);
+}
+
+.road-rail-incident-detail > p {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-live-layer {
+  display: grid;
+  gap: 9px;
+  border-top: 1px solid var(--separator-border);
+  border-bottom: 1px solid var(--separator-border);
+  padding: 10px 0;
+}
+
+.road-rail-incident-live-layer-active {
+  border-color: color-mix(in srgb, var(--tertiary) 36%, var(--separator-border));
+}
+
+.road-rail-incident-live-copy {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-incident-live-copy > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  text-align: right;
+}
+
+.road-rail-incident-live-copy strong,
+.road-rail-incident-live-copy span:not(.road-rail-incident-status):not(.material-symbols-outlined),
+.road-rail-incident-live-facts dt,
+.road-rail-incident-live-facts dd {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.road-rail-incident-live-copy strong {
+  color: var(--on-background);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 15px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-live-copy span:not(.road-rail-incident-status):not(.material-symbols-outlined) {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  line-height: 13px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-live-meter {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+}
+
+.road-rail-incident-live-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.road-rail-incident-live-layer-active .road-rail-incident-live-meter span {
+  background: var(--tertiary);
+}
+
+.road-rail-incident-live-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.road-rail-incident-live-facts div {
+  min-width: 0;
+}
+
+.road-rail-incident-live-facts dt {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 13px;
+  text-transform: uppercase;
+}
+
+.road-rail-incident-live-facts dd {
+  margin-top: 3px;
+  color: var(--on-background);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.road-rail-incident-detail-meta div {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 4px;
+  background: var(--surface-container-low);
+  padding: 9px;
+}
+
+.road-rail-incident-detail-meta strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-incident-detail-scope {
+  display: grid;
+  gap: 10px;
+}
+
+.road-rail-scope-group {
+  display: grid;
+  gap: 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-container-low) 88%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 72%, transparent);
+  padding: 10px 12px;
+}
+
+.road-rail-scope-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.road-rail-scope-group-header .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: var(--primary);
+  font-family: "Material Symbols Outlined";
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1;
+  font-variation-settings: "FILL" 1, "wght" 500;
+}
+
+.road-rail-scope-group-count {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--surface-container-highest);
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  min-width: 22px;
+  padding: 1px 8px;
+  text-align: center;
+}
+
+.road-rail-scope-list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.road-rail-scope-item {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border-radius: 10px;
+  background: var(--card-bg);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 55%, transparent);
+  padding: 10px 12px;
+}
+
+.road-rail-scope-item-label {
+  color: var(--on-background);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-scope-item-meta,
+.road-rail-scope-empty {
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-scope-empty {
+  padding: 2px 0;
 }
 
 .road-rail-corridor-load {
@@ -698,6 +1316,93 @@
 
 .road-rail-stage-bad .road-rail-stage-meter span {
   background: var(--error);
+}
+
+.road-rail-network-panel .road-rail-corridor-panel {
+  gap: 10px;
+  border-top: 1px solid var(--separator-border);
+  margin-top: 2px;
+  padding: 12px 0 0;
+}
+
+.road-rail-diagnostics-panel {
+  padding: 0;
+}
+
+.road-rail-diagnostics-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 12px;
+}
+
+.road-rail-diagnostics-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.road-rail-diagnostics-panel summary div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.road-rail-diagnostics-panel summary span:not(.material-symbols-outlined),
+.road-rail-diagnostic-section header span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.road-rail-diagnostics-panel summary strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.road-rail-diagnostics-panel summary .material-symbols-outlined {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+  transition: transform 150ms ease;
+}
+
+.road-rail-diagnostics-panel[open] summary .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.road-rail-diagnostics-body {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--separator-border);
+  padding: 12px;
+}
+
+.road-rail-diagnostic-section {
+  display: grid;
+  gap: 10px;
+}
+
+.road-rail-diagnostic-section header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.road-rail-diagnostic-section header strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .road-rail-provider-status {
@@ -846,4 +1551,82 @@
   transform: translateX(2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   border-color: var(--outline-variant);
+}
+
+@media (max-width: 960px) {
+  .road-rail-incident-toolbar {
+    flex-direction: column;
+  }
+
+  .road-rail-incident-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .road-rail-timeband-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .road-rail-timeband-row strong {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .road-rail-incident-live-copy {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .road-rail-incident-live-copy > div {
+    text-align: left;
+  }
+
+  .road-rail-incident-live-facts,
+  .road-rail-incident-detail-meta,
+  .road-rail-incident-detail-scope {
+    grid-template-columns: 1fr;
+  }
+
+  .road-rail-incident-list {
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .road-rail-incident-inspector {
+    order: -1;
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .road-rail-command-panel,
+  .road-rail-insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .road-rail-command-status {
+    align-items: flex-start;
+  }
+
+  .road-rail-command-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .road-rail-command-status {
+    gap: 12px;
+  }
+
+  .road-rail-command-panel .road-rail-condition-icon {
+    font-size: 38px !important;
+  }
+
+  .road-rail-command-status strong {
+    font-size: 34px;
+  }
+
+  .road-rail-command-facts {
+    grid-template-columns: 1fr;
+  }
 }

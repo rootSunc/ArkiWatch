@@ -116,6 +116,88 @@
   padding: 12px;
 }
 
+.water-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+}
+
+.water-command-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.water-command-status > div {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.water-command-status .water-card-kicker {
+  justify-content: flex-start;
+}
+
+.water-command-status strong {
+  color: var(--on-background);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.water-command-status p {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.water-command-panel-good .water-command-status p {
+  color: var(--success);
+}
+
+.water-command-panel-bad .water-command-status p {
+  color: var(--error);
+}
+
+.water-command-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.water-command-facts div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 9px 10px;
+}
+
+.water-command-facts span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.water-command-facts strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
 .water-hero {
   align-self: start;
   width: 100%;
@@ -155,6 +237,19 @@
   color: var(--primary);
   font-size: 72px;
   font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.water-command-panel .water-condition-icon {
+  flex: 0 0 auto;
+  font-size: 48px;
+}
+
+.water-command-panel-good .water-condition-icon {
+  color: var(--success);
+}
+
+.water-command-panel-bad .water-condition-icon {
+  color: var(--error);
 }
 
 .water-hero-good .water-condition-icon {
@@ -464,16 +559,16 @@
 
 .water-summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
 }
 
 .water-summary-strip article {
   display: grid;
-  min-height: 76px;
+  min-height: 62px;
   align-content: space-between;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .water-summary-strip article strong {
@@ -504,9 +599,27 @@
 .water-signal-panel h3 {
   margin-top: 2px;
   color: var(--on-background);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 22px;
+}
+
+.water-insight-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.water-insight-grid .water-coverage-panel,
+.water-insight-grid .water-field-panel {
+  grid-column: auto;
+}
+
+.water-insight-grid .water-coverage-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.water-insight-grid .water-field-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .water-schema-grid {
@@ -913,6 +1026,47 @@
 .water-detail-empty p {
   color: var(--on-surface-variant);
   line-height: 20px;
+}
+
+@media (max-width: 960px) {
+  .water-detail-header > div:first-child,
+  .water-detail-header > div:last-child {
+    flex: 0 1 auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .water-command-panel,
+  .water-insight-grid .water-coverage-list {
+    grid-template-columns: 1fr;
+  }
+
+  .water-command-status {
+    align-items: flex-start;
+  }
+
+  .water-command-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .water-command-status {
+    gap: 12px;
+  }
+
+  .water-command-panel .water-condition-icon {
+    font-size: 38px !important;
+  }
+
+  .water-command-status strong {
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .water-command-facts {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Premium Water & Snow, Geospatial, and Regional Profile styles */

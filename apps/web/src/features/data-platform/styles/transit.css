@@ -70,6 +70,27 @@
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
+.transit-live-status-ready span,
+.transit-provider-status-ready > div:first-child span {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.transit-live-status-stale span,
+.transit-provider-status-stale > div:first-child span {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  animation: none;
+}
+
+.transit-live-status-empty span,
+.transit-provider-status-empty > div:first-child span {
+  background: var(--on-surface-variant);
+  box-shadow: none;
+  animation: none;
+}
+
 .transit-glass-panel,
 .transit-detail-empty {
   min-width: 0;
@@ -96,6 +117,98 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
+}
+
+.transit-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+}
+
+.transit-command-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.transit-command-status > div {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.transit-command-status .transit-card-kicker {
+  justify-content: flex-start;
+}
+
+.transit-command-status strong {
+  color: var(--on-background);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.transit-command-status p {
+  display: grid;
+  gap: 3px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.transit-command-status p span {
+  color: var(--primary);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.transit-command-panel-bad .transit-command-status p span {
+  color: var(--error);
+}
+
+.transit-command-panel-warn .transit-command-status p span {
+  color: var(--tertiary);
+}
+
+.transit-command-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.transit-command-facts div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 9px 10px;
+}
+
+.transit-command-facts span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.transit-command-facts strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
 }
 
 .transit-hero {
@@ -137,6 +250,19 @@
   color: var(--primary);
   font-size: 86px;
   font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.transit-command-panel .transit-condition-icon {
+  flex: 0 0 auto;
+  font-size: 48px;
+}
+
+.transit-command-panel-bad .transit-condition-icon {
+  color: var(--error);
+}
+
+.transit-command-panel-warn .transit-condition-icon {
+  color: var(--tertiary);
 }
 
 .transit-hero-bad .transit-condition-icon {
@@ -396,16 +522,16 @@
 
 .transit-summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
 }
 
 .transit-summary-strip article {
   display: grid;
-  min-height: 76px;
+  min-height: 62px;
   align-content: space-between;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .transit-summary-strip article strong {
@@ -423,9 +549,16 @@
 .transit-alert-panel h3 {
   margin-top: 2px;
   color: var(--on-background);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 22px;
+}
+
+.transit-insight-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.15fr);
+  gap: 12px;
+  align-items: start;
 }
 
 .transit-alert-toolbar {
@@ -689,6 +822,39 @@
   .transit-alert-inspector {
     order: -1;
     position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .transit-command-panel,
+  .transit-insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transit-command-status {
+    align-items: flex-start;
+  }
+
+  .transit-command-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .transit-command-status {
+    gap: 12px;
+  }
+
+  .transit-command-panel .transit-condition-icon {
+    font-size: 38px !important;
+  }
+
+  .transit-command-status strong {
+    font-size: 34px;
+  }
+
+  .transit-command-facts {
+    grid-template-columns: 1fr;
   }
 }
 

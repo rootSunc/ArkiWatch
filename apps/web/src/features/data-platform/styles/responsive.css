@@ -45,7 +45,7 @@
     border-right: 1px solid var(--outline-variant);
     background: var(--surface-container-lowest);
     color: var(--primary-fixed-dim);
-    padding: 24px 12px;
+    padding: 16px 12px 24px;
     z-index: 2;
     overflow: hidden;
   }
@@ -687,7 +687,7 @@
     min-width: 0;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid var(--outline-variant);
     border-radius: 10px;
     background: var(--surface-container-low);
@@ -828,10 +828,71 @@
     line-height: 16px;
   }
 
-  .mobile-scope-switchers .date-scope-input {
+  .mobile-scope-switchers .date-scope-trigger {
     inset: 0;
     width: 100%;
     height: 100%;
+  }
+
+  .mobile-scope-switchers .date-calendar-popover {
+    right: 0;
+    left: auto;
+    width: min(278px, calc(100vw - 24px));
+    padding: 10px 12px 12px;
+  }
+
+  .date-calendar-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .date-calendar-header strong {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .date-calendar-nav {
+    gap: 4px;
+  }
+
+  .date-calendar-nav button {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+  }
+
+  .date-calendar-nav .material-symbols-outlined {
+    font-size: 24px;
+  }
+
+  .date-calendar-weekdays {
+    margin-bottom: 3px;
+    font-size: 12px;
+  }
+
+  .date-calendar-weekdays span {
+    height: 22px;
+  }
+
+  .date-calendar-day {
+    height: 31px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .date-calendar-data-dot {
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+  }
+
+  .date-calendar-actions {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .date-calendar-actions button {
+    font-size: 12px;
   }
 
   .date-scope-value-full,
@@ -844,17 +905,22 @@
   }
 
   .historical-banner {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
     align-items: flex-start;
-    flex-wrap: wrap;
+    column-gap: 8px;
+    row-gap: 8px;
   }
 
   .historical-banner-text {
-    flex-basis: calc(100% - 30px);
+    grid-column: 2;
   }
 
   .historical-banner-action {
+    grid-column: 2;
     width: 100%;
-    margin-left: 30px;
+    min-width: 0;
+    margin-left: 0;
   }
 
   .dashboard-content {
@@ -901,6 +967,20 @@
     flex: 0 0 min(74vw, 244px);
     min-height: 82px;
     scroll-snap-align: start;
+  }
+
+  .today-brief-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-inline: 0;
+    overflow: visible;
+    padding: 0;
+    scroll-snap-type: none;
+  }
+
+  .today-brief-summary .metric-tile {
+    flex: initial;
+    min-height: 94px;
   }
 
   .summary-grid-user .metric-tile-detail {
@@ -1623,7 +1703,7 @@
     background: var(--surface-container-lowest);
     border-right: 1px solid var(--outline-variant);
     z-index: 1100;
-    padding: 24px 16px;
+    padding: 16px 16px 24px;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
     animation: sideNavSlideIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -1784,5 +1864,17 @@
   .water-current-cluster,
   .linked-events-focus {
     gap: 12px;
+  }
+}
+
+.road-rail-main-grid .road-rail-incident-panel,
+.road-rail-insight-grid .road-rail-severity-panel,
+.road-rail-insight-grid .road-rail-network-panel {
+  grid-column: auto;
+}
+
+@media (min-width: 768px) {
+  .road-rail-main-grid .road-rail-incident-panel {
+    grid-column: 1 / -1;
   }
 }

@@ -2,6 +2,7 @@
 .source-health-summary {
   display: flex;
   width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 0.5rem;
   padding: 0;
@@ -18,8 +19,16 @@
 }
 
 .source-health-summary .material-symbols-outlined {
+  flex: 0 0 auto;
   font-size: 1.1rem;
   opacity: 0.85;
+}
+
+.source-health-summary > span:not(.material-symbols-outlined) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .source-health-chevron {
@@ -28,11 +37,17 @@
 
 .source-health-panel:not(.source-health-panel-expanded) {
   padding-top: 8px;
+  padding-right: 14px;
   padding-bottom: 8px;
 }
 
 .source-health-panel {
   position: relative;
+  grid-column: 1 / -1;
+  align-self: start;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   margin-top: 8px;
   margin-bottom: 24px;
   padding: 10px 54px 10px 14px;

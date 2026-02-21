@@ -161,6 +161,88 @@
   padding: 12px;
 }
 
+.energy-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+}
+
+.energy-command-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.energy-command-status > div {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.energy-command-status .energy-card-kicker {
+  justify-content: flex-start;
+}
+
+.energy-command-status strong {
+  color: var(--on-background);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.energy-command-status p {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.energy-command-panel-good .energy-command-status p {
+  color: var(--success);
+}
+
+.energy-command-panel-bad .energy-command-status p {
+  color: var(--error);
+}
+
+.energy-command-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.energy-command-facts div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--detail-panel-border-strong);
+  border-radius: 4px;
+  background: var(--detail-panel-bg);
+  padding: 9px 10px;
+}
+
+.energy-command-facts span {
+  color: var(--on-surface-variant);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 12px;
+  text-transform: uppercase;
+}
+
+.energy-command-facts strong {
+  color: var(--on-background);
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
 .energy-hero {
   min-height: 260px;
   justify-content: space-between;
@@ -199,6 +281,19 @@
   color: var(--energy-accent);
   font-size: 86px;
   font-variation-settings: "FILL" 1, "wght" 200;
+}
+
+.energy-command-panel .energy-condition-icon {
+  flex: 0 0 auto;
+  font-size: 48px;
+}
+
+.energy-command-panel-good .energy-condition-icon {
+  color: var(--success);
+}
+
+.energy-command-panel-bad .energy-condition-icon {
+  color: var(--error);
 }
 
 .energy-hero-good .energy-condition-icon {
@@ -389,8 +484,8 @@
 
 .energy-summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
 }
 
 .energy-summary-stack {
@@ -400,10 +495,10 @@
 
 .energy-summary-strip article {
   display: grid;
-  min-height: 76px;
+  min-height: 62px;
   align-content: space-between;
-  gap: 10px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
 }
 
 .energy-summary-strip article strong {
@@ -434,9 +529,14 @@
 .energy-signal-panel h3 {
   margin-top: 2px;
   color: var(--on-background);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 24px;
+  line-height: 22px;
+}
+
+.energy-insight-grid {
+  display: grid;
+  gap: 12px;
 }
 
 .energy-price-chart {
@@ -1087,6 +1187,39 @@
 .energy-detail-empty p {
   color: var(--on-surface-variant);
   line-height: 20px;
+}
+
+@media (max-width: 720px) {
+  .energy-command-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .energy-command-status {
+    align-items: flex-start;
+  }
+
+  .energy-command-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .energy-command-status {
+    gap: 12px;
+  }
+
+  .energy-command-panel .energy-condition-icon {
+    font-size: 38px !important;
+  }
+
+  .energy-command-status strong {
+    font-size: 30px;
+    line-height: 1.08;
+  }
+
+  .energy-command-facts {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Premium Energy Workspace Styles */

@@ -82,6 +82,15 @@
   font-family: inherit;
 }
 
+.signal-system-tile {
+  cursor: default;
+}
+
+.signal-system-tile:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .signal-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
