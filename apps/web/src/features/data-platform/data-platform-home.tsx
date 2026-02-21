@@ -14,10 +14,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   formatTimestamp,
   severityTone,
-  statusTone,
 } from "@/features/shared/format";
 
-import { categoryKeyDataItems } from "./category-metadata";
 import { categoryVisibleToCurrentUser } from "./category-access";
 import {
   categorySupportsCityScope,
@@ -50,8 +48,6 @@ import {
   preferredLanguageMode,
   saveLanguageMode,
   storedLanguageMode,
-  translateDataLabel,
-  translateEnumLabel,
   translateText,
 } from "./i18n";
 import {
@@ -59,8 +55,8 @@ import {
   EnergyCurrentResponse,
   PlatformCategory,
   PlatformEvent,
+  PlatformHistoryAvailabilityResponse,
   PlatformHistoryResponse,
-  PlatformMetric,
   PlatformOverviewResponse,
   PublicDashboardRead,
   RoadRailCurrentResponse,
@@ -100,7 +96,9 @@ import {
   categorySignalAttribution,
   formatSignalAttributionLine,
 } from "./signal-attribution";
+import { buildSignalSystemTiles } from "./signals-console";
 import { SourceHealthStrip } from "./source-health-strip";
+import { buildTodayBrief } from "./today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import {
   ENERGY_TAB_QUERY_KEY,
@@ -109,6 +107,26 @@ import {
   resolveMobilityTabParam,
   type EnergyPanelKey,
 } from "./workspace-query-params";
+import {
+  MOBILITY_NAV_KEY,
+  activeEventLabel,
+  attributeLabel,
+  buildMobilityCategory,
+  displayTitle,
+  eventAttributeRows,
+  eventCategoryLabel,
+  eventTimeLabel,
+  eventMatchesSearch,
+  isMobilityCategoryKey,
+  isNotificationEvent,
+  matchesSearch,
+  mergeMobilityCategories,
+  mobilityAvailable,
+  notificationToneForEvents,
+  pickPriorityEvent,
+  signalReadout,
+  statusLabel,
+} from "./data-platform-view-model";
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
 type DataPlatformHomeProps = {
@@ -122,6 +140,7 @@ type DataPlatformHomeProps = {
   energy: EnergyCurrentResponse | null;
   householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
+  historyAvailability: PlatformHistoryAvailabilityResponse | null;
   overview: PlatformOverviewResponse | null;
   publicDashboard: PublicDashboardRead | null;
   roadRail: RoadRailCurrentResponse | null;
@@ -144,22 +163,8 @@ const CATEGORY_ICONS: Record<string, string> = {
   weather: "cloud",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  alert: "Alert",
-  background: "Catalog",
-  connected: "Active",
-  failing: "Alert",
-  healthy: "Healthy",
-  inactive: "Inactive",
-  pending: "Pending",
-  planned: "Planned",
-  stale: "Stale",
-  watch: "Watch",
-};
-
-const BRAND_LOGO_SRC = "/brand/logo.png";
+const BRAND_LOGO_SRC = "/brand/logo-mark.png";
 const NAV_QUERY_KEY = "view";
-const MOBILITY_NAV_KEY = "mobility";
 const EVENT_QUERY_KEY = "event";
 const TODAY_NAV_KEY = "today";
 const FALLBACK_NAV_KEY = "overview";
@@ -181,502 +186,6 @@ function pathWithParams(pathname: string, params: URLSearchParams): string {
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function titleCase(value: string): string {
-  return value
-    .replaceAll("_", " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
-function isMobilityCategoryKey(
-  key: string | null | undefined,
-): key is MobilityTabKey {
-  return key === "transit" || key === "traffic";
-}
-
-function mobilityAvailable(categories: PlatformCategory[]): boolean {
-  return categories.some((category) => isMobilityCategoryKey(category.key));
-}
-
-function uniqueValues(values: string[]): string[] {
-  return [...new Set(values.filter(Boolean))];
-}
-
-function mergeCategorySources(categories: PlatformCategory[]) {
-  const sources = new Map<string, PlatformCategory["sources"][number]>();
-
-  for (const category of categories) {
-    for (const source of category.sources) {
-      sources.set(source.id || source.source_code, source);
-    }
-  }
-
-  return [...sources.values()];
-}
-
-function buildMobilityCategory(
-  categories: PlatformCategory[],
-  transit: TransitCurrentResponse | null,
-  roadRail: RoadRailCurrentResponse | null,
-): PlatformCategory | null {
-  const mobilityCategories = categories.filter((category) =>
-    isMobilityCategoryKey(category.key),
-  );
-
-  if (mobilityCategories.length === 0) {
-    return null;
-  }
-
-  const activeTransitAlerts = transit?.quality.active_alert_count ?? 0;
-  const activeRoadRailEvents = roadRail?.quality.active_event_count ?? 0;
-  const activeEvents = activeTransitAlerts + activeRoadRailEvents;
-  const sourceCodes = uniqueValues(
-    mobilityCategories.flatMap((category) => category.source_codes),
-  );
-  const updatedAt =
-    transit?.observed_at ??
-    roadRail?.observed_at ??
-    mobilityCategories
-      .flatMap((category) => category.summary_metrics)
-      .find((metric) => metric.updated_at)?.updated_at ??
-    null;
-
-  return {
-    key: MOBILITY_NAV_KEY,
-    title: "Mobility",
-    description:
-      "Transit service alerts and Digitraffic road and rail operations.",
-    status: activeEvents > 0 ? "watch" : "connected",
-    stage: "connected",
-    priority: "P0",
-    source_codes: sourceCodes,
-    key_data_items: uniqueValues(
-      mobilityCategories.flatMap((category) => categoryKeyDataItems(category)),
-    ),
-    summary_metrics: [
-      {
-        key: "active_events",
-        label: "Active Events",
-        value: String(activeEvents),
-        tone: activeEvents > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: updatedAt,
-        source_codes: sourceCodes,
-      },
-      {
-        key: "transit_alerts",
-        label: "Transit",
-        value: String(activeTransitAlerts),
-        tone: activeTransitAlerts > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: transit?.observed_at ?? null,
-        source_codes: transit ? ["digitransit"] : [],
-      },
-      {
-        key: "road_rail_events",
-        label: "Road & Rail",
-        value: String(activeRoadRailEvents),
-        tone: activeRoadRailEvents > 0 ? "warn" : "good",
-        unit: null,
-        detail: null,
-        updated_at: roadRail?.observed_at ?? null,
-        source_codes: roadRail ? ["digitraffic"] : [],
-      },
-    ],
-    visualizations: mobilityCategories.flatMap(
-      (category) => category.visualizations,
-    ),
-    events: mobilityCategories.flatMap((category) => category.events),
-    sources: mergeCategorySources(mobilityCategories),
-  };
-}
-
-function mergeMobilityCategories(
-  categories: PlatformCategory[],
-  mobilityCategory: PlatformCategory | null,
-): PlatformCategory[] {
-  if (!mobilityCategory) {
-    return categories;
-  }
-
-  const mergedCategories: PlatformCategory[] = [];
-  let mobilityInserted = false;
-
-  for (const category of categories) {
-    if (isMobilityCategoryKey(category.key)) {
-      if (!mobilityInserted) {
-        mergedCategories.push(mobilityCategory);
-        mobilityInserted = true;
-      }
-      continue;
-    }
-
-    mergedCategories.push(category);
-  }
-
-  return mobilityInserted
-    ? mergedCategories
-    : [...mergedCategories, mobilityCategory];
-}
-
-function statusLabel(
-  category: PlatformCategory,
-  language: LanguageMode,
-): string {
-  if (category.status in STATUS_LABELS) {
-    return translateText(language, STATUS_LABELS[category.status]);
-  }
-
-  if (
-    category.stage &&
-    category.stage !== "connected" &&
-    category.stage in STATUS_LABELS
-  ) {
-    return translateText(language, STATUS_LABELS[category.stage]);
-  }
-
-  return translateEnumLabel(language, category.status);
-}
-
-function categoryTone(category: PlatformCategory): DashboardTone {
-  const tone = statusTone(category.status) as DashboardTone;
-  if (tone !== "neutral") {
-    return tone;
-  }
-
-  if (category.stage === "planned" || category.stage === "background") {
-    return "neutral";
-  }
-
-  return "good";
-}
-
-function metricByKey(
-  category: PlatformCategory,
-  key: string,
-): PlatformMetric | null {
-  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
-}
-
-function fallbackMetric(category: PlatformCategory): PlatformMetric | null {
-  return (
-    category.summary_metrics.find(
-      (metric) =>
-        ![
-          "catalog_stage",
-          "source_status",
-          "active_events",
-          "records_ingested",
-        ].includes(metric.key),
-    ) ??
-    metricByKey(category, "records_ingested") ??
-    metricByKey(category, "source_status")
-  );
-}
-
-function numericPercent(value: string, fallback: number): number {
-  const match = value.replace(",", ".").match(/-?\d+(\.\d+)?/);
-  if (!match) {
-    return fallback;
-  }
-
-  const numericValue = Number.parseFloat(match[0]);
-  if (!Number.isFinite(numericValue)) {
-    return fallback;
-  }
-
-  return Math.max(8, Math.min(100, numericValue));
-}
-
-function toneProgress(tone: DashboardTone): number {
-  if (tone === "bad") {
-    return 94;
-  }
-  if (tone === "warn") {
-    return 42;
-  }
-  if (tone === "good") {
-    return 78;
-  }
-  return 56;
-}
-
-function formatMetricValue(metric: PlatformMetric | null): string {
-  if (!metric) {
-    return "n/a";
-  }
-
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
-}
-
-function scoreLabel(
-  score: number | null | undefined,
-  fallback: string | null | undefined,
-  language: LanguageMode,
-): string {
-  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
-  if (score === null || score === undefined) {
-    return fallback ? translateText(language, fallback) : "n/a";
-  }
-
-  const label =
-    labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
-  return translateText(language, label);
-}
-
-function displayTitle(
-  category: PlatformCategory,
-  language: LanguageMode,
-): string {
-  if (category.key === MOBILITY_NAV_KEY) {
-    return translateText(language, "Mobility");
-  }
-  if (category.key === "air") {
-    return translateText(language, "Air Quality");
-  }
-  if (category.key === "traffic") {
-    return translateText(language, "Road & Rail");
-  }
-  if (category.key === "water") {
-    return translateText(language, "Water & Snow");
-  }
-  if (category.key === "events") {
-    return translateText(language, "Linked Events");
-  }
-
-  return translateText(language, category.title);
-}
-
-function matchesSearch(
-  category: PlatformCategory,
-  searchValue: string,
-  language: LanguageMode,
-): boolean {
-  const query = searchValue.trim().toLowerCase();
-  if (!query) {
-    return true;
-  }
-
-  const haystack = [
-    category.key,
-    category.title,
-    displayTitle(category, language),
-    category.description,
-    category.status,
-    translateEnumLabel(language, category.status),
-    category.stage ?? "",
-    ...category.source_codes,
-    ...categoryKeyDataItems(category),
-    ...categoryKeyDataItems(category).map((item) =>
-      translateDataLabel(language, item),
-    ),
-    ...category.summary_metrics.map(
-      (metric) => `${metric.label} ${metric.value} ${metric.detail ?? ""}`,
-    ),
-    ...category.events.map((event) => `${event.title} ${event.body}`),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query);
-}
-
-function eventMatchesSearch(
-  event: PlatformEvent,
-  searchValue: string,
-  language: LanguageMode,
-): boolean {
-  const query = searchValue.trim().toLowerCase();
-  if (!query) {
-    return true;
-  }
-
-  return `${event.title} ${event.body} ${event.category_key} ${event.severity} ${translateEnumLabel(language, event.severity)} ${event.source_codes.join(" ")}`
-    .toLowerCase()
-    .includes(query);
-}
-
-function signalReadout(
-  category: PlatformCategory,
-  weather: WeatherForecastResponse | null,
-  airQuality: AirQualityCurrentResponse | null,
-  energy: EnergyCurrentResponse | null,
-  roadRail: RoadRailCurrentResponse | null,
-  transit: TransitCurrentResponse | null,
-  language: LanguageMode,
-) {
-  const tone = categoryTone(category);
-
-  if (category.key === "weather") {
-    const generatedAt =
-      weather?.generated_at ??
-      weather?.checked_at ??
-      metricByKey(category, "source_status")?.updated_at;
-    return {
-      label: translateText(language, "Last Sync"),
-      value: generatedAt
-        ? formatTimestamp(generatedAt, "dateTime", language)
-        : formatMetricValue(metricByKey(category, "source_status")),
-      helpKey: "last_sync",
-      progress: tone === "warn" ? 40 : toneProgress(tone),
-      tone,
-    };
-  }
-
-  if (category.key === "air") {
-    const score = airQuality?.worst_score;
-    return {
-      label: translateText(language, "AQI Avg"),
-      value:
-        score === null || score === undefined
-          ? formatMetricValue(fallbackMetric(category))
-          : `${scoreLabel(score, airQuality?.worst_label, language)} (${Math.round(score)}/5)`,
-      helpKey: "aqi_avg",
-      progress:
-        score === null || score === undefined
-          ? toneProgress(tone)
-          : Math.max(12, (score / 5) * 100),
-      tone: score !== null && score !== undefined && score >= 4 ? "bad" : tone,
-    };
-  }
-
-  if (category.key === MOBILITY_NAV_KEY) {
-    const activeTransitAlerts = transit?.quality.active_alert_count ?? 0;
-    const activeRoadRailEvents = roadRail?.quality.active_event_count ?? 0;
-    const activeEvents = activeTransitAlerts + activeRoadRailEvents;
-    const rawSignals =
-      (transit?.quality.raw_alert_count ?? 0) +
-      (roadRail?.quality.raw_message_count ?? 0);
-
-    return {
-      label: translateText(language, "Active Events"),
-      value:
-        rawSignals > 0 || activeEvents > 0
-          ? `${activeEvents}`
-          : category.events.length > 0
-            ? `${category.events.length}`
-            : translateText(language, "Nominal"),
-      progress:
-        rawSignals > 0
-          ? Math.max(12, Math.min(100, (activeEvents / rawSignals) * 100))
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
-      tone: activeEvents > 0 ? "warn" : tone,
-    };
-  }
-
-  if (category.key === "transit") {
-    return {
-      label: translateText(language, "Active Events"),
-      value:
-        transit?.quality.active_alert_count !== undefined
-          ? `${transit.quality.active_alert_count}`
-          : category.events.length > 0
-            ? `${category.events.length}`
-            : translateText(language, "Nominal"),
-      helpKey: "active_events",
-      progress:
-        transit?.quality.raw_alert_count !== undefined
-          ? Math.max(
-              12,
-              Math.min(
-                100,
-                (transit.quality.active_alert_count /
-                  Math.max(1, transit.quality.raw_alert_count)) *
-                  100,
-              ),
-            )
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
-      tone: transit && transit.quality.active_alert_count > 0 ? "warn" : tone,
-    };
-  }
-
-  if (category.key === "traffic") {
-    return {
-      label: translateText(language, "Active Events"),
-      value:
-        roadRail?.quality.active_event_count !== undefined
-          ? `${roadRail.quality.active_event_count}`
-          : category.events.length > 0
-            ? `${category.events.length}`
-            : translateText(language, "Nominal"),
-      helpKey: "active_events",
-      progress:
-        roadRail?.quality.raw_message_count !== undefined
-          ? Math.max(
-              12,
-              Math.min(
-                100,
-                (roadRail.quality.active_event_count /
-                  Math.max(1, roadRail.quality.raw_message_count)) *
-                  100,
-              ),
-            )
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
-      tone: roadRail && roadRail.quality.active_event_count > 0 ? "warn" : tone,
-    };
-  }
-
-  if (category.key === "energy") {
-    const window = energy?.current_window;
-    return {
-      label: translateText(
-        language,
-        window?.unit?.includes("kWh") ? "Best Price" : "Best Window",
-      ),
-      value:
-        window !== null && window !== undefined
-          ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
-          : formatMetricValue(metricByKey(category, "low_energy_window")),
-      helpKey: window?.unit?.includes("kWh") ? "best_price" : "best_window",
-      progress:
-        energy?.quality.field_coverage_pct !== undefined
-          ? Math.max(8, Math.min(100, energy.quality.field_coverage_pct))
-          : toneProgress(tone),
-      tone: window ? "good" : tone,
-    };
-  }
-
-  if (category.key === "events") {
-    const freeMetric = metricByKey(category, "free_events");
-    return {
-      label: translateText(language, "Upcoming Events"),
-      value:
-        category.events.length > 0
-          ? `${category.events.length}`
-          : formatMetricValue(metricByKey(category, "active_events")),
-      helpKey: "upcoming_events",
-      progress:
-        category.events.length > 0
-          ? Math.min(100, 22 + category.events.length * 10)
-          : toneProgress(tone),
-      tone: freeMetric && freeMetric.value !== "0" ? "good" : tone,
-    };
-  }
-
-  const metric = fallbackMetric(category);
-  return {
-    label: metric?.label
-      ? translateText(language, metric.label)
-      : translateText(language, "Signal Level"),
-    value: formatMetricValue(metric),
-    helpKey: metric?.key ?? "signal_level",
-    progress: metric
-      ? numericPercent(metric.value, toneProgress(tone))
-      : toneProgress(tone),
-    tone,
-  };
-}
-
 function categoryByKey(
   categories: PlatformCategory[],
   key: string | undefined,
@@ -686,116 +195,6 @@ function categoryByKey(
   }
 
   return categories.find((category) => category.key === key) ?? null;
-}
-
-function eventCategoryLabel(
-  categories: PlatformCategory[],
-  event: PlatformEvent,
-  language: LanguageMode,
-): string {
-  return displayTitle(
-    categories.find((category) => category.key === event.category_key) ?? {
-      key: event.category_key,
-      title: titleCase(event.category_key),
-      description: "",
-      status: "neutral",
-      source_codes: [],
-      summary_metrics: [],
-      visualizations: [],
-      events: [],
-      sources: [],
-    },
-    language,
-  );
-}
-
-function eventTimeLabel(
-  categories: PlatformCategory[],
-  event: PlatformEvent,
-  language: LanguageMode,
-  t: (value: string) => string,
-): string {
-  const startsAt = new Date(event.starts_at).getTime();
-  const endsAt = new Date(event.ends_at).getTime();
-  const now = Date.now();
-  const categoryLabel = eventCategoryLabel(categories, event, language);
-
-  if (Number.isFinite(startsAt) && Number.isFinite(endsAt)) {
-    if (startsAt <= now && endsAt >= now) {
-      return `${t("Ongoing until")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
-    }
-
-    if (endsAt < now) {
-      return `${t("Ended")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
-    }
-  }
-
-  return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${categoryLabel}`;
-}
-
-function eventSeverityRank(event: PlatformEvent): number {
-  switch (event.severity.toUpperCase()) {
-    case "HIGH":
-      return 3;
-    case "MEDIUM":
-      return 2;
-    case "LOW":
-      return 1;
-    default:
-      return 0;
-  }
-}
-
-const NOTIFICATION_EVENT_TYPES = new Set([
-  "air_quality_poor",
-  "air_quality_status",
-  "blue_green_algae",
-  "cheap_energy_window",
-  "drought_risk",
-  "flood_warning",
-  "rain_risk",
-  "rail_delay",
-  "road_disruption",
-  "road_weather_risk",
-  "service_closure",
-  "snow_load",
-  "transit_delay",
-  "transit_disruption",
-  "weather_outlook",
-]);
-
-function isNotificationEvent(event: PlatformEvent): boolean {
-  return (
-    NOTIFICATION_EVENT_TYPES.has(event.event_type) ||
-    eventSeverityRank(event) > 0
-  );
-}
-
-function pickPriorityEvent(events: PlatformEvent[]): PlatformEvent | null {
-  return (
-    [...events].sort((left, right) => {
-      const severityDiff = eventSeverityRank(right) - eventSeverityRank(left);
-      if (severityDiff !== 0) {
-        return severityDiff;
-      }
-
-      return (
-        new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime()
-      );
-    })[0] ?? null
-  );
-}
-
-function notificationToneForEvents(events: PlatformEvent[]): DashboardTone {
-  if (events.some((event) => eventSeverityRank(event) >= 3)) {
-    return "bad";
-  }
-
-  if (events.length > 0) {
-    return "warn";
-  }
-
-  return "neutral";
 }
 
 function loadReadRecentEventIds(): Set<string> {
@@ -825,85 +224,6 @@ function saveReadRecentEventIds(ids: Set<string>): void {
   } catch {
     // Notification read state is helpful, but navigation should still work without storage.
   }
-}
-
-function activeEventLabel(count: number, language: LanguageMode): string {
-  return `${count} ${translateText(language, count === 1 ? "active event" : "active events")}`;
-}
-
-function attributeLabel(key: string): string {
-  return key
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
-function formatAttributeValue(value: unknown): string | null {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? String(value) : null;
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return null;
-    }
-
-    const primitiveValues = value
-      .map((item) => formatAttributeValue(item))
-      .filter((item): item is string => Boolean(item));
-
-    if (value.every((item) => typeof item !== "object" || item === null)) {
-      const preview = primitiveValues.slice(0, 6).join(", ");
-      return value.length > 6 ? `${preview} +${value.length - 6}` : preview;
-    }
-
-    const firstValue = primitiveValues[0];
-    return firstValue
-      ? `${value.length} records · ${firstValue}`
-      : `${value.length} records`;
-  }
-
-  if (typeof value === "object") {
-    const entries = Object.entries(value)
-      .map(([key, item]) => [key, formatAttributeValue(item)] as const)
-      .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
-    if (entries.length === 0) {
-      return null;
-    }
-
-    return entries
-      .slice(0, 4)
-      .map(([key, item]) => `${attributeLabel(key)}: ${item}`)
-      .join("; ");
-  }
-
-  return String(value);
-}
-
-function eventAttributeRows(
-  event: PlatformEvent,
-): Array<{ label: string; value: string }> {
-  return Object.entries(event.attributes ?? {})
-    .map(([key, value]) => ({
-      label: attributeLabel(key),
-      value: formatAttributeValue(value),
-    }))
-    .filter((row): row is { label: string; value: string } => Boolean(row.value));
 }
 
 function navItemAvailable(
@@ -984,6 +304,7 @@ export function DataPlatformHome({
   energy,
   householdEnergy,
   history,
+  historyAvailability,
   overview,
   publicDashboard,
   roadRail,
@@ -1052,7 +373,7 @@ export function DataPlatformHome({
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/sources/refresh`, {
+      const response = await fetch("/api/sources/refresh", {
         method: "POST"
       });
       if (response.ok) {
@@ -1277,10 +598,11 @@ export function DataPlatformHome({
           transit,
           roadRail,
           householdEnergy,
+          systemEnergy: energy,
         },
         languageMode,
       ),
-    [airQuality, householdEnergy, languageMode, roadRail, transit, weather],
+    [airQuality, energy, householdEnergy, languageMode, roadRail, transit, weather],
   );
   const crossDomainTimeline = useMemo(
     () =>
@@ -1292,6 +614,38 @@ export function DataPlatformHome({
         CROSS_TIMELINE_LIMIT,
       ),
     [publicDashboard, recentEventCandidates, selectedCity],
+  );
+  const signalEventTimeline = useMemo(
+    () =>
+      buildCrossDomainTimeline(
+        curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
+          city: selectedCity,
+        }),
+        null,
+        CROSS_TIMELINE_LIMIT,
+      ),
+    [recentEventCandidates, selectedCity],
+  );
+  const todayBrief = useMemo(
+    () =>
+      buildTodayBrief({
+        publicDashboard,
+        summaryTiles: userSummaryTiles,
+        timelineItems: crossDomainTimeline,
+        language: languageMode,
+      }),
+    [crossDomainTimeline, languageMode, publicDashboard, userSummaryTiles],
+  );
+  const signalSystemTiles = useMemo(
+    () =>
+      buildSignalSystemTiles({
+        overview: visibleOverview,
+        categories: displayCategories,
+        sources,
+        recentEvents,
+        language: languageMode,
+      }),
+    [displayCategories, languageMode, recentEvents, sources, visibleOverview],
   );
   const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
   const visibleCategories = selectedCategories.filter((category) =>
@@ -1801,6 +1155,7 @@ export function DataPlatformHome({
                   onCityChange={selectCity}
                 />
                 <DateScopeSelector
+                  availability={historyAvailability?.days ?? []}
                   date={selectedDate}
                   isPending={isDateRefreshPending}
                   language={languageMode}
@@ -1899,6 +1254,7 @@ export function DataPlatformHome({
                   onCityChange={selectCity}
                 />
                 <DateScopeSelector
+                  availability={historyAvailability?.days ?? []}
                   date={selectedDate}
                   isPending={isDateRefreshPending}
                   language={languageMode}
@@ -1993,6 +1349,7 @@ export function DataPlatformHome({
                     onCityChange={selectCity}
                   />
                   <DateScopeSelector
+                    availability={historyAvailability?.days ?? []}
                     date={selectedDate}
                     isPending={isDateRefreshPending}
                     language={languageMode}
@@ -2038,16 +1395,13 @@ export function DataPlatformHome({
                   isHistorical={isHistorical}
                   language={languageMode}
                   liveSignals={scenarioLiveSignals}
-                  publicDashboard={publicDashboard}
+                  planItems={todayBrief?.planItems ?? []}
+                  todayBrief={todayBrief}
+                  onOpenEvent={openRecentEvent}
                   onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
                   onOpenScenario={openScenario}
+                  onOpenSummaryTile={openSummaryTile}
                   onOpenTopAction={openScenario}
-                />
-                <CrossDomainTimelinePanel
-                  items={crossDomainTimeline}
-                  language={languageMode}
-                  onOpenEvent={openRecentEvent}
-                  onOpenScenario={openScenario}
                 />
               </>
             ) : visibleOverview ? (
@@ -2105,42 +1459,50 @@ export function DataPlatformHome({
                 <RegionalProfileWorkspace category={selectedCategory} />
               ) : (
                 <>
-                  <section
-                    className="summary-grid summary-grid-user"
-                    aria-label={t("Today's snapshot")}
-                  >
-                    {userSummaryTiles.map((tile) => (
-                      <button
-                        className={`metric-tile metric-tile-${tile.tone} metric-tile-link`}
-                        key={tile.key}
-                        onClick={() => openSummaryTile(tile.key)}
-                        type="button"
-                      >
-                        <div>
-                          <span>{tile.label}</span>
-                          <span
-                            className="material-symbols-outlined"
-                            aria-hidden="true"
-                          >
-                            {tile.icon}
+                  <section className="signals-console-overview" aria-label={t("Signal observatory")}>
+                    <header className="signals-console-header">
+                      <div>
+                        <h3>
+                          <span className="material-symbols-outlined" aria-hidden="true">
+                            monitoring
                           </span>
-                        </div>
-                        <strong
-                          className={
-                            tile.valueStyle === "emphasis"
-                              ? "metric-tile-value-emphasis"
-                              : "metric-tile-value-body"
-                          }
+                          {t("Signal observatory")}
+                        </h3>
+                        <p>{t("Signal observatory lead")}</p>
+                      </div>
+                    </header>
+                    <div
+                      className="summary-grid summary-grid-system"
+                      aria-label={t("Signal system summary")}
+                    >
+                      {signalSystemTiles.map((tile) => (
+                        <article
+                          className={`metric-tile metric-tile-${tile.tone} signal-system-tile`}
+                          key={tile.key}
                         >
-                          {tile.value}
-                        </strong>
-                        <small className="metric-tile-detail">{tile.detail}</small>
-                      </button>
-                    ))}
+                          <div>
+                            <span>{tile.label}</span>
+                            <span className="material-symbols-outlined" aria-hidden="true">
+                              {tile.icon}
+                            </span>
+                          </div>
+                          <strong
+                            className={
+                              tile.valueStyle === "emphasis"
+                                ? "metric-tile-value-emphasis"
+                                : "metric-tile-value-body"
+                            }
+                          >
+                            {tile.value}
+                          </strong>
+                          <small className="metric-tile-detail">{tile.detail}</small>
+                        </article>
+                      ))}
+                    </div>
                   </section>
 
                   <CrossDomainTimelinePanel
-                    items={crossDomainTimeline}
+                    items={signalEventTimeline}
                     language={languageMode}
                     onOpenEvent={openRecentEvent}
                     onOpenScenario={openScenario}
@@ -2276,8 +1638,6 @@ export function DataPlatformHome({
                         )}
                       </div>
                     </section>
-
-                    <SourceHealthStrip overview={visibleOverview} />
 
                     {isEventsExpanded ? (
                       <aside
@@ -2563,6 +1923,8 @@ export function DataPlatformHome({
                         </div>
                       </aside>
                     ) : null}
+
+                    <SourceHealthStrip overview={visibleOverview} />
                   </div>
                 </>
               )

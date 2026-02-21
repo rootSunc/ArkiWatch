@@ -119,6 +119,9 @@ function formatMetricValue(metric: PanelMetric | null, t: (value: string) => str
   if (metric.unit?.toUpperCase() === "EUR") {
     return formatEstimatedCost(numericValue(metric.value), t);
   }
+  if (metric.unit === "%") {
+    return `${metric.value}%`;
+  }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
@@ -139,6 +142,9 @@ function displayMetricLabel(metric: PanelMetric | null, fallback: string): strin
   }
   if (metric?.key === "maximum_value" && isPriceUnit(metric.unit)) {
     return "Peak spot price";
+  }
+  if (metric?.key === "relative_savings") {
+    return "Below forecast average";
   }
 
   return metric?.label ?? fallback;
@@ -573,8 +579,8 @@ function energyHistoryPoints(
 
 function orderedEnergyMetrics(metrics: EnergyMetric[], isPricePanel: boolean): PanelMetric[] {
   const priority = isPricePanel
-    ? ["estimated_cost", "window_average", "minimum_value", "maximum_value", "point_count"]
-    : ["window_average", "minimum_value", "maximum_value", "point_count"];
+    ? ["estimated_cost", "window_average", "relative_savings", "minimum_value", "maximum_value", "point_count"]
+    : ["window_average", "relative_savings", "minimum_value", "maximum_value", "point_count"];
 
   return [...metrics]
     .sort((left, right) => {
@@ -710,7 +716,7 @@ export function EnergyWorkspace({
       : t("No active window");
   const heroDetail =
     (isPricePanel && window
-      ? `${t("Estimated household bill for this flexible-use window.")} ${t("Average spot price")}: ${windowAverageLabel}.`
+      ? activeEnergy?.summary ?? `${t("Average spot price")}: ${windowAverageLabel}.`
       : activeEnergy?.summary) ??
     lowWindowMetric?.detail ??
     latestEvent?.body ??
@@ -795,105 +801,52 @@ export function EnergyWorkspace({
         <div>{activeSourceName} / {relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at, language, t)}</div>
       </div>
 
-      <section className="energy-overview-grid" aria-label={t("Energy operating condition")}>
-        <article
-          className={`energy-glass-panel energy-hero energy-hero-${activeTone} energy-hero-primary`}
-          id={
-            highlightedCategoryEvent
-              ? eventAnchorId(highlightedCategoryEvent.id)
-              : undefined
-          }
-        >
-          <div className="energy-card-kicker">
-            <span>{isPricePanel ? t("Cheapest Flexible Use Window") : t("Low-value System Window")}</span>
-            <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
+      <section
+        className={`energy-glass-panel energy-command-panel energy-command-panel-${activeTone}`}
+        id={
+          highlightedCategoryEvent
+            ? eventAnchorId(highlightedCategoryEvent.id)
+            : undefined
+        }
+        aria-label={t("Energy operating condition")}
+      >
+        <div className="energy-command-status">
+          <span className="material-symbols-outlined energy-condition-icon" aria-hidden="true">
+            {hasActiveWindow ? "bolt" : "hourglass_empty"}
+          </span>
+          <div>
+            <div className="energy-card-kicker">
+              <span>{isPricePanel ? t("Flexible Use Start Window") : t("Low-value System Window")}</span>
+              <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
+            </div>
+            <strong>{heroValue}</strong>
+            <p>{heroDetail}</p>
           </div>
-          <div className="energy-current-cluster">
-            <span className="material-symbols-outlined energy-condition-icon" aria-hidden="true">
-              {hasActiveWindow ? "bolt" : "hourglass_empty"}
-            </span>
-            <div>
-              <strong>{heroValue}</strong>
-              <p>{heroDetail}</p>
-            </div>
-          </div>
-          <div className="energy-hero-footer">
-            <div>
-              <span>{t("Starts")}</span>
-              <strong>{startLabel}</strong>
-            </div>
-            <div>
-              <span>{t("Ends")}</span>
-              <strong>{endLabel}</strong>
-            </div>
-            {isPricePanel ? (
-              <div>
-                <span>{t("Average spot price")}</span>
-                <strong>{windowAverageLabel}</strong>
-              </div>
-            ) : null}
-            <div>
-              <span>{isPricePanel ? t("Window usage") : t("System Source")}</span>
-              <strong>{isPricePanel
-                ? householdWindowUsage === null
-                  ? t("n/a")
-                  : `${householdWindowUsage.toFixed(2)} kWh`
-                : sourceDisclosureName}
-              </strong>
-            </div>
-          </div>
-        </article>
+        </div>
 
-        <article className="energy-glass-panel energy-window-panel">
-          <header>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: "window_state",
-                label: "Window State",
-                t,
-              })}
-            >
-              {t("Window State")}
-            </DataLabelWithHelp>
-            <strong>{hasActiveWindow ? t("Ready") : t("Pending")}</strong>
-          </header>
-          <div className="energy-window-stack">
-            {(window
-              ? [{
-                  id: "energy-current-window",
-                  label: window.unit?.includes("kWh")
-                    ? t("Cheapest household price window")
-                    : window.source === "raw_preview"
-                      ? t("Preview energy timing window")
-                      : t("Detected energy timing window"),
-                  detail: activeEnergy?.summary ?? t("Flexible electricity use window is ready."),
-                  severity: window.severity,
-                  starts_at: window.starts_at,
-                  ends_at: window.ends_at
-                }]
-              : timelineItems.length > 0
-                ? timelineItems
-                : latestEvent
-                  ? [latestEvent]
-                  : []).map((item) => {
-              const tone = toneFromSeverity(item.severity);
-              return (
-                <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
-                  <div>
-                    <strong>{"label" in item ? item.label : item.title}</strong>
-                    <span>{formatCompactTime(item.starts_at, language, t)} - {formatCompactTime(item.ends_at, language, t)}</span>
-                  </div>
-                  <p>{"detail" in item ? item.detail : item.body}</p>
-                </article>
-              );
-            })}
-            {!hasWindowEvidence ? (
-              <p>{isPricePanel
-                ? t("No household price window is available from the latest energy payload.")
-                : t("No Fingrid energy window is available from the latest energy payload.")}</p>
-            ) : null}
+        <div className="energy-command-facts">
+          <div>
+            <span>{t("Can start from")}</span>
+            <strong>{startLabel}</strong>
           </div>
-        </article>
+          <div>
+            <span>{t("Ends")}</span>
+            <strong>{endLabel}</strong>
+          </div>
+          <div>
+            <span>{isPricePanel ? t("Average spot price") : t("Window State")}</span>
+            <strong>{isPricePanel ? windowAverageLabel : hasActiveWindow ? t("Ready") : t("Pending")}</strong>
+          </div>
+          <div>
+            <span>{isPricePanel ? t("Window usage") : t("System Source")}</span>
+            <strong>{isPricePanel
+              ? householdWindowUsage === null
+                ? t("n/a")
+                : `${householdWindowUsage.toFixed(2)} kWh`
+              : sourceDisclosureName}
+            </strong>
+          </div>
+        </div>
       </section>
 
       <section className="energy-summary-strip" aria-label={t("Energy summary metrics")}>
@@ -1336,6 +1289,59 @@ export function EnergyWorkspace({
             ))}
           </article>
         </div>
+      </section>
+
+      <section className="energy-insight-grid" aria-label={t("Energy operating condition")}>
+        <article className="energy-glass-panel energy-window-panel">
+          <header>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "window_state",
+                label: "Window State",
+                t,
+              })}
+            >
+              {t("Window State")}
+            </DataLabelWithHelp>
+            <strong>{hasActiveWindow ? t("Ready") : t("Pending")}</strong>
+          </header>
+          <div className="energy-window-stack">
+            {(window
+              ? [{
+                  id: "energy-current-window",
+                  label: window.unit?.includes("kWh")
+                    ? t("Household flexible-use start window")
+                    : window.source === "raw_preview"
+                      ? t("Preview energy timing window")
+                      : t("Detected energy timing window"),
+                  detail: activeEnergy?.summary ?? t("Flexible electricity use window is ready."),
+                  severity: window.severity,
+                  starts_at: window.starts_at,
+                  ends_at: window.ends_at
+                }]
+              : timelineItems.length > 0
+                ? timelineItems
+                : latestEvent
+                  ? [latestEvent]
+                  : []).map((item) => {
+              const tone = toneFromSeverity(item.severity);
+              return (
+                <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
+                  <div>
+                    <strong>{"label" in item ? item.label : item.title}</strong>
+                    <span>{formatCompactTime(item.starts_at, language, t)} - {formatCompactTime(item.ends_at, language, t)}</span>
+                  </div>
+                  <p>{"detail" in item ? item.detail : item.body}</p>
+                </article>
+              );
+            })}
+            {!hasWindowEvidence ? (
+              <p>{isPricePanel
+                ? t("No household price window is available from the latest energy payload.")
+                : t("No Fingrid energy window is available from the latest energy payload.")}</p>
+            ) : null}
+          </div>
+        </article>
       </section>
 
       <TrendChart

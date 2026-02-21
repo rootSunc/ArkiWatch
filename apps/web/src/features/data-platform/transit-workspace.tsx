@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { formatRelativeAge } from "@/features/shared/format";
+import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
@@ -112,13 +112,31 @@ function statusTone(status: string): TransitTone {
   if (status === "ready" || status === "fetched") {
     return "good";
   }
-  if (status === "empty" || status === "missing" || status === "not_collected") {
+  if (status === "empty" || status === "missing" || status === "not_collected" || status === "stale") {
     return "warn";
   }
   if (status === "failed" || status === "error") {
     return "bad";
   }
   return "neutral";
+}
+
+function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
+  if (status === "ready") {
+    return "ready";
+  }
+  if (status === "stale") {
+    return "stale";
+  }
+  return "empty";
+}
+
+function exactObservedLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+  if (!value) {
+    return t("not observed");
+  }
+
+  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
 }
 
 function severityTone(severity: string): TransitTone {
@@ -674,171 +692,69 @@ export function TransitWorkspace({
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
   const historyPoints = transitHistoryPoints(history);
+  const transitSummaryMetrics = [
+    ["active_alerts", "Active Now"],
+    ["high_severity", "High Severity"],
+    ["disruptions", "Disruptions"],
+    ["delays", "Delays"],
+    ["route_scoped", "Route Scoped"],
+    ["raw_alerts", "Raw Feed"]
+  ];
+  const liveTone = liveStatusTone(transit.status);
 
   return (
     <section className="transit-detail-page" aria-label={t("Transit detail")}>
       <div className="transit-detail-header">
         <div>
           <h2>{t("Helsinki Transit Service Alerts")}</h2>
-          <div className="transit-live-status">
+          <div className={`transit-live-status transit-live-status-${liveTone}`}>
             <span aria-hidden="true" />
             <strong>{transit.status === "ready" ? t("HSL Feed Active") : t("Feed Delayed")}</strong>
           </div>
         </div>
-        <div>{transit.source_code.toUpperCase()} / {transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}</div>
+        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, t)}</div>
       </div>
 
-      <section className="transit-bento-grid" aria-label={t("Transit alert condition")}>
-        <article className={`transit-glass-panel transit-hero transit-hero-${activeTone}`}>
-          <div className="transit-card-kicker">
-            <span>{t("Current Transit Risk")}</span>
-            <time>{transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}</time>
+      <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={t("Transit alert condition")}>
+        <div className="transit-command-status">
+          <span className="material-symbols-outlined transit-condition-icon" aria-hidden="true">
+            {riskState.icon}
+          </span>
+          <div>
+            <div className="transit-card-kicker">
+              <span>{t("Current Transit Risk")}</span>
+              <time>{exactObservedLabel(transit.observed_at, language, t)}</time>
+            </div>
+            <strong>{transit.quality.active_alert_count}</strong>
+            <p>
+              <span>{riskState.title}</span>
+              {riskState.detail}
+            </p>
           </div>
-          <div className="transit-current-cluster">
-            <span className="material-symbols-outlined transit-condition-icon" aria-hidden="true">
-              {riskState.icon}
-            </span>
-            <div>
-              <span className="transit-risk-label">{riskState.title}</span>
-              <strong>{transit.quality.active_alert_count}</strong>
-              <p>{riskState.detail}</p>
-            </div>
-          </div>
-          <div className="transit-hero-footer">
-            <div>
-              <span>{t("Highest Severity")}</span>
-              <strong>{t(highestSeverityLabel(transit.alerts))}</strong>
-            </div>
-            <div>
-              <span>{t("Next Clear")}</span>
-              <strong>{nextActiveEndLabel(activeAlerts, language, t)}</strong>
-            </div>
-            <div>
-              <span>{t("Scoped Impact")}</span>
-              <strong>{metricValue(transit, "route_scoped")} {t("routes")} / {metricValue(transit, "stop_scoped")} {t("stops")}</strong>
-            </div>
-          </div>
-        </article>
+        </div>
 
-        <article className="transit-glass-panel transit-severity-panel">
-          <header>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: "severity_mix",
-                label: "Severity Mix",
-                t,
-              })}
-            >
-              {t("Severity Mix")}
-            </DataLabelWithHelp>
-            <strong>{transit.alerts.length}</strong>
-          </header>
-          <div className="transit-severity-bars">
-            {severityRows.map((row) => (
-              <div className={`transit-severity-row transit-severity-row-${severityTone(row.severity)}`} key={row.severity}>
-                <span>{t(row.severity)}</span>
-                <i aria-hidden="true">
-                  <span style={{ width: `${row.width}%` }} />
-                </i>
-                <strong>{row.count}</strong>
-              </div>
-            ))}
+        <div className="transit-command-facts">
+          <div>
+            <span>{t("Highest Severity")}</span>
+            <strong>{t(highestSeverityLabel(transit.alerts))}</strong>
           </div>
-        </article>
-
-        <article className="transit-glass-panel transit-scope-panel">
-          <header>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: "alert_scope",
-                label: "Alert Scope",
-                t,
-              })}
-            >
-              {t("Alert Scope")}
-            </DataLabelWithHelp>
-            <strong>{transit.quality.field_coverage_pct.toFixed(0)}%</strong>
-          </header>
-          <div className="transit-scope-grid">
-            <article>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "route_scoped",
-                  label: "Route scoped",
-                  t,
-                })}
-              >
-                {t("Route scoped")}
-              </DataLabelWithHelp>
-              <strong>{transit.quality.route_alert_count}</strong>
-              <small>{t("alerts include route ids")}</small>
-            </article>
-            <article>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "stop_scoped",
-                  label: "Stop scoped",
-                  t,
-                })}
-              >
-                {t("Stop scoped")}
-              </DataLabelWithHelp>
-              <strong>{transit.quality.stop_alert_count}</strong>
-              <small>{t("alerts include stop ids")}</small>
-            </article>
-            <article>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "raw_decoded",
-                  label: "Raw decoded",
-                  t,
-                })}
-              >
-                {t("Raw decoded")}
-              </DataLabelWithHelp>
-              <strong>{transit.quality.raw_alert_count}</strong>
-              <small>{t("GTFS-RT alert entities")}</small>
-            </article>
-            <article>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "normalized",
-                  label: "Normalized",
-                  t,
-                })}
-              >
-                {t("Normalized")}
-              </DataLabelWithHelp>
-              <strong>{transit.quality.normalized_event_count}</strong>
-              <small>{t("stored event rows")}</small>
-            </article>
+          <div>
+            <span>{t("Next Clear")}</span>
+            <strong>{nextActiveEndLabel(activeAlerts, language, t)}</strong>
           </div>
-          <div className="transit-scope-bars" aria-label={t("Transit affected scope distribution")}>
-            {scopeRows.map((row) => (
-              <article className={`transit-scope-bar transit-scope-bar-${row.tone}`} key={row.key}>
-                <div>
-                  <strong>{row.label}</strong>
-                  <span>{row.detail}</span>
-                </div>
-                <i aria-hidden="true">
-                  <span style={{ width: `${row.width}%` }} />
-                </i>
-                <em>{row.count}</em>
-              </article>
-            ))}
+          <div>
+            <span>{t("Scoped Impact")}</span>
+            <strong>{metricValue(transit, "route_scoped")} {t("routes")} / {metricValue(transit, "stop_scoped")} {t("stops")}</strong>
           </div>
-        </article>
+          <div>
+            <span>{t("Coverage")}</span>
+            <strong>{formatNumber(transit.quality.field_coverage_pct)}%</strong>
+          </div>
+        </div>
       </section>
 
       <section className="transit-summary-strip" aria-label={t("Transit summary metrics")}>
-        {[
-          ["active_alerts", "Active Now"],
-          ["high_severity", "High Severity"],
-          ["disruptions", "Disruptions"],
-          ["delays", "Delays"],
-          ["route_scoped", "Route Scoped"],
-          ["raw_alerts", "Raw Feed"]
-        ].map(([key, label]) => (
+        {transitSummaryMetrics.map(([key, label]) => (
           <article className="transit-glass-panel" key={key}>
             <DataLabelWithHelp
               helpText={dataHelpText({
@@ -1047,6 +963,116 @@ export function TransitWorkspace({
         </article>
       </section>
 
+      <section className="transit-insight-grid" aria-label={t("Transit alert condition")}>
+        <article className="transit-glass-panel transit-severity-panel">
+          <header>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "severity_mix",
+                label: "Severity Mix",
+                t,
+              })}
+            >
+              {t("Severity Mix")}
+            </DataLabelWithHelp>
+            <strong>{transit.alerts.length}</strong>
+          </header>
+          <div className="transit-severity-bars">
+            {severityRows.map((row) => (
+              <div className={`transit-severity-row transit-severity-row-${severityTone(row.severity)}`} key={row.severity}>
+                <span>{t(row.severity)}</span>
+                <i aria-hidden="true">
+                  <span style={{ width: `${row.width}%` }} />
+                </i>
+                <strong>{row.count}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+        <article className="transit-glass-panel transit-scope-panel">
+          <header>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: "alert_scope",
+                label: "Alert Scope",
+                t,
+              })}
+            >
+              {t("Alert Scope")}
+            </DataLabelWithHelp>
+            <strong>{transit.quality.field_coverage_pct.toFixed(0)}%</strong>
+          </header>
+          <div className="transit-scope-grid">
+            <article>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "route_scoped",
+                  label: "Route scoped",
+                  t,
+                })}
+              >
+                {t("Route scoped")}
+              </DataLabelWithHelp>
+              <strong>{transit.quality.route_alert_count}</strong>
+              <small>{t("alerts include route ids")}</small>
+            </article>
+            <article>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "stop_scoped",
+                  label: "Stop scoped",
+                  t,
+                })}
+              >
+                {t("Stop scoped")}
+              </DataLabelWithHelp>
+              <strong>{transit.quality.stop_alert_count}</strong>
+              <small>{t("alerts include stop ids")}</small>
+            </article>
+            <article>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "raw_decoded",
+                  label: "Raw decoded",
+                  t,
+                })}
+              >
+                {t("Raw decoded")}
+              </DataLabelWithHelp>
+              <strong>{transit.quality.raw_alert_count}</strong>
+              <small>{t("GTFS-RT alert entities")}</small>
+            </article>
+            <article>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "normalized",
+                  label: "Normalized",
+                  t,
+                })}
+              >
+                {t("Normalized")}
+              </DataLabelWithHelp>
+              <strong>{transit.quality.normalized_event_count}</strong>
+              <small>{t("stored event rows")}</small>
+            </article>
+          </div>
+          <div className="transit-scope-bars" aria-label={t("Transit affected scope distribution")}>
+            {scopeRows.map((row) => (
+              <article className={`transit-scope-bar transit-scope-bar-${row.tone}`} key={row.key}>
+                <div>
+                  <strong>{row.label}</strong>
+                  <span>{row.detail}</span>
+                </div>
+                <i aria-hidden="true">
+                  <span style={{ width: `${row.width}%` }} />
+                </i>
+                <em>{row.count}</em>
+              </article>
+            ))}
+          </div>
+        </article>
+      </section>
+
       <TrendChart
         className="transit-glass-panel"
         emptyMessage={t("No daily transit alert history is available.")}
@@ -1058,7 +1084,7 @@ export function TransitWorkspace({
         unit={t("events")}
       />
 
-      <section className="transit-provider-status" aria-label={t("Transit provider status")}>
+      <section className={`transit-provider-status transit-provider-status-${liveTone}`} aria-label={t("Transit provider status")}>
         <div>
           <span aria-hidden="true" />
           <strong>{t("Provider Status")}</strong>
@@ -1075,7 +1101,7 @@ export function TransitWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {transit.observed_at ? formatRelativeAge(transit.observed_at, language) : t("not observed")}
+            {t("Last Sync")}: {exactObservedLabel(transit.observed_at, language, t)}
           </span>
           <i aria-hidden="true" />
           <span className="transit-provider-coverage">{t("Coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>

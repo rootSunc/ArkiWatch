@@ -459,33 +459,60 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
         <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, t)}</div>
       </div>
 
-      <section className="water-bento-grid" aria-label={t("Water and snow operating condition")}>
-        <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>
-          <div className="water-card-kicker">
-            <span>{t("Hydrology Signal State")}</span>
-            <time>{sourceStageLabel(category, language)}</time>
-          </div>
-          <div className="water-current-cluster">
-            <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
-              {activeTone === "bad" ? "flood" : activeTone === "good" ? "water_drop" : "cloudy_snowing"}
-            </span>
-            <div>
-              <strong>{heroTitle}</strong>
-              <p>{heroDetail}</p>
+      <section className={`water-glass-panel water-command-panel water-command-panel-${activeTone}`} aria-label={t("Water and snow operating condition")}>
+        <div className="water-command-status">
+          <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
+            {activeTone === "bad" ? "flood" : activeTone === "good" ? "water_drop" : "cloudy_snowing"}
+          </span>
+          <div>
+            <div className="water-card-kicker">
+              <span>{t("Hydrology Signal State")}</span>
+              <time>{sourceStageLabel(category, language)}</time>
             </div>
+            <strong>{heroTitle}</strong>
+            <p>{heroDetail}</p>
           </div>
-          <div className="water-hero-footer">
-            <div>
-              <span>{t("Datasets")}</span>
-              <strong>{datasetCount}</strong>
-            </div>
-            <div>
-              <span>{t("Cadence")}</span>
-              <strong>{pollIntervalLabel(source?.poll_interval_seconds, t)}</strong>
-            </div>
-          </div>
-        </article>
+        </div>
 
+        <div className="water-command-facts">
+          <div>
+            <span>{t("Datasets")}</span>
+            <strong>{datasetCount}</strong>
+          </div>
+          <div>
+            <span>{t("Cadence")}</span>
+            <strong>{pollIntervalLabel(source?.poll_interval_seconds, t)}</strong>
+          </div>
+          <div>
+            <span>{t("Active Events")}</span>
+            <strong>{formatMetricValue(activeEventsMetric, t)}</strong>
+          </div>
+          <div>
+            <span>{t("Records Ingested")}</span>
+            <strong>{formatMetricValue(recordsMetric, t)}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="water-summary-strip" aria-label={t("Water and snow summary metrics")}>
+        {summaryMetrics.map((metric) => (
+          <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                t,
+              })}
+            >
+              {t(metric.label)}
+            </DataLabelWithHelp>
+            <strong>{formatMetricValue(metric, t)}</strong>
+          </article>
+        ))}
+      </section>
+
+      <section className="water-insight-grid" aria-label={t("Water and snow operating condition")}>
         <article className="water-glass-panel water-coverage-panel">
           <header>
             <DataLabelWithHelp
@@ -573,24 +600,6 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             </div>
           ) : null}
         </article>
-      </section>
-
-      <section className="water-summary-strip" aria-label={t("Water and snow summary metrics")}>
-        {summaryMetrics.map((metric) => (
-          <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: metric.key,
-                label: metric.label,
-                detail: metric.detail,
-                t,
-              })}
-            >
-              {t(metric.label)}
-            </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
-          </article>
-        ))}
       </section>
 
       <section className="water-main-grid" aria-label={t("Water and snow platform analytics")}>

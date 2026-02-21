@@ -84,7 +84,7 @@ export function SourceHealthStrip({
         </article>
       ) : null}
 
-      {hasSources ? (
+      {hasSources && isExpanded ? (
         <button
           className="source-health-toggle"
           aria-expanded={isExpanded}
