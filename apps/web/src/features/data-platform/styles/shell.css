@@ -406,21 +406,31 @@
 
 .city-scope-control {
   position: relative;
-  display: inline-flex;
-  height: 36px;
-  min-width: 132px;
+  display: grid;
+  height: 38px;
+  min-width: 152px;
   align-items: center;
-  gap: 6px;
-  flex: 0 1 132px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  flex: 0 1 152px;
   border: 1px solid var(--outline-variant);
-  border-radius: 8px;
-  background: var(--surface-container);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, var(--surface-container-low), var(--surface-container));
   color: var(--on-surface-variant);
-  padding: 0 30px 0 10px;
+  padding: 0 10px;
   transition:
+    background-color 150ms ease,
     border-color 150ms ease,
     box-shadow 150ms ease,
+    color 150ms ease,
     opacity 150ms ease;
+}
+
+.city-scope-control:hover {
+  border-color: var(--outline);
+  background:
+    linear-gradient(180deg, var(--surface-container), var(--surface-container-high));
 }
 
 .city-scope-control:focus-within {
@@ -433,27 +443,65 @@
 }
 
 .city-scope-control > .material-symbols-outlined {
+  position: relative;
+  z-index: 1;
   color: var(--primary);
-  font-size: 18px;
+  font-size: 19px;
+}
+
+.city-scope-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.city-scope-label {
+  color: var(--on-surface-variant);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 10px;
+  text-transform: uppercase;
+}
+
+.city-scope-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .city-scope-control select {
-  min-width: 0;
-  flex: 1 1 auto;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
   border: 0;
   appearance: none;
   background: transparent;
-  color: var(--on-surface);
+  color: transparent;
   font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 16px;
+  cursor: pointer;
+  opacity: 0;
   outline: none;
 }
 
+.city-scope-control select:disabled {
+  cursor: default;
+}
+
 .city-scope-chevron {
-  position: absolute;
-  right: 10px;
+  position: relative;
+  z-index: 1;
+  color: var(--outline);
+  font-size: 18px;
   pointer-events: none;
 }
 
@@ -461,14 +509,15 @@
   position: relative;
   display: inline-flex;
   width: 176px;
-  height: 36px;
+  height: 38px;
   align-items: center;
   gap: 8px;
   flex: 0 1 176px;
   overflow: hidden;
   border: 1px solid var(--outline-variant);
-  border-radius: 8px;
-  background: var(--surface-container);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, var(--surface-container-low), var(--surface-container));
   color: var(--on-surface-variant);
   padding: 0 8px 0 10px;
   transition:
@@ -481,7 +530,8 @@
 
 .date-scope-control:hover {
   border-color: var(--outline);
-  background: var(--surface-container-high);
+  background:
+    linear-gradient(180deg, var(--surface-container), var(--surface-container-high));
 }
 
 .date-scope-control:focus-within {
@@ -503,9 +553,12 @@
 }
 
 .date-scope-icon {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   color: var(--primary);
-  font-size: 18px;
+  font-size: 19px;
+  pointer-events: none;
 }
 
 .date-scope-control-historical .date-scope-icon {
@@ -514,12 +567,13 @@
 
 .date-scope-picker {
   position: relative;
+  z-index: 1;
   display: grid;
   min-width: 0;
   flex: 1 1 auto;
   align-content: center;
   gap: 1px;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .date-scope-status,
@@ -565,9 +619,10 @@
   display: none;
 }
 
-.date-scope-picker input {
+.date-scope-input {
   position: absolute;
   inset: 0;
+  z-index: 2;
   width: 100%;
   height: 100%;
   border: 0;
@@ -578,7 +633,12 @@
   opacity: 0;
 }
 
-.date-scope-picker input:disabled {
+.date-scope-control-historical .date-scope-input {
+  right: 34px;
+  width: auto;
+}
+
+.date-scope-input:disabled {
   cursor: default;
 }
 
@@ -588,6 +648,8 @@
 }
 
 .date-scope-clear {
+  position: relative;
+  z-index: 3;
   display: inline-flex;
   width: 24px;
   height: 24px;
@@ -619,6 +681,8 @@
 }
 
 .date-scope-chevron {
+  position: relative;
+  z-index: 1;
   color: var(--outline);
   pointer-events: none;
 }
@@ -1789,33 +1853,68 @@
 }
 
 .mobile-dashboard-footer {
+  display: none;
+}
+
+.mobile-bottom-nav {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-top: 1px solid var(--outline-variant);
-  background: var(--surface-container-lowest);
+  min-width: 0;
+  align-items: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-bottom-nav-item {
+  display: grid;
+  min-width: 62px;
+  min-height: 52px;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: transparent;
   color: var(--on-surface-variant);
-  padding: 8px 24px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 12px;
+  padding: 4px 6px;
+  text-align: center;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
-.mobile-dashboard-footer div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 14px;
-}
-
-.mobile-dashboard-footer a {
-  transition: color 150ms ease;
-}
-
-.mobile-dashboard-footer a:hover,
-.mobile-dashboard-footer a:focus-visible {
-  color: var(--primary);
+.mobile-bottom-nav-item:hover,
+.mobile-bottom-nav-item:focus-visible {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
   outline: none;
+}
+
+.mobile-bottom-nav-item-active,
+.mobile-bottom-nav-item-active:hover,
+.mobile-bottom-nav-item-active:focus-visible {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.mobile-bottom-nav-item .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.mobile-bottom-nav-item span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detail-side-nav .brand-icon {

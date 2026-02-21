@@ -84,6 +84,8 @@ const TRANSLATIONS: Record<LanguageMode, Record<string, string>> = {
     "Tracked key fields across the visible data streams.": "当前可见数据流中被跟踪的关键字段总数。",
     "Data catalog": "数据目录",
     "Data catalog navigation": "数据目录导航",
+    "Mobile navigation": "移动端导航",
+    "More": "更多",
     "Cross-signal timeline": "跨信号时间轴",
     "Cross-signal timeline lead": "将天气、出行、能源等场景的提醒与事件按时间合并展示。",
     "Copy view link": "复制当前视图链接",

@@ -5,6 +5,7 @@ import { formatTimestamp } from "@/features/shared/format";
 import {
   CITY_OPTIONS,
   CITY_STORAGE_KEY,
+  cityLabel,
   normalizeCityValue,
 } from "./city-scope";
 import { translateText } from "./i18n";
@@ -245,6 +246,7 @@ export function CityScopeSelector({
   onCityChange: (city: string) => void;
 }) {
   const label = translateText(language, "City");
+  const selectedCityLabel = cityLabel(city);
 
   return (
     <label
@@ -256,6 +258,10 @@ export function CityScopeSelector({
     >
       <span className="material-symbols-outlined" aria-hidden="true">
         location_on
+      </span>
+      <span className="city-scope-copy" aria-hidden="true">
+        <span className="city-scope-label">{label}</span>
+        <span className="city-scope-value">{selectedCityLabel}</span>
       </span>
       <select
         aria-label={label}
@@ -353,23 +359,24 @@ export function DateScopeSelector({
         <span className="date-scope-value date-scope-value-short">
           {compactValueLabel}
         </span>
-        <input
-          type="date"
-          aria-label={inputLabel}
-          disabled={isPending}
-          max={todayStr}
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            if (!value || value === todayStr) {
-              onDateChange(null);
-            } else {
-              onDateChange(value);
-            }
-          }}
-          title={inputLabel}
-          value={displayValue}
-        />
       </span>
+      <input
+        className="date-scope-input"
+        type="date"
+        aria-label={inputLabel}
+        disabled={isPending}
+        max={todayStr}
+        onChange={(event) => {
+          const value = event.currentTarget.value;
+          if (!value || value === todayStr) {
+            onDateChange(null);
+          } else {
+            onDateChange(value);
+          }
+        }}
+        title={inputLabel}
+        value={displayValue}
+      />
       {date ? (
         <button
           className="date-scope-clear"

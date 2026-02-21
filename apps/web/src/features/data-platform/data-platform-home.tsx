@@ -1615,6 +1615,10 @@ export function DataPlatformHome({
   const themeActionLabel = t(
     themeMode === "light" ? "Switch to night theme" : "Switch to day theme",
   );
+  const mobileNavItems = useMemo(
+    () => PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)),
+    [categories],
+  );
 
   return (
     <I18nProvider language={languageMode}>
@@ -1829,7 +1833,7 @@ export function DataPlatformHome({
                   tone={recentNotificationTone}
                 />
                 <button
-                  className="icon-button"
+                  className="icon-button mobile-overflow-action"
                   aria-label={t("Settings")}
                   type="button"
                 >
@@ -1841,14 +1845,14 @@ export function DataPlatformHome({
                   </span>
                 </button>
                 <span
-                  className="profile-avatar"
+                  className="profile-avatar mobile-overflow-action"
                   aria-label={t("Signed in")}
                   title={currentUserLabel}
                 >
                   {currentUserLabel.slice(0, 2).toUpperCase()}
                 </span>
                 <button
-                  className="icon-button"
+                  className="icon-button mobile-overflow-action"
                   aria-label={t("Sign out")}
                   onClick={signOut}
                   title={t("Sign out")}
@@ -2589,15 +2593,50 @@ export function DataPlatformHome({
                 <a href="/api">{t("API Docs")}</a>
               </div>
             </footer>
-          ) : (
-            <footer className="mobile-dashboard-footer">
-              <span>ArkiWatch designed by Chao</span>
-              <div>
-                <a href="/privacy">{t("Privacy Policy")}</a>
-                <a href="/api">{t("API Docs")}</a>
-              </div>
-            </footer>
-          )}
+          ) : null}
+          <footer
+            className="mobile-dashboard-footer"
+            aria-label={t("Mobile navigation")}
+          >
+            <nav className="mobile-bottom-nav" aria-label={t("Signal navigation")}>
+              {mobileNavItems.map((item) => {
+                const isActive =
+                  selectedNavKey === item.key ||
+                  (item.categoryKey != null &&
+                    selectedNavKey === item.categoryKey);
+                return (
+                  <button
+                    aria-current={isActive ? "page" : undefined}
+                    className={
+                      isActive
+                        ? "mobile-bottom-nav-item mobile-bottom-nav-item-active"
+                        : "mobile-bottom-nav-item"
+                    }
+                    key={item.key}
+                    onClick={() => selectNavItem(item)}
+                    title={t(item.label)}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                    <span>{t(item.label)}</span>
+                  </button>
+                );
+              })}
+              <button
+                className="mobile-bottom-nav-item"
+                onClick={() => setIsMobileMenuOpen(true)}
+                title={t("Open navigation")}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  menu
+                </span>
+                <span>{t("More")}</span>
+              </button>
+            </nav>
+          </footer>
           <AssistantWidget
             city={selectedCity}
             date={historicalDate}
