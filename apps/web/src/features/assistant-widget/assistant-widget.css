@@ -416,20 +416,24 @@
 
 /* Responsive Adaptive CSS */
 @media (max-width: 480px) {
+  body:has(.events-panel-expanded) .assistant-widget {
+    display: none;
+  }
+
   .assistant-widget {
-    bottom: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
     right: 12px;
   }
   .assistant-launcher {
-    width: 72px;
-    height: 72px;
+    width: 58px;
+    height: 58px;
   }
   .assistant-bubble {
     display: none !important;
   }
   .assistant-drawer {
     width: calc(100vw - 24px);
-    height: calc(100vh - 120px);
+    height: calc(100dvh - 154px - env(safe-area-inset-bottom));
     max-height: 480px;
   }
 }
