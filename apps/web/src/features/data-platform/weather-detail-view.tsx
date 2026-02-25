@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { formatRelativeAge } from "@/features/shared/format";
+import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, useI18n } from "./i18n";
@@ -235,6 +235,24 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
     hour12: false,
     timeZone: HELSINKI_TIME_ZONE
   }).format(new Date(value));
+}
+
+function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
+  if (status === "ready" || status === "summary_only") {
+    return "ready";
+  }
+  if (status === "stale") {
+    return "stale";
+  }
+  return "empty";
+}
+
+function exactDataTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
+  if (!value) {
+    return t("not observed");
+  }
+
+  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
 }
 
 function formatTimelineTime(value: string | null | undefined, language: LanguageMode): string {
@@ -891,7 +909,7 @@ function sourceTone(status: string): "good" | "warn" | "bad" | "neutral" {
   if (status === "ready" || status === "fetched") {
     return "good";
   }
-  if (status === "missing" || status === "not_collected" || status === "empty") {
+  if (status === "missing" || status === "not_collected" || status === "empty" || status === "stale") {
     return "warn";
   }
   if (status === "failed" || status === "error") {
@@ -1120,17 +1138,20 @@ export function WeatherDetailView({
     );
   }
 
+  const liveTone = liveStatusTone(weather.status);
+  const dataTime = current?.timestamp ?? weather.generated_at ?? weather.checked_at;
+
   return (
     <div className="weather-detail-page">
       <div className="weather-detail-header">
         <div>
           <h2>{displayRegion(weather.location, t)}</h2>
-          <div className="weather-live-status">
+          <div className={`weather-live-status weather-live-status-${liveTone}`}>
             <span aria-hidden="true" />
             <strong>{weather.status === "stale" ? t("Sync Delayed") : t("Live Sync Active")}</strong>
           </div>
         </div>
-        <div>LAT 60.1699 N / LON 24.9384 E</div>
+        <div>{t("Data time")} {exactDataTime(dataTime, language, t)} / LAT 60.1699 N / LON 24.9384 E</div>
       </div>
 
       <section className="weather-bento-grid" aria-label={t("Weather conditions")}>
@@ -1445,7 +1466,7 @@ export function WeatherDetailView({
         </article>
       </section>
 
-      <section className="weather-provider-status" aria-label={t("Weather provider status")}>
+      <section className={`weather-provider-status weather-provider-status-${liveTone}`} aria-label={t("Weather provider status")}>
         <div>
           <span aria-hidden="true" />
           <strong>{t("Provider Status")}</strong>
@@ -1462,7 +1483,7 @@ export function WeatherDetailView({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {syncTime ? `${formatCompactTime(syncTime, language)} EET` : "n/a"}
+            {t("Last Sync")}: {exactDataTime(syncTime, language, t)}
           </span>
           <i aria-hidden="true" />
           <span className="weather-provider-latency">

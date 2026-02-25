@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import { formatTimestamp } from "@/features/shared/format";
 
 import {
@@ -10,7 +12,11 @@ import {
 } from "./city-scope";
 import { translateText } from "./i18n";
 import type { LanguageMode } from "./i18n";
-import type { PlatformTimeScope, PlatformTone } from "./types";
+import type {
+  PlatformHistoryAvailabilityDay,
+  PlatformTimeScope,
+  PlatformTone,
+} from "./types";
 
 export type DashboardTone = PlatformTone | "warn" | "bad" | "good" | "neutral";
 
@@ -312,20 +318,81 @@ function formatDateScopeValue(
   }).format(parsedDate);
 }
 
+const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+
+type CalendarCell = {
+  dateValue: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+};
+
+function dateValue(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function monthKeyFromDateValue(value: string): string {
+  return value.slice(0, 7);
+}
+
+function addMonths(monthKey: string, offset: number): string {
+  const [year, month] = monthKey.split("-").map((part) => Number.parseInt(part, 10));
+  const nextMonth = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return dateValue(nextMonth.getUTCFullYear(), nextMonth.getUTCMonth() + 1, 1).slice(0, 7);
+}
+
+function formatMonthLabel(monthKey: string, language: LanguageMode): string {
+  const [year, month] = monthKey.split("-").map((part) => Number.parseInt(part, 10));
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+function buildCalendarCells(monthKey: string): CalendarCell[] {
+  const [year, month] = monthKey.split("-").map((part) => Number.parseInt(part, 10));
+  const monthStart = new Date(Date.UTC(year, month - 1, 1));
+  const mondayStartOffset = (monthStart.getUTCDay() + 6) % 7;
+  const gridStart = new Date(Date.UTC(year, month - 1, 1 - mondayStartOffset));
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const cellDate = new Date(gridStart);
+    cellDate.setUTCDate(gridStart.getUTCDate() + index);
+    const cellMonth = cellDate.getUTCMonth() + 1;
+
+    return {
+      dateValue: dateValue(
+        cellDate.getUTCFullYear(),
+        cellMonth,
+        cellDate.getUTCDate(),
+      ),
+      dayNumber: cellDate.getUTCDate(),
+      isCurrentMonth: cellMonth === month,
+    };
+  });
+}
+
 export function DateScopeSelector({
+  availability = [],
   date,
   isPending,
   language,
   onDateChange,
 }: {
+  availability?: PlatformHistoryAvailabilityDay[];
   date: string | null;
   isPending: boolean;
   language: LanguageMode;
   onDateChange: (date: string | null) => void;
 }) {
+  const controlRef = useRef<HTMLDivElement | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const label = translateText(language, "Selected date");
   const todayStr = todayDateValue();
   const displayValue = date ?? todayStr;
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    monthKeyFromDateValue(displayValue),
+  );
   const isHistorical = date !== null;
   const statusLabel = translateText(language, isHistorical ? "History" : "Live");
   const valueLabel = isHistorical
@@ -338,13 +405,73 @@ export function DateScopeSelector({
   const controlClassName = [
     "date-scope-control",
     isHistorical ? "date-scope-control-historical" : "date-scope-control-live",
+    isCalendarOpen ? "date-scope-control-calendar-open" : "",
     isPending ? "date-scope-control-pending" : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const availabilityByDate = useMemo(
+    () => new Map(availability.map((day) => [day.date, day])),
+    [availability],
+  );
+  const calendarCells = useMemo(() => buildCalendarCells(visibleMonth), [visibleMonth]);
+  const earliestAvailabilityMonth = availability[0]?.date
+    ? monthKeyFromDateValue(availability[0].date)
+    : null;
+  const todayMonth = monthKeyFromDateValue(todayStr);
+  const previousMonth = addMonths(visibleMonth, -1);
+  const nextMonth = addMonths(visibleMonth, 1);
+  const canGoPrevious =
+    earliestAvailabilityMonth === null || previousMonth >= earliestAvailabilityMonth;
+  const canGoNext = nextMonth <= todayMonth;
+
+  useEffect(() => {
+    setVisibleMonth(monthKeyFromDateValue(displayValue));
+  }, [displayValue]);
+
+  useEffect(() => {
+    if (!isCalendarOpen) {
+      return undefined;
+    }
+
+    const closeCalendar = (event: MouseEvent) => {
+      if (
+        controlRef.current &&
+        event.target instanceof Node &&
+        !controlRef.current.contains(event.target)
+      ) {
+        setIsCalendarOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeCalendar);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeCalendar);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isCalendarOpen]);
+
+  const selectCalendarDate = (value: string) => {
+    if (isPending || value > todayStr) {
+      return;
+    }
+
+    onDateChange(value === todayStr ? null : value);
+    setIsCalendarOpen(false);
+  };
 
   return (
-    <div className={controlClassName} aria-busy={isPending || undefined}>
+    <div
+      className={controlClassName}
+      ref={controlRef}
+      aria-busy={isPending || undefined}
+    >
       <span
         className="material-symbols-outlined date-scope-icon"
         aria-hidden="true"
@@ -360,22 +487,18 @@ export function DateScopeSelector({
           {compactValueLabel}
         </span>
       </span>
-      <input
-        className="date-scope-input"
-        type="date"
+      <button
+        className="date-scope-trigger"
+        type="button"
         aria-label={inputLabel}
+        aria-expanded={isCalendarOpen}
+        aria-haspopup="dialog"
         disabled={isPending}
-        max={todayStr}
-        onChange={(event) => {
-          const value = event.currentTarget.value;
-          if (!value || value === todayStr) {
-            onDateChange(null);
-          } else {
-            onDateChange(value);
-          }
+        onClick={() => {
+          setVisibleMonth(monthKeyFromDateValue(displayValue));
+          setIsCalendarOpen((currentValue) => !currentValue);
         }}
         title={inputLabel}
-        value={displayValue}
       />
       {date ? (
         <button
@@ -401,6 +524,108 @@ export function DateScopeSelector({
           expand_more
         </span>
       )}
+      {isCalendarOpen ? (
+        <div
+          className="date-calendar-popover"
+          role="dialog"
+          aria-label={translateText(language, "Available historical data")}
+        >
+          <div className="date-calendar-header">
+            <strong>{formatMonthLabel(visibleMonth, language)}</strong>
+            <div className="date-calendar-nav">
+              <button
+                aria-label={translateText(language, "Previous month")}
+                disabled={!canGoPrevious}
+                onClick={() => setVisibleMonth(previousMonth)}
+                title={translateText(language, "Previous month")}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  keyboard_arrow_up
+                </span>
+              </button>
+              <button
+                aria-label={translateText(language, "Next month")}
+                disabled={!canGoNext}
+                onClick={() => setVisibleMonth(nextMonth)}
+                title={translateText(language, "Next month")}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  keyboard_arrow_down
+                </span>
+              </button>
+            </div>
+          </div>
+          <div className="date-calendar-weekdays" aria-hidden="true">
+            {WEEKDAY_LABELS.map((weekday, index) => (
+              <span key={`${weekday}-${index}`}>{weekday}</span>
+            ))}
+          </div>
+          <div className="date-calendar-grid">
+            {calendarCells.map((cell) => {
+              const availabilityDay = availabilityByDate.get(cell.dateValue);
+              const hasData = Boolean(availabilityDay?.has_data);
+              const isFuture = cell.dateValue > todayStr;
+              const isSelected = cell.dateValue === displayValue;
+              const cellLabel = hasData
+                ? `${formatDateScopeValue(cell.dateValue, language)}: ${
+                    availabilityDay?.record_count ?? 0
+                  } ${translateText(language, "records")}`
+                : formatDateScopeValue(cell.dateValue, language);
+
+              return (
+                <button
+                  key={cell.dateValue}
+                  className={[
+                    "date-calendar-day",
+                    cell.isCurrentMonth ? "" : "date-calendar-day-adjacent",
+                    hasData ? "date-calendar-day-has-data" : "",
+                    isSelected ? "date-calendar-day-selected" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-label={cellLabel}
+                  disabled={isFuture || isPending}
+                  onClick={() => selectCalendarDate(cell.dateValue)}
+                  title={
+                    hasData
+                      ? `${cellLabel}`
+                      : `${cellLabel}: ${translateText(language, "No historical data")}`
+                  }
+                  type="button"
+                >
+                  <span>{cell.dayNumber}</span>
+                  {hasData ? (
+                    <span className="date-calendar-data-dot" aria-hidden="true" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <div className="date-calendar-actions">
+            <button
+              onClick={() => {
+                onDateChange(null);
+                setIsCalendarOpen(false);
+              }}
+              type="button"
+            >
+              {translateText(language, "Clear date")}
+            </button>
+            <button
+              onClick={() => {
+                onDateChange(null);
+                setVisibleMonth(monthKeyFromDateValue(todayStr));
+                setIsCalendarOpen(false);
+              }}
+              type="button"
+            >
+              {translateText(language, "Today")}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

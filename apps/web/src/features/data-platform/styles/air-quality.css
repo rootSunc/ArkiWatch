@@ -74,6 +74,24 @@
   box-shadow: 0 0 8px var(--success-glow);
 }
 
+.air-live-status-ready span,
+.air-provider-status-ready > div:first-child span {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+.air-live-status-stale span,
+.air-provider-status-stale > div:first-child span {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+}
+
+.air-live-status-empty span,
+.air-provider-status-empty > div:first-child span {
+  background: var(--on-surface-variant);
+  box-shadow: none;
+}
+
 .air-glass-panel,
 .air-detail-empty {
   min-width: 0;

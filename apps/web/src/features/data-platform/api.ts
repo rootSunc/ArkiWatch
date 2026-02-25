@@ -5,6 +5,7 @@ import {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
   PlatformHistoryApiResponse,
+  PlatformHistoryAvailabilityResponse,
   PlatformHistoryResponse,
   PlatformOverviewResponse,
   PublicDashboardRead,
@@ -25,6 +26,7 @@ export type PlatformFetchResult = {
   energy: EnergyCurrentResponse | null;
   householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
+  historyAvailability: PlatformHistoryAvailabilityResponse | null;
   roadRail: RoadRailCurrentResponse | null;
   transit: TransitCurrentResponse | null;
   error: string | null;
@@ -36,6 +38,7 @@ type PlatformFetchOptions = {
 };
 
 const HISTORY_DAY_COUNT = 7;
+const HISTORY_AVAILABILITY_DAY_COUNT = 90;
 
 function normalizeApiBaseUrl(rawValue: string | undefined): string {
   const fallbackValue = "http://127.0.0.1:8000/api";
@@ -121,6 +124,7 @@ export async function fetchPlatformHome(
   const roadRailUrl = new URL(`${apiBaseUrl}/traffic/current`);
   const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
   const historyUrl = new URL(`${apiBaseUrl}/platform/history`);
+  const historyAvailabilityUrl = new URL(`${apiBaseUrl}/platform/history/availability`);
   const publicDashboardUrl = new URL(`${apiBaseUrl}/public/dashboard`);
 
   if (userId) {
@@ -131,12 +135,24 @@ export async function fetchPlatformHome(
   airQualityUrl.searchParams.set("city", selectedCity);
   historyUrl.searchParams.set("city", selectedCity);
   historyUrl.searchParams.set("days", String(HISTORY_DAY_COUNT));
+  historyAvailabilityUrl.searchParams.set("city", selectedCity);
+  historyAvailabilityUrl.searchParams.set("days", String(HISTORY_AVAILABILITY_DAY_COUNT));
   energyUrl.searchParams.set("source", "fingrid");
   householdEnergyUrl.searchParams.set("source", "porssisahko");
   transitUrl.searchParams.set("city", selectedCity);
 
   if (selectedDate) {
-    const dateUrls = [overviewUrl, weatherUrl, airQualityUrl, energyUrl, householdEnergyUrl, roadRailUrl, transitUrl, historyUrl];
+    const dateUrls = [
+      overviewUrl,
+      weatherUrl,
+      airQualityUrl,
+      energyUrl,
+      householdEnergyUrl,
+      roadRailUrl,
+      transitUrl,
+      historyUrl,
+      historyAvailabilityUrl
+    ];
     for (const url of dateUrls) {
       url.searchParams.set("date", selectedDate);
     }
@@ -151,7 +167,8 @@ export async function fetchPlatformHome(
     householdEnergyResult,
     roadRailResult,
     transitResult,
-    historyResult
+    historyResult,
+    historyAvailabilityResult
   ] = await Promise.all([
     fetchJson<PlatformOverviewResponse>(overviewUrl, options.authToken),
     fetchJson<PublicDashboardRead>(publicDashboardUrl, options.authToken),
@@ -161,7 +178,8 @@ export async function fetchPlatformHome(
     fetchJson<EnergyCurrentResponse>(householdEnergyUrl, options.authToken),
     fetchJson<RoadRailCurrentResponse>(roadRailUrl, options.authToken),
     fetchJson<TransitCurrentResponse>(transitUrl, options.authToken),
-    fetchJson<PlatformHistoryApiResponse>(historyUrl, options.authToken)
+    fetchJson<PlatformHistoryApiResponse>(historyUrl, options.authToken),
+    fetchJson<PlatformHistoryAvailabilityResponse>(historyAvailabilityUrl, options.authToken)
   ]);
 
   return {
@@ -174,6 +192,7 @@ export async function fetchPlatformHome(
     energy: energyResult.data,
     householdEnergy: householdEnergyResult.data,
     history: normalizeHistoryResponse(historyResult.data),
+    historyAvailability: historyAvailabilityResult.data,
     roadRail: roadRailResult.data,
     transit: transitResult.data,
     error:
@@ -185,6 +204,7 @@ export async function fetchPlatformHome(
       householdEnergyResult.error ??
       roadRailResult.error ??
       transitResult.error ??
-      historyResult.error
+      historyResult.error ??
+      historyAvailabilityResult.error
   };
 }

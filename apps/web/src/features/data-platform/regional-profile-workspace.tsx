@@ -158,112 +158,26 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
     catalogStageMetric
   ].filter(isPlatformMetric);
 
-  // High premium visual mock age structure metrics
   const ageVis = category.visualizations.find((v) => v.id === "regional-profile-age-breakdown");
-  const ageStructureBreakdown = (ageVis?.data?.points as PlatformVisualizationPoint[])?.map((pt) => {
-    let countLabel = "";
-    if (pt.label.includes("Children")) countLabel = "103,124";
-    else if (pt.label.includes("Working")) countLabel = "404,532";
-    else if (pt.label.includes("Elderly")) countLabel = "153,344";
-    return {
+  const catalogCoverageVis = category.visualizations.find(
+    (v) => v.id === "regional_profile-catalog-coverage"
+  );
+  const ageStructureBreakdown =
+    (ageVis?.data?.points as PlatformVisualizationPoint[] | undefined)?.map((pt) => ({
       label: pt.label,
       value: pt.value,
       tone: pt.tone ?? "neutral",
-      countLabel
-    };
-  }) ?? [
-    { label: "Children (0-14)", value: 15.6, tone: "good", countLabel: "103,124" },
-    { label: "Working Age (15-64)", value: 61.2, tone: "neutral", countLabel: "404,532" },
-    { label: "Elderly (65+)", value: 23.2, tone: "warn", countLabel: "153,344" }
-  ];
+      countLabel: t("source data")
+    })) ??
+    (catalogCoverageVis?.data?.points as PlatformVisualizationPoint[] | undefined)?.map((pt) => ({
+      label: pt.label,
+      value: pt.value,
+      tone: pt.tone ?? "neutral",
+      countLabel: t("catalog")
+    })) ??
+    [];
 
-  // Cities comparison matrix
-  const cityComparisonRows: CityIndicatorRow[] = [
-    {
-      cityKey: "helsinki",
-      name: t("Helsinki"),
-      population: "661,000",
-      growth: "+0.8%",
-      growthTone: "good",
-      income: "€42,800",
-      incomeValue: 82,
-      employmentRate: "74.2%",
-      employmentValue: 74,
-      healthIndex: "88.5",
-      healthValue: 88,
-      healthTone: "good"
-    },
-    {
-      cityKey: "espoo",
-      name: t("Espoo"),
-      population: "305,000",
-      growth: "+1.4%",
-      growthTone: "good",
-      income: "€48,500",
-      incomeValue: 98,
-      employmentRate: "77.8%",
-      employmentValue: 78,
-      healthIndex: "80.2",
-      healthValue: 80,
-      healthTone: "good"
-    },
-    {
-      cityKey: "vantaa",
-      name: t("Vantaa"),
-      population: "244,000",
-      growth: "+1.1%",
-      growthTone: "good",
-      income: "€39,200",
-      incomeValue: 72,
-      employmentRate: "73.5%",
-      employmentValue: 73,
-      healthIndex: "94.1",
-      healthValue: 94,
-      healthTone: "good"
-    },
-    {
-      cityKey: "tampere",
-      name: t("Tampere"),
-      population: "249,000",
-      growth: "+1.2%",
-      growthTone: "good",
-      income: "€36,400",
-      incomeValue: 65,
-      employmentRate: "71.0%",
-      employmentValue: 71,
-      healthIndex: "102.4",
-      healthValue: 102,
-      healthTone: "neutral"
-    },
-    {
-      cityKey: "turku",
-      name: t("Turku"),
-      population: "196,000",
-      growth: "+0.7%",
-      growthTone: "neutral",
-      income: "€35,100",
-      incomeValue: 60,
-      employmentRate: "70.2%",
-      employmentValue: 70,
-      healthIndex: "105.1",
-      healthValue: 105,
-      healthTone: "warn"
-    },
-    {
-      cityKey: "oulu",
-      name: t("Oulu"),
-      population: "211,000",
-      growth: "+0.5%",
-      growthTone: "neutral",
-      income: "€34,800",
-      incomeValue: 58,
-      employmentRate: "69.8%",
-      employmentValue: 69,
-      healthIndex: "110.5",
-      healthValue: 110,
-      healthTone: "bad"
-    }
-  ];
+  const cityComparisonRows: CityIndicatorRow[] = [];
 
   return (
     <section className="water-detail-page" aria-label={t("Regional profile detail")}>

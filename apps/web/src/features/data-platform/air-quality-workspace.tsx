@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 
-import { formatRelativeAge } from "@/features/shared/format";
+import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, useI18n } from "./i18n";
@@ -222,8 +222,22 @@ function scoreDistribution(stations: AirQualityStation[], language: LanguageMode
   });
 }
 
-function observedLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not observed");
+function observedExactLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+  if (!value) {
+    return t("not observed");
+  }
+
+  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
+}
+
+function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
+  if (status === "ready") {
+    return "ready";
+  }
+  if (status === "stale") {
+    return "stale";
+  }
+  return "empty";
 }
 
 function scorePercent(score: number | null | undefined): number {
@@ -458,18 +472,19 @@ export function AirQualityWorkspace({
     category?.events[0] ??
     null;
   const heroEventAnchorId = highlightedEventId ?? highlightedCategoryEvent?.id ?? null;
+  const liveTone = liveStatusTone(airQuality.status);
 
   return (
     <section className="air-detail-page" aria-label={t("Air-quality detail")}>
       <div className="air-detail-header">
         <div>
           <h2>{airQuality.location ? `${airQuality.location} ${t("Air Quality Network")}` : t("Air Quality Network")}</h2>
-          <div className="air-live-status">
+          <div className={`air-live-status air-live-status-${liveTone}`}>
             <span aria-hidden="true" />
             <strong>{airQuality.status === "ready" ? t("HSY Sync Active") : t("Sync Delayed")}</strong>
           </div>
         </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedLabel(airQuality.observed_at, language, t)}</div>
+        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, t)}</div>
       </div>
 
       <section className="air-bento-grid" aria-label={t("Air-quality current condition")}>
@@ -479,7 +494,7 @@ export function AirQualityWorkspace({
         >
           <div className="air-card-kicker">
             <span>{t("Current Network Condition")}</span>
-            <time>{airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}</time>
+            <time>{observedExactLabel(airQuality.observed_at, language, t)}</time>
           </div>
           <div className="air-current-score">
             <div
@@ -823,7 +838,7 @@ export function AirQualityWorkspace({
         </div>
       </section>
 
-      <section className="air-provider-status" aria-label={t("Air-quality provider status")}>
+      <section className={`air-provider-status air-provider-status-${liveTone}`} aria-label={t("Air-quality provider status")}>
         <div>
           <span aria-hidden="true" />
           <strong>{t("Provider Status")}</strong>
@@ -840,7 +855,7 @@ export function AirQualityWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {airQuality.observed_at ? observedLabel(airQuality.observed_at, language, t) : t("not observed")}
+            {t("Last Sync")}: {observedExactLabel(airQuality.observed_at, language, t)}
           </span>
           <i aria-hidden="true" />
           <span className="air-provider-coverage">{t("Coverage")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>

@@ -253,15 +253,15 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
     catalogStageMetric
   ].filter(isPlatformMetric);
 
-  // High premium visual mock metrics for geospatial density maps
   const densityVis = category.visualizations.find((v) => v.id === "geospatial-feature-density");
-  const topographicDensityPoints: PlatformVisualizationPoint[] = (densityVis?.data?.points as PlatformVisualizationPoint[]) ?? [
-    { label: "Building Footprints", value: 384102, tone: "good" },
-    { label: "Addresses Lattice", value: 195420, tone: "good" },
-    { label: "Cadastral Parcels", value: 124801, tone: "neutral" },
-    { label: "Districts & Sub-districts", value: 890, tone: "good" },
-    { label: "Detailed Planning Polygons", value: 5802, tone: "warn" }
-  ];
+  const catalogCoverageVis = category.visualizations.find(
+    (v) => v.id === "geospatial-catalog-coverage"
+  );
+  const topographicDensityPoints: PlatformVisualizationPoint[] = (
+    (densityVis?.data?.points as PlatformVisualizationPoint[] | undefined) ??
+    (catalogCoverageVis?.data?.points as PlatformVisualizationPoint[] | undefined) ??
+    []
+  );
 
   const maxDensityValue = Math.max(1, ...topographicDensityPoints.map((item) => item.value));
 
@@ -535,7 +535,6 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             </div>
           </article>
 
-          {/* Premium mockup topographic density metric panel */}
           <article className="water-glass-panel water-event-panel">
             <header>
               <span>{t("Topographical Feature Density")}</span>
