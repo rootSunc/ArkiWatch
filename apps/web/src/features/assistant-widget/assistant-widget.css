@@ -1,7 +1,3 @@
-  /* ==========================================================================
-   AI DATA ASSISTANT MASCOT & DRAWERS
-   ========================================================================== */
-
 @keyframes assistantFloat {
   0% {
     transform: translateY(0) scale(1);
@@ -25,7 +21,6 @@
   font-family: var(--font-inter), sans-serif;
 }
 
-/* Launcher Mascot Style */
 .assistant-launcher {
   position: relative;
   display: flex;
@@ -70,7 +65,6 @@
   filter: none;
 }
 
-/* Tooltip Dialog Bubble */
 .assistant-bubble {
   position: absolute;
   right: 96px;
@@ -97,7 +91,6 @@
   transform: translateX(0);
 }
 
-/* AI Assistant Dialog Drawer */
 .assistant-drawer {
   width: 380px;
   height: 540px;
@@ -125,7 +118,6 @@
   }
 }
 
-/* Drawer Header */
 .assistant-drawer header {
   display: flex;
   align-items: center;
@@ -189,7 +181,6 @@
   color: var(--on-surface);
 }
 
-/* Messages Body Area */
 .assistant-messages {
   flex: 1;
   overflow-y: auto;
@@ -209,7 +200,6 @@
   border-radius: 3px;
 }
 
-/* Message Bubble Styles */
 .assistant-message {
   max-width: 82%;
   padding: 10px 14px;
@@ -327,7 +317,6 @@
   overflow-wrap: anywhere;
 }
 
-/* Suggestions Chips */
 .assistant-suggestions {
   display: flex;
   flex-wrap: wrap;
@@ -363,7 +352,6 @@
   opacity: 0.6;
 }
 
-/* Form Send Panel */
 .assistant-form {
   display: flex;
   align-items: center;
@@ -414,7 +402,6 @@
   font-size: 18px;
 }
 
-/* Responsive Adaptive CSS */
 @media (max-width: 480px) {
   body:has(.events-panel-expanded) .assistant-widget {
     display: none;

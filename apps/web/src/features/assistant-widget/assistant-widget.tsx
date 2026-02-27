@@ -56,7 +56,7 @@ const WIDGET_TRANSLATIONS = {
     whichExpansionPlanned: "What expansion directions are being planned?",
     askPlaceholder: "Ask about current conditions, sources, or this page...",
     send: "Send",
-    title: "AI Assistant",
+    title: "Data Assistant",
     subtitle: "Data Explainer",
     tooltip: "💡 Need help with data?",
     loading: "Reading ArkiWatch data...",
@@ -74,7 +74,7 @@ const WIDGET_TRANSLATIONS = {
     whichExpansionPlanned: "哪些扩展方向还在规划？",
     askPlaceholder: "询问当前状况、数据源或本页数据…",
     send: "发送",
-    title: "AI 助手",
+    title: "数据助手",
     subtitle: "数据解析器",
     tooltip: "💡 需要数据协助吗？",
     loading: "正在读取 ArkiWatch 数据...",
@@ -386,12 +386,12 @@ export function AssistantWidget({
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
       {isOpen ? (
-        <section className="assistant-drawer" aria-label="AI data assistant">
+        <section className="assistant-drawer" aria-label="Data assistant">
           <header>
             <div className="assistant-mini-person" aria-hidden="true">
               <Image
                 src="/brand/zoro_mascot.png"
-                alt="AI Mascot Mini"
+                alt="Assistant mascot"
                 width={36}
                 height={36}
                 className="assistant-mini-mascot-img"
@@ -494,7 +494,7 @@ export function AssistantWidget({
           <div className="assistant-mascot-wrapper">
             <Image
               src="/brand/zoro_mascot.png"
-              alt="AI Mascot Launcher"
+              alt="Assistant mascot launcher"
               width={76}
               height={76}
               className="assistant-mascot-img"
