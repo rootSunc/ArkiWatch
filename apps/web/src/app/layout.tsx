@@ -23,7 +23,7 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: `${appEnv.appName} | Unified Data Platform`,
   description:
-    "A unified Finland public-data platform for live signals, expansion categories, source health, and AI-assisted data exploration."
+    "A unified Finland public-data platform for live signals, expansion categories, source health, and guided data exploration."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

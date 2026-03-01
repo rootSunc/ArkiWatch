@@ -1088,7 +1088,6 @@ export function EnergyWorkspace({
                   </>
                 )}
 
-                {/* Hover Hit-target Rects for Premium Mouse Interaction */}
                 {chartPoints.map((point, index) => {
                   const innerWidth = PRICE_CHART_WIDTH - PRICE_CHART_PAD_LEFT - PRICE_CHART_PAD_RIGHT;
                   const slotWidth = innerWidth / Math.max(chartPoints.length, 1);
@@ -1121,7 +1120,6 @@ export function EnergyWorkspace({
                 })}
               </svg>
 
-              {/* Absolute Premium Tooltip Rendering */}
               {hoveredPoint && (
                 <div
                   className="energy-price-tooltip"
