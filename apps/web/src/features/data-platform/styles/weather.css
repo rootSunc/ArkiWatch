@@ -1142,7 +1142,6 @@
   line-height: 20px;
 }
 
-/* Premium Weather Detail View Styles */
 .weather-glass-panel {
   position: relative;
   overflow: hidden;
@@ -1158,7 +1157,6 @@
   border-color: rgba(var(--primary), 0.25);
 }
 
-/* Category-Specific Gradient Hovers for Metric Boxes */
 .weather-metric-box {
   background: linear-gradient(135deg, var(--card-bg), var(--surface-container-low));
   border-radius: 12px;
@@ -1199,7 +1197,6 @@
   box-shadow: 0 8px 24px rgba(135, 146, 154, 0.06);
 }
 
-/* Glowing Warning Borders on High-risk Cards */
 .weather-metric-warn {
   border-color: rgba(241, 160, 43, 0.3);
 }
@@ -1225,7 +1222,6 @@
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 
-/* Timeline Pulse Dot Alerts */
 .weather-event-bad .weather-event-dot {
   animation: pulse-dot 1.2s ease-in-out infinite;
   box-shadow: 0 0 10px var(--red);

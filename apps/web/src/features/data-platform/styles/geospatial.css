@@ -1,8 +1,3 @@
-/* ==========================================================================
-   GEOSPATIAL & REGIONAL PROFILE DESIGN SYSTEMS
-   ========================================================================== */
-
-/* Geospatial Workspace Styling */
 .geo-field-lattice-row {
   display: grid;
   grid-template-columns: 120px repeat(5, 1fr);

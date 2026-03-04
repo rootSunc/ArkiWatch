@@ -726,7 +726,6 @@
   pointer-events: none;
 }
 
-/* absolute glassmorphic tooltip styling */
 .energy-price-tooltip {
   transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
@@ -1222,7 +1221,6 @@
   }
 }
 
-/* Premium Energy Workspace Styles */
 .energy-glass-panel {
   position: relative;
   overflow: hidden;

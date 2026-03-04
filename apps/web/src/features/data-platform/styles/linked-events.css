@@ -1010,7 +1010,6 @@
   background: color-mix(in srgb, var(--primary) 6%, var(--detail-panel-bg));
 }
 
-/* Premium Linked Events Workspace Styles */
 .linked-events-panel,
 .linked-events-empty,
 .linked-events-empty-state {
@@ -1084,7 +1083,6 @@
   animation: pulse-dot 2.5s infinite;
 }
 
-/* Glassmorphic Capsule Filter Chips for Linked Events */
 .linked-events-filter {
   border-radius: 999px !important;
   border: 1px solid var(--outline-variant) !important;
