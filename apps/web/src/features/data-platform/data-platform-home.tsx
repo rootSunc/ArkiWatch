@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -24,28 +23,30 @@ import {
 } from "./city-scope";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import {
-  CityScopeSelector,
-  DateScopeSelector,
   HistoricalWarningBanner,
-  NotificationButton,
-  CATALOG_NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
-  RefreshDataButton,
-  ThemeToggleButton,
   saveCityValue,
   storedCityValue,
 } from "./data-platform-shell";
 import type { DashboardTone, NavItem } from "./data-platform-shell";
 import {
+  DataPlatformSideNav,
+  DataPlatformSideNavBackdrop,
+} from "./data-platform-side-nav";
+import {
+  DataPlatformDesktopHeader,
+  DataPlatformMobileHeader,
+  DataPlatformWorkspaceTopbar,
+  SideNavRestoreButton,
+} from "./data-platform-topbars";
+import {
   I18nProvider,
-  LanguageSwitchButton,
   translateMessageKey,
   translateText,
 } from "./i18n";
 import { usePlatformHome } from "./hooks/use-platform-home";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
-  BRAND_LOGO_SRC,
   CATEGORY_ICONS,
   CROSS_TIMELINE_LIMIT,
   EVENT_QUERY_KEY,
@@ -92,7 +93,6 @@ import {
 import { buildCrossDomainTimeline } from "./cross-domain-timeline";
 import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
 import { ScenarioOverview } from "./scenario-overview";
-import { ShareViewLinkButton } from "./share-view-link-button";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import {
   categorySignalAttribution,
@@ -778,21 +778,28 @@ export function DataPlatformHome({
     .filter(Boolean)
     .join(" ");
   const restoreSideNavButton = isSideNavHidden ? (
-    <button
-      className="icon-button side-nav-restore-button"
-      aria-label={tKey("shell.showNavigation")}
-      onClick={() => setIsSideNavHidden(false)}
-      title={tKey("shell.showNavigation")}
-      type="button"
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        keyboard_double_arrow_right
-      </span>
-    </button>
+    <SideNavRestoreButton onShow={() => setIsSideNavHidden(false)} />
   ) : null;
-  const themeActionLabel = tKey(
-    themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
-  );
+  const scopeControlProps = {
+    availability: historyAvailability?.days ?? [],
+    city: selectedCity,
+    date: selectedDate,
+    isAuthenticated,
+    isCityPending: isCityRefreshPending,
+    isDatePending: isDateRefreshPending,
+    isEventsExpanded,
+    isHistorical,
+    isRefreshing,
+    language: languageMode,
+    notificationCount: recentNotificationCount,
+    notificationTone: recentNotificationTone,
+    onCityChange: selectCity,
+    onDateChange: selectDate,
+    onLanguageChange: selectLanguageMode,
+    onNotificationsClick: openRecentEventsPanel,
+    onRefresh: triggerDataRefresh,
+    renderAuthActionButton,
+  };
   const mobileNavItems = useMemo(
     () => PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)),
     [categories],
@@ -801,290 +808,41 @@ export function DataPlatformHome({
   return (
     <I18nProvider language={languageMode}>
       <div className={dashboardShellClassName}>
-        <aside
+        <DataPlatformSideNav
+          categories={categories}
           className={sideNavClassName}
-          aria-label={tKey("shell.primaryNavigation")}
-        >
-          <div className="brand-panel">
-            <div className="brand-icon" aria-hidden="true">
-              <Image
-                alt=""
-                className="brand-logo-image"
-                height={96}
-                priority
-                src={BRAND_LOGO_SRC}
-                width={96}
-              />
-            </div>
-            <div className="brand-copy">
-              <h1 className="brand-title-main">ArkiWatch</h1>
-              <p className="brand-title-subtitle">{tKey("shell.dataPlatform")}</p>
-            </div>
-            <button
-              className="icon-button side-nav-collapse-button"
-              aria-label={tKey("shell.hideNavigation")}
-              onClick={() => setIsSideNavHidden(true)}
-              title={tKey("shell.hideNavigation")}
-              type="button"
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                keyboard_double_arrow_left
-              </span>
-            </button>
-          </div>
-
-          <nav className="side-nav-list" aria-label={t("Signal navigation")}>
-            {PRIMARY_NAV_ITEMS.filter((item) =>
-              navItemAvailable(item, categories),
-            ).map((item) => {
-              const isActive =
-                selectedNavKey === item.key ||
-                (item.categoryKey != null &&
-                  selectedNavKey === item.categoryKey);
-              return (
-                <button
-                  className={isActive ? "nav-row nav-row-active" : "nav-row"}
-                  key={item.key}
-                  onClick={() => selectNavItem(item)}
-                  title={t(item.label)}
-                  type="button"
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                  >
-                    {item.icon}
-                  </span>
-                  <span>{t(item.label)}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {CATALOG_NAV_ITEMS.some((item) => navItemAvailable(item, categories)) ? (
-            <nav className="side-nav-catalog" aria-label={t("Data catalog navigation")}>
-              <span className="side-nav-catalog-label">{t("Data catalog")}</span>
-              {CATALOG_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map(
-                (item) => {
-                  const isActive =
-                    selectedNavKey === item.key ||
-                    (item.categoryKey != null && selectedNavKey === item.categoryKey);
-                  return (
-                    <button
-                      className={isActive ? "nav-row nav-row-active" : "nav-row"}
-                      key={item.key}
-                      onClick={() => selectNavItem(item)}
-                      title={t(item.label)}
-                      type="button"
-                    >
-                      <span className="material-symbols-outlined" aria-hidden="true">
-                        {item.icon}
-                      </span>
-                      <span>{t(item.label)}</span>
-                    </button>
-                  );
-                },
-              )}
-            </nav>
-          ) : null}
-
-          <nav className="side-nav-footer" aria-label={t("System controls")}>
-            <div className="side-nav-utility-group">
-              <button
-                className="nav-row side-nav-utility-row"
-                aria-label={t("Settings")}
-                title={t("Settings")}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  settings
-                </span>
-                <span>{t("Settings")}</span>
-              </button>
-              <button
-                className="nav-row side-nav-utility-row"
-                aria-label={themeActionLabel}
-                onClick={toggleThemeMode}
-                title={themeActionLabel}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {themeMode === "light" ? "dark_mode" : "light_mode"}
-                </span>
-                <span>{t("Theme mode")}</span>
-              </button>
-              <div
-                className="nav-row side-nav-utility-row side-nav-user-row"
-                aria-label={userStateLabel}
-                title={currentUserLabel}
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {isAuthenticated ? "manage_accounts" : "visibility"}
-                </span>
-                <span>{currentUserLabel}</span>
-              </div>
-              {renderAuthActionButton("nav-row side-nav-utility-row", true)}
-            </div>
-          </nav>
-        </aside>
+          currentUserLabel={currentUserLabel}
+          isAuthenticated={isAuthenticated}
+          onHide={() => setIsSideNavHidden(true)}
+          onSelectNavItem={selectNavItem}
+          renderAuthActionButton={renderAuthActionButton}
+          selectedNavKey={selectedNavKey}
+          themeMode={themeMode}
+          onToggleTheme={toggleThemeMode}
+        />
         {isMobileMenuOpen ? (
-          <div
-            className="mobile-side-nav-backdrop"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
+          <DataPlatformSideNavBackdrop onClose={() => setIsMobileMenuOpen(false)} />
         ) : null}
 
         <div className="dashboard-app">
-          <header className="mobile-dashboard-header">
-            <div className="mobile-brand">
-              <button
-                className="icon-button"
-                aria-label={t("Open navigation")}
-                onClick={() => setIsMobileMenuOpen(true)}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  menu
-                </span>
-              </button>
-              <span className="mobile-brand-mark" aria-hidden="true">
-                <Image
-                  alt=""
-                  className="brand-logo-image"
-                  height={96}
-                  src={BRAND_LOGO_SRC}
-                  width={96}
-                />
-              </span>
-              <strong>ArkiWatch</strong>
-            </div>
-            <div className="top-actions">
-              <div className="mobile-scope-switchers">
-                <CityScopeSelector
-                  city={selectedCity}
-                  isPending={isCityRefreshPending}
-                  language={languageMode}
-                  onCityChange={selectCity}
-                />
-                <DateScopeSelector
-                  availability={historyAvailability?.days ?? []}
-                  date={selectedDate}
-                  isPending={isDateRefreshPending}
-                  language={languageMode}
-                  onDateChange={selectDate}
-                />
-              </div>
-              <div className="mobile-utility-actions">
-                <LanguageSwitchButton
-                  language={languageMode}
-                  onLanguageChange={selectLanguageMode}
-                />
-                <ThemeToggleButton
-                  language={languageMode}
-                  themeMode={themeMode}
-                  onToggle={toggleThemeMode}
-                />
-                {isAuthenticated && !isDetailPage && !isHistorical ? (
-                  <RefreshDataButton
-                    isRefreshing={isRefreshing}
-                    language={languageMode}
-                    onRefresh={triggerDataRefresh}
-                  />
-                ) : null}
-                <ShareViewLinkButton language={languageMode} />
-                <NotificationButton
-                  count={recentNotificationCount}
-                  isActive={isEventsExpanded && !isDetailPage}
-                  language={languageMode}
-                  onClick={openRecentEventsPanel}
-                  tone={recentNotificationTone}
-                />
-                <button
-                  className="icon-button mobile-overflow-action"
-                  aria-label={t("Settings")}
-                  type="button"
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                  >
-                    settings
-                  </span>
-                </button>
-                <span
-                  className="profile-avatar mobile-overflow-action"
-                  aria-label={userStateLabel}
-                  title={currentUserLabel}
-                >
-                  {currentUserInitials}
-                </span>
-                {renderAuthActionButton("icon-button mobile-overflow-action")}
-              </div>
-            </div>
-          </header>
+          <DataPlatformMobileHeader
+            {...scopeControlProps}
+            currentUserInitials={currentUserInitials}
+            currentUserLabel={currentUserLabel}
+            isDetailPage={isDetailPage}
+            onOpenNavigation={() => setIsMobileMenuOpen(true)}
+            themeMode={themeMode}
+            onToggleTheme={toggleThemeMode}
+            userStateLabel={userStateLabel}
+          />
 
           {showsWorkspaceTopbar ? (
-            <header className="detail-topbar">
-              <div className="detail-topbar-brand">
-                {restoreSideNavButton}
-                <span className="detail-topbar-mark" aria-hidden="true">
-                  <Image
-                    alt=""
-                    className="brand-logo-image"
-                    height={96}
-                    src={BRAND_LOGO_SRC}
-                    width={96}
-                  />
-                </span>
-                <strong>ArkiWatch</strong>
-              </div>
-              {isDetailPage ? (
-                <nav aria-label={t("Detail workspace navigation")}>
-                  <button onClick={() => selectNav(TODAY_NAV_KEY)} type="button">
-                    {t("Back to Today")}
-                  </button>
-                  <button onClick={() => selectNav(FALLBACK_NAV_KEY)} type="button">
-                    {t("All signals")}
-                  </button>
-                </nav>
-              ) : null}
-              <div className="detail-topbar-actions">
-                <CityScopeSelector
-                  city={selectedCity}
-                  isPending={isCityRefreshPending}
-                  language={languageMode}
-                  onCityChange={selectCity}
-                />
-                <DateScopeSelector
-                  availability={historyAvailability?.days ?? []}
-                  date={selectedDate}
-                  isPending={isDateRefreshPending}
-                  language={languageMode}
-                  onDateChange={selectDate}
-                />
-                <LanguageSwitchButton
-                  language={languageMode}
-                  onLanguageChange={selectLanguageMode}
-                />
-                {isAuthenticated && !isHistorical ? (
-                  <RefreshDataButton
-                    isRefreshing={isRefreshing}
-                    language={languageMode}
-                    onRefresh={triggerDataRefresh}
-                  />
-                ) : null}
-                <ShareViewLinkButton language={languageMode} />
-                <NotificationButton
-                  count={recentNotificationCount}
-                  isActive={isEventsExpanded && !isDetailPage}
-                  language={languageMode}
-                  onClick={openRecentEventsPanel}
-                  tone={recentNotificationTone}
-                />
-                {renderAuthActionButton("icon-button")}
-              </div>
-            </header>
+            <DataPlatformWorkspaceTopbar
+              {...scopeControlProps}
+              isDetailPage={isDetailPage}
+              onSelectNav={selectNav}
+              restoreSideNavButton={restoreSideNavButton}
+            />
           ) : null}
 
           <main
@@ -1103,73 +861,14 @@ export function DataPlatformHome({
               />
             ) : null}
             {!showsWorkspaceTopbar ? (
-              <div className="desktop-dashboard-header">
-                <div className="desktop-dashboard-heading">
-                  {restoreSideNavButton}
-                  <div className="desktop-dashboard-heading-copy">
-                    <h2>
-                      {selectedCategory
-                        ? `${displayTitle(selectedCategory, languageMode)} ${t("Dashboard")}`
-                        : selectedNavKey === FALLBACK_NAV_KEY
-                          ? t("Signals")
-                          : t("Today")}
-                    </h2>
-                    {selectedCategory ? (
-                      <p>{selectedCategory.description}</p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="desktop-controls">
-                  <label className="dashboard-search">
-                    <span
-                      className="material-symbols-outlined"
-                      aria-hidden="true"
-                    >
-                      search
-                    </span>
-                    <input
-                      onChange={(event) =>
-                        setSearchValue(event.currentTarget.value)
-                      }
-                      placeholder={t("Search signals, events...")}
-                      value={searchValue}
-                    />
-                  </label>
-                  <CityScopeSelector
-                    city={selectedCity}
-                    isPending={isCityRefreshPending}
-                    language={languageMode}
-                    onCityChange={selectCity}
-                  />
-                  <DateScopeSelector
-                    availability={historyAvailability?.days ?? []}
-                    date={selectedDate}
-                    isPending={isDateRefreshPending}
-                    language={languageMode}
-                    onDateChange={selectDate}
-                  />
-                  <LanguageSwitchButton
-                    language={languageMode}
-                    onLanguageChange={selectLanguageMode}
-                  />
-                  {isAuthenticated && !isHistorical ? (
-                    <RefreshDataButton
-                      isRefreshing={isRefreshing}
-                      language={languageMode}
-                      onRefresh={triggerDataRefresh}
-                    />
-                  ) : null}
-                  <ShareViewLinkButton language={languageMode} />
-                  <NotificationButton
-                    count={recentNotificationCount}
-                    isActive={isEventsExpanded && !isDetailPage}
-                    language={languageMode}
-                    onClick={openRecentEventsPanel}
-                    tone={recentNotificationTone}
-                  />
-                  {renderAuthActionButton("icon-button")}
-                </div>
-              </div>
+              <DataPlatformDesktopHeader
+                {...scopeControlProps}
+                onSearchChange={setSearchValue}
+                restoreSideNavButton={restoreSideNavButton}
+                searchValue={searchValue}
+                selectedCategory={selectedCategory}
+                selectedNavKey={selectedNavKey}
+              />
             ) : null}
 
             {selectedNavKey === TODAY_NAV_KEY ? (

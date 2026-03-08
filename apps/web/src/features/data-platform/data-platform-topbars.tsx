@@ -1,0 +1,332 @@
+"use client";
+
+import type { ReactNode } from "react";
+import Image from "next/image";
+
+import {
+  CityScopeSelector,
+  DateScopeSelector,
+  NotificationButton,
+  RefreshDataButton,
+  ThemeToggleButton,
+  type DashboardTone,
+  type ThemeMode,
+} from "./data-platform-shell";
+import { BRAND_LOGO_SRC, FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "./data-platform-nav-utils";
+import { SideNavRestoreButton } from "./data-platform-side-nav";
+import { LanguageSwitchButton, type LanguageMode, useI18n } from "./i18n";
+import { PlatformScopeControls } from "./platform-scope-controls";
+import { ShareViewLinkButton } from "./share-view-link-button";
+import type { PlatformCategory, PlatformHistoryAvailabilityDay } from "./types";
+import { displayTitle } from "./data-platform-view-model";
+
+type ScopeControlProps = {
+  availability: PlatformHistoryAvailabilityDay[];
+  city: string;
+  date: string | null;
+  isAuthenticated: boolean;
+  isCityPending: boolean;
+  isDatePending: boolean;
+  isEventsExpanded: boolean;
+  isHistorical: boolean;
+  isRefreshing: boolean;
+  language: LanguageMode;
+  notificationCount: number;
+  notificationTone: DashboardTone;
+  onCityChange: (city: string) => void;
+  onDateChange: (date: string | null) => void;
+  onLanguageChange: (language: LanguageMode) => void;
+  onNotificationsClick: () => void;
+  onRefresh: () => void;
+  renderAuthActionButton: (className: string) => ReactNode;
+};
+
+type DataPlatformMobileHeaderProps = ScopeControlProps & {
+  currentUserInitials: string;
+  currentUserLabel: string;
+  isDetailPage: boolean;
+  onOpenNavigation: () => void;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
+  userStateLabel: string;
+};
+
+export function DataPlatformMobileHeader({
+  availability,
+  city,
+  currentUserInitials,
+  currentUserLabel,
+  date,
+  isAuthenticated,
+  isCityPending,
+  isDatePending,
+  isDetailPage,
+  isEventsExpanded,
+  isHistorical,
+  isRefreshing,
+  language,
+  notificationCount,
+  notificationTone,
+  onCityChange,
+  onDateChange,
+  onLanguageChange,
+  onNotificationsClick,
+  onOpenNavigation,
+  onRefresh,
+  onToggleTheme,
+  renderAuthActionButton,
+  themeMode,
+  userStateLabel,
+}: DataPlatformMobileHeaderProps) {
+  const { tKey } = useI18n();
+
+  return (
+    <header className="mobile-dashboard-header">
+      <div className="mobile-brand">
+        <button
+          className="icon-button"
+          aria-label={tKey("shell.openNavigation")}
+          onClick={onOpenNavigation}
+          type="button"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            menu
+          </span>
+        </button>
+        <span className="mobile-brand-mark" aria-hidden="true">
+          <Image
+            alt=""
+            className="brand-logo-image"
+            height={96}
+            src={BRAND_LOGO_SRC}
+            width={96}
+          />
+        </span>
+        <strong>ArkiWatch</strong>
+      </div>
+      <div className="top-actions">
+        <div className="mobile-scope-switchers">
+          <CityScopeSelector
+            city={city}
+            isPending={isCityPending}
+            language={language}
+            onCityChange={onCityChange}
+          />
+          <DateScopeSelector
+            availability={availability}
+            date={date}
+            isPending={isDatePending}
+            language={language}
+            onDateChange={onDateChange}
+          />
+        </div>
+        <div className="mobile-utility-actions">
+          <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
+          <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />
+          {isAuthenticated && !isDetailPage && !isHistorical ? (
+            <RefreshDataButton
+              isRefreshing={isRefreshing}
+              language={language}
+              onRefresh={onRefresh}
+            />
+          ) : null}
+          <ShareViewLinkButton language={language} />
+          <NotificationButton
+            count={notificationCount}
+            isActive={isEventsExpanded && !isDetailPage}
+            language={language}
+            onClick={onNotificationsClick}
+            tone={notificationTone}
+          />
+          <button
+            className="icon-button mobile-overflow-action"
+            aria-label={tKey("shell.settings")}
+            type="button"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              settings
+            </span>
+          </button>
+          <span
+            className="profile-avatar mobile-overflow-action"
+            aria-label={userStateLabel}
+            title={currentUserLabel}
+          >
+            {currentUserInitials}
+          </span>
+          {renderAuthActionButton("icon-button mobile-overflow-action")}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
+  isDetailPage: boolean;
+  onSelectNav: (navKey: string) => void;
+  restoreSideNavButton: ReactNode;
+};
+
+export function DataPlatformWorkspaceTopbar({
+  availability,
+  city,
+  date,
+  isAuthenticated,
+  isCityPending,
+  isDatePending,
+  isDetailPage,
+  isEventsExpanded,
+  isHistorical,
+  isRefreshing,
+  language,
+  notificationCount,
+  notificationTone,
+  onCityChange,
+  onDateChange,
+  onLanguageChange,
+  onNotificationsClick,
+  onRefresh,
+  onSelectNav,
+  renderAuthActionButton,
+  restoreSideNavButton,
+}: DataPlatformWorkspaceTopbarProps) {
+  const { t, tKey } = useI18n();
+
+  return (
+    <header className="detail-topbar">
+      <div className="detail-topbar-brand">
+        {restoreSideNavButton}
+        <span className="detail-topbar-mark" aria-hidden="true">
+          <Image
+            alt=""
+            className="brand-logo-image"
+            height={96}
+            src={BRAND_LOGO_SRC}
+            width={96}
+          />
+        </span>
+        <strong>ArkiWatch</strong>
+      </div>
+      {isDetailPage ? (
+        <nav aria-label={t("Detail workspace navigation")}>
+          <button onClick={() => onSelectNav(TODAY_NAV_KEY)} type="button">
+            {tKey("shell.backToToday")}
+          </button>
+          <button onClick={() => onSelectNav(FALLBACK_NAV_KEY)} type="button">
+            {tKey("shell.allSignals")}
+          </button>
+        </nav>
+      ) : null}
+      <div className="detail-topbar-actions">
+        <PlatformScopeControls
+          availability={availability}
+          city={city}
+          date={date}
+          isAuthenticated={isAuthenticated}
+          isCityPending={isCityPending}
+          isDatePending={isDatePending}
+          isEventsExpanded={isEventsExpanded && !isDetailPage}
+          isHistorical={isHistorical}
+          isRefreshing={isRefreshing}
+          language={language}
+          notificationCount={notificationCount}
+          notificationTone={notificationTone}
+          onCityChange={onCityChange}
+          onDateChange={onDateChange}
+          onLanguageChange={onLanguageChange}
+          onNotificationsClick={onNotificationsClick}
+          onRefresh={onRefresh}
+          renderAuthActionButton={renderAuthActionButton}
+        />
+      </div>
+    </header>
+  );
+}
+
+type DataPlatformDesktopHeaderProps = ScopeControlProps & {
+  onSearchChange: (value: string) => void;
+  restoreSideNavButton: ReactNode;
+  searchValue: string;
+  selectedCategory: PlatformCategory | null;
+  selectedNavKey: string;
+};
+
+export function DataPlatformDesktopHeader({
+  availability,
+  city,
+  date,
+  isAuthenticated,
+  isCityPending,
+  isDatePending,
+  isEventsExpanded,
+  isHistorical,
+  isRefreshing,
+  language,
+  notificationCount,
+  notificationTone,
+  onCityChange,
+  onDateChange,
+  onLanguageChange,
+  onNotificationsClick,
+  onRefresh,
+  onSearchChange,
+  renderAuthActionButton,
+  restoreSideNavButton,
+  searchValue,
+  selectedCategory,
+  selectedNavKey,
+}: DataPlatformDesktopHeaderProps) {
+  const { t } = useI18n();
+
+  return (
+    <div className="desktop-dashboard-header">
+      <div className="desktop-dashboard-heading">
+        {restoreSideNavButton}
+        <div className="desktop-dashboard-heading-copy">
+          <h2>
+            {selectedCategory
+              ? `${displayTitle(selectedCategory, language)} ${t("Dashboard")}`
+              : selectedNavKey === FALLBACK_NAV_KEY
+                ? t("Signals")
+                : t("Today")}
+          </h2>
+          {selectedCategory ? <p>{selectedCategory.description}</p> : null}
+        </div>
+      </div>
+      <div className="desktop-controls">
+        <label className="dashboard-search">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            search
+          </span>
+          <input
+            onChange={(event) => onSearchChange(event.currentTarget.value)}
+            placeholder={t("Search signals, events...")}
+            value={searchValue}
+          />
+        </label>
+        <PlatformScopeControls
+          availability={availability}
+          city={city}
+          date={date}
+          isAuthenticated={isAuthenticated}
+          isCityPending={isCityPending}
+          isDatePending={isDatePending}
+          isEventsExpanded={isEventsExpanded}
+          isHistorical={isHistorical}
+          isRefreshing={isRefreshing}
+          language={language}
+          notificationCount={notificationCount}
+          notificationTone={notificationTone}
+          onCityChange={onCityChange}
+          onDateChange={onDateChange}
+          onLanguageChange={onLanguageChange}
+          onNotificationsClick={onNotificationsClick}
+          onRefresh={onRefresh}
+          renderAuthActionButton={renderAuthActionButton}
+        />
+      </div>
+    </div>
+  );
+}
+
+export { SideNavRestoreButton };
