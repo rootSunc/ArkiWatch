@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -33,28 +32,35 @@ import {
   PRIMARY_NAV_ITEMS,
   RefreshDataButton,
   ThemeToggleButton,
-  applyThemeMode,
-  preferredThemeMode,
   saveCityValue,
-  saveThemeMode,
   storedCityValue,
-  storedThemeMode,
 } from "./data-platform-shell";
-import type { DashboardTone, NavItem, ThemeMode } from "./data-platform-shell";
+import type { DashboardTone, NavItem } from "./data-platform-shell";
 import {
   I18nProvider,
-  LanguageMode,
   LanguageSwitchButton,
-  applyLanguageMode,
-  preferredLanguageMode,
-  saveLanguageMode,
-  storedLanguageMode,
+  translateMessageKey,
   translateText,
 } from "./i18n";
 import { usePlatformHome } from "./hooks/use-platform-home";
-import { platformKeys } from "./queries/platform-queries";
+import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
-  PlatformCategory,
+  BRAND_LOGO_SRC,
+  CATEGORY_ICONS,
+  CROSS_TIMELINE_LIMIT,
+  EVENT_QUERY_KEY,
+  FALLBACK_NAV_KEY,
+  NAV_QUERY_KEY,
+  TODAY_NAV_KEY,
+  categoryByKey,
+  currentSearchParams,
+  navItemAvailable,
+  pathWithParams,
+  profileInitials,
+  resolveNavKey,
+} from "./data-platform-nav-utils";
+import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
+import {
   PlatformEvent,
 } from "./types";
 import {
@@ -117,7 +123,6 @@ import {
   isNotificationEvent,
   matchesSearch,
   mergeMobilityCategories,
-  mobilityAvailable,
   notificationToneForEvents,
   pickPriorityEvent,
   signalReadout,
@@ -134,162 +139,6 @@ type DataPlatformHomeProps = {
   isAuthenticated: boolean;
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  air: "air",
-  city_services: "location_city",
-  energy: "bolt",
-  events: "event",
-  geospatial: "map",
-  mobility: "commute",
-  regional_profile: "public",
-  traffic: "traffic",
-  transit: "directions_bus",
-  water: "water_drop",
-  weather: "cloud",
-};
-
-const BRAND_LOGO_SRC = "/brand/logo-mark.png";
-const NAV_QUERY_KEY = "view";
-const EVENT_QUERY_KEY = "event";
-const TODAY_NAV_KEY = "today";
-const FALLBACK_NAV_KEY = "overview";
-const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
-const CROSS_TIMELINE_LIMIT = 10;
-
-function currentSearchParams(
-  fallbackParams: { toString: () => string },
-): URLSearchParams {
-  if (typeof window === "undefined") {
-    return new URLSearchParams(fallbackParams.toString());
-  }
-
-  return new URLSearchParams(window.location.search);
-}
-
-function pathWithParams(pathname: string, params: URLSearchParams): string {
-  const query = params.toString();
-  return query ? `${pathname}?${query}` : pathname;
-}
-
-function categoryByKey(
-  categories: PlatformCategory[],
-  key: string | undefined,
-): PlatformCategory | null {
-  if (!key) {
-    return null;
-  }
-
-  return categories.find((category) => category.key === key) ?? null;
-}
-
-function loadReadRecentEventIds(): Set<string> {
-  if (typeof window === "undefined") {
-    return new Set();
-  }
-
-  try {
-    const value = window.localStorage.getItem(READ_RECENT_EVENTS_STORAGE_KEY);
-    const parsed = value ? JSON.parse(value) : [];
-    return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function profileInitials(label: string): string {
-  const initials = label
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return initials || "DV";
-}
-
-function saveReadRecentEventIds(ids: Set<string>): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(
-      READ_RECENT_EVENTS_STORAGE_KEY,
-      JSON.stringify([...ids].slice(-400)),
-    );
-  } catch {
-    // Notification read state is helpful, but navigation should still work without storage.
-  }
-}
-
-function navItemAvailable(
-  item: NavItem,
-  categories: PlatformCategory[],
-): boolean {
-  if (item.key === TODAY_NAV_KEY) {
-    return true;
-  }
-
-  if (item.key === MOBILITY_NAV_KEY) {
-    return mobilityAvailable(categories);
-  }
-
-  if (!item.categoryKey) {
-    return true;
-  }
-
-  if (!categoryVisibleToCurrentUser(item.categoryKey)) {
-    return false;
-  }
-
-  return categories.some((category) => category.key === item.categoryKey);
-}
-
-function resolveNavKey(
-  requestedKey: string | null,
-  categories: PlatformCategory[],
-): string {
-  const normalized = requestedKey?.trim() || null;
-
-  if (!normalized || normalized === TODAY_NAV_KEY) {
-    return TODAY_NAV_KEY;
-  }
-
-  if (normalized === FALLBACK_NAV_KEY) {
-    return FALLBACK_NAV_KEY;
-  }
-
-  if (normalized === MOBILITY_NAV_KEY || isMobilityCategoryKey(normalized)) {
-    return mobilityAvailable(categories) ? MOBILITY_NAV_KEY : TODAY_NAV_KEY;
-  }
-
-  if (!categoryVisibleToCurrentUser(normalized)) {
-    return TODAY_NAV_KEY;
-  }
-
-  const primaryNavItem = PRIMARY_NAV_ITEMS.find(
-    (item) => item.key === normalized,
-  );
-  if (primaryNavItem) {
-    if (
-      primaryNavItem.categoryKey &&
-      !categoryVisibleToCurrentUser(primaryNavItem.categoryKey)
-    ) {
-      return TODAY_NAV_KEY;
-    }
-
-    return normalized;
-  }
-
-  return categories.some(
-    (category) =>
-      category.key === normalized && categoryVisibleToCurrentUser(category.key),
-  )
-    ? normalized
-    : TODAY_NAV_KEY;
-}
-
 export function DataPlatformHome({
   currentUserLabel,
   defaultUserId,
@@ -301,7 +150,6 @@ export function DataPlatformHome({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
   const {
     airQuality,
     apiBaseUrl,
@@ -337,13 +185,18 @@ export function DataPlatformHome({
   const [selectedEnergyTab, setSelectedEnergyTab] = useState<EnergyPanelKey>(() =>
     resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY)),
   );
+  const refreshMutation = useRefreshPlatformData();
+  const signOutMutation = useSignOut();
+  const {
+    languageMode,
+    markRecentEventRead,
+    readRecentEventIds,
+    selectLanguageMode,
+    themeMode,
+    toggleThemeMode,
+  } = useClientPreferences();
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
-  const [readRecentEventIds, setReadRecentEventIds] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
   const [selectedCity, setSelectedCity] = useState(() =>
@@ -357,6 +210,7 @@ export function DataPlatformHome({
   const [isCityRefreshPending, startCityRefresh] = useTransition();
   const [isDateRefreshPending, startDateRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
+  const tKey = (key: string) => translateMessageKey(languageMode, key);
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
     overview?.time_scope ??
@@ -372,41 +226,27 @@ export function DataPlatformHome({
       ? activeTimeScope.date ?? selectedDate
       : selectedDate;
   const isHistorical = historicalDate !== null;
-  const userStateLabel = isAuthenticated ? t("Signed in") : t("Demo view");
-  const authActionLabel = isAuthenticated ? t("Sign out") : t("Admin sign in");
+  const userStateLabel = isAuthenticated ? tKey("shell.signedIn") : tKey("shell.demoView");
+  const authActionLabel = isAuthenticated ? tKey("shell.signOut") : tKey("shell.adminSignIn");
   const authActionIcon = isAuthenticated ? "logout" : "login";
   const currentUserInitials = profileInitials(currentUserLabel);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isRefreshing = refreshMutation.isPending;
 
-  async function triggerDataRefresh() {
-    if (isRefreshing || !isAuthenticated) return;
-    setIsRefreshing(true);
-    try {
-      const response = await fetch("/api/sources/refresh", {
-        method: "POST"
-      });
-      if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: platformKeys.all });
-        router.refresh();
-      } else {
-        console.error("Failed to refresh data sources");
-      }
-    } catch (err) {
-      console.error("Error refreshing data sources:", err);
-    } finally {
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 1000);
+  function triggerDataRefresh(): void {
+    if (isRefreshing || !isAuthenticated || refreshMutation.isPending) {
+      return;
     }
+
+    refreshMutation.mutate(undefined, {
+      onError: (error) => {
+        console.error("Error refreshing data sources:", error);
+      },
+    });
   }
 
-  async function signOut() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    }).catch(() => null);
-    router.replace("/");
-    router.refresh();
+  function signOut(): void {
+    signOutMutation.mutate();
   }
 
   function openAdminSignIn() {
@@ -771,19 +611,6 @@ export function DataPlatformHome({
     }
   }
 
-  function markRecentEventRead(eventId: string): void {
-    setReadRecentEventIds((currentIds) => {
-      if (currentIds.has(eventId)) {
-        return currentIds;
-      }
-
-      const nextIds = new Set(currentIds);
-      nextIds.add(eventId);
-      saveReadRecentEventIds(nextIds);
-      return nextIds;
-    });
-  }
-
   function openRecentEvent(event: PlatformEvent): void {
     const target = eventTarget(event);
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -837,24 +664,6 @@ export function DataPlatformHome({
     },
     [pathname, router, searchParams, startDateRefresh],
   );
-
-  useEffect(() => {
-    setReadRecentEventIds(loadReadRecentEventIds());
-  }, []);
-
-  useEffect(() => {
-    const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
-
-    setThemeMode(nextThemeMode);
-    applyThemeMode(nextThemeMode);
-  }, []);
-
-  useEffect(() => {
-    const nextLanguageMode = storedLanguageMode() ?? preferredLanguageMode();
-
-    setLanguageMode(nextLanguageMode);
-    applyLanguageMode(nextLanguageMode);
-  }, []);
 
   useEffect(() => {
     setSelectedCity(normalizeCityValue(initialCity));
@@ -944,23 +753,6 @@ export function DataPlatformHome({
     return () => window.clearTimeout(timeout);
   }, [highlightedEventId, isDetailPage, selectedMobilityTab, selectedNavKey]);
 
-  function toggleThemeMode(): void {
-    setThemeMode((currentThemeMode) => {
-      const nextThemeMode = currentThemeMode === "dark" ? "light" : "dark";
-
-      applyThemeMode(nextThemeMode);
-      saveThemeMode(nextThemeMode);
-
-      return nextThemeMode;
-    });
-  }
-
-  function selectLanguageMode(nextLanguageMode: LanguageMode): void {
-    setLanguageMode(nextLanguageMode);
-    applyLanguageMode(nextLanguageMode);
-    saveLanguageMode(nextLanguageMode);
-  }
-
   function selectCity(nextCityValue: string): void {
     const nextCity = normalizeCityValue(nextCityValue);
     setSelectedCity(nextCity);
@@ -988,9 +780,9 @@ export function DataPlatformHome({
   const restoreSideNavButton = isSideNavHidden ? (
     <button
       className="icon-button side-nav-restore-button"
-      aria-label={t("Show navigation")}
+      aria-label={tKey("shell.showNavigation")}
       onClick={() => setIsSideNavHidden(false)}
-      title={t("Show navigation")}
+      title={tKey("shell.showNavigation")}
       type="button"
     >
       <span className="material-symbols-outlined" aria-hidden="true">
@@ -998,8 +790,8 @@ export function DataPlatformHome({
       </span>
     </button>
   ) : null;
-  const themeActionLabel = t(
-    themeMode === "light" ? "Switch to night theme" : "Switch to day theme",
+  const themeActionLabel = tKey(
+    themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
   );
   const mobileNavItems = useMemo(
     () => PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)),
@@ -1011,7 +803,7 @@ export function DataPlatformHome({
       <div className={dashboardShellClassName}>
         <aside
           className={sideNavClassName}
-          aria-label={t("Primary navigation")}
+          aria-label={tKey("shell.primaryNavigation")}
         >
           <div className="brand-panel">
             <div className="brand-icon" aria-hidden="true">
@@ -1026,13 +818,13 @@ export function DataPlatformHome({
             </div>
             <div className="brand-copy">
               <h1 className="brand-title-main">ArkiWatch</h1>
-              <p className="brand-title-subtitle">{t("Data Platform")}</p>
+              <p className="brand-title-subtitle">{tKey("shell.dataPlatform")}</p>
             </div>
             <button
               className="icon-button side-nav-collapse-button"
-              aria-label={t("Hide navigation")}
+              aria-label={tKey("shell.hideNavigation")}
               onClick={() => setIsSideNavHidden(true)}
-              title={t("Hide navigation")}
+              title={tKey("shell.hideNavigation")}
               type="button"
             >
               <span className="material-symbols-outlined" aria-hidden="true">
