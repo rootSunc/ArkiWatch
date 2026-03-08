@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { createApiClient, normalizeApiBaseUrl } from "@/lib/api-client";
 import { appEnv } from "@/lib/env";
 
 import { filterPlatformOverviewForCurrentUser } from "../category-access";
@@ -110,12 +111,7 @@ export const platformKeys = {
     ), "history-availability"] as const,
 };
 
-export function normalizeApiBaseUrl(rawValue: string | undefined): string {
-  const fallbackValue = "http://127.0.0.1:8000/api";
-  const normalizedValue = (rawValue ?? fallbackValue).trim() || fallbackValue;
-
-  return normalizedValue.endsWith("/") ? normalizedValue.slice(0, -1) : normalizedValue;
-}
+export { normalizeApiBaseUrl };
 
 export function resolvePlatformScope(scope: PlatformQueryScope = {}) {
   const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -126,42 +122,22 @@ export function resolvePlatformScope(scope: PlatformQueryScope = {}) {
   return { apiBaseUrl, city, date, userId, authToken: scope.authToken };
 }
 
-type FetchJsonResult<T> = {
-  data: T | null;
-  error: string | null;
-  status: number | null;
-};
+function platformClient(scope: ReturnType<typeof resolvePlatformScope>) {
+  return createApiClient({
+    baseUrl: scope.apiBaseUrl,
+    authToken: scope.authToken,
+  });
+}
 
-export async function fetchJson<T>(
-  url: URL,
-  authToken?: string,
-): Promise<FetchJsonResult<T>> {
-  try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      headers: authToken
-        ? {
-            Authorization: `Bearer ${authToken}`,
-          }
-        : undefined,
-    });
-
-    if (!response.ok) {
-      return {
-        data: null,
-        error: `Platform request failed with ${response.status}.`,
-        status: response.status,
-      };
-    }
-
-    return { data: (await response.json()) as T, error: null, status: response.status };
-  } catch (error) {
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : "Unknown fetch failure.",
-      status: null,
-    };
+function withOptionalDate(
+  date: string | null,
+  params: Record<string, string | null | undefined>,
+): Record<string, string | null | undefined> {
+  if (!date) {
+    return params;
   }
+
+  return { ...params, date };
 }
 
 function emptyHistory(): PlatformHistoryResponse {
@@ -192,78 +168,14 @@ export function normalizeHistoryResponse(
   };
 }
 
-function applyDateParam(urls: URL[], date: string | null): void {
-  if (!date) {
-    return;
-  }
-
-  for (const url of urls) {
-    url.searchParams.set("date", date);
-  }
-}
-
-function buildPlatformUrls(scope: ReturnType<typeof resolvePlatformScope>) {
-  const { apiBaseUrl, city, date, userId } = scope;
-  const overviewUrl = new URL(`${apiBaseUrl}/platform/overview`);
-  const weatherUrl = new URL(`${apiBaseUrl}/weather/forecast`);
-  const airQualityUrl = new URL(`${apiBaseUrl}/air-quality/current`);
-  const energyUrl = new URL(`${apiBaseUrl}/energy/current`);
-  const householdEnergyUrl = new URL(`${apiBaseUrl}/energy/current`);
-  const roadRailUrl = new URL(`${apiBaseUrl}/traffic/current`);
-  const transitUrl = new URL(`${apiBaseUrl}/transit/current`);
-  const historyUrl = new URL(`${apiBaseUrl}/platform/history`);
-  const historyAvailabilityUrl = new URL(`${apiBaseUrl}/platform/history/availability`);
-  const publicDashboardUrl = new URL(`${apiBaseUrl}/public/dashboard`);
-
-  if (userId) {
-    overviewUrl.searchParams.set("user_id", userId);
-  }
-  overviewUrl.searchParams.set("city", city);
-  weatherUrl.searchParams.set("city", city);
-  airQualityUrl.searchParams.set("city", city);
-  historyUrl.searchParams.set("city", city);
-  historyUrl.searchParams.set("days", String(HISTORY_DAY_COUNT));
-  historyAvailabilityUrl.searchParams.set("city", city);
-  historyAvailabilityUrl.searchParams.set("days", String(HISTORY_AVAILABILITY_DAY_COUNT));
-  energyUrl.searchParams.set("source", "fingrid");
-  householdEnergyUrl.searchParams.set("source", "porssisahko");
-  transitUrl.searchParams.set("city", city);
-
-  applyDateParam(
-    [
-      overviewUrl,
-      weatherUrl,
-      airQualityUrl,
-      energyUrl,
-      householdEnergyUrl,
-      roadRailUrl,
-      transitUrl,
-      historyUrl,
-      historyAvailabilityUrl,
-    ],
-    date,
-  );
-
-  return {
-    overviewUrl,
-    weatherUrl,
-    airQualityUrl,
-    energyUrl,
-    householdEnergyUrl,
-    roadRailUrl,
-    transitUrl,
-    historyUrl,
-    historyAvailabilityUrl,
-    publicDashboardUrl,
-  };
-}
-
 export async function fetchPlatformOverview(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { overviewUrl } = buildPlatformUrls(resolved);
-  const result = await fetchJson<PlatformOverviewResponse>(
-    overviewUrl,
-    resolved.authToken,
+  const result = await platformClient(resolved).get<PlatformOverviewResponse>(
+    "/platform/overview",
+    withOptionalDate(resolved.date, {
+      user_id: resolved.userId,
+      city: resolved.city,
+    }),
   );
   return {
     ...result,
@@ -273,50 +185,66 @@ export async function fetchPlatformOverview(scope: PlatformQueryScope) {
 
 export async function fetchPublicDashboard(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { publicDashboardUrl } = buildPlatformUrls(resolved);
-  return fetchJson<PublicDashboardRead>(publicDashboardUrl, resolved.authToken);
+  return platformClient(resolved).get<PublicDashboardRead>("/public/dashboard");
 }
 
 export async function fetchWeatherForecast(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { weatherUrl } = buildPlatformUrls(resolved);
-  return fetchJson<WeatherForecastResponse>(weatherUrl, resolved.authToken);
+  return platformClient(resolved).get<WeatherForecastResponse>(
+    "/weather/forecast",
+    withOptionalDate(resolved.date, { city: resolved.city }),
+  );
 }
 
 export async function fetchAirQualityCurrent(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { airQualityUrl } = buildPlatformUrls(resolved);
-  return fetchJson<AirQualityCurrentResponse>(airQualityUrl, resolved.authToken);
+  return platformClient(resolved).get<AirQualityCurrentResponse>(
+    "/air-quality/current",
+    withOptionalDate(resolved.date, { city: resolved.city }),
+  );
 }
 
 export async function fetchEnergyCurrent(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { energyUrl } = buildPlatformUrls(resolved);
-  return fetchJson<EnergyCurrentResponse>(energyUrl, resolved.authToken);
+  return platformClient(resolved).get<EnergyCurrentResponse>(
+    "/energy/current",
+    withOptionalDate(resolved.date, { source: "fingrid" }),
+  );
 }
 
 export async function fetchHouseholdEnergyCurrent(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { householdEnergyUrl } = buildPlatformUrls(resolved);
-  return fetchJson<EnergyCurrentResponse>(householdEnergyUrl, resolved.authToken);
+  return platformClient(resolved).get<EnergyCurrentResponse>(
+    "/energy/current",
+    withOptionalDate(resolved.date, { source: "porssisahko" }),
+  );
 }
 
 export async function fetchRoadRailCurrent(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { roadRailUrl } = buildPlatformUrls(resolved);
-  return fetchJson<RoadRailCurrentResponse>(roadRailUrl, resolved.authToken);
+  return platformClient(resolved).get<RoadRailCurrentResponse>(
+    "/traffic/current",
+    withOptionalDate(resolved.date, {}),
+  );
 }
 
 export async function fetchTransitCurrent(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { transitUrl } = buildPlatformUrls(resolved);
-  return fetchJson<TransitCurrentResponse>(transitUrl, resolved.authToken);
+  return platformClient(resolved).get<TransitCurrentResponse>(
+    "/transit/current",
+    withOptionalDate(resolved.date, { city: resolved.city }),
+  );
 }
 
 export async function fetchPlatformHistory(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { historyUrl } = buildPlatformUrls(resolved);
-  const result = await fetchJson<PlatformHistoryApiResponse>(historyUrl, resolved.authToken);
+  const result = await platformClient(resolved).get<PlatformHistoryApiResponse>(
+    "/platform/history",
+    withOptionalDate(resolved.date, {
+      city: resolved.city,
+      days: String(HISTORY_DAY_COUNT),
+    }),
+  );
   return {
     ...result,
     data: normalizeHistoryResponse(result.data),
@@ -325,10 +253,12 @@ export async function fetchPlatformHistory(scope: PlatformQueryScope) {
 
 export async function fetchPlatformHistoryAvailability(scope: PlatformQueryScope) {
   const resolved = resolvePlatformScope(scope);
-  const { historyAvailabilityUrl } = buildPlatformUrls(resolved);
-  return fetchJson<PlatformHistoryAvailabilityResponse>(
-    historyAvailabilityUrl,
-    resolved.authToken,
+  return platformClient(resolved).get<PlatformHistoryAvailabilityResponse>(
+    "/platform/history/availability",
+    withOptionalDate(resolved.date, {
+      city: resolved.city,
+      days: String(HISTORY_AVAILABILITY_DAY_COUNT),
+    }),
   );
 }
 

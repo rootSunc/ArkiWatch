@@ -67,16 +67,18 @@ import {
   recentEventDetails,
   RECENT_EVENT_LIMIT,
 } from "./recent-events";
-import { AirQualityWorkspace } from "./air-quality-workspace";
-import { CityServicesWorkspace } from "./city-services-workspace";
-import { EnergyWorkspace } from "./energy-workspace";
-import { LinkedEventsWorkspace } from "./linked-events-workspace";
-import { MobilityWorkspace } from "./mobility-workspace";
+import {
+  AirQualityWorkspace,
+  CityServicesWorkspace,
+  EnergyWorkspace,
+  GeospatialWorkspace,
+  LinkedEventsWorkspace,
+  MobilityWorkspace,
+  RegionalProfileWorkspace,
+  WaterSnowWorkspace,
+  WeatherDetailView,
+} from "./workspace-panels";
 import type { MobilityTabKey } from "./mobility-workspace";
-import { WeatherDetailView } from "./weather-detail-view";
-import { WaterSnowWorkspace } from "./water-snow-workspace";
-import { GeospatialWorkspace } from "./geospatial-workspace";
-import { RegionalProfileWorkspace } from "./regional-profile-workspace";
 import {
   resolveScenarioTarget,
   resolveSummaryTileTarget,
