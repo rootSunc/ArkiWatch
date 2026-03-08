@@ -137,6 +137,7 @@ type DataPlatformHomeProps = {
   initialCity: string;
   initialDate: string | null;
   initialView: string | null;
+  isAuthenticated: boolean;
   energy: EnergyCurrentResponse | null;
   householdEnergy: EnergyCurrentResponse | null;
   history: PlatformHistoryResponse;
@@ -209,6 +210,18 @@ function loadReadRecentEventIds(): Set<string> {
   } catch {
     return new Set();
   }
+}
+
+function profileInitials(label: string): string {
+  const initials = label
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return initials || "DV";
 }
 
 function saveReadRecentEventIds(ids: Set<string>): void {
@@ -301,6 +314,7 @@ export function DataPlatformHome({
   initialCity,
   initialDate,
   initialView,
+  isAuthenticated,
   energy,
   householdEnergy,
   history,
@@ -366,11 +380,15 @@ export function DataPlatformHome({
       ? activeTimeScope.date ?? selectedDate
       : selectedDate;
   const isHistorical = historicalDate !== null;
+  const userStateLabel = isAuthenticated ? t("Signed in") : t("Demo view");
+  const authActionLabel = isAuthenticated ? t("Sign out") : t("Admin sign in");
+  const authActionIcon = isAuthenticated ? "logout" : "login";
+  const currentUserInitials = profileInitials(currentUserLabel);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   async function triggerDataRefresh() {
-    if (isRefreshing) return;
+    if (isRefreshing || !isAuthenticated) return;
     setIsRefreshing(true);
     try {
       const response = await fetch("/api/sources/refresh", {
@@ -394,8 +412,29 @@ export function DataPlatformHome({
     await fetch("/api/auth/logout", {
       method: "POST",
     }).catch(() => null);
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
+  }
+
+  function openAdminSignIn() {
+    router.push("/login");
+  }
+
+  function renderAuthActionButton(className: string, showText = false) {
+    return (
+      <button
+        className={className}
+        aria-label={authActionLabel}
+        onClick={isAuthenticated ? signOut : openAdminSignIn}
+        title={authActionLabel}
+        type="button"
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          {authActionIcon}
+        </span>
+        {showText ? <span>{authActionLabel}</span> : null}
+      </button>
+    );
   }
 
   const categories = useMemo(
@@ -1091,26 +1130,15 @@ export function DataPlatformHome({
               </button>
               <div
                 className="nav-row side-nav-utility-row side-nav-user-row"
-                aria-label={t("Signed in")}
+                aria-label={userStateLabel}
                 title={currentUserLabel}
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  manage_accounts
+                  {isAuthenticated ? "manage_accounts" : "visibility"}
                 </span>
                 <span>{currentUserLabel}</span>
               </div>
-              <button
-                className="nav-row side-nav-utility-row"
-                aria-label={t("Sign out")}
-                onClick={signOut}
-                title={t("Sign out")}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  logout
-                </span>
-                <span>{t("Sign out")}</span>
-              </button>
+              {renderAuthActionButton("nav-row side-nav-utility-row", true)}
             </div>
           </nav>
         </aside>
@@ -1172,7 +1200,7 @@ export function DataPlatformHome({
                   themeMode={themeMode}
                   onToggle={toggleThemeMode}
                 />
-                {!isDetailPage && !isHistorical ? (
+                {isAuthenticated && !isDetailPage && !isHistorical ? (
                   <RefreshDataButton
                     isRefreshing={isRefreshing}
                     language={languageMode}
@@ -1201,22 +1229,12 @@ export function DataPlatformHome({
                 </button>
                 <span
                   className="profile-avatar mobile-overflow-action"
-                  aria-label={t("Signed in")}
+                  aria-label={userStateLabel}
                   title={currentUserLabel}
                 >
-                  {currentUserLabel.slice(0, 2).toUpperCase()}
+                  {currentUserInitials}
                 </span>
-                <button
-                  className="icon-button mobile-overflow-action"
-                  aria-label={t("Sign out")}
-                  onClick={signOut}
-                  title={t("Sign out")}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    logout
-                  </span>
-                </button>
+                {renderAuthActionButton("icon-button mobile-overflow-action")}
               </div>
             </div>
           </header>
@@ -1264,7 +1282,7 @@ export function DataPlatformHome({
                   language={languageMode}
                   onLanguageChange={selectLanguageMode}
                 />
-                {!isHistorical ? (
+                {isAuthenticated && !isHistorical ? (
                   <RefreshDataButton
                     isRefreshing={isRefreshing}
                     language={languageMode}
@@ -1279,17 +1297,7 @@ export function DataPlatformHome({
                   onClick={openRecentEventsPanel}
                   tone={recentNotificationTone}
                 />
-                <button
-                  className="icon-button"
-                  aria-label={t("Sign out")}
-                  onClick={signOut}
-                  title={t("Sign out")}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    logout
-                  </span>
-                </button>
+                {renderAuthActionButton("icon-button")}
               </div>
             </header>
           ) : null}
@@ -1359,7 +1367,7 @@ export function DataPlatformHome({
                     language={languageMode}
                     onLanguageChange={selectLanguageMode}
                   />
-                  {!isHistorical ? (
+                  {isAuthenticated && !isHistorical ? (
                     <RefreshDataButton
                       isRefreshing={isRefreshing}
                       language={languageMode}
@@ -1374,17 +1382,7 @@ export function DataPlatformHome({
                     onClick={openRecentEventsPanel}
                     tone={recentNotificationTone}
                   />
-                  <button
-                    className="icon-button"
-                    aria-label={t("Sign out")}
-                    onClick={signOut}
-                    title={t("Sign out")}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      logout
-                    </span>
-                  </button>
+                  {renderAuthActionButton("icon-button")}
                 </div>
               </div>
             ) : null}

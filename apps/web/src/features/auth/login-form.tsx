@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -100,6 +101,9 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
             </span>
             <span>{isSubmitting ? "Signing in" : "Sign in"}</span>
           </button>
+          <Link className="login-secondary" href="/">
+            Continue as demo
+          </Link>
         </form>
       </section>
     </main>

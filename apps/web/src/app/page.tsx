@@ -2,7 +2,7 @@ import { DataPlatformHome } from "@/features/data-platform/data-platform-home";
 import { fetchPlatformHome } from "@/features/data-platform/api";
 import { normalizeCityValue } from "@/features/data-platform/city-scope";
 import { normalizeSourceDateValue } from "@/features/data-platform/time-window";
-import { requireSession } from "@/features/auth/session";
+import { getCurrentSession } from "@/features/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ type PageProps = {
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const session = await requireSession();
+  const session = await getCurrentSession();
   const selectedCity = normalizeCityValue(searchParams?.city);
   const selectedDate = normalizeSourceDateValue(searchParams?.date);
   const {
@@ -36,19 +36,22 @@ export default async function Page({ searchParams }: PageProps) {
     error,
   } =
     await fetchPlatformHome(selectedCity, selectedDate, {
-      authToken: session.token,
-      userId: session.user.id,
+      authToken: session?.token,
+      userId: session?.user.id,
     });
 
   return (
     <DataPlatformHome
       airQuality={airQuality}
       apiBaseUrl={apiBaseUrl}
-      currentUserLabel={session.user.name ?? session.user.email ?? session.user.id}
+      currentUserLabel={
+        session ? session.user.name ?? session.user.email ?? session.user.id : "Demo view"
+      }
       defaultUserId={defaultUserId}
       initialCity={selectedCity}
       initialDate={selectedDate}
       initialView={searchParams?.view ?? null}
+      isAuthenticated={Boolean(session)}
       energy={energy}
       householdEnergy={householdEnergy}
       history={history}

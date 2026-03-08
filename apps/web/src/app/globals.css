@@ -303,3 +303,21 @@ p {
   cursor: wait;
   opacity: 0.72;
 }
+
+.login-secondary {
+  display: inline-flex;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--outline-variant);
+  border-radius: 8px;
+  color: var(--on-surface);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.login-secondary:hover,
+.login-secondary:focus-visible {
+  background: var(--surface-container-high);
+  outline: none;
+}
