@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -50,18 +51,11 @@ import {
   storedLanguageMode,
   translateText,
 } from "./i18n";
+import { usePlatformHome } from "./hooks/use-platform-home";
+import { platformKeys } from "./queries/platform-queries";
 import {
-  AirQualityCurrentResponse,
-  EnergyCurrentResponse,
   PlatformCategory,
   PlatformEvent,
-  PlatformHistoryAvailabilityResponse,
-  PlatformHistoryResponse,
-  PlatformOverviewResponse,
-  PublicDashboardRead,
-  RoadRailCurrentResponse,
-  TransitCurrentResponse,
-  WeatherForecastResponse,
 } from "./types";
 import {
   buildAirQualityRecentEvents,
@@ -130,24 +124,12 @@ import {
 import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
 
 type DataPlatformHomeProps = {
-  airQuality: AirQualityCurrentResponse | null;
-  apiBaseUrl: string;
   currentUserLabel: string;
-  defaultUserId: string;
+  defaultUserId?: string;
   initialCity: string;
   initialDate: string | null;
   initialView: string | null;
   isAuthenticated: boolean;
-  energy: EnergyCurrentResponse | null;
-  householdEnergy: EnergyCurrentResponse | null;
-  history: PlatformHistoryResponse;
-  historyAvailability: PlatformHistoryAvailabilityResponse | null;
-  overview: PlatformOverviewResponse | null;
-  publicDashboard: PublicDashboardRead | null;
-  roadRail: RoadRailCurrentResponse | null;
-  transit: TransitCurrentResponse | null;
-  weather: WeatherForecastResponse | null;
-  error: string | null;
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -307,28 +289,36 @@ function resolveNavKey(
 }
 
 export function DataPlatformHome({
-  airQuality,
-  apiBaseUrl,
   currentUserLabel,
   defaultUserId,
   initialCity,
   initialDate,
   initialView,
   isAuthenticated,
-  energy,
-  householdEnergy,
-  history,
-  historyAvailability,
-  overview,
-  publicDashboard,
-  roadRail,
-  transit,
-  weather,
-  error,
 }: DataPlatformHomeProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const {
+    airQuality,
+    apiBaseUrl,
+    defaultUserId: resolvedUserId,
+    energy,
+    error,
+    history,
+    historyAvailability,
+    householdEnergy,
+    overview,
+    publicDashboard,
+    roadRail,
+    transit,
+    weather,
+  } = usePlatformHome({
+    city: initialCity,
+    date: initialDate,
+    userId: defaultUserId,
+  });
   const initialNavCategories = (overview?.categories ?? []).filter((category) =>
     categoryVisibleToCurrentUser(category.key),
   );
@@ -395,6 +385,7 @@ export function DataPlatformHome({
         method: "POST"
       });
       if (response.ok) {
+        await queryClient.invalidateQueries({ queryKey: platformKeys.all });
         router.refresh();
       } else {
         console.error("Failed to refresh data sources");
@@ -1936,8 +1927,8 @@ export function DataPlatformHome({
                 <p>{error ?? t("Unknown platform error.")}</p>
                 <small>
                   {t("API endpoint")}: {apiBaseUrl}
-                  {defaultUserId
-                    ? ` · ${t("User context")}: ${defaultUserId}`
+                  {defaultUserId || resolvedUserId
+                    ? ` · ${t("User context")}: ${defaultUserId ?? resolvedUserId}`
                     : ""}
                 </small>
               </section>
@@ -2002,7 +1993,7 @@ export function DataPlatformHome({
             date={historicalDate}
             overview={overview}
             language={languageMode}
-            userId={defaultUserId}
+            userId={defaultUserId ?? resolvedUserId}
           />
         </div>
       </div>

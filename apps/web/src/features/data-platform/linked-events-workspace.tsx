@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
+import { useEventDescriptionTranslation } from "./queries/translate-queries";
 import {
   PlatformCategory,
   PlatformEvent,
@@ -67,7 +67,6 @@ type EventDescriptionSource = {
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const DESCRIPTION_MAX_LENGTH = 520;
-const TRANSLATION_TEXT_MAX_LENGTH = 1800;
 
 const EVENT_CATEGORY_DEFINITIONS: Array<{
   key: EventCategoryKey;
@@ -473,10 +472,6 @@ function eventDescriptionSource(
   };
 }
 
-function descriptionTranslationKey(eventId: string, language: LanguageMode, text: string): string {
-  return `${eventId}:${language}:${text.slice(0, 80)}:${text.length}`;
-}
-
 function truncateDescription(value: string): string {
   return value.length > DESCRIPTION_MAX_LENGTH ? `${value.slice(0, DESCRIPTION_MAX_LENGTH - 3).trim()}...` : value;
 }
@@ -594,7 +589,6 @@ export function LinkedEventsWorkspace({
   const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   const [activeVenue, setActiveVenue] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [translatedDescriptions, setTranslatedDescriptions] = useState<Record<string, string>>({});
 
   const referenceDate = useMemo(
     () => selectedReferenceDate(timeScope, checkedAt),
@@ -657,72 +651,14 @@ export function LinkedEventsWorkspace({
     () => eventDescriptionSource(selectedEvent, language, t),
     [language, selectedEvent, t],
   );
-  const selectedDescriptionTranslationKey = selectedEvent
-    ? descriptionTranslationKey(selectedEvent.id, language, selectedDescriptionSource.text)
-    : null;
-  const translatedSelectedDescription = selectedDescriptionTranslationKey
-    ? translatedDescriptions[selectedDescriptionTranslationKey]
-    : null;
-
-  useEffect(() => {
-    if (
-      !selectedEvent ||
-      !selectedDescriptionTranslationKey ||
-      !selectedDescriptionSource.shouldTranslate ||
-      translatedDescriptions[selectedDescriptionTranslationKey]
-    ) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const translationKey = selectedDescriptionTranslationKey;
-
-    async function translateSelectedDescription() {
-      try {
-        const response = await fetch("/api/assistant/translate", {
-          body: JSON.stringify({
-            context: selectedEvent?.title,
-            source_language: selectedDescriptionSource.sourceLanguage,
-            target_language: language,
-            text: selectedDescriptionSource.text.slice(0, TRANSLATION_TEXT_MAX_LENGTH),
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          return;
-        }
-        const body = (await response.json().catch(() => null)) as { translated_text?: unknown } | null;
-        const translatedText = typeof body?.translated_text === "string" ? body.translated_text.trim() : "";
-        if (!translatedText || controller.signal.aborted) {
-          return;
-        }
-        setTranslatedDescriptions((current) => ({
-          ...current,
-          [translationKey]: translatedText,
-        }));
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.debug("Linked Events description translation failed", error);
-        }
-      }
-    }
-
-    void translateSelectedDescription();
-
-    return () => controller.abort();
-  }, [
+  const { data: translatedSelectedDescription } = useEventDescriptionTranslation({
+    eventId: selectedEvent?.id ?? null,
     language,
-    selectedDescriptionSource.shouldTranslate,
-    selectedDescriptionSource.sourceLanguage,
-    selectedDescriptionSource.text,
-    selectedDescriptionTranslationKey,
-    selectedEvent,
-    translatedDescriptions,
-  ]);
+    text: selectedDescriptionSource.text,
+    sourceLanguage: selectedDescriptionSource.sourceLanguage,
+    shouldTranslate: selectedDescriptionSource.shouldTranslate,
+    context: selectedEvent?.title,
+  });
 
   const venueCounts = useMemo(() => {
     const counts = new Map<string, number>();
