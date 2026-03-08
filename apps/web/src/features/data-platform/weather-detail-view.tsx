@@ -17,7 +17,7 @@ import {
   WeatherSourceLayer,
   WeatherWarning
 } from "./types";
-import { TrendChart, TrendChartPoint } from "./trend-chart";
+import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 
 type WeatherDetailViewProps = {

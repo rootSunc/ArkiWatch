@@ -16,7 +16,7 @@ import {
   PlatformCategory,
   PlatformHistoricalSnapshot
 } from "./types";
-import { TrendChart, TrendChartPoint } from "./trend-chart";
+import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 
 const AirQualityStationMap = dynamic(

@@ -20,7 +20,7 @@ import {
   INCIDENT_TIMELINE_PAGE_SIZE,
   paginateTimelineItems,
 } from "./incident-timeline-pager";
-import { TrendChart, TrendChartPoint } from "./trend-chart";
+import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 
 type TransitWorkspaceProps = {
