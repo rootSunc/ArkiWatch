@@ -1,0 +1,22 @@
+{
+  "shell": {
+    "adminSignIn": "Admin sign in",
+    "allSignals": "All signals",
+    "backToToday": "Back to Today",
+    "dataCatalog": "Data catalog",
+    "dataPlatform": "Data Platform",
+    "demoView": "Demo view",
+    "displayLanguage": "Display language",
+    "hideNavigation": "Hide navigation",
+    "openNavigation": "Open navigation",
+    "primaryNavigation": "Primary navigation",
+    "settings": "Settings",
+    "showNavigation": "Show navigation",
+    "signOut": "Sign out",
+    "signedIn": "Signed in",
+    "switchToDayTheme": "Switch to day theme",
+    "switchToNightTheme": "Switch to night theme",
+    "systemControls": "System controls",
+    "themeMode": "Theme mode"
+  }
+}

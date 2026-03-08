@@ -4,27 +4,40 @@ import { NextIntlClientProvider } from "next-intl";
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
 import enMessages from "./messages/en.json";
+import shellEnMessages from "./messages/shell.en.json";
+import shellZhMessages from "./messages/shell.zh.json";
 import zhMessages from "./messages/zh.json";
 
 export type LanguageMode = "en" | "zh";
 
 export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
 
+type StructuredMessages = {
+  shell: Record<string, string>;
+};
+
 type I18nContextValue = {
   language: LanguageMode;
   t: (value: string) => string;
+  tKey: (key: string) => string;
   enumLabel: (value: string | null | undefined) => string;
   dataLabel: (value: string | null | undefined) => string;
 };
 
-const MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
+const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
   en: enMessages,
   zh: zhMessages,
+};
+
+const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
+  en: shellEnMessages,
+  zh: shellZhMessages,
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
   language: "en",
   t: (value) => value,
+  tKey: (key) => key,
   enumLabel: (value) => humanizeValue(value),
   dataLabel: (value) => humanizeValue(value),
 };
@@ -42,6 +55,31 @@ function humanizeValue(value: string | null | undefined): string {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(" ");
+}
+
+function resolveStructuredMessage(
+  language: LanguageMode,
+  key: string,
+): string | undefined {
+  const [namespace, messageKey] = key.split(".", 2);
+  if (!namespace || !messageKey) {
+    return undefined;
+  }
+
+  const namespaceMessages = STRUCTURED_MESSAGE_CATALOG[language][
+    namespace as keyof StructuredMessages
+  ];
+  return namespaceMessages?.[messageKey];
+}
+
+export function translateMessageKey(language: LanguageMode, key: string): string {
+  const localized = resolveStructuredMessage(language, key);
+  if (localized) {
+    return localized;
+  }
+
+  const englishFallback = resolveStructuredMessage("en", key);
+  return englishFallback ?? key;
 }
 
 export function isLanguageMode(value: string | null): value is LanguageMode {
@@ -91,7 +129,7 @@ export function translateText(language: LanguageMode, value: string): string {
     return value;
   }
 
-  return MESSAGE_CATALOG.zh[value] ?? value;
+  return LEGACY_MESSAGE_CATALOG.zh[value] ?? value;
 }
 
 export function translateEnumLabel(language: LanguageMode, value: string | null | undefined): string {
@@ -115,6 +153,7 @@ export function I18nProvider({
     () => ({
       language,
       t: (text) => translateText(language, text),
+      tKey: (key) => translateMessageKey(language, key),
       enumLabel: (text) => translateEnumLabel(language, text),
       dataLabel: (text) => translateDataLabel(language, text),
     }),
@@ -122,7 +161,13 @@ export function I18nProvider({
   );
 
   return (
-    <NextIntlClientProvider locale={language} messages={MESSAGE_CATALOG[language]}>
+    <NextIntlClientProvider
+      locale={language}
+      messages={{
+        ...LEGACY_MESSAGE_CATALOG[language],
+        ...STRUCTURED_MESSAGE_CATALOG[language],
+      }}
+    >
       <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
     </NextIntlClientProvider>
   );
@@ -139,7 +184,7 @@ export function LanguageSwitchButton({
   language: LanguageMode;
   onLanguageChange: (language: LanguageMode) => void;
 }) {
-  const label = translateText(language, "Display language");
+  const label = translateMessageKey(language, "shell.displayLanguage");
 
   return (
     <div className="language-switcher" aria-label={label} role="group" title={label}>

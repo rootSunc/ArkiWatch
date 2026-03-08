@@ -1,0 +1,22 @@
+{
+  "shell": {
+    "adminSignIn": "管理员登录",
+    "allSignals": "全部信号",
+    "backToToday": "返回 Today",
+    "dataCatalog": "数据目录",
+    "dataPlatform": "数据平台",
+    "demoView": "演示视图",
+    "displayLanguage": "显示语言",
+    "hideNavigation": "隐藏导航",
+    "openNavigation": "打开导航",
+    "primaryNavigation": "主导航",
+    "settings": "设置",
+    "showNavigation": "显示导航",
+    "signOut": "退出登录",
+    "signedIn": "已登录",
+    "switchToDayTheme": "切换到浅色主题",
+    "switchToNightTheme": "切换到深色主题",
+    "systemControls": "系统控制",
+    "themeMode": "主题模式"
+  }
+}
