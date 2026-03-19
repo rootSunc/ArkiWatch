@@ -13,7 +13,7 @@ import {
   CHART_MODES,
   chartAxis,
   chartConfig,
-  chartKindLabel,
+  chartKindLabelKey,
   chartPoints,
   chartReadout,
   chartScale,
@@ -53,13 +53,13 @@ export function WeatherDetailView({
   history,
   weather,
 }: WeatherDetailViewProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey } = useI18n();
   const [chartMode, setChartMode] = useState<ChartMode>("temperature");
   const points = useMemo(() => forecastWindow(weather?.points ?? []), [weather]);
   const current = latestPoint(points.length > 0 ? points : weather?.points ?? []);
   const previous = pointThreeHoursEarlier(weather?.points ?? [], current);
   const nextTrendPoint = previous ? null : pointThreeHoursLater(weather?.points ?? [], current);
-  const condition = conditionForPoint(current, t);
+  const condition = conditionForPoint(current, tKey);
   const feelsLike = apparentTemperature(current);
   const trend =
     current?.temperature_c !== null &&
@@ -70,12 +70,12 @@ export function WeatherDetailView({
         ? current.temperature_c - previous.temperature_c
         : (nextTrendPoint?.temperature_c ?? current.temperature_c) - current.temperature_c
       : null;
-  const trendLabel = previous ? t("Trend 3H") : t("Next 3H");
+  const trendLabel = previous ? tKey("weather.trend3h") : tKey("weather.next3h");
   const timelineItems = buildTimelineItems(
     weather,
     category,
     language,
-    t,
+    tKey,
     highlightedEventId,
   );
   const activeChartConfig = chartConfig(chartMode);
@@ -88,15 +88,15 @@ export function WeatherDetailView({
   const chartLabels = chartXAxisLabels(chartData);
   const sourceRequest = weather?.source_requests[0];
   const syncTime = weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
-  const metricCards = currentMetricCards(current, language, t);
+  const metricCards = currentMetricCards(current, language, tKey);
   const historyPoints = weatherHistoryPoints(history);
 
   if (!weather) {
     return (
       <section className="weather-detail-empty">
-        <span>{t("Weather Detail")}</span>
-        <h2>{t("Weather data is not available yet")}</h2>
-        <p>{t("The FMI forecast endpoint did not return current weather data for this platform window.")}</p>
+        <span>{tKey("weather.weatherDetail")}</span>
+        <h2>{tKey("weather.weatherDataIsNotAvailableYet")}</h2>
+        <p>{tKey("weather.theFmiForecastEndpointDidNotReturnCurrentWeatherDataForThisPlatformWindow")}</p>
       </section>
     );
   }
@@ -108,19 +108,19 @@ export function WeatherDetailView({
     <div className="weather-detail-page">
       <div className="weather-detail-header">
         <div>
-          <h2>{displayRegion(weather.location, t)}</h2>
+          <h2>{displayRegion(weather.location, tKey)}</h2>
           <div className={`weather-live-status weather-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{weather.status === "stale" ? t("Sync Delayed") : t("Live Sync Active")}</strong>
+            <strong>{weather.status === "stale" ? tKey("weather.syncDelayed") : tKey("weather.liveSyncActive")}</strong>
           </div>
         </div>
-        <div>{t("Data time")} {exactDataTime(dataTime, language, t)} / LAT 60.1699 N / LON 24.9384 E</div>
+        <div>{tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey)} / LAT 60.1699 N / LON 24.9384 E</div>
       </div>
 
-      <section className="weather-bento-grid" aria-label={t("Weather conditions")}>
+      <section className="weather-bento-grid" aria-label={tKey("weather.weatherConditions")}>
         <article className="weather-hero-card weather-glass-panel">
           <div className="weather-card-kicker">
-            <span>{t("Current Condition")}</span>
+            <span>{tKey("weather.currentCondition")}</span>
             <time>{formatCompactTime(current?.timestamp ?? weather.checked_at, language)} EET</time>
           </div>
           <div className="weather-current-cluster">
@@ -134,7 +134,7 @@ export function WeatherDetailView({
           </div>
           <div className="weather-hero-footer">
             <div>
-              <span>{t("Feels Like")}</span>
+              <span>{tKey("weather.feelsLike")}</span>
               <strong>{formatDegree(feelsLike)}</strong>
             </div>
             {trend !== null ? (
@@ -187,7 +187,7 @@ export function WeatherDetailView({
         </div>
       </section>
 
-      <section className="weather-summary-strip" aria-label={t("Weather summary metrics")}>
+      <section className="weather-summary-strip" aria-label={tKey("weather.weatherSummaryMetrics")}>
         {[
           ["temperature_range", "Thermal Range"],
           ["peak_wind", "Peak Wind"],
@@ -216,31 +216,31 @@ export function WeatherDetailView({
 
       <TrendChart
         className="weather-glass-panel"
-        emptyMessage={t("No daily weather history is available.")}
-        eyebrow={`${historyPoints.length}D ${t("History")}`}
+        emptyMessage={tKey("weather.noDailyWeatherHistoryIsAvailable")}
+        eyebrow={`${historyPoints.length}D ${tKey("weather.history")}`}
         maximumFractionDigits={1}
         points={historyPoints}
-        title={t("Daily Average Temperature")}
+        title={tKey("weather.dailyAverageTemperature")}
         tone="primary"
         unit="C"
       />
 
-      <section className="weather-lower-grid" aria-label={t("Weather forecast and events")}>
+      <section className="weather-lower-grid" aria-label={tKey("weather.weatherForecastAndEvents")}>
         <article className="weather-glass-panel weather-chart-panel">
           <header>
-            <span>{weather.quality.forecast_hours}H {t("Forecast Trajectory")}</span>
-            <strong>{chartReadout(chartData, chartMode, t, secondaryChartData)}</strong>
+            <span>{weather.quality.forecast_hours}H {tKey("weather.forecastTrajectory")}</span>
+            <strong>{chartReadout(chartData, chartMode, tKey, secondaryChartData)}</strong>
             <small className="weather-chart-kind">
-              {t(chartKindLabel(activeChartConfig.kind))} · {t(activeChartConfig.description)}
+              {tKey(`weather.${chartKindLabelKey(activeChartConfig.kind)}`)} · {tKey(`weather.${activeChartConfig.descriptionKey}`)}
             </small>
-            <div className="weather-chart-toggle" aria-label={t("Forecast chart mode")}>
+            <div className="weather-chart-toggle" aria-label={tKey("weather.forecastChartMode")}>
               {CHART_MODES.map((mode) => (
                 <button
-                  aria-label={`${t(mode.fullLabel)} · ${t(mode.description)}`}
+                  aria-label={`${tKey(`weather.${mode.fullLabelKey}`)} · ${tKey(`weather.${mode.descriptionKey}`)}`}
                   className={chartMode === mode.key ? "active" : ""}
                   key={mode.key}
                   onClick={() => setChartMode(mode.key)}
-                  title={`${t(mode.fullLabel)} · ${t(mode.description)}`}
+                  title={`${tKey(`weather.${mode.fullLabelKey}`)} · ${tKey(`weather.${mode.descriptionKey}`)}`}
                   type="button"
                 >
                   {mode.label}
@@ -263,7 +263,7 @@ export function WeatherDetailView({
               {axis.bottom}
               {activeChartConfig.unit}
             </span>
-            {renderForecastChart(chartData, secondaryChartData, activeChartConfig, t)}
+            {renderForecastChart(chartData, secondaryChartData, activeChartConfig, tKey)}
             <div className="weather-chart-x-axis">
               {chartLabels.map((label, index) => (
                 <span key={`${label}-${index}`}>{label}</span>
@@ -273,7 +273,7 @@ export function WeatherDetailView({
         </article>
 
         <article className="weather-glass-panel weather-event-panel">
-          <h3>{t("Event Timeline")}</h3>
+          <h3>{tKey("weather.eventTimeline")}</h3>
           <div className="weather-event-list">
             {timelineItems.map((item) => (
               <article
@@ -282,7 +282,7 @@ export function WeatherDetailView({
                 key={item.id}
               >
                 <span className="weather-event-dot" aria-hidden="true" />
-                <time>{item.active ? t("ACTIVE NOW") : item.time}</time>
+                <time>{item.active ? tKey("weather.activeNow") : item.time}</time>
                 <div>
                   <strong>{item.title}</strong>
                   <p>{item.body}</p>
@@ -293,7 +293,7 @@ export function WeatherDetailView({
         </article>
       </section>
 
-      <section className="weather-ops-grid" aria-label={t("Weather operations data")}>
+      <section className="weather-ops-grid" aria-label={tKey("weather.weatherOperationsData")}>
         <article className="weather-glass-panel weather-rain-window-panel">
           <header>
             <DataLabelWithHelp
@@ -303,7 +303,7 @@ export function WeatherDetailView({
                 t,
               })}
             >
-              {t("Rain Windows")}
+              {tKey("weather.rainWindows")}
             </DataLabelWithHelp>
             <strong>{weather.rain_windows.length}</strong>
           </header>
@@ -312,12 +312,12 @@ export function WeatherDetailView({
               weather.rain_windows.map((window) => (
                 <article key={`${window.starts_at}-${window.ends_at}`}>
                   <div>
-                    <strong>{formatRainWindow(window, language, t)}</strong>
+                    <strong>{formatRainWindow(window, language, tKey)}</strong>
                     <span>{window.hours}h</span>
                   </div>
                   <p>
-                    {t("Peak")} {formatNumber(window.peak_precip_mm, 1)} mm {t("at")}{" "}
-                    {formatCompactTime(window.peak_precip_at, language)} · {t("total")}{" "}
+                    {tKey("weather.peak")} {formatNumber(window.peak_precip_mm, 1)} mm {tKey("weather.at")}{" "}
+                    {formatCompactTime(window.peak_precip_at, language)} · {tKey("weather.total")}{" "}
                     {formatNumber(window.total_precip_mm, 1)} mm
                   </p>
                   <span className="weather-rain-meter" aria-hidden="true">
@@ -326,7 +326,7 @@ export function WeatherDetailView({
                 </article>
               ))
             ) : (
-              <p>{t("No rain windows in the current forecast horizon.")}</p>
+              <p>{tKey("weather.noRainWindowsInTheCurrentForecastHorizon")}</p>
             )}
           </div>
         </article>
@@ -340,7 +340,7 @@ export function WeatherDetailView({
                 t,
               })}
             >
-              {t("Data Quality")}
+              {tKey("weather.dataQuality")}
             </DataLabelWithHelp>
             <strong>{formatNumber(weather.quality.field_coverage_pct, 0)}%</strong>
           </header>
@@ -348,11 +348,11 @@ export function WeatherDetailView({
             <span style={{ width: `${weather.quality.field_coverage_pct}%` }} />
           </span>
           <div className="weather-quality-stats">
-            <span>{weather.quality.point_count} {t("points")}</span>
-            <span>{weather.quality.forecast_hours}h {t("horizon")}</span>
-            <span>{weather.quality.rain_window_count} {t("rain windows")}</span>
+            <span>{weather.quality.point_count} {tKey("weather.points")}</span>
+            <span>{weather.quality.forecast_hours}h {tKey("weather.horizon")}</span>
+            <span>{weather.quality.rain_window_count} {tKey("weather.rainWindows2")}</span>
           </div>
-          <p>{fieldCoverageLabel(weather, t)}</p>
+          <p>{fieldCoverageLabel(weather, tKey)}</p>
           {weather.quality.notes.map((note) => (
             <small key={note}>{note}</small>
           ))}
@@ -367,7 +367,7 @@ export function WeatherDetailView({
                 t,
               })}
             >
-              {t("Pipeline")}
+              {tKey("weather.pipeline")}
             </DataLabelWithHelp>
             <strong>
               {weather.data_pipeline.filter((stage) => stage.status === "ready").length}/
@@ -383,7 +383,7 @@ export function WeatherDetailView({
                   </div>
                   <p>
                     {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${t("records")}` : ""}
+                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("weather.records")}` : ""}
                   </p>
                 <span className="weather-pipeline-meter" aria-hidden="true">
                   <span style={{ width: `${stageProgress(stage)}%` }} />
@@ -402,7 +402,7 @@ export function WeatherDetailView({
                 t,
               })}
             >
-              {t("Source Layers")}
+              {tKey("weather.sourceLayers")}
             </DataLabelWithHelp>
             <strong>
               {weather.source_layers.filter((layer) => layer.status === "ready").length}/
@@ -420,7 +420,7 @@ export function WeatherDetailView({
                   </div>
                   <p>{layer.detail}</p>
                   <small>
-                    {request ? `${sourceRequestHost(request.endpoint, t)} · ${request.content_type ?? t("unknown content")}` : t("request metadata unavailable")}
+                    {request ? `${sourceRequestHost(request.endpoint, tKey)} · ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
                   </small>
                 </article>
               );
@@ -429,10 +429,10 @@ export function WeatherDetailView({
         </article>
       </section>
 
-      <section className={`weather-provider-status weather-provider-status-${liveTone}`} aria-label={t("Weather provider status")}>
+      <section className={`weather-provider-status weather-provider-status-${liveTone}`} aria-label={tKey("weather.weatherProviderStatus")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("weather.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -446,17 +446,17 @@ export function WeatherDetailView({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {exactDataTime(syncTime, language, t)}
+            {tKey("weather.lastSync")}: {exactDataTime(syncTime, language, tKey)}
           </span>
           <i aria-hidden="true" />
           <span className="weather-provider-latency">
-            {t("Coverage")}: {metricValue(weather, "forecast_hours") !== "n/a" ? metricValue(weather, "forecast_hours") : `${weather.quality.field_coverage_pct}%`}
+            {tKey("weather.coverage")}: {metricValue(weather, "forecast_hours") !== "n/a" ? metricValue(weather, "forecast_hours") : `${weather.quality.field_coverage_pct}%`}
           </span>
         </div>
       </section>
 
       <p className="weather-detail-freshness">
-        {t("Forecast feed checked")} {formatRelativeAge(weather.checked_at, language)}. {weather.summary ?? category?.description}
+        {tKey("weather.forecastFeedChecked")} {formatRelativeAge(weather.checked_at, language)}. {weather.summary ?? category?.description}
       </p>
     </div>
   );

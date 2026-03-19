@@ -48,16 +48,16 @@ export type ForecastChartTone = "primary" | "rain" | "wind" | "cloud" | "humidit
 export type ForecastChartConfig = {
   key: ChartMode;
   label: string;
-  fullLabel: string;
+  fullLabelKey: string;
   unit: string;
   tone: ForecastChartTone;
   kind: ForecastChartKind;
-  description: string;
+  descriptionKey: string;
   floorZero?: boolean;
   fixedMin?: number;
   fixedMax?: number;
   pairedKey?: ChartMode;
-  pairedLabel?: string;
+  pairedLabelKey?: string;
 };
 
 export type ForecastChartPoint = {

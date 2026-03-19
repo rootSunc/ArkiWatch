@@ -19,94 +19,94 @@ export const CHART_MODES: ForecastChartConfig[] = [
   {
     key: "temperature",
     label: "TMP",
-    fullLabel: "Temperature",
+    fullLabelKey: "temperature",
     unit: "°",
     tone: "primary",
     kind: "line",
-    description: "Continuous thermal curve"
+    descriptionKey: "continuousThermalCurve"
   },
   {
     key: "precipitation",
     label: "PRCP",
-    fullLabel: "Precipitation",
+    fullLabelKey: "precipitation",
     unit: " mm",
     tone: "rain",
     kind: "bar",
-    description: "Hourly rain volume",
+    descriptionKey: "hourlyRainVolume",
     floorZero: true
   },
   {
     key: "wind",
     label: "WIND",
-    fullLabel: "Wind and Gust",
+    fullLabelKey: "windAndGust",
     unit: " m/s",
     tone: "wind",
     kind: "dual-line",
-    description: "Sustained wind with gust overlay",
+    descriptionKey: "sustainedWindWithGustOverlay",
     floorZero: true,
     pairedKey: "gust",
-    pairedLabel: "Gust"
+    pairedLabelKey: "gust"
   },
   {
     key: "gust",
     label: "GUST",
-    fullLabel: "Gust and Wind",
+    fullLabelKey: "gustAndWind",
     unit: " m/s",
     tone: "wind",
     kind: "dual-line",
-    description: "Gust peaks against sustained wind",
+    descriptionKey: "gustPeaksAgainstSustainedWind",
     floorZero: true,
     pairedKey: "wind",
-    pairedLabel: "Wind"
+    pairedLabelKey: "wind"
   },
   {
     key: "cloud",
     label: "CLD",
-    fullLabel: "Cloud Cover",
+    fullLabelKey: "cloudCover",
     unit: "%",
     tone: "cloud",
     kind: "band",
-    description: "Percent coverage band",
+    descriptionKey: "percentCoverageBand",
     fixedMin: 0,
     fixedMax: 100
   },
   {
     key: "humidity",
     label: "RH",
-    fullLabel: "Humidity",
+    fullLabelKey: "humidity",
     unit: "%",
     tone: "humidity",
     kind: "band",
-    description: "Relative humidity band",
+    descriptionKey: "relativeHumidityBand",
     fixedMin: 0,
     fixedMax: 100
   },
   {
     key: "dewPoint",
     label: "DEW",
-    fullLabel: "Dew Point",
+    fullLabelKey: "dewPoint",
     unit: "°",
     tone: "humidity",
     kind: "line",
-    description: "Moisture temperature curve"
+    descriptionKey: "moistureTemperatureCurve"
   },
   {
     key: "pressure",
     label: "HPA",
-    fullLabel: "Pressure",
+    fullLabelKey: "pressure",
     unit: " hPa",
     tone: "pressure",
     kind: "line",
-    description: "Pressure trend line"
+    descriptionKey: "pressureTrendLine"
   },
   {
     key: "visibility",
     label: "VIS",
-    fullLabel: "Visibility",
+    fullLabelKey: "visibility",
     unit: " km",
     tone: "visibility",
     kind: "area",
-    description: "Distance envelope",
+    descriptionKey: "distanceEnvelope",
     floorZero: true
   }
 ];
@@ -266,11 +266,11 @@ export function chartAxis(scale: ForecastChartScale, config: ForecastChartConfig
 export function chartReadout(
   points: ForecastChartPoint[],
   mode: ChartMode,
-  t: (value: string) => string,
+  tKey: (key: string) => string,
   secondaryPoints: ForecastChartPoint[] = []
 ): string {
   if (points.length === 0) {
-    return t("No values");
+    return tKey("weather.noValues");
   }
 
   const config = chartConfig(mode);
@@ -280,31 +280,31 @@ export function chartReadout(
   const digits = ["cloud", "humidity", "pressure"].includes(mode) ? 0 : 1;
   if (config.kind === "bar") {
     const total = values.reduce((sum, value) => sum + value, 0);
-    return `${t("total")} ${formatNumber(total, 1)}${config.unit} / ${t("peak")} ${formatNumber(max, 1)}${config.unit}`;
+    return `${tKey("weather.total")} ${formatNumber(total, 1)}${config.unit} / ${tKey("weather.peakLower")} ${formatNumber(max, 1)}${config.unit}`;
   }
   if (config.kind === "dual-line" && secondaryPoints.length > 0) {
     const secondaryMax = Math.max(...secondaryPoints.map((point) => point.value));
-    return `${formatNumber(min, digits)}-${formatNumber(max, digits)}${config.unit} / ${config.pairedLabel ?? t("Overlay")} ${formatNumber(secondaryMax, digits)}${config.unit}`;
+    return `${formatNumber(min, digits)}-${formatNumber(max, digits)}${config.unit} / ${config.pairedLabelKey ? tKey(`weather.${config.pairedLabelKey}`) : tKey("weather.overlay")} ${formatNumber(secondaryMax, digits)}${config.unit}`;
   }
 
   return `${formatNumber(min, digits)}${config.unit} to ${formatNumber(max, digits)}${config.unit}`;
 }
 
-export function chartKindLabel(kind: ForecastChartKind): string {
+export function chartKindLabelKey(kind: ForecastChartKind): string {
   if (kind === "bar") {
-    return "Bar chart";
+    return "barChart";
   }
   if (kind === "area") {
-    return "Area chart";
+    return "areaChart";
   }
   if (kind === "band") {
-    return "Coverage band";
+    return "coverageBand";
   }
   if (kind === "dual-line") {
-    return "Dual-line chart";
+    return "dualLineChart";
   }
 
-  return "Line chart";
+  return "lineChart";
 }
 
 export function chartXAxisLabels(points: ForecastChartPoint[]): string[] {
@@ -322,10 +322,10 @@ export function renderForecastChart(
   points: ForecastChartPoint[],
   secondaryPoints: ForecastChartPoint[],
   config: ForecastChartConfig,
-  t: (value: string) => string
+  tKey: (key: string) => string
 ) {
   if (points.length === 0) {
-    return <div className="weather-chart-empty">{t("No forecast points available")}</div>;
+    return <div className="weather-chart-empty">{tKey("weather.noForecastPointsAvailable")}</div>;
   }
 
   const scale = chartScale(config, points, secondaryPoints);
@@ -402,7 +402,7 @@ export function renderForecastChart(
           key={`${point.timestamp}-${index}`}
           r={index === points.length - 1 ? 4 : 2.4}
         >
-          <title>{`${config.fullLabel}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
+          <title>{`${tKey(`weather.${config.fullLabelKey}`)}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
         </circle>
       ))}
       {config.kind === "dual-line"
@@ -414,7 +414,7 @@ export function renderForecastChart(
               key={`${point.timestamp}-secondary-${index}`}
               r={index === secondaryPoints.length - 1 ? 3.4 : 2}
             >
-              <title>{`${config.pairedLabel ?? t("Overlay")}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
+              <title>{`${config.pairedLabelKey ? tKey(`weather.${config.pairedLabelKey}`) : tKey("weather.overlay")}: ${formatNumber(point.value, 1)}${config.unit} at ${point.label}`}</title>
             </circle>
           ))
         : null}

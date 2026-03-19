@@ -6,6 +6,8 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 import enMessages from "./messages/en.json";
 import shellEnMessages from "./messages/shell.en.json";
 import shellZhMessages from "./messages/shell.zh.json";
+import weatherEnMessages from "./messages/weather.en.json";
+import weatherZhMessages from "./messages/weather.zh.json";
 import zhMessages from "./messages/zh.json";
 
 export type LanguageMode = "en" | "zh";
@@ -14,6 +16,7 @@ export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
 
 type StructuredMessages = {
   shell: Record<string, string>;
+  weather: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -30,8 +33,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: shellEnMessages,
-  zh: shellZhMessages,
+  en: { ...shellEnMessages, ...weatherEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
