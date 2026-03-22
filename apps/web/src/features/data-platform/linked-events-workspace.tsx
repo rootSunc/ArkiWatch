@@ -70,48 +70,48 @@ const DESCRIPTION_MAX_LENGTH = 520;
 
 const EVENT_CATEGORY_DEFINITIONS: Array<{
   key: EventCategoryKey;
-  label: string;
+  labelKey: string;
   icon: string;
   patterns: string[];
 }> = [
-  { key: "all", label: "All activities", icon: "apps", patterns: [] },
+  { key: "all", labelKey: "allActivities", icon: "apps", patterns: [] },
   {
     key: "culture",
-    label: "Culture",
+    labelKey: "culture",
     icon: "theater_comedy",
     patterns: ["art", "culture", "concert", "music", "museum", "dance", "theatre", "teatteri", "taide", "musiikki"],
   },
   {
     key: "family",
-    label: "Family",
+    labelKey: "family",
     icon: "family_restroom",
     patterns: ["children", "family", "kids", "child", "youth", "laps", "nuor", "perhe"],
   },
   {
     key: "learning",
-    label: "Learning",
+    labelKey: "learning",
     icon: "school",
     patterns: ["course", "class", "workshop", "lecture", "training", "learning", "kurssi", "opastus"],
   },
   {
     key: "sports",
-    label: "Sports",
+    labelKey: "sports",
     icon: "directions_run",
     patterns: ["sport", "exercise", "fitness", "liikunta", "run", "yoga", "swim", "football", "hockey"],
   },
   {
     key: "outdoors",
-    label: "Outdoors",
+    labelKey: "outdoors",
     icon: "park",
     patterns: ["outdoor", "nature", "park", "garden", "retki", "luonto", "ulkoilu"],
   },
   {
     key: "library",
-    label: "Library",
+    labelKey: "library",
     icon: "local_library",
     patterns: ["library", "book", "reading", "helmet", "kirjasto", "lukeminen"],
   },
-  { key: "other", label: "Other", icon: "more_horiz", patterns: [] },
+  { key: "other", labelKey: "other", icon: "more_horiz", patterns: [] },
 ];
 
 function attributeText(event: PlatformEvent | null, key: string): string | null {
@@ -230,16 +230,16 @@ function formatEventMonthDay(value: string, language: LanguageMode): string {
   }).format(new Date(value));
 }
 
-function formatDuration(startsAt: string, endsAt: string, language: LanguageMode, t: (value: string) => string): string {
+function formatDuration(startsAt: string, endsAt: string, language: LanguageMode, tKey: (key: string) => string): string {
   const durationMs = new Date(endsAt).getTime() - new Date(startsAt).getTime();
   if (!Number.isFinite(durationMs) || durationMs <= 0) {
-    return t("Duration unavailable");
+    return tKey("linkedEvents.durationUnavailable");
   }
 
   const totalMinutes = Math.max(1, Math.round(durationMs / 60000));
   const days = Math.floor(totalMinutes / 1440);
   if (days > 30) {
-    return t("Long-running");
+    return tKey("linkedEvents.longRunning");
   }
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
@@ -353,17 +353,17 @@ function filterEvents(events: PlatformEvent[], filter: EventFilter, referenceDat
   });
 }
 
-function eventPlace(event: PlatformEvent | null, t: (value: string) => string): string {
-  return attributeText(event, "place_name") ?? t("Venue unavailable");
+function eventPlace(event: PlatformEvent | null, tKey: (key: string) => string): string {
+  return attributeText(event, "place_name") ?? tKey("linkedEvents.venueUnavailable");
 }
 
-function eventAddress(event: PlatformEvent | null, t: (value: string) => string): string {
+function eventAddress(event: PlatformEvent | null, tKey: (key: string) => string): string {
   const address = attributeText(event, "address");
   const extra = attributeText(event, "location_extra_info");
   if (address && extra) {
     return `${address} · ${extra}`;
   }
-  return address ?? extra ?? eventPlace(event, t);
+  return address ?? extra ?? eventPlace(event, tKey);
 }
 
 function eventCoordinate(event: PlatformEvent | null): string | null {
@@ -434,11 +434,11 @@ function pickLocalizedText(
 function eventDescriptionSource(
   event: PlatformEvent | null,
   language: LanguageMode,
-  t: (value: string) => string,
+  tKey: (key: string) => string,
 ): EventDescriptionSource {
   if (!event) {
     return {
-      text: t("Select an activity to inspect its schedule, tickets, address, and source links."),
+      text: tKey("linkedEvents.selectAnActivityToInspectItsScheduleTicketsAddressAndSourceLinks"),
       sourceLanguage: language,
       shouldTranslate: false,
     };
@@ -458,7 +458,7 @@ function eventDescriptionSource(
     attributeText(event, "description") ??
     attributeText(event, "short_description") ??
     event.body ??
-    t("Select an activity to inspect its schedule, tickets, address, and source links.");
+    tKey("linkedEvents.selectAnActivityToInspectItsScheduleTicketsAddressAndSourceLinks");
   const sourceLanguage: EventTextLanguage = containsChineseText(text)
     ? "zh"
     : looksFinnishOrSwedish(text)
@@ -476,41 +476,41 @@ function truncateDescription(value: string): string {
   return value.length > DESCRIPTION_MAX_LENGTH ? `${value.slice(0, DESCRIPTION_MAX_LENGTH - 3).trim()}...` : value;
 }
 
-function eventTicketLabel(event: PlatformEvent | null, t: (value: string) => string): string {
+function eventTicketLabel(event: PlatformEvent | null, tKey: (key: string) => string): string {
   if (attributeBoolean(event, "is_free")) {
-    return t("Free");
+    return tKey("linkedEvents.free");
   }
-  return attributeText(event, "ticket_label") ?? attributeText(event, "ticket_price") ?? t("Check source");
+  return attributeText(event, "ticket_label") ?? attributeText(event, "ticket_price") ?? tKey("linkedEvents.checkSource");
 }
 
-function eventActivityType(event: PlatformEvent | null, t: (value: string) => string): string {
-  return attributeText(event, "activity_type") ?? attributeList(event, "keywords")[0] ?? t("Activity");
+function eventActivityType(event: PlatformEvent | null, tKey: (key: string) => string): string {
+  return attributeText(event, "activity_type") ?? attributeList(event, "keywords")[0] ?? tKey("linkedEvents.activity");
 }
 
-function eventStatusLabel(status: string | null, language: LanguageMode, t: (value: string) => string): string {
+function eventStatusLabel(status: string | null, language: LanguageMode, tKey: (key: string) => string): string {
   if (!status) {
-    return t("status unavailable");
+    return tKey("linkedEvents.statusUnavailable");
   }
   const normalized = status.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ");
   return translateEnumLabel(language, normalized);
 }
 
-function eventPrimaryTimeLabel(event: PlatformEvent | null, referenceDate: Date, language: LanguageMode, t: (value: string) => string): string {
+function eventPrimaryTimeLabel(event: PlatformEvent | null, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
   if (!event) {
-    return t("not scheduled");
+    return tKey("linkedEvents.notScheduled");
   }
   return isEventOngoingAt(event, referenceDate)
-    ? t("Ongoing")
+    ? tKey("linkedEvents.ongoing")
     : formatEventDateTime(event.starts_at, language);
 }
 
-function eventRailTimeLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, t: (value: string) => string): string {
-  return isEventOngoingAt(event, referenceDate) ? t("Ongoing") : formatEventTime(event.starts_at, language);
+function eventRailTimeLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
+  return isEventOngoingAt(event, referenceDate) ? tKey("linkedEvents.ongoing") : formatEventTime(event.starts_at, language);
 }
 
-function eventRailDateLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, t: (value: string) => string): string {
+function eventRailDateLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
   return isEventOngoingAt(event, referenceDate)
-    ? `${t("Until")} ${formatEventMonthDay(event.ends_at, language)}`
+    ? `${tKey("linkedEvents.until")} ${formatEventMonthDay(event.ends_at, language)}`
     : formatEventDate(event.starts_at, language);
 }
 
@@ -521,7 +521,7 @@ function searchableEventText(event: PlatformEvent): string {
     attributeText(event, "description"),
     attributeText(event, "short_description"),
     attributeText(event, "activity_type"),
-    eventPlace(event, (value) => value),
+    attributeText(event, "place_name"),
     ...attributeList(event, "keywords"),
     ...attributeList(event, "audience"),
   ]
@@ -543,27 +543,27 @@ function eventCategoryKey(event: PlatformEvent): EventCategoryKey {
   return "other";
 }
 
-function eventConstraints(event: PlatformEvent | null, language: LanguageMode, t: (value: string) => string): string[] {
+function eventConstraints(event: PlatformEvent | null, language: LanguageMode, tKey: (key: string) => string): string[] {
   const values = [
-    attributeText(event, "age_limit") ? `${t("Age")}: ${attributeText(event, "age_limit")}` : null,
-    ...attributeList(event, "audience").map((item) => `${t("Audience")}: ${item}`),
-    ...attributeList(event, "languages").map((item) => `${t("Language")}: ${item}`),
+    attributeText(event, "age_limit") ? `${tKey("linkedEvents.age")}: ${attributeText(event, "age_limit")}` : null,
+    ...attributeList(event, "audience").map((item) => `${tKey("linkedEvents.audience")}: ${item}`),
+    ...attributeList(event, "languages").map((item) => `${tKey("linkedEvents.language")}: ${item}`),
   ].filter((item): item is string => Boolean(item));
 
   const status = attributeText(event, "event_status");
   if (status && status !== "EventScheduled") {
-    values.unshift(`${t("Status")}: ${eventStatusLabel(status, language, t)}`);
+    values.unshift(`${tKey("linkedEvents.status")}: ${eventStatusLabel(status, language, tKey)}`);
   }
-  return values.length > 0 ? values : [t("No constraints published")];
+  return values.length > 0 ? values : [tKey("linkedEvents.noConstraintsPublished")];
 }
 
-function eventLinks(event: PlatformEvent | null, t: (value: string) => string): EventLink[] {
+function eventLinks(event: PlatformEvent | null, tKey: (key: string) => string): EventLink[] {
   const candidates: EventLink[] = [
-    attributeText(event, "info_url") ? { label: t("Event page"), url: attributeText(event, "info_url") as string } : null,
-    attributeText(event, "ticket_url") ? { label: t("Tickets"), url: attributeText(event, "ticket_url") as string } : null,
-    attributeText(event, "registration_url") ? { label: t("Registration"), url: attributeText(event, "registration_url") as string } : null,
+    attributeText(event, "info_url") ? { label: tKey("linkedEvents.eventPage"), url: attributeText(event, "info_url") as string } : null,
+    attributeText(event, "ticket_url") ? { label: tKey("linkedEvents.tickets"), url: attributeText(event, "ticket_url") as string } : null,
+    attributeText(event, "registration_url") ? { label: tKey("linkedEvents.registration"), url: attributeText(event, "registration_url") as string } : null,
     ...attributeLinks(event, "external_links"),
-    attributeText(event, "api_url") ? { label: t("Source record"), url: attributeText(event, "api_url") as string } : null,
+    attributeText(event, "api_url") ? { label: tKey("linkedEvents.sourceRecord"), url: attributeText(event, "api_url") as string } : null,
   ].filter((item): item is EventLink => Boolean(item));
 
   const seen = new Set<string>();
@@ -582,7 +582,7 @@ export function LinkedEventsWorkspace({
   highlightedEventId,
   timeScope,
 }: LinkedEventsWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, dataLabel } = useI18n();
   const [filter, setFilter] = useState<EventFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<EventCategoryKey>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -621,13 +621,13 @@ export function LinkedEventsWorkspace({
       result = result.filter((event) => attributeList(event, "keywords").includes(activeKeyword));
     }
     if (activeVenue) {
-      result = result.filter((event) => eventPlace(event, t) === activeVenue);
+      result = result.filter((event) => eventPlace(event, tKey) === activeVenue);
     }
     if (query) {
       result = result.filter((event) => searchableEventText(event).includes(query));
     }
     return result;
-  }, [filter, sortedEvents, categoryFilter, activeKeyword, activeVenue, searchText, referenceDate, t]);
+  }, [filter, sortedEvents, categoryFilter, activeKeyword, activeVenue, searchText, referenceDate, tKey]);
 
   useEffect(() => {
     if (!highlightedEventId) {
@@ -648,8 +648,8 @@ export function LinkedEventsWorkspace({
   const selectedEvent =
     filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? sortedEvents[0] ?? null;
   const selectedDescriptionSource = useMemo(
-    () => eventDescriptionSource(selectedEvent, language, t),
-    [language, selectedEvent, t],
+    () => eventDescriptionSource(selectedEvent, language, tKey),
+    [language, selectedEvent, tKey],
   );
   const { data: translatedSelectedDescription } = useEventDescriptionTranslation({
     eventId: selectedEvent?.id ?? null,
@@ -663,13 +663,13 @@ export function LinkedEventsWorkspace({
   const venueCounts = useMemo(() => {
     const counts = new Map<string, number>();
     sortedEvents.forEach((event) => {
-      const place = eventPlace(event, t);
+      const place = eventPlace(event, tKey);
       counts.set(place, (counts.get(place) ?? 0) + 1);
     });
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-  }, [sortedEvents, t]);
+  }, [sortedEvents, tKey]);
 
   const keywordCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -694,7 +694,7 @@ export function LinkedEventsWorkspace({
     [sortedEvents]
   );
 
-  const placeLabel = useCallback((event: PlatformEvent) => eventPlace(event, t), [t]);
+  const placeLabel = useCallback((event: PlatformEvent) => eventPlace(event, tKey), [tKey]);
 
   const handleEventMapSelect = useCallback((eventId: string) => {
     setSelectedEventId(eventId);
@@ -702,10 +702,10 @@ export function LinkedEventsWorkspace({
 
   if (!category) {
     return (
-      <section className="linked-events-empty" aria-label={t("Linked Events data unavailable")}>
-        <span>{t("Linked Events")}</span>
-        <h2>{t("Linked Events feed is not available yet")}</h2>
-        <p>{t("Event, place, and keyword records are missing from this platform view.")}</p>
+      <section className="linked-events-empty" aria-label={tKey("linkedEvents.linkedEventsDataUnavailable")}>
+        <span>{tKey("linkedEvents.linkedEvents")}</span>
+        <h2>{tKey("linkedEvents.linkedEventsFeedIsNotAvailableYet")}</h2>
+        <p>{tKey("linkedEvents.eventPlaceAndKeywordRecordsAreMissingFromThisPlatformView")}</p>
       </section>
     );
   }
@@ -714,16 +714,16 @@ export function LinkedEventsWorkspace({
   const sourceRun = sourceUpdatedAt(category);
   const selectedTone = selectedEvent ? (severityTone(selectedEvent.severity) as EventTone) : toneFromStatus(category.status);
   const eventStatus = attributeText(selectedEvent, "event_status");
-  const provider = attributeText(selectedEvent, "provider") ?? t("provider unavailable");
-  const eventDetailLinks = eventLinks(selectedEvent, t);
+  const provider = attributeText(selectedEvent, "provider") ?? tKey("linkedEvents.providerUnavailable");
+  const eventDetailLinks = eventLinks(selectedEvent, tKey);
   const selectedDescription = selectedEvent
     ? truncateDescription(translatedSelectedDescription ?? selectedDescriptionSource.text)
-    : t("No activities are available for the selected city yet. The city-specific feed may need a fresh collection.");
-  const filterOptions: Array<{ key: EventFilter; label: string; count: number }> = [
-    { key: "all", label: "All", count: sortedEvents.length },
-    { key: "today", label: "Today", count: filterEvents(sortedEvents, "today", referenceDate).length },
-    { key: "week", label: "7-day horizon", count: filterEvents(sortedEvents, "week", referenceDate).length },
-    { key: "free", label: "Free events", count: filterEvents(sortedEvents, "free", referenceDate).length },
+    : tKey("linkedEvents.noActivitiesAreAvailableForTheSelectedCityYetTheCitySpecificFeedMayNeedAFreshCollection");
+  const filterOptions: Array<{ key: EventFilter; labelKey: string; count: number }> = [
+    { key: "all", labelKey: "allFilter", count: sortedEvents.length },
+    { key: "today", labelKey: "today", count: filterEvents(sortedEvents, "today", referenceDate).length },
+    { key: "week", labelKey: "week7DayHorizon", count: filterEvents(sortedEvents, "week", referenceDate).length },
+    { key: "free", labelKey: "freeEvents", count: filterEvents(sortedEvents, "free", referenceDate).length },
   ];
 
   function renderVenueDensityChart() {
@@ -736,11 +736,11 @@ export function LinkedEventsWorkspace({
     return (
       <article className="linked-events-panel linked-events-venue-panel">
         <header>
-          <span>{t("Top venues")}</span>
-          <strong>{venueCounts.length} {t("Venues")}</strong>
+          <span>{tKey("linkedEvents.topVenues")}</span>
+          <strong>{venueCounts.length} {tKey("linkedEvents.venues")}</strong>
         </header>
         <p className="linked-events-chart-description">
-          {t("Click a venue to narrow the activity list.")}
+          {tKey("linkedEvents.clickAVenueToNarrowTheActivityList")}
         </p>
         <div className="linked-events-venue-list">
           {venueCounts.map(([venue, count]) => {
@@ -757,7 +757,7 @@ export function LinkedEventsWorkspace({
               >
                 <div className="linked-events-venue-info">
                   <strong>{venue}</strong>
-                  <span>{count} {t("events")}</span>
+                  <span>{count} {tKey("linkedEvents.events")}</span>
                 </div>
                 <i className="linked-events-venue-track" aria-hidden="true">
                   <span style={{ width: `${widthPct}%` }} />
@@ -778,11 +778,11 @@ export function LinkedEventsWorkspace({
     return (
       <article className="linked-events-panel linked-events-keyword-cloud-panel">
         <header>
-          <span>{t("Activity tags")}</span>
+          <span>{tKey("linkedEvents.activityTags")}</span>
           <strong>{keywordCounts.length}</strong>
         </header>
         <p className="linked-events-chart-description">
-          {t("Click a tag to filter upcoming activities.")}
+          {tKey("linkedEvents.clickATagToFilterUpcomingActivities")}
         </p>
         <div className="linked-events-keyword-cloud">
           {keywordCounts.map(([keyword, count]) => {
@@ -806,64 +806,64 @@ export function LinkedEventsWorkspace({
   }
 
   return (
-    <section className="linked-events-page" aria-label={t("Linked Events detail")}>
+    <section className="linked-events-page" aria-label={tKey("linkedEvents.linkedEventsDetail")}>
       <div className="linked-events-header">
         <div>
-          <h2>{t(category.title || "Linked Events")}</h2>
+          <h2>{category.title ? dataLabel(category.title) : tKey("linkedEvents.linkedEvents")}</h2>
           <div className="linked-events-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{source?.source_code.toUpperCase() ?? "LINKEDEVENTS"} / {sourceRun ? formatRelativeAge(sourceRun, language) : t("not collected")}</div>
+        <div>{source?.source_code.toUpperCase() ?? "LINKEDEVENTS"} / {sourceRun ? formatRelativeAge(sourceRun, language) : tKey("linkedEvents.notCollected")}</div>
       </div>
 
-      <section className="linked-events-command" aria-label={t("Linked Events operating condition")}>
+      <section className="linked-events-command" aria-label={tKey("linkedEvents.linkedEventsOperatingCondition")}>
         <article className={`linked-events-panel linked-events-hero linked-events-hero-${selectedTone}`}>
           <div className="linked-events-kicker">
-            <span>{t("Selected activity")}</span>
-            <time>{eventPrimaryTimeLabel(selectedEvent, referenceDate, language, t)}</time>
+            <span>{tKey("linkedEvents.selectedActivity")}</span>
+            <time>{eventPrimaryTimeLabel(selectedEvent, referenceDate, language, tKey)}</time>
           </div>
           <div className="linked-events-focus">
             <span className="material-symbols-outlined linked-events-focus-icon" aria-hidden="true">
               event_available
             </span>
             <div>
-              <strong>{selectedEvent?.title ?? t("No upcoming activities")}</strong>
+              <strong>{selectedEvent?.title ?? tKey("linkedEvents.noUpcomingActivities")}</strong>
               <p>{selectedDescription}</p>
             </div>
           </div>
           <div className="linked-events-hero-footer linked-events-hero-footer-four">
             <div>
-              <span>{t("Venue")}</span>
-              <strong>{eventPlace(selectedEvent, t)}</strong>
+              <span>{tKey("linkedEvents.venue")}</span>
+              <strong>{eventPlace(selectedEvent, tKey)}</strong>
             </div>
             <div>
-              <span>{t("Ticketing")}</span>
-              <strong>{eventTicketLabel(selectedEvent, t)}</strong>
+              <span>{tKey("linkedEvents.ticketing")}</span>
+              <strong>{eventTicketLabel(selectedEvent, tKey)}</strong>
             </div>
             <div>
-              <span>{t("Duration")}</span>
-              <strong>{selectedEvent ? formatDuration(selectedEvent.starts_at, selectedEvent.ends_at, language, t) : t("Duration unavailable")}</strong>
+              <span>{tKey("linkedEvents.duration")}</span>
+              <strong>{selectedEvent ? formatDuration(selectedEvent.starts_at, selectedEvent.ends_at, language, tKey) : tKey("linkedEvents.durationUnavailable")}</strong>
             </div>
             <div>
-              <span>{t("Activity type")}</span>
-              <strong>{eventActivityType(selectedEvent, t)}</strong>
+              <span>{tKey("linkedEvents.activityType")}</span>
+              <strong>{eventActivityType(selectedEvent, tKey)}</strong>
             </div>
           </div>
         </article>
 
         <article className="linked-events-panel linked-events-filter-panel">
           <header>
-            <span>{t("Browse activities")}</span>
+            <span>{tKey("linkedEvents.browseActivities")}</span>
             <strong>{filteredEvents.length}</strong>
           </header>
           <label className="linked-events-search">
             <span className="material-symbols-outlined" aria-hidden="true">search</span>
             <input
-              aria-label={t("Search activities")}
+              aria-label={tKey("linkedEvents.searchActivities")}
               onChange={(event) => setSearchText(event.currentTarget.value)}
-              placeholder={t("Search by activity, venue, or keyword")}
+              placeholder={tKey("linkedEvents.searchByActivityVenueOrKeyword")}
               type="search"
               value={searchText}
             />
@@ -880,7 +880,7 @@ export function LinkedEventsWorkspace({
                 }}
                 type="button"
               >
-                <span>{t(option.label)}</span>
+                <span>{tKey(`linkedEvents.${option.labelKey}`)}</span>
                 <strong>{option.count}</strong>
               </button>
             ))}
@@ -889,7 +889,7 @@ export function LinkedEventsWorkspace({
 
         <article className="linked-events-panel linked-events-category-panel">
           <header>
-            <span>{t("Activity categories")}</span>
+            <span>{tKey("linkedEvents.activityCategories")}</span>
             <strong>{categoryCounts.get("all") ?? 0}</strong>
           </header>
           <div className="linked-events-category-grid">
@@ -903,7 +903,7 @@ export function LinkedEventsWorkspace({
                   type="button"
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">{definition.icon}</span>
-                  <span>{t(definition.label)}</span>
+                  <span>{tKey(`linkedEvents.${definition.labelKey}`)}</span>
                   <strong>{categoryCounts.get(definition.key) ?? 0}</strong>
                 </button>
               );
@@ -913,12 +913,12 @@ export function LinkedEventsWorkspace({
 
       </section>
 
-      <section className="linked-events-main-grid" aria-label={t("Linked Events schedule and detail")}>
+      <section className="linked-events-main-grid" aria-label={tKey("linkedEvents.linkedEventsScheduleAndDetail")}>
         <article className="linked-events-panel linked-events-timeline-panel">
           <header>
             <div>
-              <span>{t("Activity list")}</span>
-              <h3>{t("Activities valid from selected time")}</h3>
+              <span>{tKey("linkedEvents.activityList")}</span>
+              <h3>{tKey("linkedEvents.activitiesValidFromSelectedTime")}</h3>
             </div>
             <div className="linked-events-filter-status">
               {activeKeyword || activeVenue || searchText || categoryFilter !== "all" ? (
@@ -932,11 +932,11 @@ export function LinkedEventsWorkspace({
                   }}
                   type="button"
                 >
-                  {t("Clear Filters")}
+                  {tKey("linkedEvents.clearFilters")}
                   <span className="material-symbols-outlined" style={{ fontSize: "14px", marginLeft: "4px" }}>close</span>
                 </button>
               ) : (
-                <strong>{filteredEvents.length} {t("activities")}</strong>
+                <strong>{filteredEvents.length} {tKey("linkedEvents.activities")}</strong>
               )}
             </div>
           </header>
@@ -960,24 +960,24 @@ export function LinkedEventsWorkspace({
                     type="button"
                   >
                     <span className="linked-events-date-rail">
-                      <strong>{eventRailTimeLabel(event, referenceDate, language, t)}</strong>
-                      <small>{eventRailDateLabel(event, referenceDate, language, t)}</small>
+                      <strong>{eventRailTimeLabel(event, referenceDate, language, tKey)}</strong>
+                      <small>{eventRailDateLabel(event, referenceDate, language, tKey)}</small>
                     </span>
                     <span className="linked-events-row-main">
                       <strong>{event.title}</strong>
-                      <span>{eventAddress(event, t)}</span>
+                      <span>{eventAddress(event, tKey)}</span>
                       {keywords.length > 0 ? (
                         <em>{keywords.join(" / ")}</em>
                       ) : null}
                     </span>
                     <span className="linked-events-row-meta">
-                      {eventTicketLabel(event, t)}
+                      {eventTicketLabel(event, tKey)}
                     </span>
                   </button>
                 );
               })
             ) : (
-              <div className="linked-events-empty-state">{t("No activities match the current filters.")}</div>
+              <div className="linked-events-empty-state">{tKey("linkedEvents.noActivitiesMatchTheCurrentFilters")}</div>
             )}
           </div>
         </article>
@@ -985,42 +985,42 @@ export function LinkedEventsWorkspace({
         <aside className="linked-events-side-grid">
           <article className="linked-events-panel linked-events-inspector">
             <header>
-              <span>{t("Activity details")}</span>
-              <strong>{selectedEvent ? translateEnumLabel(language, selectedEvent.severity) : t("missing")}</strong>
+              <span>{tKey("linkedEvents.activityDetails")}</span>
+              <strong>{selectedEvent ? translateEnumLabel(language, selectedEvent.severity) : tKey("linkedEvents.missing")}</strong>
             </header>
             <div className="linked-events-inspector-body">
-              <h3>{selectedEvent?.title ?? t("No selected event")}</h3>
+              <h3>{selectedEvent?.title ?? tKey("linkedEvents.noSelectedEvent")}</h3>
               <div className="linked-events-detail-tags">
-                <span>{eventActivityType(selectedEvent, t)}</span>
-                <span>{eventTicketLabel(selectedEvent, t)}</span>
-                <span>{eventStatusLabel(eventStatus, language, t)}</span>
+                <span>{eventActivityType(selectedEvent, tKey)}</span>
+                <span>{eventTicketLabel(selectedEvent, tKey)}</span>
+                <span>{eventStatusLabel(eventStatus, language, tKey)}</span>
               </div>
               <p className="linked-events-description">{selectedDescription}</p>
               <dl>
                 <div>
-                  <dt>{t("Starts")}</dt>
-                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.starts_at, language) : t("not scheduled")}</dd>
+                  <dt>{tKey("linkedEvents.starts")}</dt>
+                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.starts_at, language) : tKey("linkedEvents.notScheduled")}</dd>
                 </div>
                 <div>
-                  <dt>{t("Ends")}</dt>
-                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.ends_at, language) : t("not scheduled")}</dd>
+                  <dt>{tKey("linkedEvents.ends")}</dt>
+                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.ends_at, language) : tKey("linkedEvents.notScheduled")}</dd>
                 </div>
                 <div>
-                  <dt>{t("Duration")}</dt>
-                  <dd>{selectedEvent ? formatDuration(selectedEvent.starts_at, selectedEvent.ends_at, language, t) : t("Duration unavailable")}</dd>
+                  <dt>{tKey("linkedEvents.duration")}</dt>
+                  <dd>{selectedEvent ? formatDuration(selectedEvent.starts_at, selectedEvent.ends_at, language, tKey) : tKey("linkedEvents.durationUnavailable")}</dd>
                 </div>
                 <div>
-                  <dt>{t("Address")}</dt>
+                  <dt>{tKey("linkedEvents.address")}</dt>
                   <dd>
-                    {eventAddress(selectedEvent, t)}
+                    {eventAddress(selectedEvent, tKey)}
                     {attributeText(selectedEvent, "place_name") && (
                       <button
                         className="linked-events-inspector-filter-btn"
                         onClick={() => {
-                          const place = eventPlace(selectedEvent, t);
+                          const place = eventPlace(selectedEvent, tKey);
                           setActiveVenue(activeVenue === place ? null : place);
                         }}
-                        title={t("Filter by this venue")}
+                        title={tKey("linkedEvents.filterByThisVenue")}
                         type="button"
                       >
                         <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>filter_list</span>
@@ -1029,30 +1029,30 @@ export function LinkedEventsWorkspace({
                   </dd>
                 </div>
                 <div>
-                  <dt>{t("Ticketing")}</dt>
-                  <dd>{eventTicketLabel(selectedEvent, t)}</dd>
+                  <dt>{tKey("linkedEvents.ticketing")}</dt>
+                  <dd>{eventTicketLabel(selectedEvent, tKey)}</dd>
                 </div>
                 <div>
-                  <dt>{t("Organizer")}</dt>
+                  <dt>{tKey("linkedEvents.organizer")}</dt>
                   <dd>{provider}</dd>
                 </div>
                 <div>
-                  <dt>{t("Coordinate")}</dt>
-                  <dd>{eventCoordinate(selectedEvent) ?? t("coordinate unavailable")}</dd>
+                  <dt>{tKey("linkedEvents.coordinate")}</dt>
+                  <dd>{eventCoordinate(selectedEvent) ?? tKey("linkedEvents.coordinateUnavailable")}</dd>
                 </div>
               </dl>
 
               <section className="linked-events-detail-section">
-                <span>{t("Constraints")}</span>
+                <span>{tKey("linkedEvents.constraints")}</span>
                 <div className="linked-events-meta-list">
-                  {eventConstraints(selectedEvent, language, t).map((item) => (
+                  {eventConstraints(selectedEvent, language, tKey).map((item) => (
                     <span key={item}>{item}</span>
                   ))}
                 </div>
               </section>
 
               <section className="linked-events-detail-section">
-                <span>{t("Links")}</span>
+                <span>{tKey("linkedEvents.links")}</span>
                 {eventDetailLinks.length > 0 ? (
                   <div className="linked-events-link-stack">
                     {eventDetailLinks.map((link) => (
@@ -1063,7 +1063,7 @@ export function LinkedEventsWorkspace({
                     ))}
                   </div>
                 ) : (
-                  <p>{t("No event links were published.")}</p>
+                  <p>{tKey("linkedEvents.noEventLinksWerePublished")}</p>
                 )}
               </section>
             </div>
@@ -1074,16 +1074,16 @@ export function LinkedEventsWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "event_map_geometry",
-                  label: "Event Map Geometry",
+                  label: tKey("linkedEvents.eventMapGeometry"),
                   t
                 })}
               >
-                {t("Event Map Geometry")}
+                {tKey("linkedEvents.eventMapGeometry")}
               </DataLabelWithHelp>
               <strong>{mappedEventCount}</strong>
             </header>
             <p className="linked-events-chart-description">
-              {t("Geographical event distribution in the expansion area.")}
+              {tKey("linkedEvents.geographicalEventDistributionInTheExpansionArea")}
             </p>
             <LinkedEventsCoordinateMap
               events={sortedEvents}
@@ -1092,6 +1092,7 @@ export function LinkedEventsWorkspace({
               placeLabel={placeLabel}
               selectedEventId={selectedEvent?.id ?? null}
               t={t}
+              tKey={tKey}
             />
           </article>
 

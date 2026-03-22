@@ -13,6 +13,7 @@ type LinkedEventsCoordinateMapProps = {
   formatNumber: (value: number | null | undefined, maximumFractionDigits?: number) => string;
   placeLabel: (event: PlatformEvent) => string;
   t: (value: string) => string;
+  tKey: (key: string) => string;
   onEventSelect: (eventId: string) => void;
 };
 
@@ -44,6 +45,7 @@ export function LinkedEventsCoordinateMap({
   formatNumber,
   placeLabel,
   t,
+  tKey,
   onEventSelect
 }: LinkedEventsCoordinateMapProps) {
   const points = useMemo<CoordinateMapPoint[]>(
@@ -69,7 +71,7 @@ export function LinkedEventsCoordinateMap({
 
   return (
     <CoordinateMap
-      emptyMessage={t("No event coordinates were returned in the latest Linked Events payload.")}
+      emptyMessage={tKey("linkedEvents.noEventCoordinatesWereReturnedInTheLatestLinkedEventsPayload")}
       formatNumber={formatNumber}
       onPointClick={onEventSelect}
       points={points}
