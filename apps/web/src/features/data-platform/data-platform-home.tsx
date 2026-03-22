@@ -41,6 +41,7 @@ import {
 } from "./data-platform-topbars";
 import {
   I18nProvider,
+  translateDataLabel,
   translateMessageKey,
   translateText,
 } from "./i18n";
@@ -211,6 +212,7 @@ export function DataPlatformHome({
   const [isDateRefreshPending, startDateRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
   const tKey = (key: string) => translateMessageKey(languageMode, key);
+  const dataLabel = (value: string | null | undefined) => translateDataLabel(languageMode, value);
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
     overview?.time_scope ??
@@ -558,20 +560,20 @@ export function DataPlatformHome({
   const priorityVisibleEvent = pickPriorityEvent(visibleNotificationEvents);
   const overallScopeLabel = selectedCategory
     ? displayTitle(selectedCategory, languageMode)
-    : t("Overall");
+    : tKey("shell.overall");
   const overallNotificationTitle =
     visibleNotificationEvents.length > 0
       ? `${overallScopeLabel} · ${activeEventLabel(
           visibleNotificationEvents.length,
           languageMode,
         )}`
-      : `${overallScopeLabel} · ${t("No active notifications")}`;
+      : `${overallScopeLabel} · ${tKey("shell.noActiveNotifications")}`;
   const overallNotificationBody = priorityVisibleEvent
     ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${priorityVisibleEvent.title}`
-    : t("No active cross-signal notifications in this view.");
+    : tKey("shell.noActiveCrossSignalNotificationsInThisView");
   const overallNotificationDetail =
     priorityVisibleEvent?.body ??
-    t("Recent events remain available below for source-level inspection.");
+    tKey("shell.recentEventsRemainAvailableBelowForSourceLevelInspection");
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
   const isEnergyDetail = selectedCategory?.key === "energy";
@@ -941,21 +943,21 @@ export function DataPlatformHome({
                 <RegionalProfileWorkspace category={selectedCategory} />
               ) : (
                 <>
-                  <section className="signals-console-overview" aria-label={t("Signal observatory")}>
+                  <section className="signals-console-overview" aria-label={tKey("shell.signalObservatory")}>
                     <header className="signals-console-header">
                       <div>
                         <h3>
                           <span className="material-symbols-outlined" aria-hidden="true">
                             monitoring
                           </span>
-                          {t("Signal observatory")}
+                          {tKey("shell.signalObservatory")}
                         </h3>
-                        <p>{t("Signal observatory lead")}</p>
+                        <p>{tKey("shell.signalObservatoryLead")}</p>
                       </div>
                     </header>
                     <div
                       className="summary-grid summary-grid-system"
-                      aria-label={t("Signal system summary")}
+                      aria-label={tKey("shell.signalSystemSummary")}
                     >
                       {signalSystemTiles.map((tile) => (
                         <article
@@ -999,7 +1001,7 @@ export function DataPlatformHome({
                   >
                     <section
                       className="signal-section"
-                      aria-label={t("Signal status array")}
+                      aria-label={tKey("shell.signalStatusArray")}
                     >
                       <h3>
                         <span
@@ -1008,7 +1010,7 @@ export function DataPlatformHome({
                         >
                           sensors
                         </span>
-                        {t("All signals")}
+                        {tKey("shell.allSignals")}
                       </h3>
 
                       <div className="signal-grid">
@@ -1095,7 +1097,7 @@ export function DataPlatformHome({
                                     <span>
                                       {followsSelectedCity
                                         ? cityLabel(selectedCity)
-                                        : t("Regional scope")}
+                                        : tKey("shell.regionalScope")}
                                     </span>
                                   </span>
                                   <span
@@ -1115,7 +1117,7 @@ export function DataPlatformHome({
                           })
                         ) : (
                           <div className="dashboard-empty-state">
-                            {t("No signal cards match the current search.")}
+                            {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
                           </div>
                         )}
                       </div>
@@ -1124,13 +1126,13 @@ export function DataPlatformHome({
                     {isEventsExpanded ? (
                       <aside
                         className="events-panel events-panel-expanded"
-                        aria-label={t("Recent events")}
+                        aria-label={tKey("shell.recentEvents")}
                       >
                         <header>
                           <button
                             aria-controls="recent-events-timeline"
                             aria-expanded={isEventsExpanded}
-                            aria-label={t("Collapse recent events")}
+                            aria-label={tKey("shell.collapseRecentEvents")}
                             className="events-panel-toggle"
                             onClick={() =>
                               setIsEventsExpanded((isExpanded) => !isExpanded)
@@ -1148,7 +1150,7 @@ export function DataPlatformHome({
                             <span className="events-panel-copy">
                               <span className="events-panel-title">
                                 <span className="events-panel-heading">
-                                  {t("Recent Events")}
+                                  {tKey("shell.recentEvents2")}
                                 </span>
                                 <span className="events-count-badge">
                                   {unreadVisibleEvents.length}
@@ -1157,7 +1159,7 @@ export function DataPlatformHome({
                               <span className="events-panel-summary">
                                 {latestUnreadEvent
                                   ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode, t)} · ${latestUnreadEvent.title}`
-                                  : t("No recent events match the current view.")}
+                                  : tKey("shell.noRecentEventsMatchTheCurrentView")}
                               </span>
                             </span>
                             <span
@@ -1175,7 +1177,7 @@ export function DataPlatformHome({
                         >
                           <section
                             className={`overall-notification overall-notification-${latestEventTone}`}
-                            aria-label={t("Overall notification")}
+                            aria-label={tKey("shell.overallNotification")}
                             aria-live="polite"
                           >
                             <div className="overall-notification-main">
@@ -1191,7 +1193,7 @@ export function DataPlatformHome({
                               </span>
                               <div className="overall-notification-copy">
                                 <span className="overall-notification-kicker">
-                                  {t("Overall notification")} ·{" "}
+                                  {tKey("shell.overallNotification")} ·{" "}
                                   {cityLabel(selectedCity)}
                                 </span>
                                 <strong>{overallNotificationTitle}</strong>
@@ -1200,7 +1202,7 @@ export function DataPlatformHome({
                             </div>
                             <div className="overall-notification-meta">
                               <span>
-                                {t("Updated")}{" "}
+                                {tKey("shell.updated")}{" "}
                                 {formatTimestamp(
                                   visibleOverview.checked_at,
                                   "dateTime",
@@ -1211,8 +1213,8 @@ export function DataPlatformHome({
                                 className={`status-badge status-badge-${latestEventTone}`}
                               >
                                 {visibleNotificationEvents.length > 0
-                                  ? t("Needs attention")
-                                  : t("Nominal")}
+                                  ? tKey("shell.needsAttention")
+                                  : tKey("shell.nominal")}
                               </span>
                             </div>
                             <p className="overall-notification-detail">
@@ -1222,7 +1224,7 @@ export function DataPlatformHome({
                           {selectedEvent ? (
                             <section
                               className="event-detail-panel"
-                              aria-label={t("Event detail")}
+                              aria-label={tKey("shell.eventDetail")}
                             >
                               <header className="event-detail-header">
                                 <div>
@@ -1237,10 +1239,10 @@ export function DataPlatformHome({
                                   <strong>{selectedEvent.title}</strong>
                                 </div>
                                 <button
-                                  aria-label={t("Close event detail")}
+                                  aria-label={tKey("shell.closeEventDetail")}
                                   className="event-detail-close"
                                   onClick={() => setSelectedEventId(null)}
-                                  title={t("Close event detail")}
+                                  title={tKey("shell.closeEventDetail")}
                                   type="button"
                                 >
                                   <span
@@ -1251,10 +1253,10 @@ export function DataPlatformHome({
                                   </span>
                                 </button>
                                 <button
-                                  aria-label={t("Open workspace")}
+                                  aria-label={tKey("shell.openWorkspace")}
                                   className="event-detail-close"
                                   onClick={() => openRecentEvent(selectedEvent)}
-                                  title={t("Open workspace")}
+                                  title={tKey("shell.openWorkspace")}
                                   type="button"
                                 >
                                   <span
@@ -1268,7 +1270,7 @@ export function DataPlatformHome({
                               <p>{selectedEvent.body}</p>
                               <div className="event-detail-meta">
                                 <span>
-                                  {t("Validity")}:{" "}
+                                  {tKey("shell.validity")}:{" "}
                                   {formatTimestamp(
                                     selectedEvent.starts_at,
                                     "dateTime",
@@ -1282,14 +1284,14 @@ export function DataPlatformHome({
                                   )}
                                 </span>
                                 <span>
-                                  {t("Sources")}:{" "}
+                                  {tKey("shell.sources")}:{" "}
                                   {selectedEvent.source_codes.join(", ") ||
-                                    t("Derived")}
+                                    tKey("shell.derived")}
                                 </span>
                               </div>
                               {selectedEvent.evidence.length > 0 ? (
                                 <div className="event-detail-evidence">
-                                  <span>{t("Evidence")}</span>
+                                  <span>{tKey("shell.evidence")}</span>
                                   <div className="event-tags">
                                     {selectedEvent.evidence.map((item) => (
                                       <span key={item}>{item}</span>
@@ -1307,8 +1309,8 @@ export function DataPlatformHome({
                                   ))
                                 ) : (
                                   <div>
-                                    <dt>{t("Details")}</dt>
-                                    <dd>{t("No structured attributes")}</dd>
+                                    <dt>{tKey("shell.details")}</dt>
+                                    <dd>{tKey("shell.noStructuredAttributes")}</dd>
                                   </div>
                                 )}
                               </dl>
@@ -1346,7 +1348,7 @@ export function DataPlatformHome({
                                   />
                                   <button
                                     aria-expanded={isSelected}
-                                    aria-label={`${t("Open event detail")}: ${event.title}`}
+                                    aria-label={`${tKey("shell.openEventDetail")}: ${event.title}`}
                                     className="timeline-item-content"
                                     onClick={() => {
                                       markRecentEventRead(event.id);
@@ -1373,7 +1375,7 @@ export function DataPlatformHome({
                                             : "timeline-read-state timeline-read-state-unread"
                                         }
                                       >
-                                        {isRead ? t("Read") : t("Unread")}
+                                        {isRead ? tKey("shell.read") : tKey("shell.unread")}
                                       </span>
                                     </span>
                                     <p>{event.body}</p>
@@ -1399,7 +1401,7 @@ export function DataPlatformHome({
                             })
                           ) : (
                             <div className="dashboard-empty-state">
-                              {t("No recent events match the current view.")}
+                              {tKey("shell.noRecentEventsMatchTheCurrentView")}
                             </div>
                           )}
                         </div>
@@ -1413,15 +1415,15 @@ export function DataPlatformHome({
             ) : (
               <section
                 className="platform-error"
-                aria-label={t("Platform unavailable")}
+                aria-label={tKey("shell.platformUnavailable")}
               >
-                <span>{t("Platform unavailable")}</span>
-                <h1>{t("Data platform could not load")}</h1>
-                <p>{error ?? t("Unknown platform error.")}</p>
+                <span>{tKey("shell.platformUnavailable")}</span>
+                <h1>{tKey("shell.dataPlatformCouldNotLoad")}</h1>
+                <p>{error ?? tKey("shell.unknownPlatformError")}</p>
                 <small>
-                  {t("API endpoint")}: {apiBaseUrl}
+                  {tKey("shell.apiEndpoint")}: {apiBaseUrl}
                   {defaultUserId || resolvedUserId
-                    ? ` · ${t("User context")}: ${defaultUserId ?? resolvedUserId}`
+                    ? ` · ${tKey("shell.userContext")}: ${defaultUserId ?? resolvedUserId}`
                     : ""}
                 </small>
               </section>
@@ -1432,17 +1434,17 @@ export function DataPlatformHome({
             <footer className="detail-footer">
               <span>ArkiWatch designed by Chao</span>
               <div>
-                <a href="/privacy">{t("Privacy Policy")}</a>
-                <a href="/regional-settings">{t("Regional Settings")}</a>
-                <a href="/api">{t("API Docs")}</a>
+                <a href="/privacy">{tKey("shell.privacyPolicy")}</a>
+                <a href="/regional-settings">{tKey("shell.regionalSettings")}</a>
+                <a href="/api">{tKey("shell.apiDocs")}</a>
               </div>
             </footer>
           ) : null}
           <footer
             className="mobile-dashboard-footer"
-            aria-label={t("Mobile navigation")}
+            aria-label={tKey("shell.mobileNavigation")}
           >
-            <nav className="mobile-bottom-nav" aria-label={t("Signal navigation")}>
+            <nav className="mobile-bottom-nav" aria-label={tKey("shell.signalNavigation")}>
               {mobileNavItems.map((item) => {
                 const isActive =
                   selectedNavKey === item.key ||
@@ -1458,26 +1460,26 @@ export function DataPlatformHome({
                     }
                     key={item.key}
                     onClick={() => selectNavItem(item)}
-                    title={t(item.label)}
+                    title={dataLabel(item.label)}
                     type="button"
                   >
                     <span className="material-symbols-outlined" aria-hidden="true">
                       {item.icon}
                     </span>
-                    <span>{t(item.label)}</span>
+                    <span>{dataLabel(item.label)}</span>
                   </button>
                 );
               })}
               <button
                 className="mobile-bottom-nav-item"
                 onClick={() => setIsMobileMenuOpen(true)}
-                title={t("Open navigation")}
+                title={tKey("shell.openNavigation")}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
                   menu
                 </span>
-                <span>{t("More")}</span>
+                <span>{tKey("shell.more")}</span>
               </button>
             </nav>
           </footer>
