@@ -63,9 +63,9 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
-    return t("catalog");
+    return tKey("regionalProfile.catalog");
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -101,8 +101,8 @@ function progressFromTone(tone: ProfileTone): number {
   return 50;
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not observed");
+function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? formatRelativeAge(value, language) : tKey("regionalProfile.notObserved");
 }
 
 function fieldStateLabel(category: PlatformCategory, language: LanguageMode): string {
@@ -116,14 +116,14 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, dataLabel, enumLabel } = useI18n();
 
   if (!category) {
     return (
-      <section className="water-detail-empty" aria-label={t("Regional profile data unavailable")}>
-        <span>{t("Regional Context")}</span>
-        <h2>{t("Regional profile signals are not available yet")}</h2>
-        <p>{t("Statistics Finland and THL Sotkanet source metadata has not arrived for the current platform view.")}</p>
+      <section className="water-detail-empty" aria-label={tKey("regionalProfile.dataUnavailable")}>
+        <span>{tKey("regionalProfile.regionalContext")}</span>
+        <h2>{tKey("regionalProfile.signalsUnavailable")}</h2>
+        <p>{tKey("regionalProfile.metadataMissing")}</p>
       </section>
     );
   }
@@ -148,8 +148,8 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
     sourceStatusMetric?.updated_at ??
     catalogStageMetric?.updated_at;
 
-  const heroTitle = t("Municipal Demographic Profiles & Health Indicators");
-  const heroDetail = category.description || t("Statistics Finland & THL data registers are mapped for city-scope analysis.");
+  const heroTitle = tKey("regionalProfile.heroTitle");
+  const heroDetail = category.description || tKey("regionalProfile.registersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -167,35 +167,35 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
       label: pt.label,
       value: pt.value,
       tone: pt.tone ?? "neutral",
-      countLabel: t("source data")
+      countLabel: tKey("regionalProfile.sourceData")
     })) ??
     (catalogCoverageVis?.data?.points as PlatformVisualizationPoint[] | undefined)?.map((pt) => ({
       label: pt.label,
       value: pt.value,
       tone: pt.tone ?? "neutral",
-      countLabel: t("catalog")
+      countLabel: tKey("regionalProfile.catalog")
     })) ??
     [];
 
   const cityComparisonRows: CityIndicatorRow[] = [];
 
   return (
-    <section className="water-detail-page" aria-label={t("Regional profile detail")}>
+    <section className="water-detail-page" aria-label={tKey("regionalProfile.detailAria")}>
       <div className="water-detail-header">
         <div>
-          <h2>{t("Regional Profile Dashboard")}</h2>
+          <h2>{tKey("regionalProfile.dashboardTitle")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, t)}</div>
+        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
       </div>
 
-      <section className="water-bento-grid" aria-label={t("Regional profile operating condition")}>
+      <section className="water-bento-grid" aria-label={tKey("regionalProfile.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>
           <div className="water-card-kicker">
-            <span>{t("Regional Context State")}</span>
+            <span>{tKey("regionalProfile.contextState")}</span>
             <time>{translateEnumLabel(language, category.stage ?? "background")}</time>
           </div>
           <div className="water-current-cluster">
@@ -209,12 +209,12 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           </div>
           <div className="water-hero-footer">
             <div>
-              <span>{t("Datasets")}</span>
+              <span>{tKey("regionalProfile.datasets")}</span>
               <strong>{totalDatasetsCount || datasets.length || 5}</strong>
             </div>
             <div>
-              <span>{t("Ingestion Sync")}</span>
-              <strong>{t("daily sync")}</strong>
+              <span>{tKey("regionalProfile.ingestionSync")}</span>
+              <strong>{tKey("regionalProfile.dailySync")}</strong>
             </div>
           </div>
         </article>
@@ -222,14 +222,14 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
         {/* Demographics Age range card */}
         <article className="water-glass-panel water-coverage-panel">
           <header>
-            <span>{t("Age range distribution")}</span>
-            <strong>{t("Helsinki Region")}</strong>
+            <span>{tKey("regionalProfile.ageRangeDistribution")}</span>
+            <strong>{tKey("regionalProfile.helsinkiRegion")}</strong>
           </header>
           <div className="water-coverage-list regional-coverage-list">
             {ageStructureBreakdown.map((row) => (
               <article className={`water-coverage-row water-coverage-row-${row.tone}`} key={row.label}>
                 <div className="regional-coverage-row-meta">
-                  <strong style={{ fontSize: "0.9rem" }}>{t(row.label)}</strong>
+                  <strong style={{ fontSize: "0.9rem" }}>{dataLabel(row.label)}</strong>
                   <span>
                     {row.countLabel} ({row.value}%)
                   </span>
@@ -251,7 +251,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
         {/* Tracked Fields Card */}
         <article className="water-glass-panel water-field-panel">
           <header>
-            <span>{t("Tracked Fields")}</span>
+            <span>{tKey("regionalProfile.trackedFields")}</span>
             <strong>{keyDataItems.length}</strong>
           </header>
           <div className="water-field-grid regional-field-grid">
@@ -261,7 +261,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                   {FIELD_ICONS[field] ?? "dataset"}
                 </span>
                 <div className="regional-field-card-text">
-                  <strong>{t(formatDataItemLabel(field))}</strong>
+                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>
@@ -269,16 +269,16 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           </div>
 
           <div className="regional-source-status-box">
-            <span>{t("Source state")}</span>
+            <span>{tKey("regionalProfile.sourceState")}</span>
             <div className="regional-source-status-row">
-              <span>StatFi: {t("live")}</span>
-              <span>Sotkanet: {t("live")}</span>
+              <span>StatFi: {enumLabel("live")}</span>
+              <span>Sotkanet: {enumLabel("live")}</span>
             </div>
           </div>
         </article>
       </section>
 
-      <section className="water-summary-strip" aria-label={t("Regional profile summary metrics")}>
+      <section className="water-summary-strip" aria-label={tKey("regionalProfile.summaryMetrics")}>
         {signalMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
             <DataLabelWithHelp
@@ -289,36 +289,36 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                 t,
               })}
             >
-              {t(metric.label)}
+              {dataLabel(metric.label)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
+            <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="water-main-grid" aria-label={t("Regional profile comparative analysis")}>
+      <section className="water-main-grid" aria-label={tKey("regionalProfile.comparativeAnalysis")}>
         <article className="water-glass-panel water-signal-panel">
           <header>
             <div>
-              <span>{t("Comparative Matrix")}</span>
-              <h3>{t("Municipal and health metrics comparison across Finland major cities")}</h3>
+              <span>{tKey("regionalProfile.comparativeMatrix")}</span>
+              <h3>{tKey("regionalProfile.comparativeMatrixLead")}</h3>
             </div>
-            <strong>{cityComparisonRows.length} {t("cities")}</strong>
+            <strong>{cityComparisonRows.length} {tKey("regionalProfile.cities")}</strong>
           </header>
 
           <div className="regional-table-wrapper">
             <table className="regional-table">
               <thead>
                 <tr>
-                  <th>{t("City")}</th>
-                  <th>{t("Population")}</th>
-                  <th>{t("Growth")}</th>
-                  <th>{t("Household Income")}</th>
-                  <th>{t("Employment Rate")}</th>
+                  <th>{tKey("regionalProfile.city")}</th>
+                  <th>{tKey("regionalProfile.population")}</th>
+                  <th>{tKey("regionalProfile.growth")}</th>
+                  <th>{tKey("regionalProfile.householdIncome")}</th>
+                  <th>{tKey("regionalProfile.employmentRate")}</th>
                   <th>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      {t("Morbidity Score")}
-                      <DataHelpIcon text={t("lower is healthier")} />
+                      {tKey("regionalProfile.morbidityScore")}
+                      <DataHelpIcon text={tKey("regionalProfile.lowerIsHealthier")} />
                     </div>
                   </th>
                 </tr>
@@ -368,9 +368,9 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, t)}</span>
+                  <span>{formatMetricValue(metric, tKey)}</span>
                 </div>
-                <p>{metric.detail ?? t("This regional profile signal is currently mapped in background.")}</p>
+                <p>{metric.detail ?? tKey("regionalProfile.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
                   <span style={{ width: `${progressFromTone(metricTone(metric))}%` }} />
                 </span>
@@ -382,17 +382,17 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
         <div className="water-side-grid">
           <article className="water-glass-panel water-source-panel">
             <header>
-              <span>{t("Regional Profile")}</span>
-              <strong>{readySources}/{category.sources.length} {t("ready")}</strong>
+              <span>{tKey("regionalProfile.title")}</span>
+              <strong>{readySources}/{category.sources.length} {tKey("regionalProfile.ready")}</strong>
             </header>
             <div className="water-source-facts">
-              <span>{totalDatasetsCount || 5} {t("datasets")}</span>
-              <span>{t("daily sync")}</span>
+              <span>{totalDatasetsCount || 5} {tKey("regionalProfile.datasetsLower")}</span>
+              <span>{tKey("regionalProfile.dailySync")}</span>
               <span>CC BY 4.0</span>
             </div>
-            <p>{t("Statistics Finland & THL public data registers.")}</p>
+            <p>{tKey("regionalProfile.publicDataRegisters")}</p>
             <a href="https://stat.fi/en" rel="noreferrer" target="_blank">
-              {t("StatFi documentation")}
+              {tKey("regionalProfile.statFiDocumentation")}
             </a>
           </article>
 
@@ -405,7 +405,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                   t,
                 })}
               >
-                {t("Indicators Table Volume")}
+                {tKey("regionalProfile.indicatorsTableVolume")}
               </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
@@ -428,8 +428,8 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           {/* Public health index card */}
           <article className="water-glass-panel water-event-panel">
             <header>
-              <span>{t("Regional Morbidity Index (THL)")}</span>
-              <strong style={{ fontSize: "0.8rem", color: "var(--accent-green, #10b981)" }}>{t("lower is healthier")}</strong>
+              <span>{tKey("regionalProfile.regionalMorbidityIndex")}</span>
+              <strong style={{ fontSize: "0.8rem", color: "var(--accent-green, #10b981)" }}>{tKey("regionalProfile.lowerIsHealthier")}</strong>
             </header>
             <div className="regional-morbidity-box">
               <div className="regional-morbidity-header">
@@ -437,7 +437,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                 <span>-11.5% vs baseline</span>
               </div>
               <p className="regional-morbidity-desc">
-                {t("Morbidity score for the Helsinki-Uusimaa region is 88.5 points, placing it significantly healthier than the national average (baseline 100).")}
+                {tKey("regionalProfile.morbidityDescription")}
               </p>
               <div className="regional-morbidity-track">
                 <span className="regional-morbidity-bar" style={{ width: "88.5%" }} />
@@ -447,10 +447,10 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
         </div>
       </section>
 
-      <section className="water-provider-status" aria-label={t("Regional profile provider status")}>
+      <section className="water-provider-status" aria-label={tKey("regionalProfile.providerStatusAria")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("regionalProfile.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -464,11 +464,11 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Ingestion Sync")}: {t("daily")}
+            {tKey("regionalProfile.ingestionSync")}: {tKey("regionalProfile.daily")}
           </span>
           <i aria-hidden="true" />
           <span className="water-provider-coverage">
-            {t("Records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : t("planned")}
+            {tKey("regionalProfile.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : tKey("regionalProfile.planned")}
           </span>
         </div>
       </section>

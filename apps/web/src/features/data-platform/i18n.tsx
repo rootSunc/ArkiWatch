@@ -12,6 +12,8 @@ import linkedEventsEnMessages from "./messages/linkedEvents.en.json";
 import linkedEventsZhMessages from "./messages/linkedEvents.zh.json";
 import mobilityEnMessages from "./messages/mobility.en.json";
 import mobilityZhMessages from "./messages/mobility.zh.json";
+import regionalProfileEnMessages from "./messages/regionalProfile.en.json";
+import regionalProfileZhMessages from "./messages/regionalProfile.zh.json";
 import roadRailEnMessages from "./messages/roadRail.en.json";
 import roadRailZhMessages from "./messages/roadRail.zh.json";
 import shellEnMessages from "./messages/shell.en.json";
@@ -38,6 +40,7 @@ type StructuredMessages = {
   airQuality: Record<string, string>;
   linkedEvents: Record<string, string>;
   waterSnow: Record<string, string>;
+  regionalProfile: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -54,8 +57,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
