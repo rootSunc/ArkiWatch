@@ -27,10 +27,10 @@ type MobilityWorkspaceProps = {
 const MOBILITY_TABS: Array<{
   key: MobilityTabKey;
   icon: string;
-  label: string;
+  labelKey: string;
 }> = [
-  { key: "transit", icon: "directions_bus", label: "Transit" },
-  { key: "traffic", icon: "traffic", label: "Road & Rail" },
+  { key: "transit", icon: "directions_bus", labelKey: "transit" },
+  { key: "traffic", icon: "traffic", labelKey: "roadRail" },
 ];
 
 function mobilityTabCount(
@@ -55,16 +55,16 @@ export function MobilityWorkspace({
   transitCategory,
   transitHistory,
 }: MobilityWorkspaceProps) {
-  const { t } = useI18n();
+  const { tKey } = useI18n();
 
   return (
-    <section className="mobility-detail-page" aria-label={t("Mobility detail")}>
-      <nav className="mobility-tab-list" aria-label={t("Mobility workspace tabs")} role="tablist">
+    <section className="mobility-detail-page" aria-label={tKey("mobility.mobilityDetail")}>
+      <nav className="mobility-tab-list" aria-label={tKey("mobility.mobilityWorkspaceTabs")} role="tablist">
         {MOBILITY_TABS.map((tab) => {
           const count = mobilityTabCount(tab.key, transit, roadRail);
-          const tabLabel = t(tab.label);
+          const tabLabel = tKey(`mobility.${tab.labelKey}`);
           const countLabel =
-            count !== null ? `, ${count} ${t("active")}` : "";
+            count !== null ? `, ${count} ${tKey("mobility.active")}` : "";
 
           return (
             <button

@@ -1,0 +1,9 @@
+{
+  "mobility": {
+    "mobilityDetail": "Mobility detail",
+    "mobilityWorkspaceTabs": "Mobility workspace tabs",
+    "roadRail": "Road & Rail",
+    "transit": "Transit",
+    "active": "active"
+  }
+}

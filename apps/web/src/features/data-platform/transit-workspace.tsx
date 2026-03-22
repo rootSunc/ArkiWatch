@@ -70,13 +70,13 @@ const HSL_STOP_DETAILS: Record<string, { address: string; code: string; name: st
     zone: "B"
   }
 };
-const ALERT_FILTERS: Array<{ icon: string; key: TransitAlertFilter; label: string }> = [
-  { icon: "priority_high", key: "priority", label: "Priority" },
-  { icon: "radio_button_checked", key: "active", label: "Active" },
-  { icon: "schedule", key: "upcoming", label: "Upcoming" },
-  { icon: "warning", key: "high", label: "High" },
-  { icon: "route", key: "scoped", label: "Scoped" },
-  { icon: "view_list", key: "all", label: "All" }
+const ALERT_FILTERS: Array<{ icon: string; key: TransitAlertFilter; labelKey: string }> = [
+  { icon: "priority_high", key: "priority", labelKey: "priority" },
+  { icon: "radio_button_checked", key: "active", labelKey: "active" },
+  { icon: "schedule", key: "upcoming", labelKey: "upcoming" },
+  { icon: "warning", key: "high", labelKey: "high" },
+  { icon: "route", key: "scoped", labelKey: "scoped" },
+  { icon: "view_list", key: "all", labelKey: "all" }
 ];
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
@@ -87,9 +87,9 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
+function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not observed");
+    return tKey("transit.notObserved");
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
@@ -131,9 +131,9 @@ function liveStatusTone(status: string | null | undefined): "ready" | "stale" | 
   return "empty";
 }
 
-function exactObservedLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+function exactObservedLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not observed");
+    return tKey("transit.notObserved");
   }
 
   return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
@@ -166,17 +166,17 @@ function scopeFactsLabel(facts: TransitScopeFact[]): string {
     .join(" · ");
 }
 
-function stopFacts(stopId: string, t: (value: string) => string): TransitScopeFact[] {
+function stopFacts(stopId: string, tKey: (key: string) => string): TransitScopeFact[] {
   const stop = HSL_STOP_DETAILS[stopId];
   if (!stop) {
-    return [{ label: t("Stop ID"), value: stopId }];
+    return [{ label: tKey("transit.stopId"), value: stopId }];
   }
 
   return [
     { value: stop.address },
     { value: stop.code },
-    { label: t("Zone"), value: stop.zone },
-    { label: t("Stop ID"), value: stopId }
+    { label: tKey("transit.zone"), value: stop.zone },
+    { label: tKey("transit.stopId"), value: stopId }
   ];
 }
 
@@ -211,34 +211,34 @@ function uniqueScopeCount(alerts: TransitAlert[], field: "route_ids" | "stop_ids
   return new Set(alerts.flatMap((alert) => alert[field])).size;
 }
 
-function transitScopeMetrics(alerts: TransitAlert[], t: (value: string) => string): TransitScopeMetric[] {
+function transitScopeMetrics(alerts: TransitAlert[], tKey: (key: string) => string): TransitScopeMetric[] {
   const rows = [
     {
       key: "routes",
-      label: t("Routes"),
+      label: tKey("transit.routes"),
       count: uniqueScopeCount(alerts, "route_ids"),
-      detail: `${alerts.filter((alert) => alert.route_ids.length > 0).length} ${t("alerts")}`,
+      detail: `${alerts.filter((alert) => alert.route_ids.length > 0).length} ${tKey("transit.alerts")}`,
       tone: "warn" as TransitTone
     },
     {
       key: "stops",
-      label: t("Stops"),
+      label: tKey("transit.stops"),
       count: uniqueScopeCount(alerts, "stop_ids"),
-      detail: `${alerts.filter((alert) => alert.stop_ids.length > 0).length} ${t("alerts")}`,
+      detail: `${alerts.filter((alert) => alert.stop_ids.length > 0).length} ${tKey("transit.alerts")}`,
       tone: "bad" as TransitTone
     },
     {
       key: "trips",
-      label: t("Trips"),
+      label: tKey("transit.trips"),
       count: uniqueScopeCount(alerts, "trip_ids"),
-      detail: `${alerts.filter((alert) => alert.trip_ids.length > 0).length} ${t("alerts")}`,
+      detail: `${alerts.filter((alert) => alert.trip_ids.length > 0).length} ${tKey("transit.alerts")}`,
       tone: "good" as TransitTone
     },
     {
       key: "network",
-      label: t("Network-wide"),
+      label: tKey("transit.networkWide"),
       count: alerts.filter((alert) => !isScopedAlert(alert)).length,
-      detail: t("no ids attached"),
+      detail: tKey("transit.noIdsAttached"),
       tone: "neutral" as TransitTone
     }
   ];
@@ -250,9 +250,9 @@ function transitScopeMetrics(alerts: TransitAlert[], t: (value: string) => strin
   }));
 }
 
-function sourceRequestHost(endpoint: string | null, t: (value: string) => string): string {
+function sourceRequestHost(endpoint: string | null, tKey: (key: string) => string): string {
   if (!endpoint) {
-    return t("endpoint not recorded");
+    return tKey("transit.endpointNotRecorded");
   }
 
   try {
@@ -262,43 +262,43 @@ function sourceRequestHost(endpoint: string | null, t: (value: string) => string
   }
 }
 
-function effectLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
-  return value ? translateEnumLabel(language, value) : t("effect unavailable");
+function effectLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? translateEnumLabel(language, value) : tKey("transit.effectUnavailable");
 }
 
-function causeLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
-  return value ? translateEnumLabel(language, value) : t("cause unavailable");
+function causeLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? translateEnumLabel(language, value) : tKey("transit.causeUnavailable");
 }
 
-function scopeLabel(alert: TransitAlert, t: (value: string) => string): string {
+function scopeLabel(alert: TransitAlert, tKey: (key: string) => string): string {
   const scopes = [];
   if (alert.route_ids.length > 0) {
-    scopes.push(`${alert.route_ids.length} ${t("routes")}`);
+    scopes.push(`${alert.route_ids.length} ${tKey("transit.routes2")}`);
   }
   if (alert.stop_ids.length > 0) {
-    scopes.push(`${alert.stop_ids.length} ${t("stops")}`);
+    scopes.push(`${alert.stop_ids.length} ${tKey("transit.stops2")}`);
   }
   if (alert.trip_ids.length > 0) {
-    scopes.push(`${alert.trip_ids.length} ${t("trips")}`);
+    scopes.push(`${alert.trip_ids.length} ${tKey("transit.trips2")}`);
   }
 
-  return scopes.length > 0 ? scopes.join(" / ") : t("network-wide");
+  return scopes.length > 0 ? scopes.join(" / ") : tKey("transit.networkWide2");
 }
 
-function scopePreview(alert: TransitAlert, t: (value: string) => string): string {
+function scopePreview(alert: TransitAlert, tKey: (key: string) => string): string {
   const scopes = [];
   if (alert.route_ids.length > 0) {
-    scopes.push(`${t("routes")} ${alert.route_ids.slice(0, 4).join(", ")}${alert.route_ids.length > 4 ? " +" : ""}`);
+    scopes.push(`${tKey("transit.routes2")} ${alert.route_ids.slice(0, 4).join(", ")}${alert.route_ids.length > 4 ? " +" : ""}`);
   }
   if (alert.stop_ids.length > 0) {
     const stopNames = alert.stop_ids.slice(0, 3).map(stopLabel);
-    scopes.push(`${t("stops")} ${stopNames.join(", ")}${alert.stop_ids.length > 3 ? " +" : ""}`);
+    scopes.push(`${tKey("transit.stops2")} ${stopNames.join(", ")}${alert.stop_ids.length > 3 ? " +" : ""}`);
   }
   if (alert.trip_ids.length > 0) {
-    scopes.push(`${alert.trip_ids.length} ${t("trips")}`);
+    scopes.push(`${alert.trip_ids.length} ${tKey("transit.trips2")}`);
   }
 
-  return scopes.length > 0 ? scopes.join(" / ") : t("network-wide alert");
+  return scopes.length > 0 ? scopes.join(" / ") : tKey("transit.networkWideAlert");
 }
 
 function stageProgress(stage: TransitDataStage): number {
@@ -339,24 +339,24 @@ function filterAlerts(alerts: TransitAlert[], filter: TransitAlertFilter): Trans
   return alerts;
 }
 
-function filterEmptyMessage(filter: TransitAlertFilter, t: (value: string) => string): string {
+function filterEmptyMessage(filter: TransitAlertFilter, tKey: (key: string) => string): string {
   if (filter === "priority") {
-    return t("No priority transit alerts are active or upcoming.");
+    return tKey("transit.noPriorityTransitAlertsAreActiveOrUpcoming");
   }
   if (filter === "active") {
-    return t("No transit alerts are active right now.");
+    return tKey("transit.noTransitAlertsAreActiveRightNow");
   }
   if (filter === "upcoming") {
-    return t("No upcoming transit alerts were normalized from the latest feed.");
+    return tKey("transit.noUpcomingTransitAlertsWereNormalizedFromTheLatestFeed");
   }
   if (filter === "high") {
-    return t("No high-severity transit alerts were normalized from the latest feed.");
+    return tKey("transit.noHighSeverityTransitAlertsWereNormalizedFromTheLatestFeed");
   }
   if (filter === "scoped") {
-    return t("No route, stop, or trip-scoped transit alerts were normalized.");
+    return tKey("transit.noRouteStopOrTripScopedTransitAlertsWereNormalized");
   }
 
-  return t("No transit alerts were normalized from the latest HSL feed.");
+  return tKey("transit.noTransitAlertsWereNormalizedFromTheLatestHslFeed");
 }
 
 function activeAlertTone(activeAlerts: TransitAlert[], allAlerts: TransitAlert[]): TransitTone {
@@ -373,19 +373,19 @@ function highestSeverityLabel(alerts: TransitAlert[]): string {
   return SEVERITY_LABELS.find((severity) => alerts.some((alert) => alert.severity.toUpperCase() === severity)) ?? "NONE";
 }
 
-function nextActiveEndLabel(activeAlerts: TransitAlert[], language: LanguageMode, t: (value: string) => string): string {
+function nextActiveEndLabel(activeAlerts: TransitAlert[], language: LanguageMode, tKey: (key: string) => string): string {
   if (activeAlerts.length === 0) {
-    return t("no active window");
+    return tKey("transit.noActiveWindow");
   }
 
   const nextEndingAlert = [...activeAlerts].sort(
     (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
   )[0];
 
-  return `${t("until")} ${formatCompactTime(nextEndingAlert.ends_at, language, t)}`;
+  return `${tKey("transit.until")} ${formatCompactTime(nextEndingAlert.ends_at, language, tKey)}`;
 }
 
-function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[], t: (value: string) => string) {
+function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[], tKey: (key: string) => string) {
   const highActive = activeAlerts.filter(isHighSeverity).length;
   const highUpcoming = allAlerts.filter((alert) => !alert.active && isHighSeverity(alert)).length;
 
@@ -393,7 +393,7 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
     return {
       detail: `${highActive} high-severity alert${highActive === 1 ? "" : "s"} active now across the HSL feed.`,
       icon: "warning",
-      title: t("High impact active")
+      title: tKey("transit.highImpactActive")
     };
   }
 
@@ -401,7 +401,7 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
     return {
       detail: `${activeAlerts.length} active alert${activeAlerts.length === 1 ? "" : "s"} may affect route choice or timing.`,
       icon: "directions_bus",
-      title: t("Service alerts active")
+      title: tKey("transit.serviceAlertsActive")
     };
   }
 
@@ -409,14 +409,14 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
     return {
       detail: `${highUpcoming} high-severity alert${highUpcoming === 1 ? "" : "s"} are scheduled or pending in the feed.`,
       icon: "schedule",
-      title: t("High impact upcoming")
+      title: tKey("transit.highImpactUpcoming")
     };
   }
 
   return {
-    detail: allAlerts.length > 0 ? t("No active alerts right now; monitor upcoming feed items.") : t("No active service alerts in the latest HSL feed."),
+    detail: allAlerts.length > 0 ? tKey("transit.noActiveAlertsRightNowMonitorUpcomingFeedItems") : tKey("transit.noActiveServiceAlertsInTheLatestHslFeed"),
     icon: "check_circle",
-    title: t("Network clear")
+    title: tKey("transit.networkClear")
   };
 }
 
@@ -456,24 +456,24 @@ function alertTimelineBounds(alerts: TransitAlert[], nowTimestamp: number): { st
   };
 }
 
-function scopeSummary(alert: TransitAlert, t: (value: string) => string): string {
+function scopeSummary(alert: TransitAlert, tKey: (key: string) => string): string {
   const scopes = [
-    alert.route_ids.length > 0 ? `${alert.route_ids.length} ${t("routes")}` : null,
-    alert.stop_ids.length > 0 ? `${alert.stop_ids.length} ${t("stops")}` : null,
-    alert.trip_ids.length > 0 ? `${alert.trip_ids.length} ${t("trips")}` : null
+    alert.route_ids.length > 0 ? `${alert.route_ids.length} ${tKey("transit.routes2")}` : null,
+    alert.stop_ids.length > 0 ? `${alert.stop_ids.length} ${tKey("transit.stops2")}` : null,
+    alert.trip_ids.length > 0 ? `${alert.trip_ids.length} ${tKey("transit.trips2")}` : null
   ].filter((item): item is string => item !== null);
 
-  return scopes.length > 0 ? scopes.join(" / ") : t("network-wide");
+  return scopes.length > 0 ? scopes.join(" / ") : tKey("transit.networkWide2");
 }
 
-function detailScopeItems(alert: TransitAlert, t: (value: string) => string): TransitScopeDetailItem[] {
+function detailScopeItems(alert: TransitAlert, tKey: (key: string) => string): TransitScopeDetailItem[] {
   return [
     {
       key: "routes",
-      label: t("Routes affected"),
+      label: tKey("transit.routesAffected"),
       icon: "route",
       values: alert.route_ids.map((routeId) => {
-        const facts = [{ label: t("Route ID"), value: routeId }];
+        const facts = [{ label: tKey("transit.routeId"), value: routeId }];
         return {
           id: routeId,
           label: routeId,
@@ -481,14 +481,14 @@ function detailScopeItems(alert: TransitAlert, t: (value: string) => string): Tr
           meta: scopeFactsLabel(facts)
         };
       }),
-      empty: t("No routes attached")
+      empty: tKey("transit.noRoutesAttached")
     },
     {
       key: "stops",
-      label: t("Stops affected"),
+      label: tKey("transit.stopsAffected"),
       icon: "pin_drop",
       values: alert.stop_ids.map((stopId) => {
-        const facts = stopFacts(stopId, t);
+        const facts = stopFacts(stopId, tKey);
         return {
           id: stopId,
           label: stopLabel(stopId),
@@ -496,14 +496,14 @@ function detailScopeItems(alert: TransitAlert, t: (value: string) => string): Tr
           meta: scopeFactsLabel(facts)
         };
       }),
-      empty: t("No stops attached")
+      empty: tKey("transit.noStopsAttached")
     },
     {
       key: "trips",
-      label: t("Trips affected"),
+      label: tKey("transit.tripsAffected"),
       icon: "confirmation_number",
       values: alert.trip_ids.map((tripId) => {
-        const facts = [{ label: t("Trip ID"), value: tripId }];
+        const facts = [{ label: tKey("transit.tripId"), value: tripId }];
         return {
           id: tripId,
           label: tripId,
@@ -511,7 +511,7 @@ function detailScopeItems(alert: TransitAlert, t: (value: string) => string): Tr
           meta: scopeFactsLabel(facts)
         };
       }),
-      empty: t("No trips attached")
+      empty: tKey("transit.noTripsAttached")
     }
   ];
 }
@@ -561,18 +561,18 @@ function transitHistoryPoints(
 function TransitAlertStatusBadge({
   alert,
   language,
-  t
+  tKey,
 }: {
   alert: TransitAlert;
   language: LanguageMode;
-  t: (value: string) => string;
+  tKey: (key: string) => string;
 }) {
   return (
     <span className={alert.active ? "transit-alert-status transit-alert-status-active" : "transit-alert-status"}>
       <span className="material-symbols-outlined" aria-hidden="true">
         {alert.active ? "radio_button_checked" : "schedule"}
       </span>
-      <span>{alert.active ? t("ACTIVE NOW") : formatCompactTime(alert.starts_at, language, t)}</span>
+      <span>{alert.active ? tKey("transit.activeNow") : formatCompactTime(alert.starts_at, language, tKey)}</span>
     </span>
   );
 }
@@ -581,28 +581,28 @@ function TransitAlertLiveLayer({
   alert,
   language,
   nowTimestamp,
-  t
+  tKey,
 }: {
   alert: TransitAlert;
   language: LanguageMode;
   nowTimestamp: number;
-  t: (value: string) => string;
+  tKey: (key: string) => string;
 }) {
   const progress = alertWindowProgress(alert, nowTimestamp);
 
   return (
     <section
       className={alert.active ? "transit-alert-live-layer transit-alert-live-layer-active" : "transit-alert-live-layer"}
-      aria-label={t("Alert status")}
+      aria-label={tKey("transit.alertStatus")}
     >
       <div className="transit-alert-live-copy">
-        <TransitAlertStatusBadge alert={alert} language={language} t={t} />
+        <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
         <div>
-          <strong>{alert.active ? t("In effect") : t("Scheduled")}</strong>
+          <strong>{alert.active ? tKey("transit.inEffect") : tKey("transit.scheduled")}</strong>
           <span>
             {alert.active
-              ? `${t("until")} ${formatCompactTime(alert.ends_at, language, t)}`
-              : `${t("Starts")} ${formatCompactTime(alert.starts_at, language, t)}`}
+              ? `${tKey("transit.until")} ${formatCompactTime(alert.ends_at, language, tKey)}`
+              : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey)}`}
           </span>
         </div>
       </div>
@@ -611,12 +611,12 @@ function TransitAlertLiveLayer({
       </span>
       <dl className="transit-alert-live-facts">
         <div>
-          <dt>{t("Window")}</dt>
-          <dd>{formatCompactTime(alert.starts_at, language, t)} - {formatCompactTime(alert.ends_at, language, t)}</dd>
+          <dt>{tKey("transit.window")}</dt>
+          <dd>{formatCompactTime(alert.starts_at, language, tKey)} - {formatCompactTime(alert.ends_at, language, tKey)}</dd>
         </div>
         <div>
-          <dt>{t("Impact scope")}</dt>
-          <dd>{scopeSummary(alert, t)}</dd>
+          <dt>{tKey("transit.impactScope")}</dt>
+          <dd>{scopeSummary(alert, tKey)}</dd>
         </div>
       </dl>
     </section>
@@ -629,7 +629,7 @@ export function TransitWorkspace({
   history,
   transit,
 }: TransitWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, enumLabel } = useI18n();
   const [alertFilter, setAlertFilter] = useState<TransitAlertFilter>("priority");
   const [alertPage, setAlertPage] = useState(0);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
@@ -665,17 +665,17 @@ export function TransitWorkspace({
 
   if (!transit) {
     return (
-      <section className="transit-detail-empty" aria-label={t("Transit data unavailable")}>
-        <span>{t("Transit")}</span>
-        <h2>{t("Transit service alerts are not available yet")}</h2>
-        <p>{t("Digitransit/HSL service alert data has not arrived for the current platform window.")}</p>
+      <section className="transit-detail-empty" aria-label={tKey("transit.transitDataUnavailable")}>
+        <span>{tKey("transit.transit")}</span>
+        <h2>{tKey("transit.transitServiceAlertsAreNotAvailableYet")}</h2>
+        <p>{tKey("transit.digitransitHslServiceAlertDataHasNotArrivedForTheCurrentPlatformWindow")}</p>
       </section>
     );
   }
 
   const nowTimestamp = transitReferenceTimestamp(transit);
   const activeTone = activeAlertTone(activeAlerts, transit.alerts);
-  const riskState = transitRiskState(activeAlerts, transit.alerts, t);
+  const riskState = transitRiskState(activeAlerts, transit.alerts, tKey);
   const {
     currentPage: currentAlertPage,
     pageCount: alertPageCount,
@@ -688,42 +688,42 @@ export function TransitWorkspace({
   const timebandAlerts = pagedAlerts;
   const timebandBounds = alertTimelineBounds(timebandAlerts, nowTimestamp);
   const severityRows = severityDistribution(transit.alerts);
-  const scopeRows = transitScopeMetrics(transit.alerts, t);
+  const scopeRows = transitScopeMetrics(transit.alerts, tKey);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
   const historyPoints = transitHistoryPoints(history);
   const transitSummaryMetrics = [
-    ["active_alerts", "Active Now"],
-    ["high_severity", "High Severity"],
-    ["disruptions", "Disruptions"],
-    ["delays", "Delays"],
-    ["route_scoped", "Route Scoped"],
-    ["raw_alerts", "Raw Feed"]
+    ["active_alerts", "activeNowSummary"],
+    ["high_severity", "highSeverity"],
+    ["disruptions", "disruptions"],
+    ["delays", "delays"],
+    ["route_scoped", "routeScopedSummary"],
+    ["raw_alerts", "rawFeed"],
   ];
   const liveTone = liveStatusTone(transit.status);
 
   return (
-    <section className="transit-detail-page" aria-label={t("Transit detail")}>
+    <section className="transit-detail-page" aria-label={tKey("transit.transitDetail")}>
       <div className="transit-detail-header">
         <div>
-          <h2>{t("Helsinki Transit Service Alerts")}</h2>
+          <h2>{tKey("transit.helsinkiTransitServiceAlerts")}</h2>
           <div className={`transit-live-status transit-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{transit.status === "ready" ? t("HSL Feed Active") : t("Feed Delayed")}</strong>
+            <strong>{transit.status === "ready" ? tKey("transit.hslFeedActive") : tKey("transit.feedDelayed")}</strong>
           </div>
         </div>
-        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, t)}</div>
+        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey)}</div>
       </div>
 
-      <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={t("Transit alert condition")}>
+      <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={tKey("transit.transitAlertCondition")}>
         <div className="transit-command-status">
           <span className="material-symbols-outlined transit-condition-icon" aria-hidden="true">
             {riskState.icon}
           </span>
           <div>
             <div className="transit-card-kicker">
-              <span>{t("Current Transit Risk")}</span>
-              <time>{exactObservedLabel(transit.observed_at, language, t)}</time>
+              <span>{tKey("transit.currentTransitRisk")}</span>
+              <time>{exactObservedLabel(transit.observed_at, language, tKey)}</time>
             </div>
             <strong>{transit.quality.active_alert_count}</strong>
             <p>
@@ -735,52 +735,52 @@ export function TransitWorkspace({
 
         <div className="transit-command-facts">
           <div>
-            <span>{t("Highest Severity")}</span>
-            <strong>{t(highestSeverityLabel(transit.alerts))}</strong>
+            <span>{tKey("transit.highestSeverity")}</span>
+            <strong>{enumLabel(highestSeverityLabel(transit.alerts))}</strong>
           </div>
           <div>
-            <span>{t("Next Clear")}</span>
-            <strong>{nextActiveEndLabel(activeAlerts, language, t)}</strong>
+            <span>{tKey("transit.nextClear")}</span>
+            <strong>{nextActiveEndLabel(activeAlerts, language, tKey)}</strong>
           </div>
           <div>
-            <span>{t("Scoped Impact")}</span>
-            <strong>{metricValue(transit, "route_scoped")} {t("routes")} / {metricValue(transit, "stop_scoped")} {t("stops")}</strong>
+            <span>{tKey("transit.scopedImpact")}</span>
+            <strong>{metricValue(transit, "route_scoped")} {tKey("transit.routes2")} / {metricValue(transit, "stop_scoped")} {tKey("transit.stops2")}</strong>
           </div>
           <div>
-            <span>{t("Coverage")}</span>
+            <span>{tKey("transit.coverage")}</span>
             <strong>{formatNumber(transit.quality.field_coverage_pct)}%</strong>
           </div>
         </div>
       </section>
 
-      <section className="transit-summary-strip" aria-label={t("Transit summary metrics")}>
-        {transitSummaryMetrics.map(([key, label]) => (
+      <section className="transit-summary-strip" aria-label={tKey("transit.transitSummaryMetrics")}>
+        {transitSummaryMetrics.map(([key, labelKey]) => (
           <article className="transit-glass-panel" key={key}>
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key,
-                label,
+                label: tKey(`transit.${labelKey}`),
                 t,
               })}
             >
-              {t(label)}
+              {tKey(`transit.${labelKey}`)}
             </DataLabelWithHelp>
             <strong>{metricValue(transit, key)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="transit-main-grid" aria-label={t("Transit alert analytics")}>
+      <section className="transit-main-grid" aria-label={tKey("transit.transitAlertAnalytics")}>
         <article className="transit-glass-panel transit-alert-panel">
           <header>
             <div>
-              <span>{t("Incident Timeline")}</span>
-              <h3>{t("Active and upcoming service alerts")}</h3>
+              <span>{tKey("transit.incidentTimeline")}</span>
+              <h3>{tKey("transit.activeAndUpcomingServiceAlerts")}</h3>
             </div>
-            <strong>{filteredAlerts.length} {t("alerts")}</strong>
+            <strong>{filteredAlerts.length} {tKey("transit.alerts")}</strong>
           </header>
           <div className="transit-alert-toolbar">
-            <div className="transit-alert-filters" aria-label={t("Transit alert filters")}>
+            <div className="transit-alert-filters" aria-label={tKey("transit.transitAlertFilters")}>
               {ALERT_FILTERS.map((filter) => (
                 <button
                   aria-pressed={alertFilter === filter.key}
@@ -792,7 +792,7 @@ export function TransitWorkspace({
                   <span className="material-symbols-outlined" aria-hidden="true">
                     {filter.icon}
                   </span>
-                  <span>{t(filter.label)}</span>
+                  <span>{tKey(`transit.${filter.labelKey}`)}</span>
                 </button>
               ))}
             </div>
@@ -800,9 +800,9 @@ export function TransitWorkspace({
           <div className="transit-alert-layout">
             <div className="transit-alert-list-column">
               {timebandAlerts.length > 0 && timebandBounds ? (
-                <div className="transit-timeband-panel" aria-label={t("Transit alert time windows")}>
+                <div className="transit-timeband-panel" aria-label={tKey("transit.transitAlertTimeWindows")}>
                   <header>
-                    <span>{t("Time Windows")}</span>
+                    <span>{tKey("transit.timeWindows")}</span>
                     <strong>{timebandAlerts.length}</strong>
                   </header>
                   <div className="transit-timeband-list">
@@ -814,7 +814,7 @@ export function TransitWorkspace({
                       const width = Math.max(4, right - left);
                       return (
                         <article className={`transit-timeband-row transit-timeband-row-${severityTone(alert.severity)}`} key={alert.id}>
-                          <TransitAlertStatusBadge alert={alert} language={language} t={t} />
+                          <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
                           <i aria-hidden="true">
                             <span
                               style={
@@ -825,7 +825,7 @@ export function TransitWorkspace({
                               }
                             />
                           </i>
-                          <strong>{scopeLabel(alert, t)}</strong>
+                          <strong>{scopeLabel(alert, tKey)}</strong>
                         </article>
                       );
                     })}
@@ -847,12 +847,12 @@ export function TransitWorkspace({
                       <div className="transit-alert-main">
                         <div>
                           <div className="transit-alert-time-row">
-                            <TransitAlertStatusBadge alert={alert} language={language} t={t} />
-                            <span>{t(alert.severity)}</span>
+                            <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
+                            <span>{enumLabel(alert.severity)}</span>
                           </div>
                           <strong>{alert.title}</strong>
                           <p>{alert.description}</p>
-                          <small className="transit-alert-scope-preview">{scopePreview(alert, t)}</small>
+                          <small className="transit-alert-scope-preview">{scopePreview(alert, tKey)}</small>
                         </div>
                         <em>{eventTypeLabel(alert.event_type)}</em>
                       </div>
@@ -860,15 +860,15 @@ export function TransitWorkspace({
                         <span style={{ width: `${alertWindowProgress(alert, nowTimestamp)}%` }} />
                       </span>
                       <div className="transit-alert-meta">
-                        <span>{causeLabel(alert.cause, language, t)}</span>
-                        <span>{effectLabel(alert.effect, language, t)}</span>
-                        <span>{scopeLabel(alert, t)}</span>
-                        <span>{t("until")} {formatCompactTime(alert.ends_at, language, t)}</span>
+                        <span>{causeLabel(alert.cause, language, tKey)}</span>
+                        <span>{effectLabel(alert.effect, language, tKey)}</span>
+                        <span>{scopeLabel(alert, tKey)}</span>
+                        <span>{tKey("transit.until")} {formatCompactTime(alert.ends_at, language, tKey)}</span>
                       </div>
                     </button>
                   ))
                 ) : (
-                  <p>{filterEmptyMessage(alertFilter, t)}</p>
+                  <p>{filterEmptyMessage(alertFilter, tKey)}</p>
                 )}
               </div>
               <IncidentTimelinePager
@@ -880,34 +880,34 @@ export function TransitWorkspace({
                 visibleCount={pagedAlerts.length}
               />
             </div>
-            <aside className="transit-alert-inspector" aria-label={t("Incident details")}>
+            <aside className="transit-alert-inspector" aria-label={tKey("transit.incidentDetails")}>
               {selectedAlert ? (
                 <section className={`transit-alert-detail transit-alert-detail-${severityTone(selectedAlert.severity)}`}>
                   <header>
                     <div>
-                      <TransitAlertStatusBadge alert={selectedAlert} language={language} t={t} />
+                      <TransitAlertStatusBadge alert={selectedAlert} language={language} tKey={tKey} />
                       <strong>{selectedAlert.title}</strong>
                     </div>
-                    <em>{t(selectedAlert.severity)}</em>
+                    <em>{enumLabel(selectedAlert.severity)}</em>
                   </header>
                   <p>{selectedAlert.description}</p>
-                  <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} t={t} />
+                  <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} tKey={tKey} />
                   <div className="transit-alert-detail-meta">
                     <div>
-                      <span>{t("Type")}</span>
+                      <span>{tKey("transit.type")}</span>
                       <strong>{eventTypeLabel(selectedAlert.event_type)}</strong>
                     </div>
                     <div>
-                      <span>{t("Cause")}</span>
-                      <strong>{causeLabel(selectedAlert.cause, language, t)}</strong>
+                      <span>{tKey("transit.cause")}</span>
+                      <strong>{causeLabel(selectedAlert.cause, language, tKey)}</strong>
                     </div>
                     <div>
-                      <span>{t("Effect")}</span>
-                      <strong>{effectLabel(selectedAlert.effect, language, t)}</strong>
+                      <span>{tKey("transit.effect")}</span>
+                      <strong>{effectLabel(selectedAlert.effect, language, tKey)}</strong>
                     </div>
                   </div>
                   <div className="transit-alert-detail-scope">
-                    {detailScopeItems(selectedAlert, t).map((item) => (
+                    {detailScopeItems(selectedAlert, tKey).map((item) => (
                       <section key={item.key} className="transit-scope-group">
                         <header className="transit-scope-group-header">
                           <span className="material-symbols-outlined" aria-hidden="true">
@@ -951,11 +951,11 @@ export function TransitWorkspace({
                 <section className="transit-alert-detail transit-alert-detail-empty">
                   <header>
                     <div>
-                      <span>{t("Incident details")}</span>
-                      <strong>{t("No selected event")}</strong>
+                      <span>{tKey("transit.incidentDetails")}</span>
+                      <strong>{tKey("transit.noSelectedEvent")}</strong>
                     </div>
                   </header>
-                  <p>{filterEmptyMessage(alertFilter, t)}</p>
+                  <p>{filterEmptyMessage(alertFilter, tKey)}</p>
                 </section>
               )}
             </aside>
@@ -963,7 +963,7 @@ export function TransitWorkspace({
         </article>
       </section>
 
-      <section className="transit-insight-grid" aria-label={t("Transit alert condition")}>
+      <section className="transit-insight-grid" aria-label={tKey("transit.transitAlertCondition")}>
         <article className="transit-glass-panel transit-severity-panel">
           <header>
             <DataLabelWithHelp
@@ -973,14 +973,14 @@ export function TransitWorkspace({
                 t,
               })}
             >
-              {t("Severity Mix")}
+              {tKey("transit.severityMix")}
             </DataLabelWithHelp>
             <strong>{transit.alerts.length}</strong>
           </header>
           <div className="transit-severity-bars">
             {severityRows.map((row) => (
               <div className={`transit-severity-row transit-severity-row-${severityTone(row.severity)}`} key={row.severity}>
-                <span>{t(row.severity)}</span>
+                <span>{enumLabel(row.severity)}</span>
                 <i aria-hidden="true">
                   <span style={{ width: `${row.width}%` }} />
                 </i>
@@ -998,7 +998,7 @@ export function TransitWorkspace({
                 t,
               })}
             >
-              {t("Alert Scope")}
+              {tKey("transit.alertScope")}
             </DataLabelWithHelp>
             <strong>{transit.quality.field_coverage_pct.toFixed(0)}%</strong>
           </header>
@@ -1011,10 +1011,10 @@ export function TransitWorkspace({
                   t,
                 })}
               >
-                {t("Route scoped")}
+                {tKey("transit.routeScoped")}
               </DataLabelWithHelp>
               <strong>{transit.quality.route_alert_count}</strong>
-              <small>{t("alerts include route ids")}</small>
+              <small>{tKey("transit.alertsIncludeRouteIds")}</small>
             </article>
             <article>
               <DataLabelWithHelp
@@ -1024,10 +1024,10 @@ export function TransitWorkspace({
                   t,
                 })}
               >
-                {t("Stop scoped")}
+                {tKey("transit.stopScoped")}
               </DataLabelWithHelp>
               <strong>{transit.quality.stop_alert_count}</strong>
-              <small>{t("alerts include stop ids")}</small>
+              <small>{tKey("transit.alertsIncludeStopIds")}</small>
             </article>
             <article>
               <DataLabelWithHelp
@@ -1037,10 +1037,10 @@ export function TransitWorkspace({
                   t,
                 })}
               >
-                {t("Raw decoded")}
+                {tKey("transit.rawDecoded")}
               </DataLabelWithHelp>
               <strong>{transit.quality.raw_alert_count}</strong>
-              <small>{t("GTFS-RT alert entities")}</small>
+              <small>{tKey("transit.gtfsRtAlertEntities")}</small>
             </article>
             <article>
               <DataLabelWithHelp
@@ -1050,13 +1050,13 @@ export function TransitWorkspace({
                   t,
                 })}
               >
-                {t("Normalized")}
+                {tKey("transit.normalized")}
               </DataLabelWithHelp>
               <strong>{transit.quality.normalized_event_count}</strong>
-              <small>{t("stored event rows")}</small>
+              <small>{tKey("transit.storedEventRows")}</small>
             </article>
           </div>
-          <div className="transit-scope-bars" aria-label={t("Transit affected scope distribution")}>
+          <div className="transit-scope-bars" aria-label={tKey("transit.transitAffectedScopeDistribution")}>
             {scopeRows.map((row) => (
               <article className={`transit-scope-bar transit-scope-bar-${row.tone}`} key={row.key}>
                 <div>
@@ -1075,19 +1075,19 @@ export function TransitWorkspace({
 
       <TrendChart
         className="transit-glass-panel"
-        emptyMessage={t("No daily transit alert history is available.")}
-        eyebrow={`${historyPoints.length}D ${t("HISTORY")}`}
+        emptyMessage={tKey("transit.noDailyTransitAlertHistoryIsAvailable")}
+        eyebrow={`${historyPoints.length}D ${tKey("transit.history")}`}
         maximumFractionDigits={0}
         points={historyPoints}
-        title={t("Daily Alert Event Trend")}
+        title={tKey("transit.dailyAlertEventTrend")}
         tone={activeTone}
-        unit={t("events")}
+        unit={tKey("transit.events")}
       />
 
-      <section className={`transit-provider-status transit-provider-status-${liveTone}`} aria-label={t("Transit provider status")}>
+      <section className={`transit-provider-status transit-provider-status-${liveTone}`} aria-label={tKey("transit.transitProviderStatus")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("transit.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -1101,22 +1101,22 @@ export function TransitWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {exactObservedLabel(transit.observed_at, language, t)}
+            {tKey("transit.lastSync")}: {exactObservedLabel(transit.observed_at, language, tKey)}
           </span>
           <i aria-hidden="true" />
-          <span className="transit-provider-coverage">{t("Coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>
+          <span className="transit-provider-coverage">{tKey("transit.coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>
         </div>
       </section>
 
       <p className="transit-detail-freshness">
-        {transit.summary ?? category?.description ?? t("Latest normalized HSL transit service alert signals.")}
+        {transit.summary ?? category?.description ?? tKey("transit.latestNormalizedHslTransitServiceAlertSignals")}
       </p>
 
       <details className="transit-glass-panel transit-diagnostics-panel">
         <summary>
           <div>
-            <span>{t("Diagnostics")}</span>
-            <strong>{readyPipelineCount}/{transit.data_pipeline.length} {t("stages")} · {fetchedSourceCount}/{transit.source_requests.length} {t("sources")}</strong>
+            <span>{tKey("transit.diagnostics")}</span>
+            <strong>{readyPipelineCount}/{transit.data_pipeline.length} {tKey("transit.stages")} · {fetchedSourceCount}/{transit.source_requests.length} {tKey("transit.sources")}</strong>
           </div>
           <span className="material-symbols-outlined" aria-hidden="true">
             expand_more
@@ -1125,7 +1125,7 @@ export function TransitWorkspace({
         <div className="transit-diagnostics-body">
           <section className="transit-diagnostic-section transit-pipeline-panel">
             <header>
-              <span>{t("Pipeline")}</span>
+              <span>{tKey("transit.pipeline")}</span>
               <strong>{readyPipelineCount}/{transit.data_pipeline.length}</strong>
             </header>
             <div>
@@ -1133,11 +1133,11 @@ export function TransitWorkspace({
                 <article className={`transit-stage transit-stage-${statusTone(stage.status)}`} key={stage.key}>
                   <div>
                     <strong>{stage.label}</strong>
-                    <span>{t(stage.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
                     {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${t("records")}` : ""}
+                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("transit.records")}` : ""}
                   </p>
                   <span className="transit-stage-meter" aria-hidden="true">
                     <span style={{ width: `${stageProgress(stage)}%` }} />
@@ -1149,7 +1149,7 @@ export function TransitWorkspace({
 
           <section className="transit-diagnostic-section transit-source-panel">
             <header>
-              <span>{t("Source Request")}</span>
+              <span>{tKey("transit.sourceRequest")}</span>
               <strong>{fetchedSourceCount}/{transit.source_requests.length}</strong>
             </header>
             <div>
@@ -1157,13 +1157,13 @@ export function TransitWorkspace({
                 <article className={`transit-request transit-request-${statusTone(request.status)}`} key={request.key}>
                   <div>
                     <strong>{request.label}</strong>
-                    <span>{t(request.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
-                    {sourceRequestHost(request.endpoint, t)}
-                    {request.fetched_at ? ` · ${t("fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
+                    {sourceRequestHost(request.endpoint, tKey)}
+                    {request.fetched_at ? ` · ${tKey("transit.fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
                   </p>
-                  <small>{request.content_type ?? t("content type unavailable")}</small>
+                  <small>{request.content_type ?? tKey("transit.contentTypeUnavailable")}</small>
                 </article>
               ))}
             </div>
@@ -1171,7 +1171,7 @@ export function TransitWorkspace({
 
           <section className="transit-diagnostic-section transit-quality-notes">
             <header>
-              <span>{t("Quality Notes")}</span>
+              <span>{tKey("transit.qualityNotes")}</span>
               <strong>{transit.quality.notes.length}</strong>
             </header>
             <div>

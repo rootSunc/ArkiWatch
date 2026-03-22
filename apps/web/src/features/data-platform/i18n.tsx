@@ -6,8 +6,12 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 import energyEnMessages from "./messages/energy.en.json";
 import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
+import mobilityEnMessages from "./messages/mobility.en.json";
+import mobilityZhMessages from "./messages/mobility.zh.json";
 import shellEnMessages from "./messages/shell.en.json";
 import shellZhMessages from "./messages/shell.zh.json";
+import transitEnMessages from "./messages/transit.en.json";
+import transitZhMessages from "./messages/transit.zh.json";
 import weatherEnMessages from "./messages/weather.en.json";
 import weatherZhMessages from "./messages/weather.zh.json";
 import zhMessages from "./messages/zh.json";
@@ -20,6 +24,8 @@ type StructuredMessages = {
   shell: Record<string, string>;
   weather: Record<string, string>;
   energy: Record<string, string>;
+  transit: Record<string, string>;
+  mobility: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -36,8 +42,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
