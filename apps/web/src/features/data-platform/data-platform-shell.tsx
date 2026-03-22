@@ -10,7 +10,7 @@ import {
   cityLabel,
   normalizeCityValue,
 } from "./city-scope";
-import { translateText } from "./i18n";
+import { translateMessageKey } from "./i18n";
 import type { LanguageMode } from "./i18n";
 import type {
   PlatformHistoryAvailabilityDay,
@@ -24,27 +24,27 @@ export type ThemeMode = "dark" | "light";
 
 export type NavItem = {
   key: string;
-  label: string;
+  labelKey: string;
   icon: string;
   categoryKey?: string;
 };
 
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { key: "today", label: "Today", icon: "calendar_today" },
-  { key: "overview", label: "Signals", icon: "hub" },
-  { key: "weather", label: "Weather", icon: "cloud", categoryKey: "weather" },
-  { key: "air", label: "Air Quality", icon: "air", categoryKey: "air" },
-  { key: "energy", label: "Energy", icon: "bolt", categoryKey: "energy" },
-  { key: "mobility", label: "Mobility", icon: "commute" },
+  { key: "today", labelKey: "navToday", icon: "calendar_today" },
+  { key: "overview", labelKey: "navSignals", icon: "hub" },
+  { key: "weather", labelKey: "navWeather", icon: "cloud", categoryKey: "weather" },
+  { key: "air", labelKey: "navAirQuality", icon: "air", categoryKey: "air" },
+  { key: "energy", labelKey: "navEnergy", icon: "bolt", categoryKey: "energy" },
+  { key: "mobility", labelKey: "navMobility", icon: "commute" },
   {
     key: "water",
-    label: "Water and Snow",
+    labelKey: "navWaterAndSnow",
     icon: "water_drop",
     categoryKey: "water",
   },
   {
     key: "events",
-    label: "Linked Events",
+    labelKey: "navLinkedEvents",
     icon: "event",
     categoryKey: "events",
   },
@@ -53,19 +53,19 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
 export const CATALOG_NAV_ITEMS: NavItem[] = [
   {
     key: "city_services",
-    label: "City Services",
+    labelKey: "navCityServices",
     icon: "location_city",
     categoryKey: "city_services",
   },
   {
     key: "geospatial",
-    label: "Geospatial Base",
+    labelKey: "navGeospatialBase",
     icon: "map",
     categoryKey: "geospatial",
   },
   {
     key: "regional_profile",
-    label: "Regional Profile",
+    labelKey: "navRegionalProfile",
     icon: "public",
     categoryKey: "regional_profile",
   },
@@ -88,9 +88,9 @@ export function NotificationButton({
 }) {
   const displayCount = count > 99 ? "99+" : String(count);
   const hasNotifications = count > 0;
-  const label = translateText(
+  const label = translateMessageKey(
     language,
-    hasNotifications ? "Open recent events" : "Open notifications",
+    hasNotifications ? "shell.openRecentEvents" : "shell.openNotifications",
   );
 
   return (
@@ -168,7 +168,7 @@ export function RefreshDataButton({
   language: LanguageMode;
   onRefresh: () => void;
 }) {
-  const label = translateText(language, "Refresh data");
+  const label = translateMessageKey(language, "shell.refreshData");
 
   return (
     <button
@@ -199,9 +199,9 @@ export function ThemeToggleButton({
   onToggle: () => void;
 }) {
   const isLightTheme = themeMode === "light";
-  const label = translateText(
+  const label = translateMessageKey(
     language,
-    isLightTheme ? "Switch to night theme" : "Switch to day theme",
+    isLightTheme ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
   );
 
   return (
@@ -251,7 +251,7 @@ export function CityScopeSelector({
   language: LanguageMode;
   onCityChange: (city: string) => void;
 }) {
-  const label = translateText(language, "City");
+  const label = translateMessageKey(language, "shell.city");
   const selectedCityLabel = cityLabel(city);
 
   return (
@@ -387,17 +387,17 @@ export function DateScopeSelector({
 }) {
   const controlRef = useRef<HTMLDivElement | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const label = translateText(language, "Selected date");
+  const label = translateMessageKey(language, "shell.selectedDate");
   const todayStr = todayDateValue();
   const displayValue = date ?? todayStr;
   const [visibleMonth, setVisibleMonth] = useState(() =>
     monthKeyFromDateValue(displayValue),
   );
   const isHistorical = date !== null;
-  const statusLabel = translateText(language, isHistorical ? "History" : "Live");
+  const statusLabel = translateMessageKey(language, isHistorical ? "shell.historyMode" : "shell.liveMode");
   const valueLabel = isHistorical
     ? formatDateScopeValue(displayValue, language)
-    : translateText(language, "Today");
+    : translateMessageKey(language, "shell.navToday");
   const compactValueLabel = isHistorical
     ? formatDateScopeValue(displayValue, language, false)
     : valueLabel;
@@ -503,13 +503,13 @@ export function DateScopeSelector({
       {date ? (
         <button
           className="date-scope-clear"
-          aria-label={translateText(language, "Return to Live")}
+          aria-label={translateMessageKey(language, "shell.returnToLive")}
           disabled={isPending}
           onClick={(event) => {
             event.preventDefault();
             onDateChange(null);
           }}
-          title={translateText(language, "Return to Live")}
+          title={translateMessageKey(language, "shell.returnToLive")}
           type="button"
         >
           <span className="material-symbols-outlined" aria-hidden="true">
@@ -528,16 +528,16 @@ export function DateScopeSelector({
         <div
           className="date-calendar-popover"
           role="dialog"
-          aria-label={translateText(language, "Available historical data")}
+          aria-label={translateMessageKey(language, "shell.availableHistoricalData")}
         >
           <div className="date-calendar-header">
             <strong>{formatMonthLabel(visibleMonth, language)}</strong>
             <div className="date-calendar-nav">
               <button
-                aria-label={translateText(language, "Previous month")}
+                aria-label={translateMessageKey(language, "shell.previousMonth")}
                 disabled={!canGoPrevious}
                 onClick={() => setVisibleMonth(previousMonth)}
-                title={translateText(language, "Previous month")}
+                title={translateMessageKey(language, "shell.previousMonth")}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
@@ -545,10 +545,10 @@ export function DateScopeSelector({
                 </span>
               </button>
               <button
-                aria-label={translateText(language, "Next month")}
+                aria-label={translateMessageKey(language, "shell.nextMonth")}
                 disabled={!canGoNext}
                 onClick={() => setVisibleMonth(nextMonth)}
-                title={translateText(language, "Next month")}
+                title={translateMessageKey(language, "shell.nextMonth")}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
@@ -571,7 +571,7 @@ export function DateScopeSelector({
               const cellLabel = hasData
                 ? `${formatDateScopeValue(cell.dateValue, language)}: ${
                     availabilityDay?.record_count ?? 0
-                  } ${translateText(language, "records")}`
+                  } ${translateMessageKey(language, "shell.records")}`
                 : formatDateScopeValue(cell.dateValue, language);
 
               return (
@@ -591,7 +591,7 @@ export function DateScopeSelector({
                   title={
                     hasData
                       ? `${cellLabel}`
-                      : `${cellLabel}: ${translateText(language, "No historical data")}`
+                      : `${cellLabel}: ${translateMessageKey(language, "shell.noHistoricalData")}`
                   }
                   type="button"
                 >
@@ -611,7 +611,7 @@ export function DateScopeSelector({
               }}
               type="button"
             >
-              {translateText(language, "Clear date")}
+              {translateMessageKey(language, "shell.clearDate")}
             </button>
             <button
               onClick={() => {
@@ -621,7 +621,7 @@ export function DateScopeSelector({
               }}
               type="button"
             >
-              {translateText(language, "Today")}
+              {translateMessageKey(language, "shell.navToday")}
             </button>
           </div>
         </div>
@@ -660,13 +660,13 @@ export function HistoricalWarningBanner({
       </span>
       <span className="historical-banner-text">
         <strong>
-          {translateText(language, "Viewing historical dashboard for")} {date}
+          {translateMessageKey(language, "shell.viewingHistoricalDashboardFor")} {date}
         </strong>
         <span>
           {windowLabel ??
-            translateText(
+            translateMessageKey(
               language,
-              "Data may not reflect the current real-time state.",
+              "shell.historicalDataDisclaimer",
             )}
         </span>
       </span>
@@ -678,7 +678,7 @@ export function HistoricalWarningBanner({
         <span className="material-symbols-outlined" aria-hidden="true">
           trending_flat
         </span>
-        {translateText(language, "Return to Live")}
+        {translateMessageKey(language, "shell.returnToLive")}
       </button>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   LanguageMode,
   translateDataLabel,
   translateEnumLabel,
-  translateText,
+  translateMessageKey,
 } from "./i18n";
 import type { MobilityTabKey } from "./mobility-workspace";
 import type {
@@ -20,20 +20,30 @@ import type {
   WeatherForecastResponse,
 } from "./types";
 
-const STATUS_LABELS: Record<string, string> = {
-  alert: "Alert",
-  background: "Catalog",
-  connected: "Active",
-  failing: "Alert",
-  healthy: "Healthy",
-  inactive: "Inactive",
-  pending: "Pending",
-  planned: "Planned",
-  stale: "Stale",
-  watch: "Watch",
+export const MOBILITY_NAV_KEY = "mobility";
+
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  alert: "statusAlert",
+  background: "statusCatalog",
+  connected: "statusActive",
+  failing: "statusAlert",
+  healthy: "statusHealthy",
+  inactive: "statusInactive",
+  pending: "statusPending",
+  planned: "statusPlanned",
+  stale: "statusStale",
+  watch: "statusWatch",
 };
 
-export const MOBILITY_NAV_KEY = "mobility";
+const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
+
+const CATEGORY_TITLE_KEYS: Record<string, string> = {
+  [MOBILITY_NAV_KEY]: "navMobility",
+  air: "navAirQuality",
+  traffic: "navRoadRail",
+  water: "navWaterAndSnow",
+  events: "navLinkedEvents",
+};
 
 function titleCase(value: string): string {
   return value
@@ -181,16 +191,16 @@ export function statusLabel(
   category: PlatformCategory,
   language: LanguageMode,
 ): string {
-  if (category.status in STATUS_LABELS) {
-    return translateText(language, STATUS_LABELS[category.status]);
+  if (category.status in STATUS_LABEL_KEYS) {
+    return translateMessageKey(language, `shell.${STATUS_LABEL_KEYS[category.status]}`);
   }
 
   if (
     category.stage &&
     category.stage !== "connected" &&
-    category.stage in STATUS_LABELS
+    category.stage in STATUS_LABEL_KEYS
   ) {
-    return translateText(language, STATUS_LABELS[category.stage]);
+    return translateMessageKey(language, `shell.${STATUS_LABEL_KEYS[category.stage]}`);
   }
 
   return translateEnumLabel(language, category.status);
@@ -272,37 +282,27 @@ function scoreLabel(
   fallback: string | null | undefined,
   language: LanguageMode,
 ): string {
-  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
   if (score === null || score === undefined) {
-    return fallback ? translateText(language, fallback) : "n/a";
+    return fallback
+      ? translateDataLabel(language, fallback)
+      : translateMessageKey(language, "shell.na");
   }
 
-  const label =
-    labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
-  return translateText(language, label);
+  const key =
+    SCORE_LABEL_KEYS[Math.min(Math.max(Math.round(score), 0), 5)] ?? "na";
+  return translateMessageKey(language, `shell.${key}`);
 }
 
 export function displayTitle(
   category: PlatformCategory,
   language: LanguageMode,
 ): string {
-  if (category.key === MOBILITY_NAV_KEY) {
-    return translateText(language, "Mobility");
-  }
-  if (category.key === "air") {
-    return translateText(language, "Air Quality");
-  }
-  if (category.key === "traffic") {
-    return translateText(language, "Road & Rail");
-  }
-  if (category.key === "water") {
-    return translateText(language, "Water & Snow");
-  }
-  if (category.key === "events") {
-    return translateText(language, "Linked Events");
+  const labelKey = CATEGORY_TITLE_KEYS[category.key];
+  if (labelKey) {
+    return translateMessageKey(language, `shell.${labelKey}`);
   }
 
-  return translateText(language, category.title);
+  return translateDataLabel(language, category.title);
 }
 
 export function matchesSearch(
@@ -371,7 +371,7 @@ export function signalReadout(
       weather?.checked_at ??
       metricByKey(category, "source_status")?.updated_at;
     return {
-      label: translateText(language, "Last Sync"),
+      label: translateMessageKey(language, "shell.lastSync"),
       value: generatedAt
         ? formatTimestamp(generatedAt, "dateTime", language)
         : formatMetricValue(metricByKey(category, "source_status")),
@@ -384,7 +384,7 @@ export function signalReadout(
   if (category.key === "air") {
     const score = airQuality?.worst_score;
     return {
-      label: translateText(language, "AQI Avg"),
+      label: translateMessageKey(language, "shell.aqiAvg"),
       value:
         score === null || score === undefined
           ? formatMetricValue(fallbackMetric(category))
@@ -407,13 +407,13 @@ export function signalReadout(
       (roadRail?.quality.raw_message_count ?? 0);
 
     return {
-      label: translateText(language, "Active Events"),
+      label: translateMessageKey(language, "shell.activeEventsLabel"),
       value:
         rawSignals > 0 || activeEvents > 0
           ? `${activeEvents}`
           : category.events.length > 0
             ? `${category.events.length}`
-            : translateText(language, "Nominal"),
+            : translateMessageKey(language, "shell.nominal"),
       progress:
         rawSignals > 0
           ? Math.max(12, Math.min(100, (activeEvents / rawSignals) * 100))
@@ -426,13 +426,13 @@ export function signalReadout(
 
   if (category.key === "transit") {
     return {
-      label: translateText(language, "Active Events"),
+      label: translateMessageKey(language, "shell.activeEventsLabel"),
       value:
         transit?.quality.active_alert_count !== undefined
           ? `${transit.quality.active_alert_count}`
           : category.events.length > 0
             ? `${category.events.length}`
-            : translateText(language, "Nominal"),
+            : translateMessageKey(language, "shell.nominal"),
       helpKey: "active_events",
       progress:
         transit?.quality.raw_alert_count !== undefined
@@ -454,13 +454,13 @@ export function signalReadout(
 
   if (category.key === "traffic") {
     return {
-      label: translateText(language, "Active Events"),
+      label: translateMessageKey(language, "shell.activeEventsLabel"),
       value:
         roadRail?.quality.active_event_count !== undefined
           ? `${roadRail.quality.active_event_count}`
           : category.events.length > 0
             ? `${category.events.length}`
-            : translateText(language, "Nominal"),
+            : translateMessageKey(language, "shell.nominal"),
       helpKey: "active_events",
       progress:
         roadRail?.quality.raw_message_count !== undefined
@@ -483,9 +483,9 @@ export function signalReadout(
   if (category.key === "energy") {
     const window = energy?.current_window;
     return {
-      label: translateText(
+      label: translateMessageKey(
         language,
-        window?.unit?.includes("kWh") ? "Best Price" : "Best Window",
+        window?.unit?.includes("kWh") ? "shell.bestPrice" : "shell.bestWindow",
       ),
       value:
         window !== null && window !== undefined
@@ -503,7 +503,7 @@ export function signalReadout(
   if (category.key === "events") {
     const freeMetric = metricByKey(category, "free_events");
     return {
-      label: translateText(language, "Upcoming Events"),
+      label: translateMessageKey(language, "shell.upcomingEvents"),
       value:
         category.events.length > 0
           ? `${category.events.length}`
@@ -520,8 +520,8 @@ export function signalReadout(
   const metric = fallbackMetric(category);
   return {
     label: metric?.label
-      ? translateText(language, metric.label)
-      : translateText(language, "Signal Level"),
+      ? translateDataLabel(language, metric.label)
+      : translateMessageKey(language, "shell.signalLevel"),
     value: formatMetricValue(metric),
     helpKey: metric?.key ?? "signal_level",
     progress: metric
@@ -558,7 +558,6 @@ export function eventTimeLabel(
   categories: PlatformCategory[],
   event: PlatformEvent,
   language: LanguageMode,
-  t: (value: string) => string,
 ): string {
   const startsAt = new Date(event.starts_at).getTime();
   const endsAt = new Date(event.ends_at).getTime();
@@ -567,11 +566,11 @@ export function eventTimeLabel(
 
   if (Number.isFinite(startsAt) && Number.isFinite(endsAt)) {
     if (startsAt <= now && endsAt >= now) {
-      return `${t("Ongoing until")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
+      return `${translateMessageKey(language, "shell.ongoingUntil")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
     }
 
     if (endsAt < now) {
-      return `${t("Ended")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
+      return `${translateMessageKey(language, "shell.ended")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
     }
   }
 
@@ -649,7 +648,7 @@ export function activeEventLabel(
   count: number,
   language: LanguageMode,
 ): string {
-  return `${count} ${translateText(language, count === 1 ? "active event" : "active events")}`;
+  return `${count} ${translateMessageKey(language, count === 1 ? "shell.activeEvent" : "shell.activeEvents")}`;
 }
 
 export function attributeLabel(key: string): string {

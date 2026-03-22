@@ -38,7 +38,7 @@ export function DataPlatformSideNav({
   themeMode,
   onToggleTheme,
 }: DataPlatformSideNavProps) {
-  const { t, tKey } = useI18n();
+  const { tKey } = useI18n();
   const themeActionLabel = tKey(
     themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
   );
@@ -74,47 +74,49 @@ export function DataPlatformSideNav({
         </button>
       </div>
 
-      <nav className="side-nav-list" aria-label={t("Signal navigation")}>
+      <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
         {PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
           const isActive =
             selectedNavKey === item.key ||
             (item.categoryKey != null && selectedNavKey === item.categoryKey);
+          const navLabel = tKey(`shell.${item.labelKey}`);
           return (
             <button
               className={isActive ? "nav-row nav-row-active" : "nav-row"}
               key={item.key}
               onClick={() => onSelectNavItem(item)}
-              title={t(item.label)}
+              title={navLabel}
               type="button"
             >
               <span className="material-symbols-outlined" aria-hidden="true">
                 {item.icon}
               </span>
-              <span>{t(item.label)}</span>
+              <span>{navLabel}</span>
             </button>
           );
         })}
       </nav>
 
       {CATALOG_NAV_ITEMS.some((item) => navItemAvailable(item, categories)) ? (
-        <nav className="side-nav-catalog" aria-label={t("Data catalog navigation")}>
+        <nav className="side-nav-catalog" aria-label={tKey("shell.dataCatalogNavigation")}>
           <span className="side-nav-catalog-label">{tKey("shell.dataCatalog")}</span>
           {CATALOG_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
             const isActive =
               selectedNavKey === item.key ||
               (item.categoryKey != null && selectedNavKey === item.categoryKey);
+            const navLabel = tKey(`shell.${item.labelKey}`);
             return (
               <button
                 className={isActive ? "nav-row nav-row-active" : "nav-row"}
                 key={item.key}
                 onClick={() => onSelectNavItem(item)}
-                title={t(item.label)}
+                title={navLabel}
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
                   {item.icon}
                 </span>
-                <span>{t(item.label)}</span>
+                <span>{navLabel}</span>
               </button>
             );
           })}

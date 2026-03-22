@@ -41,7 +41,6 @@ import {
 } from "./data-platform-topbars";
 import {
   I18nProvider,
-  translateDataLabel,
   translateMessageKey,
   translateText,
 } from "./i18n";
@@ -212,7 +211,6 @@ export function DataPlatformHome({
   const [isDateRefreshPending, startDateRefresh] = useTransition();
   const t = (value: string) => translateText(languageMode, value);
   const tKey = (key: string) => translateMessageKey(languageMode, key);
-  const dataLabel = (value: string | null | undefined) => translateDataLabel(languageMode, value);
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
     overview?.time_scope ??
@@ -1158,7 +1156,7 @@ export function DataPlatformHome({
                               </span>
                               <span className="events-panel-summary">
                                 {latestUnreadEvent
-                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode, t)} · ${latestUnreadEvent.title}`
+                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode)} · ${latestUnreadEvent.title}`
                                   : tKey("shell.noRecentEventsMatchTheCurrentView")}
                               </span>
                             </span>
@@ -1363,7 +1361,6 @@ export function DataPlatformHome({
                                         categories,
                                         event,
                                         languageMode,
-                                        t,
                                       )}
                                     </time>
                                     <span className="timeline-item-heading">
@@ -1460,13 +1457,13 @@ export function DataPlatformHome({
                     }
                     key={item.key}
                     onClick={() => selectNavItem(item)}
-                    title={dataLabel(item.label)}
+                    title={tKey(`shell.${item.labelKey}`)}
                     type="button"
                   >
                     <span className="material-symbols-outlined" aria-hidden="true">
                       {item.icon}
                     </span>
-                    <span>{dataLabel(item.label)}</span>
+                    <span>{tKey(`shell.${item.labelKey}`)}</span>
                   </button>
                 );
               })}
