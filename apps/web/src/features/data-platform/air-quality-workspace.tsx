@@ -51,20 +51,20 @@ type PollutantKey = "european_aqi" | "pm2_5" | "pm10" | "no2";
 
 type PollutantProfile = {
   key: PollutantKey;
-  label: string;
+  labelKey: string;
   unit: string;
   cautionValue: number;
   severeValue: number;
 };
 
-const SCORE_LABELS = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
+const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
 const SCORE_BUCKETS = [1, 2, 3, 4, 5];
 const SCORE_FIELD_KEYS: Array<keyof AirQualityStation> = ["score", "label"];
 const POLLUTANT_PROFILES: PollutantProfile[] = [
-  { key: "european_aqi", label: "European AQI", unit: "", cautionValue: 50, severeValue: 75 },
-  { key: "pm2_5", label: "PM2.5", unit: "ug/m3", cautionValue: 10, severeValue: 25 },
-  { key: "pm10", label: "PM10", unit: "ug/m3", cautionValue: 20, severeValue: 50 },
-  { key: "no2", label: "NO2", unit: "ug/m3", cautionValue: 40, severeValue: 100 }
+  { key: "european_aqi", labelKey: "europeanAqi", unit: "", cautionValue: 50, severeValue: 75 },
+  { key: "pm2_5", labelKey: "pm25", unit: "ug/m3", cautionValue: 10, severeValue: 25 },
+  { key: "pm10", labelKey: "pm10", unit: "ug/m3", cautionValue: 20, severeValue: 50 },
+  { key: "no2", labelKey: "no2", unit: "ug/m3", cautionValue: 40, severeValue: 100 }
 ];
 const POLLUTANT_FIELD_KEYS: PollutantKey[] = POLLUTANT_PROFILES.map((profile) => profile.key);
 
@@ -80,13 +80,14 @@ function scoreLabel(
   score: number | null | undefined,
   fallback: string | null | undefined,
   language: LanguageMode,
-  t: (value: string) => string
+  tKey: (key: string) => string,
+  dataLabel: (value: string | null | undefined) => string
 ): string {
   if (score === null || score === undefined) {
-    return fallback ? t(fallback) : "n/a";
+    return fallback ? dataLabel(fallback) : tKey("airQuality.na");
   }
 
-  return t(SCORE_LABELS[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a");
+  return tKey(`airQuality.${SCORE_LABEL_KEYS[Math.min(Math.max(Math.round(score), 0), 5)] ?? "na"}`);
 }
 
 function scoreTone(score: number | null | undefined): AirTone {
@@ -132,9 +133,9 @@ function stationIndex(station: AirQualityStation): number | null {
   return parseStationIndex(station.label);
 }
 
-function endpointLabel(request: AirQualitySourceRequest, t: (value: string) => string): string {
+function endpointLabel(request: AirQualitySourceRequest, tKey: (key: string) => string): string {
   if (!request.endpoint) {
-    return t("endpoint not recorded");
+    return tKey("airQuality.endpointNotRecorded");
   }
 
   try {
@@ -157,43 +158,43 @@ function fieldCoverage(stations: AirQualityStation[], field: keyof AirQualitySta
   return Math.round((present / stations.length) * 100);
 }
 
-function fieldSignals(stations: AirQualityStation[], t: (value: string) => string): FieldSignal[] {
+function fieldSignals(stations: AirQualityStation[], tKey: (key: string) => string): FieldSignal[] {
   return [
     {
       key: "score",
-      label: t("Station score"),
+      label: tKey("airQuality.stationScore"),
       ready: fieldCoverage(stations, "score") > 0,
-      detail: `${fieldCoverage(stations, "score")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "score")}% ${tKey("airQuality.populated")}`
     },
     {
       key: "index",
-      label: t("AQ index label"),
+      label: tKey("airQuality.aqIndexLabel"),
       ready: fieldCoverage(stations, "label") > 0,
-      detail: `${fieldCoverage(stations, "label")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "label")}% ${tKey("airQuality.populated")}`
     },
     {
       key: "european_aqi",
-      label: "European AQI",
+      label: tKey("airQuality.europeanAqi"),
       ready: fieldCoverage(stations, "european_aqi") > 0,
-      detail: `${fieldCoverage(stations, "european_aqi")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "european_aqi")}% ${tKey("airQuality.populated")}`
     },
     {
       key: "pm2_5",
-      label: "PM2.5",
+      label: tKey("airQuality.pm25"),
       ready: fieldCoverage(stations, "pm2_5") > 0,
-      detail: `${fieldCoverage(stations, "pm2_5")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "pm2_5")}% ${tKey("airQuality.populated")}`
     },
     {
       key: "pm10",
-      label: "PM10",
+      label: tKey("airQuality.pm10"),
       ready: fieldCoverage(stations, "pm10") > 0,
-      detail: `${fieldCoverage(stations, "pm10")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "pm10")}% ${tKey("airQuality.populated")}`
     },
     {
       key: "no2",
-      label: "NO2",
+      label: tKey("airQuality.no2"),
       ready: fieldCoverage(stations, "no2") > 0,
-      detail: `${fieldCoverage(stations, "no2")}% ${t("populated")}`
+      detail: `${fieldCoverage(stations, "no2")}% ${tKey("airQuality.populated")}`
     }
   ];
 }
@@ -209,22 +210,27 @@ function rankedStations(stations: AirQualityStation[]): AirQualityStation[] {
   });
 }
 
-function scoreDistribution(stations: AirQualityStation[], language: LanguageMode, t: (value: string) => string) {
+function scoreDistribution(
+  stations: AirQualityStation[],
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  dataLabel: (value: string | null | undefined) => string,
+) {
   const max = Math.max(1, ...SCORE_BUCKETS.map((score) => stations.filter((station) => station.score === score).length));
   return SCORE_BUCKETS.map((score) => {
     const count = stations.filter((station) => station.score === score).length;
     return {
       count,
-      label: scoreLabel(score, null, language, t),
+      label: scoreLabel(score, null, language, tKey, dataLabel),
       score,
       width: Math.max(8, (count / max) * 100)
     };
   });
 }
 
-function observedExactLabel(value: string | null, language: LanguageMode, t: (value: string) => string): string {
+function observedExactLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not observed");
+    return tKey("airQuality.notObserved");
   }
 
   return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
@@ -335,7 +341,7 @@ function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | nul
 
 function airHistoryPoints(
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[],
-  t: (value: string) => string
+  tKey: (key: string) => string
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -352,7 +358,7 @@ function airHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date),
         value: worstScore,
-        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${t("stations")} · ${formatNumber(data.quality.field_coverage_pct, 0)}% ${t("coverage")}`
+        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatNumber(data.quality.field_coverage_pct, 0)}% ${tKey("airQuality.coverage")}`
       }
     ];
   });
@@ -362,7 +368,8 @@ function renderPollutantChart(
   profile: PollutantProfile,
   stations: AirQualityStation[],
   language: LanguageMode,
-  t: (value: string) => string
+  tKey: (key: string) => string,
+  dataLabel: (value: string | null | undefined) => string,
 ) {
   const rows = pollutantStations(stations, profile.key).slice(0, 8);
   const values = rows.map((station) => pollutantValue(station, profile.key)).filter(hasNumber);
@@ -374,15 +381,15 @@ function renderPollutantChart(
     <>
       <div className="air-pollutant-readout">
         <article>
-          <span>{t("Average")}</span>
-          <strong>{hasNumber(averageValue) ? formatPollutantValue(averageValue, profile) : t("missing")}</strong>
+          <span>{tKey("airQuality.average")}</span>
+          <strong>{hasNumber(averageValue) ? formatPollutantValue(averageValue, profile) : tKey("airQuality.missing")}</strong>
         </article>
         <article>
-          <span>{t("Peak")}</span>
-          <strong>{hasNumber(peakValue) ? formatPollutantValue(peakValue, profile) : t("missing")}</strong>
+          <span>{tKey("airQuality.peak")}</span>
+          <strong>{hasNumber(peakValue) ? formatPollutantValue(peakValue, profile) : tKey("airQuality.missing")}</strong>
         </article>
         <article>
-          <span>{t("Reporting")}</span>
+          <span>{tKey("airQuality.reporting")}</span>
           <strong>{pollutantStations(stations, profile.key).length}/{stations.length}</strong>
         </article>
       </div>
@@ -397,7 +404,7 @@ function renderPollutantChart(
               <article className={`air-pollutant-row air-pollutant-row-${tone}`} key={station.station}>
                 <div>
                   <strong>{stationDisplayName(station)}</strong>
-                  <span>{scoreLabel(station.score, station.label, language, t)}</span>
+                  <span>{scoreLabel(station.score, station.label, language, tKey, dataLabel)}</span>
                 </div>
                 <i className="air-pollutant-track" aria-hidden="true">
                   <span style={{ width: `${percent}%` }} />
@@ -409,7 +416,7 @@ function renderPollutantChart(
           })}
         </div>
       ) : (
-        <p>{t("No pollutant concentration values were returned for this field.")}</p>
+        <p>{tKey("airQuality.noPollutantConcentrationValuesWereReturnedForThisField")}</p>
       )}
     </>
   );
@@ -418,10 +425,13 @@ function renderPollutantChart(
 function renderStationMap(
   stations: AirQualityStation[],
   language: LanguageMode,
-  t: (value: string) => string
+  t: (value: string) => string,
+  tKey: (key: string) => string,
+  dataLabel: (value: string | null | undefined) => string,
 ) {
   return (
     <AirQualityStationMap
+      dataLabel={dataLabel}
       formatNumber={formatNumber}
       language={language}
       scoreLabel={scoreLabel}
@@ -429,6 +439,7 @@ function renderStationMap(
       stationDisplayName={stationDisplayName}
       stations={stations}
       t={t}
+      tKey={tKey}
     />
   );
 }
@@ -439,15 +450,15 @@ export function AirQualityWorkspace({
   highlightedEventId,
   history,
 }: AirQualityWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, enumLabel, dataLabel } = useI18n();
   const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
   if (!airQuality) {
     return (
-      <section className="air-detail-empty" aria-label={t("Air-quality data unavailable")}>
-        <span>{t("Air Quality")}</span>
-        <h2>{t("Station data is not available yet")}</h2>
-        <p>{t("HSY air-quality station snapshots have not arrived for the current platform window.")}</p>
+      <section className="air-detail-empty" aria-label={tKey("airQuality.airQualityDataUnavailable")}>
+        <span>{tKey("airQuality.airQuality")}</span>
+        <h2>{tKey("airQuality.stationDataIsNotAvailableYet")}</h2>
+        <p>{tKey("airQuality.hsyAirQualityStationSnapshotsHaveNotArrivedForTheCurrentPlatformWindow")}</p>
       </section>
     );
   }
@@ -455,7 +466,7 @@ export function AirQualityWorkspace({
   const stations = airQuality.stations ?? [];
   const ranked = rankedStations(stations);
   const topStations = ranked.slice(0, 8);
-  const fields = fieldSignals(stations, t);
+  const fields = fieldSignals(stations, tKey);
   const currentScore = airQuality.worst_score;
   const currentTone = scoreTone(currentScore);
   const indexValues = stations.map(stationIndex).filter(hasNumber);
@@ -463,7 +474,7 @@ export function AirQualityWorkspace({
   const lowIndex = indexValues.length > 0 ? Math.min(...indexValues) : null;
   const pollutantFieldsReady = POLLUTANT_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
-  const historyPoints = airHistoryPoints(history, t);
+  const historyPoints = airHistoryPoints(history, tKey);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
   const highlightedCategoryEvent =
     (highlightedEventId
@@ -475,26 +486,26 @@ export function AirQualityWorkspace({
   const liveTone = liveStatusTone(airQuality.status);
 
   return (
-    <section className="air-detail-page" aria-label={t("Air-quality detail")}>
+    <section className="air-detail-page" aria-label={tKey("airQuality.airQualityDetail")}>
       <div className="air-detail-header">
         <div>
-          <h2>{airQuality.location ? `${airQuality.location} ${t("Air Quality Network")}` : t("Air Quality Network")}</h2>
+          <h2>{airQuality.location ? `${airQuality.location} ${tKey("airQuality.airQualityNetwork")}` : tKey("airQuality.airQualityNetwork")}</h2>
           <div className={`air-live-status air-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{airQuality.status === "ready" ? t("HSY Sync Active") : t("Sync Delayed")}</strong>
+            <strong>{airQuality.status === "ready" ? tKey("airQuality.hsySyncActive") : tKey("airQuality.syncDelayed")}</strong>
           </div>
         </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, t)}</div>
+        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey)}</div>
       </div>
 
-      <section className="air-bento-grid" aria-label={t("Air-quality current condition")}>
+      <section className="air-bento-grid" aria-label={tKey("airQuality.airQualityCurrentCondition")}>
         <article
           className={`air-glass-panel air-hero air-hero-${currentTone}`}
           id={heroEventAnchorId ? eventAnchorId(heroEventAnchorId) : undefined}
         >
           <div className="air-card-kicker">
-            <span>{t("Current Network Condition")}</span>
-            <time>{observedExactLabel(airQuality.observed_at, language, t)}</time>
+            <span>{tKey("airQuality.currentNetworkCondition")}</span>
+            <time>{observedExactLabel(airQuality.observed_at, language, tKey)}</time>
           </div>
           <div className="air-current-score">
             <div
@@ -506,21 +517,21 @@ export function AirQualityWorkspace({
               <span>/5</span>
             </div>
             <div>
-              <strong>{scoreLabel(currentScore, airQuality.worst_label, language, t)}</strong>
-              <p>{airQuality.worst_station ?? t("Worst station unavailable")}</p>
+              <strong>{scoreLabel(currentScore, airQuality.worst_label, language, tKey, dataLabel)}</strong>
+              <p>{airQuality.worst_station ?? tKey("airQuality.worstStationUnavailable")}</p>
             </div>
           </div>
           <div className="air-hero-footer">
             <div>
-              <span>{t("Reporting")}</span>
-              <strong>{airQuality.quality.reporting_station_count}/{airQuality.quality.station_count} {t("stations")}</strong>
+              <span>{tKey("airQuality.reporting")}</span>
+              <strong>{airQuality.quality.reporting_station_count}/{airQuality.quality.station_count} {tKey("airQuality.stations")}</strong>
             </div>
             <div>
-              <span>{t("Index Range")}</span>
+              <span>{tKey("airQuality.indexRange")}</span>
               <strong>
                 {hasNumber(lowIndex) && hasNumber(peakIndex)
                   ? `${formatNumber(lowIndex, 0)}-${formatNumber(peakIndex, 0)}`
-                  : t("index missing")}
+                  : tKey("airQuality.indexMissing")}
               </strong>
             </div>
           </div>
@@ -531,16 +542,16 @@ export function AirQualityWorkspace({
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key: "score_distribution",
-                label: "Score Distribution",
+                label: tKey("airQuality.scoreDistribution"),
                 t,
               })}
             >
-              {t("Score Distribution")}
+              {tKey("airQuality.scoreDistribution")}
             </DataLabelWithHelp>
             <strong>{stations.length}</strong>
           </header>
           <div className="air-score-bars">
-            {scoreDistribution(stations, language, t).map((bucket) => (
+            {scoreDistribution(stations, language, tKey, dataLabel).map((bucket) => (
               <div className={`air-score-row air-score-row-${scoreTone(bucket.score)}`} key={bucket.score}>
                 <span>{bucket.label}</span>
                 <i aria-hidden="true">
@@ -557,11 +568,11 @@ export function AirQualityWorkspace({
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key: "available_fields",
-                label: "Available Fields",
+                label: tKey("airQuality.availableFields"),
                 t,
               })}
             >
-              {t("Available Fields")}
+              {tKey("airQuality.availableFields")}
             </DataLabelWithHelp>
             <strong>{readyFieldCount(fields)}</strong>
           </header>
@@ -569,7 +580,7 @@ export function AirQualityWorkspace({
             {fields.map((field) => (
               <article className={field.ready ? "air-field-ready" : "air-field-missing"} key={field.key}>
                 <span>{field.label}</span>
-                <strong>{field.ready ? t("Ready") : t("Missing")}</strong>
+                <strong>{field.ready ? tKey("airQuality.ready") : tKey("airQuality.missing2")}</strong>
                 <small>{field.detail}</small>
               </article>
             ))}
@@ -577,16 +588,16 @@ export function AirQualityWorkspace({
         </article>
       </section>
 
-      <section className="air-summary-strip" aria-label={t("Air-quality summary metrics")}>
+      <section className="air-summary-strip" aria-label={tKey("airQuality.airQualitySummaryMetrics")}>
         <article className="air-glass-panel">
           <DataLabelWithHelp
             helpText={dataHelpText({
               key: "worst_score",
-              label: "Worst Score",
+              label: tKey("airQuality.worstScore"),
               t,
             })}
           >
-            {t("Worst Score")}
+            {tKey("airQuality.worstScore")}
           </DataLabelWithHelp>
           <strong>{formatNumber(currentScore, 0)}/5</strong>
         </article>
@@ -594,23 +605,23 @@ export function AirQualityWorkspace({
           <DataLabelWithHelp
             helpText={dataHelpText({
               key: "peak_index",
-              label: "Peak Index",
+              label: tKey("airQuality.peakIndex"),
               t,
             })}
           >
-            {t("Peak Index")}
+            {tKey("airQuality.peakIndex")}
           </DataLabelWithHelp>
-          <strong>{hasNumber(peakIndex) ? formatNumber(peakIndex, 0) : t("missing")}</strong>
+          <strong>{hasNumber(peakIndex) ? formatNumber(peakIndex, 0) : tKey("airQuality.missing")}</strong>
         </article>
         <article className="air-glass-panel">
           <DataLabelWithHelp
             helpText={dataHelpText({
               key: "field_coverage",
-              label: "Field Coverage",
+              label: tKey("airQuality.fieldCoverage"),
               t,
             })}
           >
-            {t("Field Coverage")}
+            {tKey("airQuality.fieldCoverage")}
           </DataLabelWithHelp>
           <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
         </article>
@@ -618,11 +629,11 @@ export function AirQualityWorkspace({
           <DataLabelWithHelp
             helpText={dataHelpText({
               key: "pollutant_fields",
-              label: "Pollutant Fields",
+              label: tKey("airQuality.pollutantFields"),
               t,
             })}
           >
-            {t("Pollutant Fields")}
+            {tKey("airQuality.pollutantFields")}
           </DataLabelWithHelp>
           <strong>{pollutantFieldsReady}/{POLLUTANT_FIELD_KEYS.length}</strong>
         </article>
@@ -630,11 +641,11 @@ export function AirQualityWorkspace({
           <DataLabelWithHelp
             helpText={dataHelpText({
               key: "score_fields",
-              label: "Score Fields",
+              label: tKey("airQuality.scoreFields"),
               t,
             })}
           >
-            {t("Score Fields")}
+            {tKey("airQuality.scoreFields")}
           </DataLabelWithHelp>
           <strong>{scoreFieldsReady}/2</strong>
         </article>
@@ -642,46 +653,46 @@ export function AirQualityWorkspace({
 
       <TrendChart
         className="air-glass-panel"
-        emptyMessage={t("No daily air-quality history is available.")}
-        eyebrow={`${historyPoints.length}D ${t("History")}`}
+        emptyMessage={tKey("airQuality.noDailyAirQualityHistoryIsAvailable")}
+        eyebrow={`${historyPoints.length}D ${tKey("airQuality.history")}`}
         maximumFractionDigits={0}
         points={historyPoints}
-        title={t("Worst Station Score Trend")}
+        title={tKey("airQuality.worstStationScoreTrend")}
         tone={scoreTone(currentScore)}
         unit="/5"
       />
 
-      <section className="air-main-grid" aria-label={t("Air-quality station analytics")}>
+      <section className="air-main-grid" aria-label={tKey("airQuality.airQualityStationAnalytics")}>
         <article className="air-glass-panel air-pollutant-panel">
           <header>
             <div>
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "pollutant_fields",
-                  label: "Pollutant Concentration",
+                  label: tKey("airQuality.pollutantConcentration"),
                   t,
                 })}
               >
-                {t("Pollutant Concentration")}
+                {tKey("airQuality.pollutantConcentration")}
               </DataLabelWithHelp>
-              <h3>{activePollutantProfile.label} {t("by reporting station")}</h3>
+              <h3>{tKey(`airQuality.${activePollutantProfile.labelKey}`)} {tKey("airQuality.byReportingStation")}</h3>
             </div>
-            <div className="air-pollutant-toggle" aria-label={t("Pollutant field")}>
+            <div className="air-pollutant-toggle" aria-label={tKey("airQuality.pollutantField")}>
               {POLLUTANT_PROFILES.map((profile) => (
                 <button
                   aria-pressed={activePollutantKey === profile.key}
                   className={activePollutantKey === profile.key ? "active" : ""}
                   key={profile.key}
                   onClick={() => setActivePollutantKey(profile.key)}
-                  title={profile.unit ? `${profile.label} · ${profile.unit}` : profile.label}
+                  title={profile.unit ? `${tKey(`airQuality.${profile.labelKey}`)} · ${profile.unit}` : tKey(`airQuality.${profile.labelKey}`)}
                   type="button"
                 >
-                  {profile.label}
+                  {tKey(`airQuality.${profile.labelKey}`)}
                 </button>
               ))}
             </div>
           </header>
-          {renderPollutantChart(activePollutantProfile, stations, language, t)}
+          {renderPollutantChart(activePollutantProfile, stations, language, tKey, dataLabel)}
         </article>
 
         <article className="air-glass-panel air-station-panel">
@@ -690,15 +701,15 @@ export function AirQualityWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "station_ranking",
-                  label: "Station Ranking",
+                  label: tKey("airQuality.stationRanking"),
                   t,
                 })}
               >
-                {t("Station Ranking")}
+                {tKey("airQuality.stationRanking")}
               </DataLabelWithHelp>
-              <h3>{t("Highest HSY index values")}</h3>
+              <h3>{tKey("airQuality.highestHsyIndexValues")}</h3>
             </div>
-            <strong>{topStations.length} {t("rows")}</strong>
+            <strong>{topStations.length} {tKey("airQuality.rows")}</strong>
           </header>
           <div className="air-station-list">
             {topStations.length > 0 ? (
@@ -710,9 +721,9 @@ export function AirQualityWorkspace({
                     <div className="air-station-main">
                       <div>
                         <strong>{station.station}</strong>
-                        <span>{scoreLabel(station.score, station.label, language, t)} · {t("score")} {formatNumber(station.score, 0)}/5</span>
+                        <span>{scoreLabel(station.score, station.label, language, tKey, dataLabel)} · {tKey("airQuality.score")} {formatNumber(station.score, 0)}/5</span>
                       </div>
-                      <em>{hasNumber(index) ? formatNumber(index, 0) : t("index missing")}</em>
+                      <em>{hasNumber(index) ? formatNumber(index, 0) : tKey("airQuality.indexMissing")}</em>
                     </div>
                     <span className="air-index-track" aria-hidden="true">
                       <span style={{ width: `${indexPercent(index)}%` }} />
@@ -721,7 +732,7 @@ export function AirQualityWorkspace({
                 );
               })
             ) : (
-              <p>{t("No station rows were normalized from the latest HSY payload.")}</p>
+              <p>{tKey("airQuality.noStationRowsWereNormalizedFromTheLatestHsyPayload")}</p>
             )}
           </div>
         </article>
@@ -732,15 +743,15 @@ export function AirQualityWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "station_geometry",
-                  label: "Station Geometry",
+                  label: tKey("airQuality.stationGeometry"),
                   t,
                 })}
               >
-                {t("Station Geometry")}
+                {tKey("airQuality.stationGeometry")}
               </DataLabelWithHelp>
               <strong>{stations.filter((station) => hasNumber(station.lat) && hasNumber(station.lon)).length}</strong>
             </header>
-            {renderStationMap(stations, language, t)}
+            {renderStationMap(stations, language, t, tKey, dataLabel)}
           </article>
 
           <article className="air-glass-panel air-quality-panel">
@@ -748,11 +759,11 @@ export function AirQualityWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "data_quality",
-                  label: "Data Quality",
+                  label: tKey("airQuality.dataQuality"),
                   t,
                 })}
               >
-                {t("Data Quality")}
+                {tKey("airQuality.dataQuality")}
               </DataLabelWithHelp>
               <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
             </header>
@@ -760,14 +771,14 @@ export function AirQualityWorkspace({
               <span style={{ width: `${airQuality.quality.field_coverage_pct}%` }} />
             </span>
             <div className="air-quality-facts">
-              <span>{airQuality.quality.station_count} {t("station features")}</span>
-              <span>{airQuality.quality.reporting_station_count} {t("scored stations")}</span>
-              <span>{airQuality.quality.missing_fields.length} {t("missing")} {t("field groups")}</span>
+              <span>{airQuality.quality.station_count} {tKey("airQuality.stationFeatures")}</span>
+              <span>{airQuality.quality.reporting_station_count} {tKey("airQuality.scoredStations")}</span>
+              <span>{airQuality.quality.missing_fields.length} {tKey("airQuality.missing")} {tKey("airQuality.fieldGroups")}</span>
             </div>
             <p>
               {airQuality.quality.missing_fields.length > 0
-                ? `${t("Missing full station fields")}: ${airQuality.quality.missing_fields.join(", ")}.`
-                : t("All tracked station fields are present.")}
+                ? `${tKey("airQuality.missingFullStationFields")}: ${airQuality.quality.missing_fields.join(", ")}.`
+                : tKey("airQuality.allTrackedStationFieldsArePresent")}
             </p>
             {airQuality.quality.notes.map((note) => (
               <small key={note}>{note}</small>
@@ -779,11 +790,11 @@ export function AirQualityWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "pipeline",
-                  label: "Pipeline",
+                  label: tKey("airQuality.pipeline"),
                   t,
                 })}
               >
-                {t("Pipeline")}
+                {tKey("airQuality.pipeline")}
               </DataLabelWithHelp>
               <strong>
                 {airQuality.data_pipeline.filter((stage) => stage.status === "ready").length}/
@@ -795,11 +806,11 @@ export function AirQualityWorkspace({
                 <article className={`air-stage air-stage-${stageTone(stage)}`} key={stage.key}>
                   <div>
                     <strong>{stage.label}</strong>
-                    <span>{t(stage.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
                     {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${t("records")}` : ""}
+                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("airQuality.records")}` : ""}
                   </p>
                 </article>
               ))}
@@ -811,11 +822,11 @@ export function AirQualityWorkspace({
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: "source_request",
-                  label: "Source Request",
+                  label: tKey("airQuality.sourceRequest"),
                   t,
                 })}
               >
-                {t("Source Request")}
+                {tKey("airQuality.sourceRequest")}
               </DataLabelWithHelp>
               <strong>{sourceRequestCount(airQuality)}</strong>
             </header>
@@ -824,13 +835,13 @@ export function AirQualityWorkspace({
                 <article className={`air-request air-request-${stageTone(request)}`} key={request.key}>
                   <div>
                     <strong>{request.label}</strong>
-                    <span>{t(request.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
-                    {endpointLabel(request, t)}
-                    {request.fetched_at ? ` · ${t("fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
+                    {endpointLabel(request, tKey)}
+                    {request.fetched_at ? ` · ${tKey("airQuality.fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
                   </p>
-                  <small>{request.content_type ?? t("content type unavailable")}</small>
+                  <small>{request.content_type ?? tKey("airQuality.contentTypeUnavailable")}</small>
                 </article>
               ))}
             </div>
@@ -838,10 +849,10 @@ export function AirQualityWorkspace({
         </div>
       </section>
 
-      <section className={`air-provider-status air-provider-status-${liveTone}`} aria-label={t("Air-quality provider status")}>
+      <section className={`air-provider-status air-provider-status-${liveTone}`} aria-label={tKey("airQuality.airQualityProviderStatus")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("airQuality.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -855,15 +866,15 @@ export function AirQualityWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {observedExactLabel(airQuality.observed_at, language, t)}
+            {tKey("airQuality.lastSync")}: {observedExactLabel(airQuality.observed_at, language, tKey)}
           </span>
           <i aria-hidden="true" />
-          <span className="air-provider-coverage">{t("Coverage")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>
+          <span className="air-provider-coverage">{tKey("airQuality.coverage2")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>
         </div>
       </section>
 
       <p className="air-detail-freshness">
-        {airQuality.summary ?? category?.description ?? t("Latest normalized HSY air-quality station signals.")}
+        {airQuality.summary ?? category?.description ?? tKey("airQuality.latestNormalizedHsyAirQualityStationSignals")}
       </p>
     </section>
   );

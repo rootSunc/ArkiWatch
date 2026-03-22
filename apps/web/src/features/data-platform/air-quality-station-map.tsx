@@ -13,11 +13,14 @@ type AirQualityStationMapProps = {
   stations: AirQualityStation[];
   language: LanguageMode;
   t: (value: string) => string;
+  tKey: (key: string) => string;
+  dataLabel: (value: string | null | undefined) => string;
   scoreLabel: (
     score: number | null | undefined,
     fallback: string | null | undefined,
     language: LanguageMode,
-    t: (value: string) => string
+    tKey: (key: string) => string,
+    dataLabel: (value: string | null | undefined) => string
   ) => string;
   scoreTone: (score: number | null | undefined) => AirTone;
   stationDisplayName: (station: AirQualityStation) => string;
@@ -42,6 +45,8 @@ export function AirQualityStationMap({
   stations,
   language,
   t,
+  tKey,
+  dataLabel,
   scoreLabel,
   scoreTone,
   stationDisplayName,
@@ -58,17 +63,17 @@ export function AirQualityStationMap({
           lat: wgs84.lat,
           lon: wgs84.lon,
           title,
-          popupDetail: scoreLabel(station.score, station.label, language, t),
+          popupDetail: scoreLabel(station.score, station.label, language, tKey, dataLabel),
           popupId: station.station !== title ? station.station : undefined,
           tone: scoreTone(station.score)
         };
       }),
-    [language, scoreLabel, scoreTone, stationDisplayName, stations, t]
+    [dataLabel, language, scoreLabel, scoreTone, stationDisplayName, stations, tKey]
   );
 
   return (
     <CoordinateMap
-      emptyMessage={t("No station coordinates were returned in the latest HSY payload.")}
+      emptyMessage={tKey("airQuality.noStationCoordinatesWereReturnedInTheLatestHsyPayload")}
       formatNumber={formatNumber}
       points={points}
       t={t}

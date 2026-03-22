@@ -3,6 +3,8 @@
 import { NextIntlClientProvider } from "next-intl";
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
+import airQualityEnMessages from "./messages/airQuality.en.json";
+import airQualityZhMessages from "./messages/airQuality.zh.json";
 import energyEnMessages from "./messages/energy.en.json";
 import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
@@ -29,6 +31,7 @@ type StructuredMessages = {
   transit: Record<string, string>;
   mobility: Record<string, string>;
   roadRail: Record<string, string>;
+  airQuality: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -45,8 +48,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
