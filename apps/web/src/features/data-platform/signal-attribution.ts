@@ -1,7 +1,7 @@
 import { formatRelativeAge } from "@/features/shared/format";
 
 import type { LanguageMode } from "./i18n";
-import { translateText } from "./i18n";
+import { translateMessageKey } from "./i18n";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -105,9 +105,8 @@ export function formatSignalAttributionLine(
   attribution: SignalAttribution,
   language: LanguageMode,
 ): string {
-  const t = (value: string) => translateText(language, value);
   const age = attribution.updatedAt
     ? formatRelativeAge(attribution.updatedAt, language)
-    : t("not collected");
+    : translateMessageKey(language, "shell.notCollected");
   return `${attribution.sources} · ${age}`;
 }

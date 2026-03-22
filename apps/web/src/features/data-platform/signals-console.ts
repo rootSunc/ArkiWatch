@@ -2,7 +2,7 @@ import { formatTimestamp } from "@/features/shared/format";
 
 import type { DashboardTone } from "./data-platform-shell";
 import type { LanguageMode } from "./i18n";
-import { translateText } from "./i18n";
+import { translateMessageKey } from "./i18n";
 import type {
   DashboardSource,
   PlatformCategory,
@@ -41,7 +41,7 @@ export function buildSignalSystemTiles({
   recentEvents: PlatformEvent[];
   language: LanguageMode;
 }): SignalSystemTile[] {
-  const t = (value: string) => translateText(language, value);
+
   const healthySources = sources.filter(sourceIsHealthy).length;
   const issueSources = Math.max(0, sources.length - healthySources);
   const severeEvents = severeEventCount(recentEvents);
@@ -52,42 +52,42 @@ export function buildSignalSystemTiles({
   return [
     {
       key: "signal_categories",
-      label: t("Signal categories"),
+      label: translateMessageKey(language, "shell.signalCategories"),
       value: String(categories.length),
-      detail: `${connectedCategories} ${t("active")} · ${Math.max(0, categories.length - connectedCategories)} ${t("catalog")}`,
+      detail: `${connectedCategories} ${translateMessageKey(language, "shell.active")} · ${Math.max(0, categories.length - connectedCategories)} ${translateMessageKey(language, "shell.catalog")}`,
       tone: categories.length > 0 ? "good" : "neutral",
       icon: "hub",
       valueStyle: "emphasis",
     },
     {
       key: "active_events",
-      label: t("Active events"),
+      label: translateMessageKey(language, "shell.activeEvents"),
       value: String(recentEvents.length),
       detail:
         severeEvents > 0
-          ? `${severeEvents} ${t("high severity")}`
-          : t("Normalized event stream"),
+          ? `${severeEvents} ${translateMessageKey(language, "shell.highSeverity")}`
+          : translateMessageKey(language, "shell.normalizedEventStream"),
       tone: severeEvents > 0 ? "bad" : recentEvents.length > 0 ? "warn" : "good",
       icon: "notifications",
       valueStyle: "emphasis",
     },
     {
       key: "source_health",
-      label: t("Source health"),
-      value: sources.length > 0 ? `${healthySources}/${sources.length}` : t("n/a"),
+      label: translateMessageKey(language, "shell.sourceHealth"),
+      value: sources.length > 0 ? `${healthySources}/${sources.length}` : translateMessageKey(language, "shell.na"),
       detail:
         issueSources > 0
-          ? `${issueSources} ${t("sources need attention")}`
-          : t("No source issues detected"),
+          ? `${issueSources} ${translateMessageKey(language, "shell.sourcesNeedAttention")}`
+          : translateMessageKey(language, "shell.noSourceIssuesDetected"),
       tone: issueSources > 0 ? "warn" : sources.length > 0 ? "good" : "neutral",
       icon: "database",
       valueStyle: "emphasis",
     },
     {
       key: "last_platform_check",
-      label: t("Last platform check"),
+      label: translateMessageKey(language, "shell.lastPlatformCheck"),
       value: formatTimestamp(overview?.checked_at ?? null, "dateTime", language),
-      detail: overview?.coverage_area ?? t("Regional scope"),
+      detail: overview?.coverage_area ?? translateMessageKey(language, "shell.regionalScope"),
       tone: overview ? "good" : "neutral",
       icon: "schedule",
       valueStyle: "body",

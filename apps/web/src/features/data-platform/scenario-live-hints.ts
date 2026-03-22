@@ -1,7 +1,7 @@
 import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
 
 import type { LanguageMode } from "./i18n";
-import { translateText } from "./i18n";
+import { translateDataLabel, translateMessageKey } from "./i18n";
 import {
   weatherSnapshotDetail,
   weatherSnapshotHeadline,
@@ -30,15 +30,21 @@ export type ScenarioLiveSignals = {
   systemEnergy: EnergyCurrentResponse | null;
 };
 
+const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
+
 function scoreLabel(
   score: number,
   fallback: string | null | undefined,
   language: LanguageMode,
 ): string {
-  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
-  const label =
-    labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
-  return translateText(language, label);
+  if (score === null || score === undefined) {
+    return fallback
+      ? translateDataLabel(language, fallback)
+      : translateMessageKey(language, "shell.na");
+  }
+
+  const key = SCORE_LABEL_KEYS[Math.min(Math.max(Math.round(score), 0), 5)] ?? "na";
+  return translateMessageKey(language, `shell.${key}`);
 }
 
 function formatEnergyWindow(
@@ -56,7 +62,6 @@ export function buildScenarioLiveHint(
   signals: ScenarioLiveSignals,
   language: LanguageMode,
 ): ScenarioLiveHint | null {
-  const t = (value: string) => translateText(language, value);
 
   switch (scenarioKey) {
     case "outdoor": {
@@ -80,7 +85,7 @@ export function buildScenarioLiveHint(
       const headline =
         score !== null && score !== undefined
           ? `${scoreLabel(score, airQuality.worst_label, language)} (${Math.round(score)}/5)`
-          : airQuality.summary ?? t("Air quality loaded");
+          : airQuality.summary ?? translateMessageKey(language, "shell.airQualityLoaded");
       const reporting = airQuality.quality.reporting_station_count;
       const total = airQuality.quality.station_count;
       return {
@@ -88,7 +93,7 @@ export function buildScenarioLiveHint(
         detail:
           airQuality.worst_station && airQuality.worst_label
             ? `${airQuality.worst_station} · ${airQuality.worst_label}`
-            : `${reporting}/${total} ${t("stations")}`,
+            : `${reporting}/${total} ${translateMessageKey(language, "shell.stations")}`,
         updatedAt: airQuality.observed_at ?? airQuality.checked_at,
         sources: "HSY",
       };
@@ -103,14 +108,14 @@ export function buildScenarioLiveHint(
       const total = transitAlerts + roadEvents;
       const headline =
         total > 0
-          ? `${total} ${t("active disruptions")}`
-          : t("No active commute disruptions");
+          ? `${total} ${translateMessageKey(language, "shell.activeDisruptions")}`
+          : translateMessageKey(language, "shell.noActiveCommuteDisruptions");
       const parts: string[] = [];
       if (transit) {
-        parts.push(`${t("Transit")}: ${transitAlerts}`);
+        parts.push(`${translateMessageKey(language, "shell.navTransit")}: ${transitAlerts}`);
       }
       if (roadRail) {
-        parts.push(`${t("Road & Rail")}: ${roadEvents}`);
+        parts.push(`${translateMessageKey(language, "shell.navRoadRail")}: ${roadEvents}`);
       }
       return {
         headline,
@@ -134,13 +139,13 @@ export function buildScenarioLiveHint(
       const priceLabel = formatEnergyWindow(priceWindow ?? null);
       const systemLabel = formatEnergyWindow(systemWindow ?? null);
       const headline = priceLabel
-        ? `${t("Household")} ${priceLabel}`
+        ? `${translateMessageKey(language, "shell.household")} ${priceLabel}`
         : systemLabel
-          ? `${t("System")} ${systemLabel}`
-          : t("Energy signals loaded");
+          ? `${translateMessageKey(language, "shell.system")} ${systemLabel}`
+          : translateMessageKey(language, "shell.energySignalsLoaded");
       const details: string[] = [];
       if (priceLabel && systemLabel) {
-        details.push(`${t("System")} ${systemLabel}`);
+        details.push(`${translateMessageKey(language, "shell.system")} ${systemLabel}`);
       } else if (householdEnergy?.summary) {
         details.push(householdEnergy.summary);
       } else if (systemEnergy?.summary) {
@@ -148,7 +153,7 @@ export function buildScenarioLiveHint(
       }
       return {
         headline,
-        detail: details.join(" · ") || t("Compare household prices with grid load"),
+        detail: details.join(" · ") || translateMessageKey(language, "shell.compareHouseholdPricesWithGridLoad"),
         updatedAt:
           householdEnergy?.observed_at ??
           systemEnergy?.observed_at ??
@@ -166,10 +171,9 @@ export function buildScenarioLiveHint(
 export function formatScenarioHintAge(
   updatedAt: string | null,
   language: LanguageMode,
-  t: (value: string) => string,
 ): string | null {
   if (!updatedAt) {
     return null;
   }
-  return `${t("Updated")} ${formatRelativeAge(updatedAt, language)} · ${formatTimestamp(updatedAt, "dateTime", language)}`;
+  return `${translateMessageKey(language, "shell.updated")} ${formatRelativeAge(updatedAt, language)} · ${formatTimestamp(updatedAt, "dateTime", language)}`;
 }

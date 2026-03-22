@@ -1,6 +1,6 @@
 import type { CrossDomainTimelineItem } from "./cross-domain-timeline";
 import type { LanguageMode } from "./i18n";
-import { translateText } from "./i18n";
+import { translateMessageKey } from "./i18n";
 import type {
   PublicActionRead,
   PublicDashboardRead,
@@ -56,7 +56,7 @@ function buildHeadline(
     return `${activeTile.label}: ${activeTile.value}`;
   }
 
-  return translateText(language, "Core daily scenarios are currently clear.");
+  return translateMessageKey(language, "shell.coreDailyScenariosClear");
 }
 
 function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineItem[] {

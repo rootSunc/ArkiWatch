@@ -2,7 +2,7 @@
 
 import { formatTimestamp } from "@/features/shared/format";
 
-import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
+import { LanguageMode, translateEnumLabel, translateMessageKey, useI18n } from "./i18n";
 import {
   buildScenarioLiveHint,
   formatScenarioHintAge,
@@ -144,7 +144,7 @@ function buildScenarioDataPoints(
   signals: ScenarioLiveSignals,
   language: LanguageMode,
 ): ScenarioDataPoint[] {
-  const t = (value: string) => translateEnumLabel(language, value);
+  const shell = (key: string) => translateMessageKey(language, key);
   const points: ScenarioDataPoint[] = [];
 
   switch (scenarioKey) {
@@ -153,16 +153,16 @@ function buildScenarioDataPoints(
       if (!weather) {
         return points;
       }
-      appendDataPoint(points, t("Wind"), formatMetricValue(findMetric(weather.metrics, "peak_wind"), language));
-      appendDataPoint(points, t("Gust"), formatMetricValue(findMetric(weather.metrics, "peak_gust"), language));
+      appendDataPoint(points, shell("shell.wind"), formatMetricValue(findMetric(weather.metrics, "peak_wind"), language));
+      appendDataPoint(points, shell("shell.gust"), formatMetricValue(findMetric(weather.metrics, "peak_gust"), language));
       appendDataPoint(
         points,
-        weather.warnings.length > 0 ? t("Warnings") : t("Rain windows"),
+        weather.warnings.length > 0 ? shell("shell.warnings") : shell("shell.rainWindows"),
         weather.warnings.length > 0
           ? String(weather.warnings.length)
           : String(weather.quality.rain_window_count),
       );
-      appendDataPoint(points, t("Humidity"), formatMetricValue(findMetric(weather.metrics, "humidity"), language));
+      appendDataPoint(points, shell("shell.humidity"), formatMetricValue(findMetric(weather.metrics, "humidity"), language));
       break;
     }
     case "home_air": {
@@ -176,10 +176,10 @@ function buildScenarioDataPoints(
         airQuality.stations[0];
       appendDataPoint(
         points,
-        t("Stations"),
+        shell("shell.stations"),
         `${airQuality.quality.reporting_station_count}/${airQuality.quality.station_count}`,
       );
-      appendDataPoint(points, t("Coverage"), `${airQuality.quality.field_coverage_pct.toFixed(0)}%`);
+      appendDataPoint(points, shell("shell.coverage"), `${airQuality.quality.field_coverage_pct.toFixed(0)}%`);
       appendDataPoint(points, "PM2.5", formatPollutantValue(referenceStation?.pm2_5));
       appendDataPoint(points, "NO2", formatPollutantValue(referenceStation?.no2));
       break;
@@ -189,10 +189,10 @@ function buildScenarioDataPoints(
       if (!transit && !roadRail) {
         return points;
       }
-      appendDataPoint(points, t("Transit"), String(transit?.quality.active_alert_count ?? 0));
-      appendDataPoint(points, t("Road & Rail"), String(roadRail?.quality.active_event_count ?? 0));
-      appendDataPoint(points, t("Weather risk"), String(roadRail?.quality.weather_risk_count ?? 0));
-      appendDataPoint(points, t("Corridors"), String(roadRail?.quality.corridor_count ?? 0));
+      appendDataPoint(points, shell("shell.navTransit"), String(transit?.quality.active_alert_count ?? 0));
+      appendDataPoint(points, shell("shell.navRoadRail"), String(roadRail?.quality.active_event_count ?? 0));
+      appendDataPoint(points, shell("shell.weatherRisk"), String(roadRail?.quality.weather_risk_count ?? 0));
+      appendDataPoint(points, shell("shell.corridors"), String(roadRail?.quality.corridor_count ?? 0));
       break;
     }
     case "energy": {
@@ -203,21 +203,21 @@ function buildScenarioDataPoints(
       const unit = window?.unit ?? activeEnergy?.unit ?? null;
       const startsAt = formatShortTime(window?.starts_at ?? null, language);
       const endsAt = formatShortTime(window?.ends_at ?? null, language);
-      appendDataPoint(points, t("Window"), startsAt && endsAt ? `${startsAt}-${endsAt}` : null);
-      appendDataPoint(points, t("Average"), formatEnergyValue(window?.average_value, unit));
-      appendDataPoint(points, t("Low"), formatEnergyValue(window?.minimum_value, unit));
+      appendDataPoint(points, shell("shell.window"), startsAt && endsAt ? `${startsAt}-${endsAt}` : null);
+      appendDataPoint(points, shell("shell.average"), formatEnergyValue(window?.average_value, unit));
+      appendDataPoint(points, shell("shell.low"), formatEnergyValue(window?.minimum_value, unit));
       appendDataPoint(
         points,
-        t("Cost"),
+        shell("shell.cost"),
         window?.estimated_cost_eur !== null && window?.estimated_cost_eur !== undefined
           ? `${window.estimated_cost_eur.toFixed(2)} EUR`
           : null,
       );
       if (!window && activeEnergy) {
-        appendDataPoint(points, t("Points"), String(activeEnergy.quality.point_count));
-        appendDataPoint(points, t("Low"), formatEnergyValue(activeEnergy.quality.minimum_value, unit));
-        appendDataPoint(points, t("Peak"), formatEnergyValue(activeEnergy.quality.maximum_value, unit));
-        appendDataPoint(points, t("Coverage"), `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%`);
+        appendDataPoint(points, shell("shell.points"), String(activeEnergy.quality.point_count));
+        appendDataPoint(points, shell("shell.low"), formatEnergyValue(activeEnergy.quality.minimum_value, unit));
+        appendDataPoint(points, shell("shell.peak"), formatEnergyValue(activeEnergy.quality.maximum_value, unit));
+        appendDataPoint(points, shell("shell.coverage"), `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%`);
       }
       break;
     }
@@ -233,13 +233,13 @@ function ScenarioCard({
   liveSignals,
   language,
   onOpen,
-  t,
+  tKey,
 }: {
   section: PublicScenarioSectionRead;
   liveSignals: ScenarioLiveSignals;
   language: LanguageMode;
   onOpen: () => void;
-  t: (value: string) => string;
+  tKey: (key: string) => string;
 }) {
   const rec = section.recommendation;
   const placeholder = isPlaceholderRecommendation(rec.id, rec.body);
@@ -256,7 +256,6 @@ function ScenarioCard({
   const updatedLine = formatScenarioHintAge(
     placeholder && liveHint ? liveHint.updatedAt : rec.valid_from,
     language,
-    t,
   );
   const dataPoints = buildScenarioDataPoints(section.key, liveSignals, language);
 
@@ -269,7 +268,7 @@ function ScenarioCard({
         </span>
       </div>
       {placeholder && liveHint ? (
-        <span className="scenario-card-live-badge">{t("Live signal")}</span>
+        <span className="scenario-card-live-badge">{tKey("shell.liveSignal")}</span>
       ) : null}
       <h3 className="scenario-card-title">{title}</h3>
       <p className="scenario-card-body">{body}</p>
@@ -289,7 +288,7 @@ function ScenarioCard({
         ) : (
           <>
             <span>
-              {t("Valid")}{" "}
+              {tKey("shell.valid")}{" "}
               {formatTimestamp(rec.valid_from, "dateTime", language)} –{" "}
               {formatTimestamp(rec.valid_to, "dateTime", language)}
             </span>
@@ -301,9 +300,9 @@ function ScenarioCard({
         )}
       </div>
       <div className="scenario-card-sources">
-        {t("Sources")}: {sourcesLabel}
+        {tKey("shell.sources")}: {sourcesLabel}
       </div>
-      <span className="scenario-card-cta">{t("View details")} →</span>
+      <span className="scenario-card-cta">{tKey("shell.viewDetails")} →</span>
     </button>
   );
 }
@@ -320,17 +319,17 @@ export function ScenarioOverview({
   onOpenEvent,
   onOpenTopAction,
 }: ScenarioOverviewProps) {
-  const { t } = useI18n();
+  const { tKey } = useI18n();
 
   if (!todayBrief) {
     return (
-      <section className="scenario-overview-page" aria-label={t("Today")}>
+      <section className="scenario-overview-page" aria-label={tKey("shell.navToday")}>
         <div className="scenario-empty">
-          <strong>{t("Scenario overview unavailable")}</strong>
-          <p>{t("Public recommendations could not be loaded. Try again or open all signals.")}</p>
+          <strong>{tKey("shell.scenarioOverviewUnavailable")}</strong>
+          <p>{tKey("shell.publicRecommendationsCouldNotBeLoadedTryAgainOrOpenAllSignals")}</p>
           <div className="scenario-overview-actions" style={{ marginTop: "0.75rem", justifyContent: "center" }}>
             <button onClick={onOpenSignals} type="button">
-              {t("Open all signals")}
+              {tKey("shell.openAllSignals")}
             </button>
           </div>
         </div>
@@ -342,18 +341,18 @@ export function ScenarioOverview({
   const topActions = todayBrief.topActions;
 
   return (
-    <section className="scenario-overview-page" aria-label={t("Scenario overview")}>
+    <section className="scenario-overview-page" aria-label={tKey("shell.scenarioOverview")}>
       <header className="scenario-overview-header">
         <div>
-          <h2>{t("Today")}</h2>
+          <h2>{tKey("shell.navToday")}</h2>
           <strong className="scenario-overview-headline">{todayBrief.headline}</strong>
           <p>
-            {t("Scenario overview lead")}{" "}
+            {tKey("shell.scenarioOverviewLead")}{" "}
             <strong>{todayBrief.coverageArea}</strong>
             {todayBrief.checkedAt ? (
               <>
                 {" "}
-                · {t("Updated")}{" "}
+                · {tKey("shell.updated")}{" "}
                 {formatTimestamp(todayBrief.checkedAt, "dateTime", language)}
               </>
             ) : null}
@@ -361,20 +360,20 @@ export function ScenarioOverview({
         </div>
         <div className="scenario-overview-actions">
           <button onClick={onOpenSignals} type="button">
-            {t("Open all signals")}
+            {tKey("shell.openAllSignals")}
           </button>
         </div>
       </header>
 
       {isHistorical ? (
         <div className="scenario-historical-banner" role="status">
-          {t("Scenario overview historical note")}
+          {tKey("shell.scenarioOverviewHistoricalNote")}
         </div>
       ) : null}
 
       <section
         className="summary-grid summary-grid-user today-brief-summary"
-        aria-label={t("Today's snapshot")}
+        aria-label={tKey("shell.todaySSnapshot")}
       >
         {todayBrief.summaryTiles.map((tile) => (
           <button
@@ -411,7 +410,7 @@ export function ScenarioOverview({
       />
 
       {topActions.length > 0 ? (
-        <section className="scenario-top-actions" aria-label={t("Top actions")}>
+        <section className="scenario-top-actions" aria-label={tKey("shell.topActions")}>
           {topActions.slice(0, 3).map((action) => (
             <button
               className={`scenario-top-action scenario-top-action-${action.severity.toLowerCase()}`}
@@ -421,7 +420,7 @@ export function ScenarioOverview({
             >
               <strong>{action.title}</strong>
               <p>{action.body}</p>
-              <span className="scenario-card-cta">{t("View details")} →</span>
+              <span className="scenario-card-cta">{tKey("shell.viewDetails")} →</span>
             </button>
           ))}
         </section>
@@ -434,7 +433,7 @@ export function ScenarioOverview({
             language={language}
             liveSignals={liveSignals}
             section={section}
-            t={t}
+            tKey={tKey}
             onOpen={() => onOpenScenario(section.key)}
           />
         ))}

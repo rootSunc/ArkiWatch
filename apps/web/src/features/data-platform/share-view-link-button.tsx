@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { translateText } from "./i18n";
+import { translateMessageKey } from "./i18n";
 import type { LanguageMode } from "./i18n";
 
 type ShareViewLinkButtonProps = {
@@ -12,8 +12,8 @@ type ShareViewLinkButtonProps = {
 export function ShareViewLinkButton({ language }: ShareViewLinkButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const copyLabel = translateText(language, "Copy view link");
-  const copiedLabel = translateText(language, "Link copied");
+  const copyLabel = translateMessageKey(language, "shell.copyViewLink");
+  const copiedLabel = translateMessageKey(language, "shell.linkCopied");
 
   const copyLink = useCallback(async () => {
     if (typeof window === "undefined") {

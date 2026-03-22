@@ -1,5 +1,5 @@
 import type { LanguageMode } from "./i18n";
-import { translateText } from "./i18n";
+import { translateDataLabel, translateMessageKey } from "./i18n";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -22,15 +22,21 @@ export type UserSummaryTile = {
   valueStyle?: "emphasis" | "body";
 };
 
+const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
+
 function scoreLabel(
   score: number,
   fallback: string | null | undefined,
   language: LanguageMode,
 ): string {
-  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
-  const label =
-    labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "n/a";
-  return translateText(language, label);
+  if (score === null || score === undefined) {
+    return fallback
+      ? translateDataLabel(language, fallback)
+      : translateMessageKey(language, "shell.na");
+  }
+
+  const key = SCORE_LABEL_KEYS[Math.min(Math.max(Math.round(score), 0), 5)] ?? "na";
+  return translateMessageKey(language, `shell.${key}`);
 }
 
 export function buildUserSummaryTiles(
@@ -44,15 +50,14 @@ export function buildUserSummaryTiles(
   },
   language: LanguageMode,
 ): UserSummaryTile[] {
-  const t = (value: string) => translateText(language, value);
 
   const weatherWarnings = signals.weather?.warnings.length ?? 0;
   const weatherValue = signals.weather
     ? weatherSnapshotHeadline(signals.weather, language)
-    : t("n/a");
+    : translateMessageKey(language, "shell.na");
   const weatherDetail = signals.weather
     ? weatherSnapshotDetail(signals.weather, language)
-    : t("No weather feed");
+    : translateMessageKey(language, "shell.noWeatherFeed");
   const weatherTone: UserSummaryTile["tone"] =
     weatherWarnings > 0 ? "warn" : signals.weather ? "good" : "neutral";
 
@@ -60,7 +65,7 @@ export function buildUserSummaryTiles(
   const airValue =
     airScore !== null && airScore !== undefined
       ? `${scoreLabel(airScore, signals.airQuality?.worst_label, language)}`
-      : t("n/a");
+      : translateMessageKey(language, "shell.na");
   const airTone: UserSummaryTile["tone"] =
     airScore !== null && airScore !== undefined && airScore >= 4
       ? "bad"
@@ -83,13 +88,13 @@ export function buildUserSummaryTiles(
     ? `${priceWindow.average_value.toFixed(2)}${priceWindow.unit ? ` ${priceWindow.unit}` : ""}`
     : systemWindow
       ? `${systemWindow.average_value.toFixed(2)}${systemWindow.unit ? ` ${systemWindow.unit}` : ""}`
-    : t("n/a");
+    : translateMessageKey(language, "shell.na");
   const energyTone: UserSummaryTile["tone"] = energyWindow ? "good" : "neutral";
 
   return [
     {
       key: "outdoor",
-      label: t("Outdoor"),
+      label: translateMessageKey(language, "shell.outdoor"),
       value: weatherValue,
       detail: weatherDetail,
       tone: weatherTone,
@@ -98,34 +103,34 @@ export function buildUserSummaryTiles(
     },
     {
       key: "air",
-      label: t("Home air"),
+      label: translateMessageKey(language, "shell.homeAir"),
       value: airValue,
-      detail: signals.airQuality?.worst_station ?? t("Station network"),
+      detail: signals.airQuality?.worst_station ?? translateMessageKey(language, "shell.stationNetwork"),
       tone: airTone,
       icon: "air",
       valueStyle: "emphasis",
     },
     {
       key: "commute",
-      label: t("Commute"),
+      label: translateMessageKey(language, "shell.commute"),
       value:
         commuteTotal > 0
-          ? `${commuteTotal} ${t("active")}`
-          : t("All clear"),
-      detail: `${t("Transit")} ${transitAlerts} · ${t("Road & Rail")} ${roadEvents}`,
+          ? `${commuteTotal} ${translateMessageKey(language, "shell.active")}`
+          : translateMessageKey(language, "shell.allClear"),
+      detail: `${translateMessageKey(language, "shell.navTransit")} ${transitAlerts} · ${translateMessageKey(language, "shell.navRoadRail")} ${roadEvents}`,
       tone: commuteTone,
       icon: "commute",
       valueStyle: "emphasis",
     },
     {
       key: "energy",
-      label: t("Energy"),
+      label: translateMessageKey(language, "shell.navEnergy"),
       value: energyValue,
       detail: priceWindow
-        ? t("Current household price window")
+        ? translateMessageKey(language, "shell.currentHouseholdPriceWindow")
         : systemWindow
-          ? t("Current system energy window")
-        : t("No price window"),
+          ? translateMessageKey(language, "shell.currentSystemEnergyWindow")
+        : translateMessageKey(language, "shell.noPriceWindow"),
       tone: energyTone,
       icon: "bolt",
       valueStyle: "emphasis",
