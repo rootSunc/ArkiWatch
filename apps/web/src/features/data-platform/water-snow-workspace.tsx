@@ -73,19 +73,19 @@ const FIELD_ICONS: Record<string, string> = {
   water_level: "water_drop"
 };
 
-const FIELD_SIGNAL_COLUMNS: Array<{ key: WaterFieldSignalKey; label: string }> = [
-  { key: "level", label: "Level" },
-  { key: "flow", label: "Flow" },
-  { key: "ground", label: "Ground" },
-  { key: "snow", label: "Snow" },
-  { key: "risk", label: "Risk" }
+const FIELD_SIGNAL_COLUMNS: Array<{ key: WaterFieldSignalKey; labelKey: string }> = [
+  { key: "level", labelKey: "level" },
+  { key: "flow", labelKey: "flow" },
+  { key: "ground", labelKey: "ground" },
+  { key: "snow", labelKey: "snow" },
+  { key: "risk", labelKey: "risk" }
 ];
 
 const GUIDANCE_TYPES = [
-  { key: "flood", label: "Flood guidance", icon: "flood" },
-  { key: "drought", label: "Drought guidance", icon: "water_drop" },
-  { key: "snow", label: "Snow-load guidance", icon: "cloudy_snowing" },
-  { key: "algae", label: "Algae guidance", icon: "water" }
+  { key: "flood", labelKey: "floodGuidance", icon: "flood" },
+  { key: "drought", labelKey: "droughtGuidance", icon: "water_drop" },
+  { key: "snow", labelKey: "snowLoadGuidance", icon: "cloudy_snowing" },
+  { key: "algae", labelKey: "algaeGuidance", icon: "water" }
 ];
 
 const MIN_TIMELINE_WINDOW_MS = 15 * 60 * 1000;
@@ -99,9 +99,9 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
-    return t("missing");
+    return tKey("waterSnow.missing");
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -176,13 +176,13 @@ function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not observed");
+function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? formatRelativeAge(value, language) : tKey("waterSnow.notObserved");
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
+function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not scheduled");
+    return tKey("waterSnow.notScheduled");
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
@@ -211,9 +211,9 @@ function formatTimelineBoundary(value: number, language: LanguageMode): string {
     .toUpperCase();
 }
 
-function pollIntervalLabel(seconds: number | null | undefined, t: (value: string) => string): string {
+function pollIntervalLabel(seconds: number | null | undefined, tKey: (key: string) => string): string {
   if (!seconds) {
-    return t("cadence missing");
+    return tKey("waterSnow.cadenceMissing");
   }
 
   if (seconds < 3600) {
@@ -299,7 +299,7 @@ function fieldSignalKeys(field: string): WaterFieldSignalKey[] {
   return ["risk"];
 }
 
-function guidanceRows(eventSchemas: SourceNormalizedEventStructure[], t: (value: string) => string): WaterGuidanceRow[] {
+function guidanceRows(eventSchemas: SourceNormalizedEventStructure[], tKey: (key: string) => string): WaterGuidanceRow[] {
   return GUIDANCE_TYPES.map((guidance) => {
     const isMapped = eventSchemas.some((schema) => {
       const eventType = schema.event_type.toLowerCase();
@@ -308,10 +308,10 @@ function guidanceRows(eventSchemas: SourceNormalizedEventStructure[], t: (value:
 
     return {
       key: guidance.key,
-      label: t(guidance.label),
+      label: tKey(`waterSnow.${guidance.labelKey}`),
       icon: guidance.icon,
       tone: isMapped ? "good" : "neutral",
-      status: isMapped ? t("mapped") : t("reserved"),
+      status: isMapped ? tKey("waterSnow.mapped") : tKey("waterSnow.reserved"),
       width: isMapped ? 100 : 28
     };
   });
@@ -379,14 +379,14 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, dataLabel } = useI18n();
 
   if (!category) {
     return (
-      <section className="water-detail-empty" aria-label={t("Water and snow data unavailable")}>
-        <span>{t("Water & Snow")}</span>
-        <h2>{t("Hydrology signals are not available yet")}</h2>
-        <p>{t("SYKE and Flood Centre source metadata has not arrived for the current platform view.")}</p>
+      <section className="water-detail-empty" aria-label={tKey("waterSnow.dataUnavailable")}>
+        <span>{tKey("waterSnow.title")}</span>
+        <h2>{tKey("waterSnow.signalsUnavailable")}</h2>
+        <p>{tKey("waterSnow.sykeMetadataMissing")}</p>
       </section>
     );
   }
@@ -408,7 +408,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
   const coverageRows = catalogCoveragePoints(category);
   const shapeRows = schemaShapeRows(datasets, language);
   const waterTimelineBounds = timelineBounds(timeline);
-  const waterGuidanceRows = guidanceRows(eventSchemas, t);
+  const waterGuidanceRows = guidanceRows(eventSchemas, tKey);
   const sourceRows =
     sourcePoints.length > 0
       ? sourcePoints
@@ -434,11 +434,11 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
     catalogStageMetric?.updated_at;
   const heroTitle =
     latest?.title ??
-    (category.stage === "connected" ? t("Hydrology feed active") : t("Hydrology source mapped"));
+    (category.stage === "connected" ? tKey("waterSnow.feedActive") : tKey("waterSnow.sourceMapped"));
   const heroDetail =
     latest?.body ??
     category.description ??
-    t("Water level, discharge, groundwater, snow-water equivalent, and flood context are ready for ingestion.");
+    tKey("waterSnow.ingestionReady");
   const signalMetrics = [
     activeEventsMetric,
     sourceStatusMetric,
@@ -447,26 +447,26 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
   ].filter(isPlatformMetric);
 
   return (
-    <section className="water-detail-page" aria-label={t("Water and snow detail")}>
+    <section className="water-detail-page" aria-label={tKey("waterSnow.detailAria")}>
       <div className="water-detail-header">
         <div>
-          <h2>{t("Water & Snow Hydrology")}</h2>
+          <h2>{tKey("waterSnow.hydrologyTitle")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
             <strong>{sourceStatusLabel(category, language)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, t)}</div>
+        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
       </div>
 
-      <section className={`water-glass-panel water-command-panel water-command-panel-${activeTone}`} aria-label={t("Water and snow operating condition")}>
+      <section className={`water-glass-panel water-command-panel water-command-panel-${activeTone}`} aria-label={tKey("waterSnow.operatingCondition")}>
         <div className="water-command-status">
           <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
             {activeTone === "bad" ? "flood" : activeTone === "good" ? "water_drop" : "cloudy_snowing"}
           </span>
           <div>
             <div className="water-card-kicker">
-              <span>{t("Hydrology Signal State")}</span>
+              <span>{tKey("waterSnow.signalState")}</span>
               <time>{sourceStageLabel(category, language)}</time>
             </div>
             <strong>{heroTitle}</strong>
@@ -476,25 +476,25 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
         <div className="water-command-facts">
           <div>
-            <span>{t("Datasets")}</span>
+            <span>{tKey("waterSnow.datasets")}</span>
             <strong>{datasetCount}</strong>
           </div>
           <div>
-            <span>{t("Cadence")}</span>
-            <strong>{pollIntervalLabel(source?.poll_interval_seconds, t)}</strong>
+            <span>{tKey("waterSnow.cadence")}</span>
+            <strong>{pollIntervalLabel(source?.poll_interval_seconds, tKey)}</strong>
           </div>
           <div>
-            <span>{t("Active Events")}</span>
-            <strong>{formatMetricValue(activeEventsMetric, t)}</strong>
+            <span>{tKey("waterSnow.activeEvents")}</span>
+            <strong>{formatMetricValue(activeEventsMetric, tKey)}</strong>
           </div>
           <div>
-            <span>{t("Records Ingested")}</span>
-            <strong>{formatMetricValue(recordsMetric, t)}</strong>
+            <span>{tKey("waterSnow.recordsIngested")}</span>
+            <strong>{formatMetricValue(recordsMetric, tKey)}</strong>
           </div>
         </div>
       </section>
 
-      <section className="water-summary-strip" aria-label={t("Water and snow summary metrics")}>
+      <section className="water-summary-strip" aria-label={tKey("waterSnow.summaryMetrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
             <DataLabelWithHelp
@@ -505,14 +505,14 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 t,
               })}
             >
-              {t(metric.label)}
+              {dataLabel(metric.label)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
+            <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="water-insight-grid" aria-label={t("Water and snow operating condition")}>
+      <section className="water-insight-grid" aria-label={tKey("waterSnow.operatingCondition")}>
         <article className="water-glass-panel water-coverage-panel">
           <header>
             <DataLabelWithHelp
@@ -522,7 +522,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 t,
               })}
             >
-              {t("Catalog Coverage")}
+              {tKey("waterSnow.catalogCoverage")}
             </DataLabelWithHelp>
             <strong>{coverageRows.length || 3}</strong>
           </header>
@@ -536,8 +536,8 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 ]).map((point) => (
               <article className={`water-coverage-row water-coverage-row-${point.tone ?? "neutral"}`} key={point.label}>
                 <div>
-                  <strong>{t(point.label)}</strong>
-                  <span>{point.value} {t("items")}</span>
+                  <strong>{dataLabel(point.label)}</strong>
+                  <span>{point.value} {tKey("waterSnow.items")}</span>
                 </div>
                 <i aria-hidden="true">
                   <span style={{ width: `${pointWidth(point, coverageRows.length > 0 ? coverageRows : [point])}%` }} />
@@ -556,7 +556,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 t,
               })}
             >
-              {t("Tracked Fields")}
+              {tKey("waterSnow.trackedFields")}
             </DataLabelWithHelp>
             <strong>{keyDataItems.length}</strong>
           </header>
@@ -567,18 +567,18 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                   {FIELD_ICONS[field] ?? "dataset"}
                 </span>
                 <div>
-                  <strong>{t(formatDataItemLabel(field))}</strong>
+                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>
             ))}
           </div>
           {keyDataItems.length > 0 ? (
-            <div className="water-field-lattice" aria-label={t("Hydrology field matrix")}>
+            <div className="water-field-lattice" aria-label={tKey("waterSnow.fieldMatrix")}>
               <div className="water-field-lattice-head">
-                <span>{t("Signal")}</span>
+                <span>{tKey("waterSnow.signal")}</span>
                 {FIELD_SIGNAL_COLUMNS.map((column) => (
-                  <span key={column.key}>{t(column.label)}</span>
+                  <span key={column.key}>{tKey(`waterSnow.${column.labelKey}`)}</span>
                 ))}
               </div>
               {keyDataItems.map((field) => {
@@ -586,10 +586,10 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
                 return (
                   <div className="water-field-lattice-row" key={field}>
-                    <strong>{t(formatDataItemLabel(field))}</strong>
+                    <strong>{dataLabel(formatDataItemLabel(field))}</strong>
                     {FIELD_SIGNAL_COLUMNS.map((column) => (
                       <i
-                        aria-label={`${t(formatDataItemLabel(field))} ${t(column.label)}`}
+                        aria-label={`${dataLabel(formatDataItemLabel(field))} ${tKey(`waterSnow.${column.labelKey}`)}`}
                         className={activeSignals.includes(column.key) ? "active" : undefined}
                         key={column.key}
                       />
@@ -602,18 +602,18 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
         </article>
       </section>
 
-      <section className="water-main-grid" aria-label={t("Water and snow platform analytics")}>
+      <section className="water-main-grid" aria-label={tKey("waterSnow.platformAnalytics")}>
         <article className="water-glass-panel water-signal-panel">
           <header>
             <div>
-              <span>{t("Hydrology Signal Stack")}</span>
-              <h3>{t("Source schema, event readiness, and collection state")}</h3>
+              <span>{tKey("waterSnow.signalStack")}</span>
+              <h3>{tKey("waterSnow.signalStackLead")}</h3>
             </div>
-            <strong>{signalMetrics.length} {t("metrics")}</strong>
+            <strong>{signalMetrics.length} {tKey("waterSnow.metrics")}</strong>
           </header>
 
           {shapeRows.length > 0 ? (
-            <div className="water-schema-shape-bars" aria-label={t("Dataset shape distribution")}>
+            <div className="water-schema-shape-bars" aria-label={tKey("waterSnow.datasetShapeDistribution")}>
               {shapeRows.map((row) => (
                 <article className={`water-schema-shape-row water-schema-shape-row-${row.tone}`} key={row.key}>
                   <span>{row.label}</span>
@@ -641,19 +641,19 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                     <p>{dataset.spatial_grain} · {dataset.cadence}</p>
                     <div className="water-schema-composition">
                       <span>
-                        {requiredFieldCount}/{dataset.fields.length} {t("required fields")}
+                        {requiredFieldCount}/{dataset.fields.length} {tKey("waterSnow.requiredFields")}
                       </span>
                       <i aria-hidden="true">
                         <span style={{ width: `${Math.max(8, (requiredFieldCount / fieldTotal) * 100)}%` }} />
                       </i>
                     </div>
-                    <div className="water-schema-field-strip" aria-label={t("Field requirement lattice")}>
+                    <div className="water-schema-field-strip" aria-label={tKey("waterSnow.fieldRequirementLattice")}>
                       {dataset.fields.slice(0, 10).map((field) => (
                         <span
-                          aria-label={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                          aria-label={`${field.label}: ${field.required ? tKey("waterSnow.required") : tKey("waterSnow.optional")}`}
                           className={field.required ? "required" : undefined}
                           key={field.key}
-                          title={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                          title={`${field.label}: ${field.required ? tKey("waterSnow.required") : tKey("waterSnow.optional")}`}
                         />
                       ))}
                     </div>
@@ -671,10 +671,10 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                     <strong>Hydrology schema</strong>
                   <span>{translateEnumLabel(language, category.stage ?? "planned")}</span>
                 </div>
-                <p>{t("Station, catchment, flood-context, and snow-water fields are mapped in the catalog.")}</p>
+                <p>{tKey("waterSnow.catalogFieldsMapped")}</p>
                 <div className="water-schema-fields">
                   {keyDataItems.slice(0, 4).map((field) => (
-                    <span key={field}>{t(formatDataItemLabel(field))}</span>
+                    <span key={field}>{dataLabel(formatDataItemLabel(field))}</span>
                   ))}
                 </div>
               </article>
@@ -686,9 +686,9 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, t)}</span>
+                  <span>{formatMetricValue(metric, tKey)}</span>
                 </div>
-                <p>{metric.detail ?? t("This signal has not produced a platform metric yet.")}</p>
+                <p>{metric.detail ?? tKey("waterSnow.metricNotProduced")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
                   <span style={{ width: `${metricProgress(metric)}%` }} />
                 </span>
@@ -700,18 +700,18 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
         <div className="water-side-grid">
           <article className="water-glass-panel water-source-panel">
             <header>
-              <span>{t("SYKE Source")}</span>
+              <span>{tKey("waterSnow.sykeSource")}</span>
               <strong>{sourceStageLabel(category, language)}</strong>
             </header>
             <div className="water-source-facts">
-              <span>{datasetCount} {t("datasets")}</span>
-              <span>{pollIntervalLabel(source?.poll_interval_seconds, t)} {t("poll")}</span>
-              <span>{source?.license_label ?? t("Open data")}</span>
+              <span>{datasetCount} {tKey("waterSnow.datasetsLower")}</span>
+              <span>{pollIntervalLabel(source?.poll_interval_seconds, tKey)} {tKey("waterSnow.poll")}</span>
+              <span>{source?.license_label ?? tKey("waterSnow.openData")}</span>
             </div>
             <p>{providerName}</p>
             {source?.documentation_url ? (
               <a href={source.documentation_url} rel="noreferrer" target="_blank">
-                {t("Open data documentation")}
+                {tKey("waterSnow.openDataDocumentation")}
               </a>
             ) : null}
           </article>
@@ -725,7 +725,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                   t,
                 })}
               >
-                {t("Collection Volume")}
+                {tKey("waterSnow.collectionVolume")}
               </DataLabelWithHelp>
               <strong>{sourceRows.length}</strong>
             </header>
@@ -734,7 +734,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 <article className={`water-volume-row water-volume-row-${point.tone ?? "neutral"}`} key={point.label}>
                   <div>
                     <strong>{point.label}</strong>
-                    <span>{point.detail ? translateEnumLabel(language, point.detail) : t("records")}</span>
+                    <span>{point.detail ? translateEnumLabel(language, point.detail) : tKey("waterSnow.records")}</span>
                   </div>
                   <em>{point.value}</em>
                   <span className="water-volume-meter" aria-hidden="true">
@@ -754,16 +754,16 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                   t,
                 })}
               >
-                {t("Event Readiness")}
+                {tKey("waterSnow.eventReadiness")}
               </DataLabelWithHelp>
               <strong>{events.length}</strong>
             </header>
             {timeline.length > 0 ? (
               <>
                 {waterTimelineBounds ? (
-                  <div className="water-timeband-panel" aria-label={t("Water guidance time windows")}>
+                  <div className="water-timeband-panel" aria-label={tKey("waterSnow.guidanceTimeWindows")}>
                     <header>
-                      <span>{t("Time Windows")}</span>
+                      <span>{tKey("waterSnow.timeWindows")}</span>
                       <span>
                         {formatTimelineBoundary(waterTimelineBounds.startsAt, language)} -{" "}
                         {formatTimelineBoundary(waterTimelineBounds.endsAt, language)}
@@ -786,7 +786,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
                         return (
                           <article className={`water-timeband-row water-timeband-row-${eventTone(item)}`} key={item.id}>
-                            <span>{formatCompactTime(item.starts_at, language, t)}</span>
+                            <span>{formatCompactTime(item.starts_at, language, tKey)}</span>
                             <i aria-hidden="true">
                               <span style={bandStyle} />
                             </i>
@@ -806,7 +806,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 	                    >
                       <span className="water-event-dot" aria-hidden="true" />
                       <div>
-                        <time>{formatCompactTime(item.starts_at, language, t)}</time>
+                        <time>{formatCompactTime(item.starts_at, language, tKey)}</time>
                         <strong>{item.label}</strong>
                         <p>{item.detail}</p>
                       </div>
@@ -816,7 +816,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               </>
             ) : (
               <div className="water-severity-bars">
-                <div className="water-guidance-grid" aria-label={t("Guidance readiness")}>
+                <div className="water-guidance-grid" aria-label={tKey("waterSnow.guidanceReadiness")}>
                   {waterGuidanceRows.map((row) => (
                     <article className={`water-guidance-row water-guidance-row-${row.tone}`} key={row.key}>
                       <span className="material-symbols-outlined" aria-hidden="true">
@@ -842,9 +842,9 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                   </article>
                 ))}
                 {eventSchemas.length > 0 ? (
-                  <p>{eventSchemas.length} {t("normalized event schema(s) mapped for water guidance.")}</p>
+                  <p>{eventSchemas.length} {tKey("waterSnow.normalizedSchemasMappedSuffix")}</p>
                 ) : (
-                  <p>{t("Flood, drought, snow-load, and algae event types are reserved for the SYKE integration.")}</p>
+                  <p>{tKey("waterSnow.guidanceTypesReserved")}</p>
                 )}
               </div>
             )}
@@ -852,10 +852,10 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
         </div>
       </section>
 
-      <section className="water-provider-status" aria-label={t("Water and snow provider status")}>
+      <section className="water-provider-status" aria-label={tKey("waterSnow.providerStatusAria")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("waterSnow.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -869,7 +869,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {relativeTime(sourceUpdatedAt, language, t)}
+            {tKey("shell.lastSync")}: {relativeTime(sourceUpdatedAt, language, tKey)}
           </span>
           <i aria-hidden="true" />
           <span className="water-provider-stage">{sourceStageLabel(category, language)}</span>
