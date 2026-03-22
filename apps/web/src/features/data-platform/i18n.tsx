@@ -3,6 +3,8 @@
 import { NextIntlClientProvider } from "next-intl";
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
+import energyEnMessages from "./messages/energy.en.json";
+import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
 import shellEnMessages from "./messages/shell.en.json";
 import shellZhMessages from "./messages/shell.zh.json";
@@ -17,6 +19,7 @@ export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
 type StructuredMessages = {
   shell: Record<string, string>;
   weather: Record<string, string>;
+  energy: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -33,8 +36,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {

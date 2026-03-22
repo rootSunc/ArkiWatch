@@ -37,12 +37,12 @@ export type EnergyDisplayPoint = {
 
 export type EnergyPanelProfile = {
   chartKind: "area-line" | "hourly-bars";
-  chartKindLabel: string;
+  chartKindLabelKey: string;
   pageClassName: string;
-  rangeLabel: string;
-  spreadLabel: string;
-  unitLabel: string;
-  valueColumnLabel: string;
-  detailColumnLabel: string;
-  noUnitLabel: string;
+  rangeLabelKey: string;
+  spreadLabelKey: string;
+  unitLabelKey: string;
+  valueColumnLabelKey: string;
+  detailColumnLabelKey: string;
+  noUnitLabelKey: string;
 };

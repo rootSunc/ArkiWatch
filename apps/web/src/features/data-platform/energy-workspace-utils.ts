@@ -25,13 +25,13 @@ import type {
 import type { EnergyPanelKey } from "./workspace-query-params";
 import type { EnergyDisplayPoint, EnergyTone, PanelMetric } from "./energy-workspace-types";
 
-export function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
+export function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
-    return t("missing");
+    return tKey("energy.missing");
   }
 
   if (metric.unit?.toUpperCase() === "EUR") {
-    return formatEstimatedCost(numericValue(metric.value), t);
+    return formatEstimatedCost(numericValue(metric.value), tKey);
   }
   if (metric.unit === "%") {
     return `${metric.value}%`;
@@ -44,29 +44,42 @@ export function metricByKey(category: PlatformCategory, key: string): PlatformMe
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-export function displayMetricLabel(metric: PanelMetric | null, fallback: string): string {
+export function displayMetricLabelKey(metric: PanelMetric | null): string | null {
   if (metric?.key === "estimated_cost") {
-    return "Estimated cost";
+    return "estimatedCost";
   }
   if (metric?.key === "window_average" && isPriceUnit(metric.unit)) {
-    return "Average spot price";
+    return "averageSpotPrice";
   }
   if (metric?.key === "minimum_value" && isPriceUnit(metric.unit)) {
-    return "Cheapest spot price";
+    return "cheapestSpotPrice";
   }
   if (metric?.key === "maximum_value" && isPriceUnit(metric.unit)) {
-    return "Peak spot price";
+    return "peakSpotPrice";
   }
   if (metric?.key === "relative_savings") {
-    return "Below forecast average";
+    return "belowForecastAverage";
   }
 
-  return metric?.label ?? fallback;
+  return null;
 }
 
-export function formatCompactTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
+export function resolveMetricLabel(
+  metric: PanelMetric | null,
+  tKey: (key: string) => string,
+  t: (value: string) => string,
+): string {
+  const key = displayMetricLabelKey(metric);
+  if (key) {
+    return tKey(`energy.${key}`);
+  }
+
+  return metric?.label ? t(metric.label) : tKey("energy.metricUnavailable");
+}
+
+export function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not scheduled");
+    return tKey("energy.notScheduled");
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
@@ -81,8 +94,8 @@ export function formatCompactTime(value: string | null | undefined, language: La
     .toUpperCase();
 }
 
-export function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not observed");
+export function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? formatRelativeAge(value, language) : tKey("energy.notObserved");
 }
 
 export function toneFromStatus(status: string): EnergyTone {
@@ -228,9 +241,9 @@ export function sourceRecordsMetric(source: DashboardSource | null): PanelMetric
   };
 }
 
-export function pollIntervalLabel(seconds: number | null | undefined, t: (value: string) => string): string {
+export function pollIntervalLabel(seconds: number | null | undefined, tKey: (key: string) => string): string {
   if (!seconds) {
-    return t("cadence missing");
+    return tKey("energy.cadenceMissing");
   }
 
   if (seconds < 3600) {
@@ -270,9 +283,9 @@ export function formatEnergyPointValue(point: EnergyPoint, fallbackUnit: string 
   return formatValueWithUnit(point.value, unit);
 }
 
-export function formatEstimatedCost(value: number | null | undefined, t: (value: string) => string): string {
+export function formatEstimatedCost(value: number | null | undefined, tKey: (key: string) => string): string {
   if (value === null || value === undefined) {
-    return t("cost n/a");
+    return tKey("energy.costNA");
   }
 
   return `EUR ${value.toFixed(2)}`;
@@ -335,9 +348,9 @@ export function chartDisplayPoints(
 export function formatEnergyRange(
   range: { min: number; max: number },
   unit: string | null | undefined,
-  t: (value: string) => string
+  tKey: (key: string) => string
 ): string {
-  return `${formatValueWithUnit(range.min, unit)} ${t("to")} ${formatValueWithUnit(range.max, unit)}`;
+  return `${formatValueWithUnit(range.min, unit)} ${tKey("energy.to")} ${formatValueWithUnit(range.max, unit)}`;
 }
 
 export function formatEnergySpread(range: { min: number; max: number }, unit: string | null | undefined): string {
@@ -445,7 +458,7 @@ export function averagePointValue(points: EnergyPoint[]): number | null {
 
 export function energyHistoryPoints(
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[],
-  t: (value: string) => string,
+  tKey: (key: string) => string,
   showEstimatedCost: boolean
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -476,15 +489,15 @@ export function energyHistoryPoints(
     const historyFractionDigits = showEstimatedCost ? 2 : 1;
     const rangeDetail =
       minimumValue !== null && maximumValue !== null
-        ? `${t("range")} ${minimumValue.toFixed(historyFractionDigits)}-${maximumValue.toFixed(historyFractionDigits)}`
-        : `${data.quality.point_count} ${t("points")}`;
+        ? `${tKey("energy.range")} ${minimumValue.toFixed(historyFractionDigits)}-${maximumValue.toFixed(historyFractionDigits)}`
+        : `${data.quality.point_count} ${tKey("energy.points")}`;
 
     return [
       {
         label: formatHistoryDate(snapshot.date),
         value: averageValue,
         detail: data.current_window
-          ? `${rangeDetail} · ${data.current_window.point_count} ${t("window points")}`
+          ? `${rangeDetail} · ${data.current_window.point_count} ${tKey("energy.windowPoints")}`
           : rangeDetail
       }
     ];

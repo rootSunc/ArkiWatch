@@ -10,41 +10,41 @@ export const PRICE_CHART_PAD_BOTTOM = 40;
 export const DEFAULT_HOUSEHOLD_PRICE_PROVIDER = "Fortum";
 export const ENERGY_PANEL_TABS: Array<{
   key: EnergyPanelKey;
-  label: string;
+  labelKey: string;
   icon: string;
 }> = [
   {
     key: "porssisahko",
-    label: "Household Prices",
+    labelKey: "householdPrices",
     icon: "payments",
   },
   {
     key: "fingrid",
-    label: "Fingrid System",
+    labelKey: "fingridSystem",
     icon: "electrical_services",
   },
 ];
 export const ENERGY_PANEL_PROFILES: Record<EnergyPanelKey, EnergyPanelProfile> = {
   fingrid: {
     chartKind: "area-line",
-    chartKindLabel: "Continuous system curve",
+    chartKindLabelKey: "continuousSystemCurve",
     pageClassName: "energy-detail-page-system",
-    rangeLabel: "System value range",
-    spreadLabel: "System spread",
-    unitLabel: "Signal unit",
-    valueColumnLabel: "Signal value",
-    detailColumnLabel: "Ends",
-    noUnitLabel: "raw value"
+    rangeLabelKey: "systemValueRange",
+    spreadLabelKey: "systemSpread",
+    unitLabelKey: "signalUnit",
+    valueColumnLabelKey: "signalValue",
+    detailColumnLabelKey: "ends",
+    noUnitLabelKey: "rawValue",
   },
   porssisahko: {
     chartKind: "hourly-bars",
-    chartKindLabel: "Hourly cost bars",
+    chartKindLabelKey: "hourlyCostBars",
     pageClassName: "energy-detail-page-price",
-    rangeLabel: "Estimated cost range",
-    spreadLabel: "Cost spread",
-    unitLabel: "Displayed unit",
-    valueColumnLabel: "Estimated cost",
-    detailColumnLabel: "Spot price",
-    noUnitLabel: "EUR"
-  }
+    rangeLabelKey: "estimatedCostRange",
+    spreadLabelKey: "costSpread",
+    unitLabelKey: "displayedUnit",
+    valueColumnLabelKey: "estimatedCost",
+    detailColumnLabelKey: "spotPrice",
+    noUnitLabelKey: "eur",
+  },
 };

@@ -24,7 +24,7 @@ import {
   chartScale,
   chartX,
   chartY,
-  displayMetricLabel,
+  resolveMetricLabel,
   energyHistoryPoints,
   energyMetricTone,
   energyTimelineItems,
@@ -69,7 +69,7 @@ export function EnergyWorkspace({
   householdHistory,
   onPanelChange,
 }: EnergyWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey } = useI18n();
   const [internalPanel, setInternalPanel] = useState<EnergyPanelKey>("porssisahko");
   const activePanel = controlledPanel ?? internalPanel;
 
@@ -95,10 +95,10 @@ export function EnergyWorkspace({
 
   if (!category) {
     return (
-      <section className="energy-detail-empty" aria-label={t("Energy data unavailable")}>
-        <span>{t("Energy")}</span>
-        <h2>{t("Energy signals are not available yet")}</h2>
-        <p>{t("Fingrid electricity-system metadata has not arrived for the current platform view.")}</p>
+      <section className="energy-detail-empty" aria-label={tKey("energy.energyDataUnavailable")}>
+        <span>{tKey("energy.energy")}</span>
+        <h2>{tKey("energy.energySignalsAreNotAvailableYet")}</h2>
+        <p>{tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}</p>
       </section>
     );
   }
@@ -134,15 +134,15 @@ export function EnergyWorkspace({
     timelineItems.some((item) => !isNoActiveWindowLabel(item.label)) ||
     (latestEvent !== null && !isNoActiveWindowLabel(latestEvent.title));
   const startLabel = window
-    ? formatCompactTime(window.starts_at, language, t)
+    ? formatCompactTime(window.starts_at, language, tKey)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.starts_at, language, t)
-      : t("window pending");
+      ? formatCompactTime(latestEvent.starts_at, language, tKey)
+      : tKey("energy.windowPending2");
   const endLabel = window
-    ? formatCompactTime(window.ends_at, language, t)
+    ? formatCompactTime(window.ends_at, language, tKey)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.ends_at, language, t)
-      : t("waiting for event");
+      ? formatCompactTime(latestEvent.ends_at, language, tKey)
+      : tKey("energy.waitingForEvent");
   const householdWindowUsage = isPricePanel && window?.usage_kwh != null ? window.usage_kwh : null;
   const householdUsageMetric = householdWindowUsage !== null
     ? {
@@ -164,7 +164,7 @@ export function EnergyWorkspace({
       estimated_cost_eur: window.estimated_cost_eur
     }
     : null;
-  const windowAverageLabel = windowAveragePoint ? formatEnergyPointValue(windowAveragePoint, activeEnergy?.unit) : t("n/a");
+  const windowAverageLabel = windowAveragePoint ? formatEnergyPointValue(windowAveragePoint, activeEnergy?.unit) : tKey("energy.nA");
   const signalMetrics: PanelMetric[] = activeEnergy?.metrics.length ? activeEnergy.metrics.map((metric) => ({
     ...metric,
     detail: null,
@@ -172,22 +172,22 @@ export function EnergyWorkspace({
   })) : [lowWindowMetric, recordsMetric, sourceStateMetric].filter((metric): metric is PanelMetric => metric !== null);
   const heroValue = window
     ? isPricePanel
-      ? formatEstimatedCost(window.estimated_cost_eur, t)
+      ? formatEstimatedCost(window.estimated_cost_eur, tKey)
       : `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
     : lowWindowMetric
-    ? formatMetricValue(lowWindowMetric, t)
+    ? formatMetricValue(lowWindowMetric, tKey)
     : hasActiveWindow
-      ? t("Window detected")
-      : t("No active window");
+      ? tKey("energy.windowDetected")
+      : tKey("energy.noActiveWindow");
   const heroDetail =
     (isPricePanel && window
-      ? activeEnergy?.summary ?? `${t("Average spot price")}: ${windowAverageLabel}.`
+      ? activeEnergy?.summary ?? `${tKey("energy.averageSpotPrice")}: ${windowAverageLabel}.`
       : activeEnergy?.summary) ??
     lowWindowMetric?.detail ??
     latestEvent?.body ??
     (isPricePanel
-      ? `${priceProviderName} ${t("price data has not produced a household price window for the current platform view.")}`
-      : t("Fingrid data has not produced a low-value energy window for the current platform view."));
+      ? `${priceProviderName} ${tKey("energy.priceDataHasNotProducedAHouseholdPriceWindowForTheCurrentPlatformView")}`
+      : tKey("energy.fingridDataHasNotProducedALowValueEnergyWindowForTheCurrentPlatformView"));
   const points = activeEnergy?.points ?? [];
   const sourceChartPoints = points.slice(0, 96);
   const chartPointPairs = chartDisplayPoints(sourceChartPoints, isPricePanel, activeEnergy?.unit, householdWindowUsage);
@@ -208,13 +208,13 @@ export function EnergyWorkspace({
     return ticks;
   })() : [];
 
-  const historyPoints = energyHistoryPoints(activeHistory, t, isPricePanel);
+  const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel);
   const activeSourceLabel = sourceStatusLabel(activeSource, activeStatus, language);
-  const activeTitle = isPricePanel ? `${priceProviderName} ${t("Household Energy Price")}` : t("Fingrid Energy Signals");
+  const activeTitle = isPricePanel ? `${priceProviderName} ${tKey("energy.householdEnergyPrice")}` : tKey("energy.fingridEnergySignals");
   const activeDataFeedName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
   const activeSourceName = isPricePanel ? priceProviderName : activeDataFeedName;
   const sourceDisclosureName = isPricePanel ? activeDataFeedName : activeSourceName;
-  const activeUnitLabel = isPricePanel ? "EUR" : activeEnergy?.unit ?? t(activeProfile.noUnitLabel);
+  const activeUnitLabel = isPricePanel ? "EUR" : activeEnergy?.unit ?? tKey(`energy.${activeProfile.noUnitLabelKey}`);
   const datasetCount = activeSource?.datasets?.length ?? 0;
   const baseSummaryMetrics: PanelMetric[] = activeEnergy?.metrics.length
     ? orderedEnergyMetrics(activeEnergy.metrics, isPricePanel).slice(0, 5)
@@ -230,11 +230,11 @@ export function EnergyWorkspace({
   }];
 
   return (
-    <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={t("Energy detail")}>
-      <nav className="energy-tab-list" aria-label={t("Energy workspace tabs")} role="tablist">
+    <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={tKey("energy.energyDetail")}>
+      <nav className="energy-tab-list" aria-label={tKey("energy.energyWorkspaceTabs")} role="tablist">
         {ENERGY_PANEL_TABS.map((tab) => {
           const tabLabel =
-            tab.key === "porssisahko" ? `${priceProviderName} ${t("Prices")}` : t(tab.label);
+            tab.key === "porssisahko" ? `${priceProviderName} ${tKey("energy.prices")}` : tKey(`energy.${tab.labelKey}`);
 
           return (
             <button
@@ -263,7 +263,7 @@ export function EnergyWorkspace({
             <strong>{activeSourceLabel}</strong>
           </div>
         </div>
-        <div>{activeSourceName} / {relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at, language, t)}</div>
+        <div>{activeSourceName} / {relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at, language, tKey)}</div>
       </div>
 
       <section
@@ -273,7 +273,7 @@ export function EnergyWorkspace({
             ? eventAnchorId(highlightedCategoryEvent.id)
             : undefined
         }
-        aria-label={t("Energy operating condition")}
+        aria-label={tKey("energy.energyOperatingCondition")}
       >
         <div className="energy-command-status">
           <span className="material-symbols-outlined energy-condition-icon" aria-hidden="true">
@@ -281,8 +281,8 @@ export function EnergyWorkspace({
           </span>
           <div>
             <div className="energy-card-kicker">
-              <span>{isPricePanel ? t("Flexible Use Start Window") : t("Low-value System Window")}</span>
-              <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, t)}</time>
+              <span>{isPricePanel ? tKey("energy.flexibleUseStartWindow") : tKey("energy.lowValueSystemWindow")}</span>
+              <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, tKey)}</time>
             </div>
             <strong>{heroValue}</strong>
             <p>{heroDetail}</p>
@@ -291,22 +291,22 @@ export function EnergyWorkspace({
 
         <div className="energy-command-facts">
           <div>
-            <span>{t("Can start from")}</span>
+            <span>{tKey("energy.canStartFrom")}</span>
             <strong>{startLabel}</strong>
           </div>
           <div>
-            <span>{t("Ends")}</span>
+            <span>{tKey("energy.ends")}</span>
             <strong>{endLabel}</strong>
           </div>
           <div>
-            <span>{isPricePanel ? t("Average spot price") : t("Window State")}</span>
-            <strong>{isPricePanel ? windowAverageLabel : hasActiveWindow ? t("Ready") : t("Pending")}</strong>
+            <span>{isPricePanel ? tKey("energy.averageSpotPrice") : tKey("energy.windowState")}</span>
+            <strong>{isPricePanel ? windowAverageLabel : hasActiveWindow ? tKey("energy.ready") : tKey("energy.pending")}</strong>
           </div>
           <div>
-            <span>{isPricePanel ? t("Window usage") : t("System Source")}</span>
+            <span>{isPricePanel ? tKey("energy.windowUsage") : tKey("energy.systemSource")}</span>
             <strong>{isPricePanel
               ? householdWindowUsage === null
-                ? t("n/a")
+                ? tKey("energy.nA")
                 : `${householdWindowUsage.toFixed(2)} kWh`
               : sourceDisclosureName}
             </strong>
@@ -314,25 +314,25 @@ export function EnergyWorkspace({
         </div>
       </section>
 
-      <section className="energy-summary-strip" aria-label={t("Energy summary metrics")}>
+      <section className="energy-summary-strip" aria-label={tKey("energy.energySummaryMetrics")}>
         {displaySummaryMetrics.map((metric) => (
           <article className={`energy-glass-panel energy-summary-${metricTone(metric)}`} key={metric.key}>
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key: metric.key,
-                label: displayMetricLabel(metric, "Metric unavailable"),
+                label: resolveMetricLabel(metric, tKey, t),
                 detail: "detail" in metric ? metric.detail : null,
                 t,
               })}
             >
-              {t(displayMetricLabel(metric, "Metric unavailable"))}
+              {resolveMetricLabel(metric, tKey, t)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
+            <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="energy-main-grid" aria-label={t("Energy platform analytics")}>
+      <section className="energy-main-grid" aria-label={tKey("energy.energyPlatformAnalytics")}>
         <article className="energy-glass-panel energy-signal-panel">
           <header>
             <div>
@@ -343,37 +343,37 @@ export function EnergyWorkspace({
                   t,
                 })}
               >
-                {isPricePanel ? t("Household Price Forecast") : t("Fingrid System Timeseries")}
+                {isPricePanel ? tKey("energy.householdPriceForecast") : tKey("energy.fingridSystemTimeseries")}
               </DataLabelWithHelp>
               <h3>{isPricePanel
-                ? t("Spot price by time and estimated flexible-use cost")
-                : t("Configured Fingrid dataset by time and selected low-value window")}</h3>
+                ? tKey("energy.spotPriceByTimeAndEstimatedFlexibleUseCost")
+                : tKey("energy.configuredFingridDatasetByTimeAndSelectedLowValueWindow")}</h3>
             </div>
-            <strong>{signalMetrics.length} {t("metrics")}</strong>
+            <strong>{signalMetrics.length} {tKey("energy.metrics")}</strong>
           </header>
           {chartPoints.length > 0 && chartRange && chartVisualScale ? (
-            <div className="energy-price-chart" aria-label={isPricePanel ? t("Household electricity price forecast") : t("Fingrid electricity-system timeseries")}>
-              <div className="energy-chart-context" aria-label={t("Energy chart context")}>
+            <div className="energy-price-chart" aria-label={isPricePanel ? tKey("energy.householdElectricityPriceForecast") : tKey("energy.fingridElectricitySystemTimeseries")}>
+              <div className="energy-chart-context" aria-label={tKey("energy.energyChartContext")}>
                 <article>
-                  <span>{t(activeProfile.rangeLabel)}</span>
-                  <strong>{formatEnergyRange(chartRange, chartUnit, t)}</strong>
+                  <span>{tKey(`energy.${activeProfile.rangeLabelKey}`)}</span>
+                  <strong>{formatEnergyRange(chartRange, chartUnit, tKey)}</strong>
                 </article>
                 <article>
-                  <span>{t(activeProfile.spreadLabel)}</span>
+                  <span>{tKey(`energy.${activeProfile.spreadLabelKey}`)}</span>
                   <strong>{formatEnergySpread(chartRange, chartUnit)}</strong>
                 </article>
                 <article>
-                  <span>{t(activeProfile.unitLabel)}</span>
+                  <span>{tKey(`energy.${activeProfile.unitLabelKey}`)}</span>
                   <strong>{activeUnitLabel}</strong>
                 </article>
                 <article>
-                  <span>{t("Chart form")}</span>
-                  <strong>{t(activeProfile.chartKindLabel)}</strong>
+                  <span>{tKey("energy.chartForm")}</span>
+                  <strong>{tKey(`energy.${activeProfile.chartKindLabelKey}`)}</strong>
                 </article>
               </div>
               <div className="energy-price-chart-head">
-                <span>{t("Min")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, chartUnit)}</span>
-                <strong>{t("Max")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, chartUnit)}</strong>
+                <span>{tKey("energy.min")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.min }, chartUnit)}</span>
+                <strong>{tKey("energy.max")} {formatEnergyPointValue({ ...chartPoints[0], value: chartRange.max }, chartUnit)}</strong>
               </div>
               <svg
                 aria-hidden="false"
@@ -599,14 +599,14 @@ export function EnergyWorkspace({
                 >
                   <div className="energy-tooltip-content">
                     <div className="energy-tooltip-time">
-                      {formatCompactTime(hoveredPoint.point.starts_at, language, t)}
+                      {formatCompactTime(hoveredPoint.point.starts_at, language, tKey)}
                     </div>
                     <div className="energy-tooltip-value">
                       <strong>{formatEnergyPointValue(hoveredPoint.point, chartUnit)}</strong>
                     </div>
                     {hoveredPoint.raw && hoveredPoint.raw !== hoveredPoint.point && (
                       <div className="energy-tooltip-detail">
-                        <span>{t("Spot price")}:</span>
+                        <span>{tKey("energy.spotPrice")}:</span>
                         <strong>{formatEnergyPointValue(hoveredPoint.raw, activeEnergy?.unit)}</strong>
                       </div>
                     )}
@@ -615,17 +615,17 @@ export function EnergyWorkspace({
               )}
               <div className="energy-price-list">
                 <article className="energy-price-row energy-price-row-heading" aria-hidden="true">
-                  <span>{t("Starts")}</span>
-                  <strong>{t(activeProfile.valueColumnLabel)}</strong>
-                  <em>{t(activeProfile.detailColumnLabel)}</em>
+                  <span>{tKey("energy.starts")}</span>
+                  <strong>{tKey(`energy.${activeProfile.valueColumnLabelKey}`)}</strong>
+                  <em>{tKey(`energy.${activeProfile.detailColumnLabelKey}`)}</em>
                 </article>
                 {chartPointPairs.slice(0, 12).map(({ raw, display }) => {
                   const inWindow = isWindowPoint(display, window?.starts_at, window?.ends_at);
                   return (
                     <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={display.starts_at}>
-                      <span>{formatCompactTime(display.starts_at, language, t)}</span>
+                      <span>{formatCompactTime(display.starts_at, language, tKey)}</span>
                       <strong>{formatEnergyPointValue(display, chartUnit)}</strong>
-                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, t)}</em>
+                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, tKey)}</em>
                     </article>
                   );
                 })}
@@ -636,10 +636,10 @@ export function EnergyWorkspace({
             {signalMetrics.map((metric) => (
               <article className={`energy-signal energy-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
-                  <strong>{t(displayMetricLabel(metric, "Metric unavailable"))}</strong>
-                  <span>{formatMetricValue(metric, t)}</span>
+                  <strong>{resolveMetricLabel(metric, tKey, t)}</strong>
+                  <span>{formatMetricValue(metric, tKey)}</span>
                 </div>
-                <p>{metric.detail ?? t("This signal has not produced a platform metric yet.")}</p>
+                <p>{metric.detail ?? tKey("energy.thisSignalHasNotProducedAPlatformMetricYet")}</p>
                 <span className="energy-signal-meter" aria-hidden="true">
                   <span style={{ width: `${metricProgress(metric)}%` }} />
                 </span>
@@ -651,28 +651,28 @@ export function EnergyWorkspace({
         <div className="energy-side-grid">
           <article className="energy-glass-panel energy-source-panel">
             <header>
-              <span>{isPricePanel ? t("Price Source") : t("System Source")}</span>
+              <span>{isPricePanel ? tKey("energy.priceSource") : tKey("energy.systemSource")}</span>
               <strong>{activeSourceLabel}</strong>
             </header>
             <div className="energy-source-facts">
               <article className="energy-stat-chip">
                 <strong>{datasetCount || activeEnergy?.source_requests.length || 0}</strong>
-                <span>{t("datasets")}</span>
+                <span>{tKey("energy.datasets")}</span>
               </article>
               <article className="energy-stat-chip">
-                <strong>{pollIntervalLabel(activeSource?.poll_interval_seconds, t)}</strong>
-                <span>{t("poll")}</span>
+                <strong>{pollIntervalLabel(activeSource?.poll_interval_seconds, tKey)}</strong>
+                <span>{tKey("energy.poll")}</span>
               </article>
               <article className="energy-stat-chip">
-                <strong>{activeEnergy?.quality.point_count ?? formatMetricValue(recordsMetric, t)}</strong>
-                <span>{t("points")}</span>
+                <strong>{activeEnergy?.quality.point_count ?? formatMetricValue(recordsMetric, tKey)}</strong>
+                <span>{tKey("energy.points")}</span>
               </article>
             </div>
-            <p>{activeSourceName} · {activeSource?.license_label ?? t("license unavailable")}</p>
+            <p>{activeSourceName} · {activeSource?.license_label ?? tKey("energy.licenseUnavailable")}</p>
             {activeSource?.error_message ? <p>{activeSource.error_message}</p> : null}
             {activeSource?.documentation_url ? (
               <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">
-                {t("Open data documentation")}
+                {tKey("energy.openDataDocumentation")}
               </a>
             ) : null}
           </article>
@@ -686,7 +686,7 @@ export function EnergyWorkspace({
                   t,
                 })}
               >
-                {t("Collection Volume")}
+                {tKey("energy.collectionVolume")}
               </DataLabelWithHelp>
               <strong>{activeVolumePoints.length}</strong>
             </header>
@@ -695,7 +695,7 @@ export function EnergyWorkspace({
                 <article className={`energy-volume-row energy-volume-row-${point.tone ?? "neutral"}`} key={point.label}>
                   <div>
                     <strong>{point.label}</strong>
-                    <span>{point.detail ? translateEnumLabel(language, point.detail) : t("records")}</span>
+                    <span>{point.detail ? translateEnumLabel(language, point.detail) : tKey("energy.records2")}</span>
                   </div>
                   <em>{point.value}</em>
                   <span className="energy-volume-meter" aria-hidden="true">
@@ -715,7 +715,7 @@ export function EnergyWorkspace({
                   t,
                 })}
               >
-                {t("Data Quality")}
+                {tKey("energy.dataQuality")}
               </DataLabelWithHelp>
               <strong>{activeEnergy ? `${activeEnergy.quality.field_coverage_pct.toFixed(0)}%` : severityRows.length}</strong>
             </header>
@@ -723,15 +723,15 @@ export function EnergyWorkspace({
               <div className="energy-quality-facts">
                 <article className="energy-stat-chip">
                   <strong>{activeEnergy.quality.point_count}</strong>
-                  <span>{t("points")}</span>
+                  <span>{tKey("energy.points")}</span>
                 </article>
                 <article className="energy-stat-chip">
                   <strong>{activeEnergy.quality.window_point_count}</strong>
-                  <span>{t("window points")}</span>
+                  <span>{tKey("energy.windowPoints")}</span>
                 </article>
                 <article className="energy-stat-chip">
                   <strong>{activeEnergy.quality.missing_fields.length}</strong>
-                  <span>{t("missing fields")}</span>
+                  <span>{tKey("energy.missingFields")}</span>
                 </article>
               </div>
             ) : (
@@ -754,7 +754,7 @@ export function EnergyWorkspace({
         </div>
       </section>
 
-      <section className="energy-insight-grid" aria-label={t("Energy operating condition")}>
+      <section className="energy-insight-grid" aria-label={tKey("energy.energyOperatingCondition")}>
         <article className="energy-glass-panel energy-window-panel">
           <header>
             <DataLabelWithHelp
@@ -764,20 +764,20 @@ export function EnergyWorkspace({
                 t,
               })}
             >
-              {t("Window State")}
+              {tKey("energy.windowState")}
             </DataLabelWithHelp>
-            <strong>{hasActiveWindow ? t("Ready") : t("Pending")}</strong>
+            <strong>{hasActiveWindow ? tKey("energy.ready") : tKey("energy.pending")}</strong>
           </header>
           <div className="energy-window-stack">
             {(window
               ? [{
                   id: "energy-current-window",
                   label: window.unit?.includes("kWh")
-                    ? t("Household flexible-use start window")
+                    ? tKey("energy.householdFlexibleUseStartWindow")
                     : window.source === "raw_preview"
-                      ? t("Preview energy timing window")
-                      : t("Detected energy timing window"),
-                  detail: activeEnergy?.summary ?? t("Flexible electricity use window is ready."),
+                      ? tKey("energy.previewEnergyTimingWindow")
+                      : tKey("energy.detectedEnergyTimingWindow"),
+                  detail: activeEnergy?.summary ?? tKey("energy.flexibleElectricityUseWindowIsReady"),
                   severity: window.severity,
                   starts_at: window.starts_at,
                   ends_at: window.ends_at
@@ -792,7 +792,7 @@ export function EnergyWorkspace({
                 <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
                   <div>
                     <strong>{"label" in item ? item.label : item.title}</strong>
-                    <span>{formatCompactTime(item.starts_at, language, t)} - {formatCompactTime(item.ends_at, language, t)}</span>
+                    <span>{formatCompactTime(item.starts_at, language, tKey)} - {formatCompactTime(item.ends_at, language, tKey)}</span>
                   </div>
                   <p>{"detail" in item ? item.detail : item.body}</p>
                 </article>
@@ -800,8 +800,8 @@ export function EnergyWorkspace({
             })}
             {!hasWindowEvidence ? (
               <p>{isPricePanel
-                ? t("No household price window is available from the latest energy payload.")
-                : t("No Fingrid energy window is available from the latest energy payload.")}</p>
+                ? tKey("energy.noHouseholdPriceWindowIsAvailableFromTheLatestEnergyPayload")
+                : tKey("energy.noFingridEnergyWindowIsAvailableFromTheLatestEnergyPayload")}</p>
             ) : null}
           </div>
         </article>
@@ -809,36 +809,36 @@ export function EnergyWorkspace({
 
       <TrendChart
         className="energy-glass-panel"
-        emptyMessage={t("No daily energy history is available.")}
-        eyebrow={`${historyPoints.length}D ${t("History")}`}
+        emptyMessage={tKey("energy.noDailyEnergyHistoryIsAvailable")}
+        eyebrow={`${historyPoints.length}D ${tKey("energy.history")}`}
         maximumFractionDigits={2}
         points={historyPoints}
-        title={isPricePanel ? t("Daily Estimated Cost Trend") : t("Daily Average Energy Trend")}
+        title={isPricePanel ? tKey("energy.dailyEstimatedCostTrend") : tKey("energy.dailyAverageEnergyTrend")}
         tone={activeTone}
         unit={isPricePanel ? "EUR" : activeEnergy?.unit}
       />
 
-      <section className="energy-provider-status" aria-label={t("Energy provider status")}>
+      <section className="energy-provider-status" aria-label={tKey("energy.energyProviderStatus")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("energy.providerStatus")}</strong>
         </div>
         <div>
           <span>
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            {isPricePanel ? t("Price Source") : t("System Source")}: {sourceDisclosureName}
+            {isPricePanel ? tKey("energy.priceSource") : tKey("energy.systemSource")}: {sourceDisclosureName}
           </span>
           <i aria-hidden="true" />
           <span>
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {relativeTime(activeEnergy?.observed_at ?? activeSource?.last_run_finished_at ?? lowWindowMetric?.updated_at, language, t)}
+            {tKey("energy.lastSync")}: {relativeTime(activeEnergy?.observed_at ?? activeSource?.last_run_finished_at ?? lowWindowMetric?.updated_at, language, tKey)}
           </span>
           <i aria-hidden="true" />
-          <span className="energy-provider-window">{hasActiveWindow ? t("Window detected") : t("Window pending")}</span>
+          <span className="energy-provider-window">{hasActiveWindow ? tKey("energy.windowDetected") : tKey("energy.windowPending")}</span>
         </div>
       </section>
 
