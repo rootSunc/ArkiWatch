@@ -5,6 +5,8 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 
 import airQualityEnMessages from "./messages/airQuality.en.json";
 import airQualityZhMessages from "./messages/airQuality.zh.json";
+import geospatialEnMessages from "./messages/geospatial.en.json";
+import geospatialZhMessages from "./messages/geospatial.zh.json";
 import energyEnMessages from "./messages/energy.en.json";
 import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
@@ -41,6 +43,7 @@ type StructuredMessages = {
   linkedEvents: Record<string, string>;
   waterSnow: Record<string, string>;
   regionalProfile: Record<string, string>;
+  geospatial: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -57,8 +60,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {

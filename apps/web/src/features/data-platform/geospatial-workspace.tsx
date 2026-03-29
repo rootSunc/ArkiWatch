@@ -55,12 +55,12 @@ const FIELD_ICONS: Record<string, string> = {
   terrain_model: "terrain"
 };
 
-const FIELD_SIGNAL_COLUMNS: Array<{ key: GeoFieldSignalKey; label: string }> = [
-  { key: "vector", label: "Vector" },
-  { key: "raster", label: "Raster" },
-  { key: "attribute", label: "Attribute" },
-  { key: "index", label: "Index" },
-  { key: "model", label: "Model" }
+const FIELD_SIGNAL_COLUMNS: Array<{ key: GeoFieldSignalKey; labelKey: string }> = [
+  { key: "vector", labelKey: "vector" },
+  { key: "raster", labelKey: "raster" },
+  { key: "attribute", labelKey: "attribute" },
+  { key: "index", labelKey: "index" },
+  { key: "model", labelKey: "model" }
 ];
 
 function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetric {
@@ -71,9 +71,9 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, t: (value: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
-    return t("catalog");
+    return tKey("geospatial.catalog");
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -136,8 +136,8 @@ function metricProgress(metric: PanelMetric | null): number {
   return Math.max(12, Math.min(100, value));
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not observed");
+function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? formatRelativeAge(value, language) : tKey("geospatial.notObserved");
 }
 
 function schemaShapeTone(shape: string): GeoTone {
@@ -209,14 +209,14 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, dataLabel } = useI18n();
 
   if (!category) {
     return (
-      <section className="water-detail-empty" aria-label={t("Geospatial data unavailable")}>
-        <span>{t("Regional Context")}</span>
-        <h2>{t("Geospatial signals are not available yet")}</h2>
-        <p>{t("NLS and Helsinki city geodata source metadata has not arrived for the current platform view.")}</p>
+      <section className="water-detail-empty" aria-label={tKey("geospatial.dataUnavailable")}>
+        <span>{tKey("geospatial.regionalContext")}</span>
+        <h2>{tKey("geospatial.signalsUnavailable")}</h2>
+        <p>{tKey("geospatial.metadataMissing")}</p>
       </section>
     );
   }
@@ -243,8 +243,8 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
     sourceStatusMetric?.updated_at ??
     catalogStageMetric?.updated_at;
 
-  const heroTitle = t("Topographic & Planning layers ready");
-  const heroDetail = category.description || t("National Land Survey and Helsinki geodata layers are mapped for city-scope analysis.");
+  const heroTitle = tKey("geospatial.heroTitle");
+  const heroDetail = category.description || tKey("geospatial.layersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -266,22 +266,22 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
   const maxDensityValue = Math.max(1, ...topographicDensityPoints.map((item) => item.value));
 
   return (
-    <section className="water-detail-page" aria-label={t("Geospatial detail")}>
+    <section className="water-detail-page" aria-label={tKey("geospatial.detailAria")}>
       <div className="water-detail-header">
         <div>
-          <h2>{t("Geospatial Base")}</h2>
+          <h2>{tKey("geospatial.title")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, t)}</div>
+        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
       </div>
 
-      <section className="water-bento-grid" aria-label={t("Geospatial operating condition")}>
+      <section className="water-bento-grid" aria-label={tKey("geospatial.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>
           <div className="water-card-kicker">
-            <span>{t("Regional Context State")}</span>
+            <span>{tKey("geospatial.contextState")}</span>
             <time>{translateEnumLabel(language, category.stage ?? "background")}</time>
           </div>
           <div className="water-current-cluster">
@@ -295,19 +295,19 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           </div>
           <div className="water-hero-footer">
             <div>
-              <span>{t("Datasets")}</span>
+              <span>{tKey("geospatial.datasets")}</span>
               <strong>{totalDatasetsCount || datasets.length || 9}</strong>
             </div>
             <div>
-              <span>{t("Ingestion Sync")}</span>
-              <strong>{t("daily")}</strong>
+              <span>{tKey("geospatial.ingestionSync")}</span>
+              <strong>{tKey("geospatial.daily")}</strong>
             </div>
           </div>
         </article>
 
         <article className="water-glass-panel water-coverage-panel">
           <header>
-            <span>{t("Source Readiness")}</span>
+            <span>{tKey("geospatial.sourceReadiness")}</span>
             <strong>{readySources}/{category.sources.length}</strong>
           </header>
           <div className="water-coverage-list">
@@ -330,7 +330,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
 
         <article className="water-glass-panel water-field-panel">
           <header>
-            <span>{t("Tracked Fields")}</span>
+            <span>{tKey("geospatial.trackedFields")}</span>
             <strong>{keyDataItems.length}</strong>
           </header>
           <div className="water-field-grid">
@@ -340,18 +340,18 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                   {FIELD_ICONS[field] ?? "dataset"}
                 </span>
                 <div>
-                  <strong>{t(formatDataItemLabel(field))}</strong>
+                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>
             ))}
           </div>
 
-          <div className="water-field-lattice" aria-label={t("Geospatial field lattice")}>
+          <div className="water-field-lattice" aria-label={tKey("geospatial.fieldLattice")}>
             <div className="water-field-lattice-head">
-              <span>{t("Feature")}</span>
+              <span>{tKey("geospatial.feature")}</span>
               {FIELD_SIGNAL_COLUMNS.map((column) => (
-                <span key={column.key}>{t(column.label)}</span>
+                <span key={column.key}>{tKey(`geospatial.${column.labelKey}`)}</span>
               ))}
             </div>
             {keyDataItems.map((field) => {
@@ -359,10 +359,10 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
 
               return (
                 <div className="water-field-lattice-row geo-field-lattice-row" key={field}>
-                  <strong>{t(formatDataItemLabel(field))}</strong>
+                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
                   {FIELD_SIGNAL_COLUMNS.map((column) => (
                     <i
-                      aria-label={`${t(formatDataItemLabel(field))} ${t(column.label)}`}
+                      aria-label={`${dataLabel(formatDataItemLabel(field))} ${tKey(`geospatial.${column.labelKey}`)}`}
                       className={`geo-field-lattice-dot ${activeSignals.includes(column.key) ? "active" : ""}`}
                       key={column.key}
                     />
@@ -374,7 +374,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
         </article>
       </section>
 
-      <section className="water-summary-strip" aria-label={t("Geospatial summary metrics")}>
+      <section className="water-summary-strip" aria-label={tKey("geospatial.summaryMetrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
             <DataLabelWithHelp
@@ -385,25 +385,25 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                 t,
               })}
             >
-              {t(metric.label)}
+              {dataLabel(metric.label)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
+            <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="water-main-grid" aria-label={t("Geospatial platform analytics")}>
+      <section className="water-main-grid" aria-label={tKey("geospatial.platformAnalytics")}>
         <article className="water-glass-panel water-signal-panel">
           <header>
             <div>
-              <span>{t("Geospatial Layer Composition")}</span>
-              <h3>{t("OGC Features, WFS Layers, and topographic records")}</h3>
+              <span>{tKey("geospatial.layerComposition")}</span>
+              <h3>{tKey("geospatial.layerCompositionLead")}</h3>
             </div>
-            <strong>{signalMetrics.length} {t("metrics")}</strong>
+            <strong>{signalMetrics.length} {tKey("geospatial.metrics")}</strong>
           </header>
 
           {shapeRows.length > 0 ? (
-            <div className="water-schema-shape-bars" aria-label={t("Dataset shape distribution")}>
+            <div className="water-schema-shape-bars" aria-label={tKey("geospatial.datasetShapeDistribution")}>
               {shapeRows.map((row) => (
                 <article className={`water-schema-shape-row water-schema-shape-row-${row.tone}`} key={row.key}>
                   <span>{row.label}</span>
@@ -431,19 +431,19 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                     <p>{dataset.spatial_grain} · {dataset.cadence}</p>
                     <div className="water-schema-composition">
                       <span>
-                        {requiredFieldCount}/{dataset.fields.length} {t("required fields")}
+                        {requiredFieldCount}/{dataset.fields.length} {tKey("geospatial.requiredFields")}
                       </span>
                       <i aria-hidden="true">
                         <span style={{ width: `${Math.max(8, (requiredFieldCount / fieldTotal) * 100)}%` }} />
                       </i>
                     </div>
-                    <div className="water-schema-field-strip" aria-label={t("Field requirement lattice")}>
+                    <div className="water-schema-field-strip" aria-label={tKey("geospatial.fieldRequirementLattice")}>
                       {dataset.fields.slice(0, 10).map((field) => (
                         <span
-                          aria-label={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                          aria-label={`${field.label}: ${field.required ? tKey("geospatial.required") : tKey("geospatial.optional")}`}
                           className={field.required ? "required" : undefined}
                           key={field.key}
-                          title={`${field.label}: ${field.required ? t("required") : t("optional")}`}
+                          title={`${field.label}: ${field.required ? tKey("geospatial.required") : tKey("geospatial.optional")}`}
                         />
                       ))}
                     </div>
@@ -462,10 +462,10 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                     <strong>{src.source_name} Layers</strong>
                     <span>{translateEnumLabel(language, src.stage ?? "planned")}</span>
                   </div>
-                  <p>{src.source_code === "nls" ? t("Topographic, address, and parcel spatial boundaries.") : t("Detailed buildings, district profiles, planning zones, and nature maps.")}</p>
+                  <p>{src.source_code === "nls" ? tKey("geospatial.nlsLayerDescription") : tKey("geospatial.helsinkiLayerDescription")}</p>
                   <div className="water-schema-fields">
                     {src.datasets?.map((ds) => (
-                      <span key={ds}>{t(ds)}</span>
+                      <span key={ds}>{dataLabel(ds)}</span>
                     ))}
                   </div>
                 </article>
@@ -478,9 +478,9 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, t)}</span>
+                  <span>{formatMetricValue(metric, tKey)}</span>
                 </div>
-                <p>{metric.detail ?? t("This geospatial signal is currently mapped in background.")}</p>
+                <p>{metric.detail ?? tKey("geospatial.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
                   <span style={{ width: `${metricProgress(metric)}%` }} />
                 </span>
@@ -492,17 +492,17 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
         <div className="water-side-grid">
           <article className="water-glass-panel water-source-panel">
             <header>
-              <span>{t("Regional Profile")}</span>
+              <span>{tKey("geospatial.sourcePanelTitle")}</span>
               <strong>{translateEnumLabel(language, category.stage ?? "background")}</strong>
             </header>
             <div className="water-source-facts">
-              <span>{totalDatasetsCount || 9} {t("datasets")}</span>
-              <span>{t("daily sync")}</span>
+              <span>{totalDatasetsCount || 9} {tKey("geospatial.datasetsLower")}</span>
+              <span>{tKey("geospatial.dailySync")}</span>
               <span>CC BY 4.0</span>
             </div>
-            <p>{t("National Land Survey & Helsinki public data registers.")}</p>
+            <p>{tKey("geospatial.publicDataRegisters")}</p>
             <a href="https://www.maanmittauslaitos.fi/en" rel="noreferrer" target="_blank">
-              {t("NLS documentation")}
+              {tKey("geospatial.nlsDocumentation")}
             </a>
           </article>
 
@@ -515,7 +515,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                   t,
                 })}
               >
-                {t("Ingested Layers Volume")}
+                {tKey("geospatial.ingestedLayersVolume")}
               </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
@@ -537,14 +537,14 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
 
           <article className="water-glass-panel water-event-panel">
             <header>
-              <span>{t("Topographical Feature Density")}</span>
+              <span>{tKey("geospatial.topographicFeatureDensity")}</span>
               <strong>{topographicDensityPoints.length}</strong>
             </header>
-            <div className="water-guidance-grid" aria-label={t("Topographic density layers")} style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
+            <div className="water-guidance-grid" aria-label={tKey("geospatial.topographicDensityLayers")} style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "12px" }}>
               {topographicDensityPoints.map((row) => (
                 <article className={`water-guidance-row water-guidance-row-${row.tone} geo-density-row`} key={row.label}>
                   <div className="geo-density-row-header">
-                    <strong>{t(row.label)}</strong>
+                    <strong>{dataLabel(row.label)}</strong>
                     <span>{new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(row.value)}</span>
                   </div>
                   <div className="geo-density-progress-track">
@@ -562,10 +562,10 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
         </div>
       </section>
 
-      <section className="water-provider-status" aria-label={t("Geospatial provider status")}>
+      <section className="water-provider-status" aria-label={tKey("geospatial.providerStatusAria")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("geospatial.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -579,11 +579,11 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Ingestion Sync")}: {t("daily")}
+            {tKey("geospatial.ingestionSync")}: {tKey("geospatial.daily")}
           </span>
           <i aria-hidden="true" />
           <span className="water-provider-coverage">
-            {t("Records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : t("planned")}
+            {tKey("geospatial.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : tKey("geospatial.planned")}
           </span>
         </div>
       </section>
