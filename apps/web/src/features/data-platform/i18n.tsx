@@ -7,6 +7,8 @@ import airQualityEnMessages from "./messages/airQuality.en.json";
 import airQualityZhMessages from "./messages/airQuality.zh.json";
 import geospatialEnMessages from "./messages/geospatial.en.json";
 import geospatialZhMessages from "./messages/geospatial.zh.json";
+import cityServicesEnMessages from "./messages/cityServices.en.json";
+import cityServicesZhMessages from "./messages/cityServices.zh.json";
 import energyEnMessages from "./messages/energy.en.json";
 import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
@@ -44,6 +46,7 @@ type StructuredMessages = {
   waterSnow: Record<string, string>;
   regionalProfile: Record<string, string>;
   geospatial: Record<string, string>;
+  cityServices: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -60,8 +63,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {

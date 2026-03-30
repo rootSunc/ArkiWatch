@@ -22,9 +22,9 @@ type CityTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
 
 type ServiceField = {
   key: string;
-  label: string;
-  owner: string;
-  detail: string;
+  labelKey: string;
+  ownerKey: string;
+  detailKey: string;
 };
 
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
@@ -39,27 +39,27 @@ const SUMMARY_KEYS = [
 const CITY_SERVICE_FIELDS: ServiceField[] = [
   {
     key: "service_location",
-    label: "Service location",
-    owner: "Service Map",
-    detail: "Units, coordinates, and municipal service metadata"
+    labelKey: "serviceLocation",
+    ownerKey: "serviceMap",
+    detailKey: "serviceLocationDetail"
   },
   {
     key: "opening_hours",
-    label: "Opening hours",
-    owner: "Service Map",
-    detail: "Daily availability and exception schedules"
+    labelKey: "openingHours",
+    ownerKey: "serviceMap",
+    detailKey: "openingHoursDetail"
   },
   {
     key: "temporary_closure",
-    label: "Temporary closures",
-    owner: "Service Map",
-    detail: "Closure windows and facility availability"
+    labelKey: "temporaryClosures",
+    ownerKey: "serviceMap",
+    detailKey: "temporaryClosuresDetail"
   },
   {
     key: "accessibility",
-    label: "Accessibility",
-    owner: "Service Map",
-    detail: "Access attributes for service-unit matching"
+    labelKey: "accessibility",
+    ownerKey: "serviceMap",
+    detailKey: "accessibilityDetail"
   }
 ];
 
@@ -71,9 +71,9 @@ function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetr
   return metric !== null;
 }
 
-function formatMetricValue(metric: PlatformMetric | null, t: (value: string) => string): string {
+function formatMetricValue(metric: PlatformMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
-    return t("missing");
+    return tKey("cityServices.missing");
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -83,9 +83,9 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-GB").format(value);
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
+function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
   if (!value) {
-    return t("not scheduled");
+    return tKey("cityServices.notScheduled");
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
@@ -100,8 +100,8 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
     .toUpperCase();
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, t: (value: string) => string): string {
-  return value ? formatRelativeAge(value, language) : t("not collected");
+function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+  return value ? formatRelativeAge(value, language) : tKey("cityServices.notCollected");
 }
 
 function toneFromStatus(status: string | null | undefined): CityTone {
@@ -189,9 +189,9 @@ function fieldStatus(category: PlatformCategory, field: ServiceField, language: 
   return translateEnumLabel(language, "Mapped");
 }
 
-function sourceDatasetLabel(datasets: string[] | undefined, t: (value: string) => string): string {
+function sourceDatasetLabel(datasets: string[] | undefined, tKey: (key: string) => string): string {
   if (!datasets || datasets.length === 0) {
-    return t("dataset catalog pending");
+    return tKey("cityServices.datasetCatalogPending");
   }
 
   return datasets.map((dataset) => dataset.replaceAll("_", " ")).join(", ");
@@ -202,14 +202,14 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
 }
 
 export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) {
-  const { language, t } = useI18n();
+  const { language, t, tKey, dataLabel, enumLabel } = useI18n();
 
   if (!category) {
     return (
-      <section className="city-detail-empty" aria-label={t("City services data unavailable")}>
-        <span>{t("City Services")}</span>
-        <h2>{t("City service signals are not available yet")}</h2>
-        <p>{t("Service Map and HRI metadata are not present in this platform view.")}</p>
+      <section className="city-detail-empty" aria-label={tKey("cityServices.dataUnavailable")}>
+        <span>{tKey("cityServices.title")}</span>
+        <h2>{tKey("cityServices.signalsUnavailable")}</h2>
+        <p>{tKey("cityServices.metadataMissing")}</p>
       </section>
     );
   }
@@ -233,23 +233,29 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
   );
   const visualizations = category.visualizations;
 
+  const missingMetricLabel = tKey("cityServices.missing");
+  const recordsDisplay =
+    formatMetricValue(recordsMetric, tKey) !== missingMetricLabel
+      ? formatMetricValue(recordsMetric, tKey)
+      : formatNumber(recordCount);
+
   return (
-    <section className="city-detail-page" aria-label={t("City services detail")}>
+    <section className="city-detail-page" aria-label={tKey("cityServices.detailAria")}>
       <div className="city-detail-header">
         <div>
-          <h2>{t("City Services Dashboard")}</h2>
+          <h2>{tKey("cityServices.dashboardTitle")}</h2>
           <div className="city-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(latestRun ?? latest?.starts_at, language, t)}</div>
+        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(latestRun ?? latest?.starts_at, language, tKey)}</div>
       </div>
 
-      <section className="city-bento-grid" aria-label={t("City service operating condition")}>
+      <section className="city-bento-grid" aria-label={tKey("cityServices.operatingCondition")}>
         <article className={`city-glass-panel city-hero city-hero-${cityTone}`}>
           <div className="city-card-kicker">
-            <span>{t("Service Coverage")}</span>
+            <span>{tKey("cityServices.serviceCoverage")}</span>
             <time>{formatTimestamp(latestRun ?? latest?.starts_at ?? null, "dateTime", language)}</time>
           </div>
           <div className="city-current-cluster">
@@ -259,18 +265,17 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
             <div>
               <strong>{category.sources.length}</strong>
               <p>
-                {latest?.body ??
-                  t("Service Map and HRI are staged for public-service context.")}
+                {latest?.body ?? tKey("cityServices.stagedContext")}
               </p>
             </div>
           </div>
           <div className="city-hero-footer">
             <div>
-              <span>{t("Datasets")}</span>
+              <span>{tKey("cityServices.datasets")}</span>
               <strong>{datasetCount}</strong>
             </div>
             <div>
-              <span>{t("Key fields")}</span>
+              <span>{tKey("cityServices.keyFields")}</span>
               <strong>{fieldCount}</strong>
             </div>
           </div>
@@ -285,7 +290,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 t,
               })}
             >
-              {t("Source Readiness")}
+              {tKey("cityServices.sourceReadiness")}
             </DataLabelWithHelp>
             <strong>{readySources}/{category.sources.length}</strong>
           </header>
@@ -316,14 +321,14 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 t,
               })}
             >
-              {t("Service Model")}
+              {tKey("cityServices.serviceModel")}
             </DataLabelWithHelp>
             <strong>{fieldCount}</strong>
           </header>
           <div className="city-field-grid">
             {CITY_SERVICE_FIELDS.map((field) => (
               <article key={field.key}>
-                <span>{t(field.label)}</span>
+                <span>{tKey(`cityServices.${field.labelKey}`)}</span>
                 <strong>{fieldStatus(category, field, language)}</strong>
               </article>
             ))}
@@ -331,7 +336,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
         </article>
       </section>
 
-      <section className="city-summary-strip" aria-label={t("City service summary metrics")}>
+      <section className="city-summary-strip" aria-label={tKey("cityServices.summaryMetrics")}>
         {summaryMetrics.map((metric) => (
           <article className={`city-glass-panel city-summary-${metricTone(metric)}`} key={metric.key}>
             <DataLabelWithHelp
@@ -342,21 +347,21 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 t,
               })}
             >
-              {t(metric.label)}
+              {dataLabel(metric.label)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, t)}</strong>
+            <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
         ))}
       </section>
 
-      <section className="city-main-grid" aria-label={t("City service analytics")}>
+      <section className="city-main-grid" aria-label={tKey("cityServices.analytics")}>
         <article className="city-glass-panel city-service-panel">
           <header>
             <div>
-              <span>{t("Service Operations")}</span>
-              <h3>{t("Public facilities and availability signals")}</h3>
+              <span>{tKey("cityServices.serviceOperations")}</span>
+              <h3>{tKey("cityServices.serviceOperationsLead")}</h3>
             </div>
-            <strong>{category.events.length || category.sources.length} {t("rows")}</strong>
+            <strong>{category.events.length || category.sources.length} {tKey("cityServices.rows")}</strong>
           </header>
 
           <div className="city-service-list">
@@ -372,15 +377,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <span className="city-service-dot" aria-hidden="true" />
                     <div className="city-service-main">
                       <div>
-                        <time>{formatCompactTime(event.starts_at, language, t)}</time>
+                        <time>{formatCompactTime(event.starts_at, language, tKey)}</time>
                         <strong>{event.title}</strong>
                         <p>{event.body}</p>
                       </div>
-                      <em>{t(event.severity.toUpperCase())}</em>
+                      <em>{enumLabel(event.severity)}</em>
                     </div>
                     <div className="city-service-meta">
                       <span>{eventTypeLabel(event.category_key, language)}</span>
-                      <span>{t("until")} {formatCompactTime(event.ends_at, language, t)}</span>
+                      <span>{tKey("cityServices.until")} {formatCompactTime(event.ends_at, language, tKey)}</span>
                     </div>
                   </article>
                 );
@@ -396,13 +401,13 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <div>
                       <time>{translateEnumLabel(language, source.stage ?? "planned")}</time>
                       <strong>{source.source_name}</strong>
-                      <p>{sourceDatasetLabel(source.datasets, t)}</p>
+                      <p>{sourceDatasetLabel(source.datasets, tKey)}</p>
                     </div>
                     <em>{source.source_code}</em>
                   </div>
                   <div className="city-service-meta">
-                    <span>{Math.round(source.poll_interval_seconds / 60)} min {t("poll")}</span>
-                    <span>{source.records_ingested ?? 0} {t("records")}</span>
+                    <span>{Math.round(source.poll_interval_seconds / 60)} min {tKey("cityServices.poll")}</span>
+                    <span>{source.records_ingested ?? 0} {tKey("cityServices.records")}</span>
                   </div>
                 </article>
               ))
@@ -420,7 +425,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                   t,
                 })}
               >
-                {t("Catalog Sources")}
+                {tKey("cityServices.catalogSources")}
               </DataLabelWithHelp>
               <strong>{category.sources.length}</strong>
             </header>
@@ -431,10 +436,10 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <strong>{source.source_name}</strong>
                     <span>{source.source_code}</span>
                   </div>
-                  <p>{source.license_label ?? t("license unavailable")}</p>
+                  <p>{source.license_label ?? tKey("cityServices.licenseUnavailable")}</p>
                   {source.documentation_url ? (
                     <a href={source.documentation_url} rel="noreferrer" target="_blank">
-                      {t("Documentation")}
+                      {tKey("cityServices.documentation")}
                     </a>
                   ) : null}
                 </article>
@@ -451,16 +456,16 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                   t,
                 })}
               >
-                {t("Coverage Lattice")}
+                {tKey("cityServices.coverageLattice")}
               </DataLabelWithHelp>
               <strong>{CITY_SERVICE_FIELDS.length}</strong>
             </header>
             <div className="city-coverage-grid">
               {CITY_SERVICE_FIELDS.map((field) => (
                 <article key={field.key}>
-                  <span>{t(field.owner)}</span>
-                  <strong>{t(field.label)}</strong>
-                  <p>{t(field.detail)}</p>
+                  <span>{tKey(`cityServices.${field.ownerKey}`)}</span>
+                  <strong>{tKey(`cityServices.${field.labelKey}`)}</strong>
+                  <p>{tKey(`cityServices.${field.detailKey}`)}</p>
                 </article>
               ))}
             </div>
@@ -475,7 +480,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                   t,
                 })}
               >
-                {t("Event Model")}
+                {tKey("cityServices.eventModel")}
               </DataLabelWithHelp>
               <strong>{eventModels.length || visualizations.length}</strong>
             </header>
@@ -507,7 +512,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
         </div>
       </section>
 
-      <section className="city-visual-grid" aria-label={t("City service data visualizations")}>
+      <section className="city-visual-grid" aria-label={tKey("cityServices.visualizationsAria")}>
         {visualizations
           .filter((v) => v.type === "bar" || v.type === "gauge")
           .map((visualization) => {
@@ -541,7 +546,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     </article>
                   ))
                 ) : (
-                  <p>{t("No chart rows have been produced for this city service signal.")}</p>
+                  <p>{tKey("cityServices.noChartRows")}</p>
                 )}
               </div>
             </article>
@@ -549,10 +554,10 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
         })}
       </section>
 
-      <section className="city-provider-status" aria-label={t("City service provider status")}>
+      <section className="city-provider-status" aria-label={tKey("cityServices.providerStatusAria")}>
         <div>
           <span aria-hidden="true" />
-          <strong>{t("Provider Status")}</strong>
+          <strong>{tKey("cityServices.providerStatus")}</strong>
         </div>
         <div>
           <span>
@@ -566,16 +571,16 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {t("Last Sync")}: {relativeTime(latestRun, language, t)}
+            {tKey("shell.lastSync")}: {relativeTime(latestRun, language, tKey)}
           </span>
           <i aria-hidden="true" />
           <span className="city-provider-coverage">
-            {t("Records")}: {formatMetricValue(recordsMetric, t) !== t("missing") ? formatMetricValue(recordsMetric, t) : formatNumber(recordCount)}
+            {tKey("cityServices.recordsLabel")}: {recordsDisplay}
           </span>
           <i aria-hidden="true" />
-          <span>{t("Events")}: {formatMetricValue(activeEventsMetric, t)}</span>
+          <span>{tKey("cityServices.events")}: {formatMetricValue(activeEventsMetric, tKey)}</span>
           <i aria-hidden="true" />
-          <span>{t("Source state")}: {formatMetricValue(sourceStatusMetric, t)}</span>
+          <span>{tKey("cityServices.sourceState")}: {formatMetricValue(sourceStatusMetric, tKey)}</span>
         </div>
       </section>
 
