@@ -322,7 +322,7 @@ export function EnergyWorkspace({
                 key: metric.key,
                 label: resolveMetricLabel(metric, tKey, t),
                 detail: "detail" in metric ? metric.detail : null,
-                t,
+                language,
               })}
             >
               {resolveMetricLabel(metric, tKey, t)}
@@ -340,7 +340,7 @@ export function EnergyWorkspace({
                 helpText={dataHelpText({
                   key: isPricePanel ? "best_price" : "best_window",
                   label: isPricePanel ? "Household Price Forecast" : "Fingrid System Timeseries",
-                  t,
+                  language,
                 })}
               >
                 {isPricePanel ? tKey("energy.householdPriceForecast") : tKey("energy.fingridSystemTimeseries")}
@@ -683,7 +683,7 @@ export function EnergyWorkspace({
                 helpText={dataHelpText({
                   key: "collection_volume",
                   label: "Collection Volume",
-                  t,
+                  language,
                 })}
               >
                 {tKey("energy.collectionVolume")}
@@ -712,7 +712,7 @@ export function EnergyWorkspace({
                 helpText={dataHelpText({
                   key: "data_quality",
                   label: "Data Quality",
-                  t,
+                  language,
                 })}
               >
                 {tKey("energy.dataQuality")}
@@ -761,7 +761,7 @@ export function EnergyWorkspace({
               helpText={dataHelpText({
                 key: "window_state",
                 label: "Window State",
-                t,
+                language,
               })}
             >
               {tKey("energy.windowState")}

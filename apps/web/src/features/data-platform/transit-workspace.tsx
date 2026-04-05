@@ -629,7 +629,7 @@ export function TransitWorkspace({
   history,
   transit,
 }: TransitWorkspaceProps) {
-  const { language, t, tKey, enumLabel } = useI18n();
+  const { language, tKey, enumLabel } = useI18n();
   const [alertFilter, setAlertFilter] = useState<TransitAlertFilter>("priority");
   const [alertPage, setAlertPage] = useState(0);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
@@ -760,7 +760,7 @@ export function TransitWorkspace({
               helpText={dataHelpText({
                 key,
                 label: tKey(`transit.${labelKey}`),
-                t,
+                language,
               })}
             >
               {tKey(`transit.${labelKey}`)}
@@ -970,7 +970,7 @@ export function TransitWorkspace({
               helpText={dataHelpText({
                 key: "severity_mix",
                 label: "Severity Mix",
-                t,
+                language,
               })}
             >
               {tKey("transit.severityMix")}
@@ -995,7 +995,7 @@ export function TransitWorkspace({
               helpText={dataHelpText({
                 key: "alert_scope",
                 label: "Alert Scope",
-                t,
+                language,
               })}
             >
               {tKey("transit.alertScope")}
@@ -1008,7 +1008,7 @@ export function TransitWorkspace({
                 helpText={dataHelpText({
                   key: "route_scoped",
                   label: "Route scoped",
-                  t,
+                  language,
                 })}
               >
                 {tKey("transit.routeScoped")}
@@ -1021,7 +1021,7 @@ export function TransitWorkspace({
                 helpText={dataHelpText({
                   key: "stop_scoped",
                   label: "Stop scoped",
-                  t,
+                  language,
                 })}
               >
                 {tKey("transit.stopScoped")}
@@ -1034,7 +1034,7 @@ export function TransitWorkspace({
                 helpText={dataHelpText({
                   key: "raw_decoded",
                   label: "Raw decoded",
-                  t,
+                  language,
                 })}
               >
                 {tKey("transit.rawDecoded")}
@@ -1047,7 +1047,7 @@ export function TransitWorkspace({
                 helpText={dataHelpText({
                   key: "normalized",
                   label: "Normalized",
-                  t,
+                  language,
                 })}
               >
                 {tKey("transit.normalized")}

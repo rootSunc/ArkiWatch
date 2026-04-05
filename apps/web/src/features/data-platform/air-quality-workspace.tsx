@@ -448,7 +448,7 @@ export function AirQualityWorkspace({
   highlightedEventId,
   history,
 }: AirQualityWorkspaceProps) {
-  const { language, t, tKey, enumLabel, dataLabel } = useI18n();
+  const { language, tKey, enumLabel, dataLabel } = useI18n();
   const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
   if (!airQuality) {
@@ -541,7 +541,7 @@ export function AirQualityWorkspace({
               helpText={dataHelpText({
                 key: "score_distribution",
                 label: tKey("airQuality.scoreDistribution"),
-                t,
+                language,
               })}
             >
               {tKey("airQuality.scoreDistribution")}
@@ -567,7 +567,7 @@ export function AirQualityWorkspace({
               helpText={dataHelpText({
                 key: "available_fields",
                 label: tKey("airQuality.availableFields"),
-                t,
+                language,
               })}
             >
               {tKey("airQuality.availableFields")}
@@ -592,7 +592,7 @@ export function AirQualityWorkspace({
             helpText={dataHelpText({
               key: "worst_score",
               label: tKey("airQuality.worstScore"),
-              t,
+              language,
             })}
           >
             {tKey("airQuality.worstScore")}
@@ -604,7 +604,7 @@ export function AirQualityWorkspace({
             helpText={dataHelpText({
               key: "peak_index",
               label: tKey("airQuality.peakIndex"),
-              t,
+              language,
             })}
           >
             {tKey("airQuality.peakIndex")}
@@ -616,7 +616,7 @@ export function AirQualityWorkspace({
             helpText={dataHelpText({
               key: "field_coverage",
               label: tKey("airQuality.fieldCoverage"),
-              t,
+              language,
             })}
           >
             {tKey("airQuality.fieldCoverage")}
@@ -628,7 +628,7 @@ export function AirQualityWorkspace({
             helpText={dataHelpText({
               key: "pollutant_fields",
               label: tKey("airQuality.pollutantFields"),
-              t,
+              language,
             })}
           >
             {tKey("airQuality.pollutantFields")}
@@ -640,7 +640,7 @@ export function AirQualityWorkspace({
             helpText={dataHelpText({
               key: "score_fields",
               label: tKey("airQuality.scoreFields"),
-              t,
+              language,
             })}
           >
             {tKey("airQuality.scoreFields")}
@@ -668,7 +668,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "pollutant_fields",
                   label: tKey("airQuality.pollutantConcentration"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.pollutantConcentration")}
@@ -700,7 +700,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "station_ranking",
                   label: tKey("airQuality.stationRanking"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.stationRanking")}
@@ -742,7 +742,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "station_geometry",
                   label: tKey("airQuality.stationGeometry"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.stationGeometry")}
@@ -758,7 +758,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "data_quality",
                   label: tKey("airQuality.dataQuality"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.dataQuality")}
@@ -789,7 +789,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "pipeline",
                   label: tKey("airQuality.pipeline"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.pipeline")}
@@ -821,7 +821,7 @@ export function AirQualityWorkspace({
                 helpText={dataHelpText({
                   key: "source_request",
                   label: tKey("airQuality.sourceRequest"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("airQuality.sourceRequest")}

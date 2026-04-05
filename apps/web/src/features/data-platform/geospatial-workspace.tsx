@@ -209,7 +209,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
-  const { language, t, tKey, dataLabel } = useI18n();
+  const { language, tKey, dataLabel } = useI18n();
 
   if (!category) {
     return (
@@ -382,7 +382,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                 key: metric.key,
                 label: metric.label,
                 detail: metric.detail,
-                t,
+                language,
               })}
             >
               {dataLabel(metric.label)}
@@ -512,7 +512,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                 helpText={dataHelpText({
                   key: "collection_volume",
                   label: "Ingested Layers Volume",
-                  t,
+                  language,
                 })}
               >
                 {tKey("geospatial.ingestedLayersVolume")}

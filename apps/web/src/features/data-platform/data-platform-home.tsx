@@ -42,7 +42,6 @@ import {
 import {
   I18nProvider,
   translateMessageKey,
-  translateText,
 } from "./i18n";
 import { usePlatformHome } from "./hooks/use-platform-home";
 import { useClientPreferences } from "./hooks/use-client-preferences";
@@ -209,7 +208,6 @@ export function DataPlatformHome({
   const hasMountedRef = useRef(false);
   const [isCityRefreshPending, startCityRefresh] = useTransition();
   const [isDateRefreshPending, startDateRefresh] = useTransition();
-  const t = (value: string) => translateText(languageMode, value);
   const tKey = (key: string) => translateMessageKey(languageMode, key);
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
@@ -1070,7 +1068,7 @@ export function DataPlatformHome({
                                       helpText={dataHelpText({
                                         key: readout.helpKey,
                                         label: readout.label,
-                                        t,
+                                        language: languageMode,
                                       })}
                                     >
                                       {readout.label}

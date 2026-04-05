@@ -116,7 +116,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceProps) {
-  const { language, t, tKey, dataLabel, enumLabel } = useI18n();
+  const { language, tKey, dataLabel, enumLabel } = useI18n();
 
   if (!category) {
     return (
@@ -286,7 +286,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                 key: metric.key,
                 label: metric.label,
                 detail: metric.detail,
-                t,
+                language,
               })}
             >
               {dataLabel(metric.label)}
@@ -402,7 +402,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                 helpText={dataHelpText({
                   key: "collection_volume",
                   label: "Indicators Table Volume",
-                  t,
+                  language,
                 })}
               >
                 {tKey("regionalProfile.indicatorsTableVolume")}

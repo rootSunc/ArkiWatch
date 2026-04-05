@@ -582,7 +582,7 @@ export function LinkedEventsWorkspace({
   highlightedEventId,
   timeScope,
 }: LinkedEventsWorkspaceProps) {
-  const { language, t, tKey, dataLabel } = useI18n();
+  const { language, tKey, dataLabel } = useI18n();
   const [filter, setFilter] = useState<EventFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<EventCategoryKey>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -1075,7 +1075,7 @@ export function LinkedEventsWorkspace({
                 helpText={dataHelpText({
                   key: "event_map_geometry",
                   label: tKey("linkedEvents.eventMapGeometry"),
-                  t
+                  language,
                 })}
               >
                 {tKey("linkedEvents.eventMapGeometry")}

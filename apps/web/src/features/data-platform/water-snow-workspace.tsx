@@ -379,7 +379,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
-  const { language, t, tKey, dataLabel } = useI18n();
+  const { language, tKey, dataLabel } = useI18n();
 
   if (!category) {
     return (
@@ -502,7 +502,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 key: metric.key,
                 label: metric.label,
                 detail: metric.detail,
-                t,
+                language,
               })}
             >
               {dataLabel(metric.label)}
@@ -519,7 +519,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               helpText={dataHelpText({
                 key: "catalog_coverage",
                 label: "Catalog Coverage",
-                t,
+                language,
               })}
             >
               {tKey("waterSnow.catalogCoverage")}
@@ -553,7 +553,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
               helpText={dataHelpText({
                 key: "tracked_fields",
                 label: "Tracked Fields",
-                t,
+                language,
               })}
             >
               {tKey("waterSnow.trackedFields")}
@@ -722,7 +722,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 helpText={dataHelpText({
                   key: "collection_volume",
                   label: "Collection Volume",
-                  t,
+                  language,
                 })}
               >
                 {tKey("waterSnow.collectionVolume")}
@@ -751,7 +751,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 helpText={dataHelpText({
                   key: "event_readiness",
                   label: "Event Readiness",
-                  t,
+                  language,
                 })}
               >
                 {tKey("waterSnow.eventReadiness")}

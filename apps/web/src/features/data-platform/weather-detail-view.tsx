@@ -166,7 +166,7 @@ export function WeatherDetailView({
                     key: card.key,
                     label: card.label,
                     detail: card.detail,
-                    t,
+                    language,
                   })}
                 >
                   {card.label}
@@ -204,7 +204,7 @@ export function WeatherDetailView({
               helpText={dataHelpText({
                 key: item.key,
                 label: item.label,
-                t,
+                language,
               })}
             >
               {t(item.label)}
@@ -300,7 +300,7 @@ export function WeatherDetailView({
               helpText={dataHelpText({
                 key: "rain_windows",
                 label: "Rain Windows",
-                t,
+                language,
               })}
             >
               {tKey("weather.rainWindows")}
@@ -337,7 +337,7 @@ export function WeatherDetailView({
               helpText={dataHelpText({
                 key: "data_quality",
                 label: "Data Quality",
-                t,
+                language,
               })}
             >
               {tKey("weather.dataQuality")}
@@ -364,7 +364,7 @@ export function WeatherDetailView({
               helpText={dataHelpText({
                 key: "pipeline",
                 label: "Pipeline",
-                t,
+                language,
               })}
             >
               {tKey("weather.pipeline")}
@@ -399,7 +399,7 @@ export function WeatherDetailView({
               helpText={dataHelpText({
                 key: "source_layers",
                 label: "Source Layers",
-                t,
+                language,
               })}
             >
               {tKey("weather.sourceLayers")}

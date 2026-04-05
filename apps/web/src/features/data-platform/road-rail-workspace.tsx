@@ -648,7 +648,7 @@ export function RoadRailWorkspace({
   history,
   roadRail,
 }: RoadRailWorkspaceProps) {
-  const { language, t, tKey, enumLabel } = useI18n();
+  const { language, tKey, enumLabel } = useI18n();
   const [incidentFilter, setIncidentFilter] = useState<RoadRailIncidentFilter>("priority");
   const [incidentPage, setIncidentPage] = useState(0);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
@@ -789,7 +789,7 @@ export function RoadRailWorkspace({
               helpText={dataHelpText({
                 key,
                 label: tKey(`roadRail.${labelKey}`),
-                t,
+                language,
               })}
             >
               {tKey(`roadRail.${labelKey}`)}
@@ -995,7 +995,7 @@ export function RoadRailWorkspace({
               helpText={dataHelpText({
                 key: "severity_mix",
                 label: tKey("roadRail.severityMix"),
-                t,
+                language,
               })}
             >
               {tKey("roadRail.severityMix")}
@@ -1021,7 +1021,7 @@ export function RoadRailWorkspace({
               helpText={dataHelpText({
                 key: "alert_scope",
                 label: tKey("roadRail.networkScope"),
-                t,
+                language,
               })}
             >
               {tKey("roadRail.networkScope")}
@@ -1136,7 +1136,7 @@ export function RoadRailWorkspace({
                 helpText={dataHelpText({
                   key: "data_quality",
                   label: tKey("roadRail.dataQuality"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("roadRail.dataQuality")}
@@ -1167,7 +1167,7 @@ export function RoadRailWorkspace({
                 helpText={dataHelpText({
                   key: "pipeline",
                   label: tKey("roadRail.pipeline"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("roadRail.pipeline")}
@@ -1199,7 +1199,7 @@ export function RoadRailWorkspace({
                 helpText={dataHelpText({
                   key: "source_request",
                   label: tKey("roadRail.sourceRequests"),
-                  t,
+                  language,
                 })}
               >
                 {tKey("roadRail.sourceRequests")}

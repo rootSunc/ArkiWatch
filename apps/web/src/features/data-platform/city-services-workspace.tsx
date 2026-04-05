@@ -202,7 +202,7 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
 }
 
 export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) {
-  const { language, t, tKey, dataLabel, enumLabel } = useI18n();
+  const { language, tKey, dataLabel, enumLabel } = useI18n();
 
   if (!category) {
     return (
@@ -287,7 +287,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
               helpText={dataHelpText({
                 key: "source_readiness",
                 label: "Source Readiness",
-                t,
+                language,
               })}
             >
               {tKey("cityServices.sourceReadiness")}
@@ -318,7 +318,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
               helpText={dataHelpText({
                 key: "tracked_fields",
                 label: "Service Model",
-                t,
+                language,
               })}
             >
               {tKey("cityServices.serviceModel")}
@@ -344,7 +344,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 key: metric.key,
                 label: metric.label,
                 detail: metric.detail,
-                t,
+                language,
               })}
             >
               {dataLabel(metric.label)}
@@ -422,7 +422,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 helpText={dataHelpText({
                   key: "data_sources",
                   label: "Catalog Sources",
-                  t,
+                  language,
                 })}
               >
                 {tKey("cityServices.catalogSources")}
@@ -453,7 +453,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 helpText={dataHelpText({
                   key: "catalog_coverage",
                   label: "Coverage Lattice",
-                  t,
+                  language,
                 })}
               >
                 {tKey("cityServices.coverageLattice")}
@@ -477,7 +477,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 helpText={dataHelpText({
                   key: "normalized_event",
                   label: "Event Model",
-                  t,
+                  language,
                 })}
               >
                 {tKey("cityServices.eventModel")}
