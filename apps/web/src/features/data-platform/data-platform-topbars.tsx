@@ -190,7 +190,7 @@ export function DataPlatformWorkspaceTopbar({
   renderAuthActionButton,
   restoreSideNavButton,
 }: DataPlatformWorkspaceTopbarProps) {
-  const { t, tKey } = useI18n();
+  const { tKey } = useI18n();
 
   return (
     <header className="detail-topbar">
@@ -208,7 +208,7 @@ export function DataPlatformWorkspaceTopbar({
         <strong>ArkiWatch</strong>
       </div>
       {isDetailPage ? (
-        <nav aria-label={t("Detail workspace navigation")}>
+        <nav aria-label={tKey("shell.detailWorkspaceNavigation")}>
           <button onClick={() => onSelectNav(TODAY_NAV_KEY)} type="button">
             {tKey("shell.backToToday")}
           </button>
@@ -276,7 +276,7 @@ export function DataPlatformDesktopHeader({
   selectedCategory,
   selectedNavKey,
 }: DataPlatformDesktopHeaderProps) {
-  const { t } = useI18n();
+  const { tKey } = useI18n();
 
   return (
     <div className="desktop-dashboard-header">
@@ -285,10 +285,10 @@ export function DataPlatformDesktopHeader({
         <div className="desktop-dashboard-heading-copy">
           <h2>
             {selectedCategory
-              ? `${displayTitle(selectedCategory, language)} ${t("Dashboard")}`
+              ? `${displayTitle(selectedCategory, language)} ${tKey("shell.dashboardSuffix")}`
               : selectedNavKey === FALLBACK_NAV_KEY
-                ? t("Signals")
-                : t("Today")}
+                ? tKey("shell.navSignals")
+                : tKey("shell.navToday")}
           </h2>
           {selectedCategory ? <p>{selectedCategory.description}</p> : null}
         </div>
@@ -300,7 +300,7 @@ export function DataPlatformDesktopHeader({
           </span>
           <input
             onChange={(event) => onSearchChange(event.currentTarget.value)}
-            placeholder={t("Search signals, events...")}
+            placeholder={tKey("shell.searchSignalsPlaceholder")}
             value={searchValue}
           />
         </label>

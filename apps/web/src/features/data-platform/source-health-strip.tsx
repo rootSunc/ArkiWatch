@@ -19,7 +19,7 @@ export function SourceHealthStrip({
   overview,
   defaultExpanded = false,
 }: SourceHealthStripProps) {
-  const { language, t, enumLabel } = useI18n();
+  const { language, tKey, enumLabel } = useI18n();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const hasSources = overview.sources.length > 0;
   const healthyCount = healthySourceCount(overview.sources);
@@ -32,7 +32,7 @@ export function SourceHealthStrip({
           ? "source-health-panel source-health-panel-expanded"
           : "source-health-panel"
       }
-      aria-label={t("Source health")}
+      aria-label={tKey("shell.sourceHealth")}
     >
       {!isExpanded && hasSources ? (
         <button
@@ -45,10 +45,10 @@ export function SourceHealthStrip({
             hub
           </span>
           <span>
-            {overview.sources.length} {t("data sources")}
+            {overview.sources.length} {tKey("shell.dataSources")}
             {" · "}
-            {healthyCount} {t("healthy")}
-            {issueCount > 0 ? ` · ${issueCount} ${t("need attention")}` : ""}
+            {healthyCount} {tKey("shell.healthyCount")}
+            {issueCount > 0 ? ` · ${issueCount} ${tKey("shell.needAttentionShort")}` : ""}
           </span>
           <span className="material-symbols-outlined source-health-chevron" aria-hidden="true">
             expand_more
@@ -78,9 +78,9 @@ export function SourceHealthStrip({
 
       {!hasSources ? (
         <article className="source-chip source-chip-unknown source-health-strip">
-          <span>{t("sources")}</span>
-          <strong>{t("unavailable")}</strong>
-          <small>{t("No collector state")}</small>
+          <span>{tKey("shell.sources")}</span>
+          <strong>{tKey("shell.unavailable")}</strong>
+          <small>{tKey("shell.noCollectorState")}</small>
         </article>
       ) : null}
 
@@ -89,11 +89,11 @@ export function SourceHealthStrip({
           className="source-health-toggle"
           aria-expanded={isExpanded}
           aria-label={
-            isExpanded ? t("Collapse data sources") : t("Show all data sources")
+            isExpanded ? tKey("shell.collapseDataSources") : tKey("shell.showAllDataSources")
           }
           onClick={() => setIsExpanded((current) => !current)}
           title={
-            isExpanded ? t("Collapse data sources") : t("Show all data sources")
+            isExpanded ? tKey("shell.collapseDataSources") : tKey("shell.showAllDataSources")
           }
           type="button"
         >

@@ -24,7 +24,7 @@ export type CoordinateMapProps = {
   totalCount: number;
   emptyMessage: string;
   formatNumber: (value: number | null | undefined, maximumFractionDigits?: number) => string;
-  t: (value: string) => string;
+  mappedLabel: string;
   onPointClick?: (id: string) => void;
 };
 
@@ -168,7 +168,7 @@ export function CoordinateMap({
   totalCount,
   emptyMessage,
   formatNumber,
-  t,
+  mappedLabel,
   onPointClick
 }: CoordinateMapProps) {
   const [markerColors, setMarkerColors] = useState<ThemeMarkerColors>(DEFAULT_MARKER_COLORS);
@@ -225,7 +225,7 @@ export function CoordinateMap({
       </div>
       <div className="air-map-meta">
         <span>
-          {points.length}/{totalCount} {t("mapped")}
+          {points.length}/{totalCount} {mappedLabel}
         </span>
         <span>
           {formatNumber(minLat, 3)}-{formatNumber(maxLat, 3)} lat

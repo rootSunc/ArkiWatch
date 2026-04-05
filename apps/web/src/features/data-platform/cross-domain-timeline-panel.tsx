@@ -44,22 +44,22 @@ export function CrossDomainTimelinePanel({
   onOpenEvent,
   onOpenScenario,
 }: CrossDomainTimelinePanelProps) {
-  const { t, enumLabel } = useI18n();
+  const { tKey, enumLabel } = useI18n();
 
   if (items.length === 0) {
     return null;
   }
 
   return (
-    <section className="cross-domain-timeline" aria-label={t("Cross-signal timeline")}>
+    <section className="cross-domain-timeline" aria-label={tKey("shell.crossSignalTimeline")}>
       <header className="cross-domain-timeline-header">
         <h3>
           <span className="material-symbols-outlined" aria-hidden="true">
             timeline
           </span>
-          {t("Cross-signal timeline")}
+          {tKey("shell.crossSignalTimeline")}
         </h3>
-        <p>{t("Cross-signal timeline lead")}</p>
+        <p>{tKey("shell.crossSignalTimelineLead")}</p>
       </header>
       <ol className="cross-domain-timeline-list">
         {items.map((item) => {

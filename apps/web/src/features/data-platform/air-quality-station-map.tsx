@@ -12,7 +12,6 @@ type AirTone = "good" | "warn" | "bad" | "neutral";
 type AirQualityStationMapProps = {
   stations: AirQualityStation[];
   language: LanguageMode;
-  t: (value: string) => string;
   tKey: (key: string) => string;
   dataLabel: (value: string | null | undefined) => string;
   scoreLabel: (
@@ -44,7 +43,6 @@ function hasCoordinates(station: AirQualityStation): station is AirQualityStatio
 export function AirQualityStationMap({
   stations,
   language,
-  t,
   tKey,
   dataLabel,
   scoreLabel,
@@ -76,7 +74,7 @@ export function AirQualityStationMap({
       emptyMessage={tKey("airQuality.noStationCoordinatesWereReturnedInTheLatestHsyPayload")}
       formatNumber={formatNumber}
       points={points}
-      t={t}
+      mappedLabel={tKey("shell.mapped")}
       totalCount={stations.length}
     />
   );

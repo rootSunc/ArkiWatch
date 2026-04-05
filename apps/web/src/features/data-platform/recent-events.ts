@@ -748,7 +748,7 @@ function compactList(values: string[], maxItems: number): string {
 export function recentEventDetails(
   event: PlatformEvent,
   language: LanguageMode,
-  t: (value: string) => string,
+  tKey: (key: string) => string,
 ): RecentEventDetail[] {
   const details: RecentEventDetail[] = [];
   const place =
@@ -769,75 +769,75 @@ export function recentEventDetails(
   const totalPrecip = attributeNumber(event, "total_precip_mm");
 
   if (place) {
-    details.push({ key: "place", label: t("Location"), value: place });
+    details.push({ key: "place", label: tKey("shell.location"), value: place });
   }
   if (airQualityScore !== null) {
     details.push({
       key: "air_quality_score",
-      label: t("AQ score"),
+      label: tKey("shell.aqScore"),
       value: `${Math.round(airQualityScore)}/5`,
     });
   }
   if (warningSeverity) {
     details.push({
       key: "warning",
-      label: t("Warning"),
+      label: tKey("shell.warning"),
       value: titleCase(warningSeverity),
     });
   }
   if (peakGust !== null) {
     details.push({
       key: "peak_gust",
-      label: t("Peak gust"),
+      label: tKey("shell.peakGust"),
       value: `${formatCompactNumber(peakGust)} m/s`,
     });
   }
   if (visibility !== null) {
     details.push({
       key: "visibility",
-      label: t("Visibility"),
+      label: tKey("shell.visibility"),
       value: `${formatCompactNumber(visibility / 1000)} km`,
     });
   }
   if (peakPrecip !== null) {
     details.push({
       key: "peak_precip",
-      label: t("Peak rain"),
+      label: tKey("shell.peakRain"),
       value: `${formatCompactNumber(peakPrecip)} mm/h`,
     });
   }
   if (totalPrecip !== null) {
     details.push({
       key: "total_precip",
-      label: t("Rain total"),
+      label: tKey("shell.rainTotal"),
       value: `${formatCompactNumber(totalPrecip)} mm`,
     });
   }
   if (routes.length > 0) {
-    details.push({ key: "routes", label: t("Routes"), value: compactList(routes, 4) });
+    details.push({ key: "routes", label: tKey("shell.eventRoutes"), value: compactList(routes, 4) });
   }
   if (stops.length > 0) {
-    details.push({ key: "stops", label: t("Stops"), value: compactList(stops, 3) });
+    details.push({ key: "stops", label: tKey("shell.eventStops"), value: compactList(stops, 3) });
   }
   if (trips.length > 0) {
-    details.push({ key: "trips", label: t("Trips"), value: compactList(trips, 2) });
+    details.push({ key: "trips", label: tKey("shell.eventTrips"), value: compactList(trips, 2) });
   }
   if (cause) {
-    details.push({ key: "cause", label: t("Cause"), value: cause });
+    details.push({ key: "cause", label: tKey("shell.cause"), value: cause });
   }
   if (effect) {
-    details.push({ key: "effect", label: t("Effect"), value: effect });
+    details.push({ key: "effect", label: tKey("shell.effect"), value: effect });
   }
   if (attributeBoolean(event, "is_free")) {
-    details.push({ key: "ticketing", label: t("Ticketing"), value: t("Free") });
+    details.push({ key: "ticketing", label: tKey("shell.ticketing"), value: tKey("shell.free") });
   }
   if (provider) {
-    details.push({ key: "provider", label: t("Provider"), value: provider });
+    details.push({ key: "provider", label: tKey("shell.provider"), value: provider });
   }
 
   details.push({
     key: "until",
-    label: t("Until"),
+    label: tKey("shell.until"),
     value: formatTimestamp(event.ends_at, "dateTime", language),
   });
 

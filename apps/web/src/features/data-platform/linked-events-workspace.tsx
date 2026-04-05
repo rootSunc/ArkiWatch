@@ -1091,7 +1091,6 @@ export function LinkedEventsWorkspace({
               onEventSelect={handleEventMapSelect}
               placeLabel={placeLabel}
               selectedEventId={selectedEvent?.id ?? null}
-              t={t}
               tKey={tKey}
             />
           </article>

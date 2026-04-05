@@ -425,7 +425,6 @@ function renderPollutantChart(
 function renderStationMap(
   stations: AirQualityStation[],
   language: LanguageMode,
-  t: (value: string) => string,
   tKey: (key: string) => string,
   dataLabel: (value: string | null | undefined) => string,
 ) {
@@ -438,7 +437,6 @@ function renderStationMap(
       scoreTone={scoreTone}
       stationDisplayName={stationDisplayName}
       stations={stations}
-      t={t}
       tKey={tKey}
     />
   );
@@ -751,7 +749,7 @@ export function AirQualityWorkspace({
               </DataLabelWithHelp>
               <strong>{stations.filter((station) => hasNumber(station.lat) && hasNumber(station.lon)).length}</strong>
             </header>
-            {renderStationMap(stations, language, t, tKey, dataLabel)}
+            {renderStationMap(stations, language, tKey, dataLabel)}
           </article>
 
           <article className="air-glass-panel air-quality-panel">

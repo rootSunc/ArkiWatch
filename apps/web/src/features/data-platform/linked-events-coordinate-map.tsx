@@ -12,7 +12,6 @@ type LinkedEventsCoordinateMapProps = {
   selectedEventId: string | null;
   formatNumber: (value: number | null | undefined, maximumFractionDigits?: number) => string;
   placeLabel: (event: PlatformEvent) => string;
-  t: (value: string) => string;
   tKey: (key: string) => string;
   onEventSelect: (eventId: string) => void;
 };
@@ -44,7 +43,6 @@ export function LinkedEventsCoordinateMap({
   selectedEventId,
   formatNumber,
   placeLabel,
-  t,
   tKey,
   onEventSelect
 }: LinkedEventsCoordinateMapProps) {
@@ -75,7 +73,7 @@ export function LinkedEventsCoordinateMap({
       formatNumber={formatNumber}
       onPointClick={onEventSelect}
       points={points}
-      t={t}
+      mappedLabel={tKey("shell.mapped")}
       totalCount={events.length}
     />
   );

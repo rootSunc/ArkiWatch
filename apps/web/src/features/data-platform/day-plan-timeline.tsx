@@ -44,18 +44,18 @@ export function DayPlanTimeline({
   onOpenEvent,
   onOpenScenario,
 }: DayPlanTimelineProps) {
-  const { t, enumLabel } = useI18n();
+  const { tKey, enumLabel } = useI18n();
 
   return (
-    <section className="day-plan-timeline" aria-label={t("Today's plan")}>
+    <section className="day-plan-timeline" aria-label={tKey("shell.todayPlan")}>
       <header className="day-plan-timeline-header">
         <h3>
           <span className="material-symbols-outlined" aria-hidden="true">
             event_upcoming
           </span>
-          {t("Today's plan")}
+          {tKey("shell.todayPlan")}
         </h3>
-        <p>{t("Decision moments for the current daily window.")}</p>
+        <p>{tKey("shell.todayPlanLead")}</p>
       </header>
       {items.length > 0 ? (
         <ol className="day-plan-timeline-list">
@@ -101,7 +101,7 @@ export function DayPlanTimeline({
           })}
         </ol>
       ) : (
-        <div className="day-plan-empty">{t("No decision moments need attention right now.")}</div>
+        <div className="day-plan-empty">{tKey("shell.noDecisionMoments")}</div>
       )}
     </section>
   );

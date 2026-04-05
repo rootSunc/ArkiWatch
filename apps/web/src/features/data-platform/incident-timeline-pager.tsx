@@ -52,7 +52,7 @@ export function IncidentTimelinePager({
   totalCount,
   visibleCount,
 }: IncidentTimelinePagerProps) {
-  const { language, t } = useI18n();
+  const { language, tKey } = useI18n();
 
   if (totalCount <= INCIDENT_TIMELINE_PAGE_SIZE && pageCount <= 1) {
     return null;
@@ -61,12 +61,12 @@ export function IncidentTimelinePager({
   const rangeStart = totalCount > 0 ? startIndex + 1 : 0;
   const rangeEnd = startIndex + visibleCount;
   const rangeLabel = formatPagerRange(rangeStart, rangeEnd, totalCount, language);
-  const pageLabel = pageCount > 1 ? `${t("Page")} ${currentPage + 1}/${pageCount}` : null;
+  const pageLabel = pageCount > 1 ? `${tKey("shell.page")} ${currentPage + 1}/${pageCount}` : null;
 
   return (
-    <nav className="incident-timeline-pager" aria-label={t("Incident timeline pagination")}>
+    <nav className="incident-timeline-pager" aria-label={tKey("shell.incidentTimelinePagination")}>
       <button
-        aria-label={t("Previous")}
+        aria-label={tKey("shell.previous")}
         className="incident-timeline-pager-button"
         disabled={currentPage === 0}
         onClick={() => onPageChange(Math.max(0, currentPage - 1))}
@@ -75,20 +75,20 @@ export function IncidentTimelinePager({
         <span className="material-symbols-outlined" aria-hidden="true">
           chevron_left
         </span>
-        <span>{t("Previous")}</span>
+        <span>{tKey("shell.previous")}</span>
       </button>
       <p className="incident-timeline-pager-status" aria-live="polite">
         <strong>{rangeLabel}</strong>
         {pageLabel ? <span>{pageLabel}</span> : null}
       </p>
       <button
-        aria-label={t("Next")}
+        aria-label={tKey("shell.next")}
         className="incident-timeline-pager-button"
         disabled={currentPage >= pageCount - 1 || totalCount === 0}
         onClick={() => onPageChange(Math.min(pageCount - 1, currentPage + 1))}
         type="button"
       >
-        <span>{t("Next")}</span>
+        <span>{tKey("shell.next")}</span>
         <span className="material-symbols-outlined" aria-hidden="true">
           chevron_right
         </span>

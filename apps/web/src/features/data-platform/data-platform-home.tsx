@@ -1324,7 +1324,7 @@ export function DataPlatformHome({
                               const details = recentEventDetails(
                                 event,
                                 languageMode,
-                                t,
+                                tKey,
                               );
                               return (
                                 <article
