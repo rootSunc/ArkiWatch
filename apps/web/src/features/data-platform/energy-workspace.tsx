@@ -69,7 +69,7 @@ export function EnergyWorkspace({
   householdHistory,
   onPanelChange,
 }: EnergyWorkspaceProps) {
-  const { language, t, tKey } = useI18n();
+  const { language, tKey, dataLabel } = useI18n();
   const [internalPanel, setInternalPanel] = useState<EnergyPanelKey>("porssisahko");
   const activePanel = controlledPanel ?? internalPanel;
 
@@ -320,12 +320,12 @@ export function EnergyWorkspace({
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key: metric.key,
-                label: resolveMetricLabel(metric, tKey, t),
+                label: resolveMetricLabel(metric, tKey, dataLabel),
                 detail: "detail" in metric ? metric.detail : null,
                 language,
               })}
             >
-              {resolveMetricLabel(metric, tKey, t)}
+              {resolveMetricLabel(metric, tKey, dataLabel)}
             </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>
@@ -636,7 +636,7 @@ export function EnergyWorkspace({
             {signalMetrics.map((metric) => (
               <article className={`energy-signal energy-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
-                  <strong>{resolveMetricLabel(metric, tKey, t)}</strong>
+                  <strong>{resolveMetricLabel(metric, tKey, dataLabel)}</strong>
                   <span>{formatMetricValue(metric, tKey)}</span>
                 </div>
                 <p>{metric.detail ?? tKey("energy.thisSignalHasNotProducedAPlatformMetricYet")}</p>

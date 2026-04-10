@@ -53,7 +53,7 @@ export function WeatherDetailView({
   history,
   weather,
 }: WeatherDetailViewProps) {
-  const { language, t, tKey } = useI18n();
+  const { language, tKey, enumLabel } = useI18n();
   const [chartMode, setChartMode] = useState<ChartMode>("temperature");
   const points = useMemo(() => forecastWindow(weather?.points ?? []), [weather]);
   const current = latestPoint(points.length > 0 ? points : weather?.points ?? []);
@@ -189,25 +189,25 @@ export function WeatherDetailView({
 
       <section className="weather-summary-strip" aria-label={tKey("weather.weatherSummaryMetrics")}>
         {[
-          ["temperature_range", "Thermal Range"],
-          ["peak_wind", "Peak Wind"],
-          ["peak_gust", "Peak Gust"],
-          ["peak_precipitation", "Peak Rain"],
-          ["total_precipitation", "Rain Total"],
-          ["forecast_points", "Hourly Points"]
-        ].flatMap(([key, label]) => {
+          ["temperature_range", "thermalRange"],
+          ["peak_wind", "peakWind"],
+          ["peak_gust", "peakGust"],
+          ["peak_precipitation", "peakRain"],
+          ["total_precipitation", "rainTotal"],
+          ["forecast_points", "hourlyPoints"],
+        ].flatMap(([key, labelKey]) => {
           const value = metricByKey(weather, key);
-          return value ? [{ key, label, value }] : [];
+          return value ? [{ key, labelKey, value }] : [];
         }).map((item) => (
           <article className="weather-glass-panel" key={item.key}>
             <DataLabelWithHelp
               helpText={dataHelpText({
                 key: item.key,
-                label: item.label,
+                label: tKey(`weather.${item.labelKey}`),
                 language,
               })}
             >
-              {t(item.label)}
+              {tKey(`weather.${item.labelKey}`)}
             </DataLabelWithHelp>
             <strong>{item.value}</strong>
           </article>
@@ -379,7 +379,7 @@ export function WeatherDetailView({
               <article className={`weather-pipeline-stage weather-pipeline-${sourceTone(stage.status)}`} key={stage.key}>
                 <div>
                     <strong>{stage.label}</strong>
-                    <span>{t(stage.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
                     {stage.detail}
@@ -416,7 +416,7 @@ export function WeatherDetailView({
                 <article className={`weather-source-layer weather-source-${sourceTone(layer.status)}`} key={layer.key}>
                   <div>
                     <strong>{layer.label}</strong>
-                    <span>{t(layer.status.replaceAll("_", " "))}</span>
+                    <span>{enumLabel(layer.status)}</span>
                   </div>
                   <p>{layer.detail}</p>
                   <small>

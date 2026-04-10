@@ -67,14 +67,14 @@ export function displayMetricLabelKey(metric: PanelMetric | null): string | null
 export function resolveMetricLabel(
   metric: PanelMetric | null,
   tKey: (key: string) => string,
-  t: (value: string) => string,
+  dataLabel: (value: string | null | undefined) => string,
 ): string {
   const key = displayMetricLabelKey(metric);
   if (key) {
     return tKey(`energy.${key}`);
   }
 
-  return metric?.label ? t(metric.label) : tKey("energy.metricUnavailable");
+  return metric?.label ? dataLabel(metric.label) : tKey("energy.metricUnavailable");
 }
 
 export function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
