@@ -1,0 +1,12 @@
+{
+  "auth": {
+    "adminSignIn": "Admin sign in",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in",
+    "continueAsDemo": "Continue as demo",
+    "sessionExpired": "Session expired. Please sign in again.",
+    "loginFailed": "Login failed."
+  }
+}

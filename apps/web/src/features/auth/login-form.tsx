@@ -3,8 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
+
+import {
+  preferredLanguageMode,
+  storedLanguageMode,
+  translateMessageKey,
+} from "@/features/data-platform/i18n";
 
 type LoginFormProps = {
   sessionExpired: boolean;
@@ -14,8 +20,13 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
   const router = useRouter();
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
+  const language = useMemo(
+    () => storedLanguageMode() ?? preferredLanguageMode(),
+    [],
+  );
+  const tKey = (key: string) => translateMessageKey(language, key);
   const [error, setError] = useState<string | null>(
-    sessionExpired ? "Session expired. Please sign in again." : null,
+    sessionExpired ? tKey("auth.sessionExpired") : null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,14 +49,14 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
 
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        setError(formatLoginError(body?.detail));
+        setError(formatLoginError(body?.detail, tKey));
         return;
       }
 
       router.replace("/");
       router.refresh();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Login failed.");
+      setError(requestError instanceof Error ? requestError.message : tKey("auth.loginFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -60,13 +71,13 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
           </span>
           <div>
             <span>ArkiWatch</span>
-            <h1 id="login-title">Admin sign in</h1>
+            <h1 id="login-title">{tKey("auth.adminSignIn")}</h1>
           </div>
         </div>
 
         <form className="login-form" onSubmit={submitLogin}>
           <label>
-            <span>Username</span>
+            <span>{tKey("auth.username")}</span>
             <input
               autoComplete="username"
               autoFocus
@@ -78,7 +89,7 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
           </label>
 
           <label>
-            <span>Password</span>
+            <span>{tKey("auth.password")}</span>
             <input
               autoComplete="current-password"
               name="password"
@@ -99,10 +110,10 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               login
             </span>
-            <span>{isSubmitting ? "Signing in" : "Sign in"}</span>
+            <span>{isSubmitting ? tKey("auth.signingIn") : tKey("auth.signIn")}</span>
           </button>
           <Link className="login-secondary" href="/">
-            Continue as demo
+            {tKey("auth.continueAsDemo")}
           </Link>
         </form>
       </section>
@@ -110,7 +121,10 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
   );
 }
 
-function formatLoginError(detail: unknown): string {
+function formatLoginError(
+  detail: unknown,
+  tKey: (key: string) => string,
+): string {
   if (typeof detail === "string" && detail.trim()) {
     return detail;
   }
@@ -124,5 +138,5 @@ function formatLoginError(detail: unknown): string {
     }
   }
 
-  return "Login failed.";
+  return tKey("auth.loginFailed");
 }

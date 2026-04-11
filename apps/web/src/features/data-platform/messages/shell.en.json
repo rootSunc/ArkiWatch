@@ -233,6 +233,25 @@
     "free": "Free",
     "provider": "Provider",
     "until": "Until",
-    "mapped": "mapped"
+    "mapped": "mapped",
+    "ready": "Ready",
+    "missing": "Missing",
+    "empty": "Empty",
+    "partial": "Partial",
+    "failing": "Failing",
+    "fetched": "Fetched",
+    "error": "Error",
+    "summaryOnly": "Summary only",
+    "info": "Info",
+    "medium": "Medium",
+    "high": "High",
+    "fresh": "Fresh",
+    "degraded": "Degraded",
+    "live": "Live",
+    "neutral": "Neutral",
+    "warn": "Warn",
+    "bad": "Bad",
+    "helsinkiUusimaa": "Helsinki & Uusimaa",
+    "helsinkiMetro": "Helsinki metro"
   }
 }

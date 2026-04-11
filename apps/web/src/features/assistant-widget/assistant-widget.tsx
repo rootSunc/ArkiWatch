@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
-import { LanguageMode } from "@/features/data-platform/i18n";
+import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";
 
 type AssistantWidgetProps = {
   overview: PlatformOverviewResponse | null;
@@ -44,45 +44,6 @@ type AssistantStreamPayload = {
 type AssistantStreamEvent = {
   event: string;
   data: AssistantStreamPayload;
-};
-
-const WIDGET_TRANSLATIONS = {
-  en: {
-    welcome:
-      "Hello! I am your ArkiWatch Data Explainer. Ask about weather, air quality, energy, traffic, sources, or what the current snapshot means — I answer from live platform data and stay on topic.",
-    explainCurrent: "Explain the current page's data",
-    analyzeCategory: (category: string) => `Analyze ${category} data`,
-    whichSourceAbnormal: "Which data source is abnormal recently?",
-    whichExpansionPlanned: "What expansion directions are being planned?",
-    askPlaceholder: "Ask about current conditions, sources, or this page...",
-    send: "Send",
-    title: "Data Assistant",
-    subtitle: "Data Explainer",
-    tooltip: "💡 Need help with data?",
-    loading: "Reading ArkiWatch data...",
-    failure: "I could not reach the data assistant. Please try again after refreshing the page.",
-    basis: "Basis",
-    fallback: "Fallback",
-    offlinePrompt: "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
-  },
-  zh: {
-    welcome:
-      "您好！我是 ArkiWatch 数据解析助手。可询问天气、空气质量、能源、交通、数据源状态，或当前快照的含义；我会结合平台数据直接作答。",
-    explainCurrent: "解释当前页面的数据",
-    analyzeCategory: (category: string) => `分析 ${category} 数据`,
-    whichSourceAbnormal: "哪个数据源最近异常？",
-    whichExpansionPlanned: "哪些扩展方向还在规划？",
-    askPlaceholder: "询问当前状况、数据源或本页数据…",
-    send: "发送",
-    title: "数据助手",
-    subtitle: "数据解析器",
-    tooltip: "💡 需要数据协助吗？",
-    loading: "正在读取 ArkiWatch 数据...",
-    failure: "暂时无法连接数据助手。请刷新页面后再试。",
-    basis: "依据",
-    fallback: "兜底回答",
-    offlinePrompt: "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。"
-  }
 };
 
 function parseAssistantStream(
@@ -131,7 +92,14 @@ export function AssistantWidget({
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const t = WIDGET_TRANSLATIONS[language] || WIDGET_TRANSLATIONS.en;
+  const tKey = useCallback(
+    (key: string) => translateMessageKey(language, key),
+    [language],
+  );
+  const analyzeCategory = useCallback(
+    (category: string) => tKey("assistant.analyzeCategory").replace("{category}", category),
+    [tKey],
+  );
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -209,7 +177,7 @@ export function AssistantWidget({
     {
       id: "welcome",
       role: "assistant",
-      text: t.welcome
+      text: tKey("assistant.welcome")
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -217,11 +185,11 @@ export function AssistantWidget({
   useEffect(() => {
     setMessages((currentMessages) => {
       if (currentMessages.length === 1 && currentMessages[0]?.id === "welcome") {
-        return [{ id: "welcome", role: "assistant", text: t.welcome }];
+        return [{ id: "welcome", role: "assistant", text: tKey("assistant.welcome") }];
       }
       return currentMessages;
     });
-  }, [t.welcome]);
+  }, [language, tKey]);
 
   const hasUserMessages = useMemo(
     () => messages.some((message) => message.role === "user"),
@@ -231,19 +199,19 @@ export function AssistantWidget({
   const suggestedQuestions = useMemo(() => {
     if (!overview) {
       return [
-        t.explainCurrent,
-        t.whichSourceAbnormal,
-        t.whichExpansionPlanned
+        tKey("assistant.explainCurrent"),
+        tKey("assistant.whichSourceAbnormal"),
+        tKey("assistant.whichExpansionPlanned")
       ];
     }
     const firstCat = overview.categories[0]?.title ?? "Weather";
     return [
-      t.explainCurrent,
-      t.analyzeCategory(firstCat),
-      t.whichSourceAbnormal,
-      t.whichExpansionPlanned
+      tKey("assistant.explainCurrent"),
+      analyzeCategory(firstCat),
+      tKey("assistant.whichSourceAbnormal"),
+      tKey("assistant.whichExpansionPlanned")
     ];
-  }, [overview, t]);
+  }, [overview, tKey, analyzeCategory]);
 
   const submitQuestion = async (question: string) => {
     const normalizedQuestion = question.trim();
@@ -348,7 +316,7 @@ export function AssistantWidget({
                         event.data.error_message ??
                         event.data.message ??
                         event.data.content ??
-                        t.failure
+                        tKey("assistant.failure")
                     }
                   : message
               )
@@ -360,14 +328,14 @@ export function AssistantWidget({
       if (!assistantText.trim()) {
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
-            message.id === assistantMessageId ? { ...message, text: t.failure } : message
+            message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
           )
         );
       }
     } catch {
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
-          message.id === assistantMessageId ? { ...message, text: t.failure } : message
+          message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
         )
       );
     } finally {
@@ -398,8 +366,8 @@ export function AssistantWidget({
               />
             </div>
             <div>
-              <span className="label-text">{t.title}</span>
-              <h2>{t.subtitle}</h2>
+              <span className="label-text">{tKey("assistant.title")}</span>
+              <h2>{tKey("assistant.subtitle")}</h2>
             </div>
             <button
               aria-label="Close assistant"
@@ -426,8 +394,8 @@ export function AssistantWidget({
                   )}
                   {message.role === "assistant" && message.citations?.length ? (
                     <footer className="assistant-citations">
-                      <span>{t.basis}</span>
-                      {message.answerMode === "fallback" ? <em>{t.fallback}</em> : null}
+                      <span>{tKey("assistant.basis")}</span>
+                      {message.answerMode === "fallback" ? <em>{tKey("assistant.fallback")}</em> : null}
                       {message.citations.slice(0, 4).map((citation) => (
                         <small key={`${message.id}-${citation.source}`}>
                           {citationLabel(citation)}
@@ -440,7 +408,7 @@ export function AssistantWidget({
             })}
             {isLoading ? (
               <article className="assistant-message assistant-message-assistant assistant-message-pending">
-                {t.loading}
+                {tKey("assistant.loading")}
               </article>
             ) : null}
           </div>
@@ -467,7 +435,7 @@ export function AssistantWidget({
               aria-label="Ask about platform data"
               disabled={isLoading}
               onChange={(event) => setInputValue(event.target.value)}
-              placeholder={t.askPlaceholder}
+              placeholder={tKey("assistant.askPlaceholder")}
               value={inputValue}
             />
             <button disabled={isLoading} type="submit">
@@ -477,7 +445,7 @@ export function AssistantWidget({
         </section>
       ) : (
         <button
-          aria-label={t.tooltip}
+          aria-label={tKey("assistant.tooltip")}
           className="assistant-launcher"
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
@@ -501,7 +469,7 @@ export function AssistantWidget({
               priority
             />
           </div>
-          <span className="assistant-bubble">{t.tooltip}</span>
+          <span className="assistant-bubble">{tKey("assistant.tooltip")}</span>
         </button>
       )}
     </div>

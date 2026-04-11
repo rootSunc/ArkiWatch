@@ -1,0 +1,12 @@
+{
+  "auth": {
+    "adminSignIn": "管理员登录",
+    "username": "用户名",
+    "password": "密码",
+    "signIn": "登录",
+    "signingIn": "正在登录",
+    "continueAsDemo": "以演示模式继续",
+    "sessionExpired": "会话已过期，请重新登录。",
+    "loginFailed": "登录失败。"
+  }
+}

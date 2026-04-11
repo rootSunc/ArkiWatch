@@ -1,0 +1,19 @@
+{
+  "assistant": {
+    "welcome": "Hello! I am your ArkiWatch Data Explainer. Ask about weather, air quality, energy, traffic, sources, or what the current snapshot means — I answer from live platform data and stay on topic.",
+    "explainCurrent": "Explain the current page's data",
+    "analyzeCategory": "Analyze {category} data",
+    "whichSourceAbnormal": "Which data source is abnormal recently?",
+    "whichExpansionPlanned": "What expansion directions are being planned?",
+    "askPlaceholder": "Ask about current conditions, sources, or this page...",
+    "send": "Send",
+    "title": "Data Assistant",
+    "subtitle": "Data Explainer",
+    "tooltip": "💡 Need help with data?",
+    "loading": "Reading ArkiWatch data...",
+    "failure": "I could not reach the data assistant. Please try again after refreshing the page.",
+    "basis": "Basis",
+    "fallback": "Fallback",
+    "offlinePrompt": "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
+  }
+}

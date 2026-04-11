@@ -5,6 +5,10 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 
 import airQualityEnMessages from "./messages/airQuality.en.json";
 import airQualityZhMessages from "./messages/airQuality.zh.json";
+import assistantEnMessages from "./messages/assistant.en.json";
+import assistantZhMessages from "./messages/assistant.zh.json";
+import authEnMessages from "./messages/auth.en.json";
+import authZhMessages from "./messages/auth.zh.json";
 import geospatialEnMessages from "./messages/geospatial.en.json";
 import geospatialZhMessages from "./messages/geospatial.zh.json";
 import dataHelpEnMessages from "./messages/dataHelp.en.json";
@@ -50,6 +54,8 @@ type StructuredMessages = {
   geospatial: Record<string, string>;
   cityServices: Record<string, string>;
   dataHelp: Record<string, string>;
+  auth: Record<string, string>;
+  assistant: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -66,8 +72,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages, ...dataHelpEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages, ...dataHelpZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages, ...dataHelpEnMessages, ...authEnMessages, ...assistantEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages, ...dataHelpZhMessages, ...authZhMessages, ...assistantZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
@@ -79,6 +85,108 @@ const DEFAULT_CONTEXT: I18nContextValue = {
 };
 
 const I18nContext = createContext<I18nContextValue>(DEFAULT_CONTEXT);
+
+function snakeToCamel(value: string): string {
+  return value.replace(/_([a-z])/g, (_, character) => character.toUpperCase());
+}
+
+const DYNAMIC_LABEL_ALIASES: Record<string, string> = {
+  active: "shell.active",
+  air: "shell.navAirQuality",
+  alert: "shell.alert",
+  background: "shell.statusCatalog",
+  bad: "shell.bad",
+  catalog: "shell.catalog",
+  city_services: "shell.navCityServices",
+  commute: "shell.commute",
+  connected: "shell.statusActive",
+  degraded: "shell.degraded",
+  empty: "shell.empty",
+  energy: "shell.navEnergy",
+  error: "shell.error",
+  events: "shell.navLinkedEvents",
+  failing: "shell.failing",
+  fetched: "shell.fetched",
+  fresh: "shell.fresh",
+  geospatial: "shell.navGeospatialBase",
+  healthy: "shell.healthy",
+  helsinki_metro: "shell.helsinkiMetro",
+  helsinki_uusimaa: "shell.helsinkiUusimaa",
+  high: "shell.high",
+  home_air: "shell.homeAir",
+  inactive: "shell.inactive",
+  info: "shell.info",
+  live: "shell.live",
+  low: "shell.low",
+  mapped: "shell.mapped",
+  medium: "shell.medium",
+  missing: "shell.missing",
+  mobility: "shell.navMobility",
+  neutral: "shell.neutral",
+  not_collected: "shell.notCollected",
+  outdoor: "shell.outdoor",
+  partial: "shell.partial",
+  pending: "shell.pending",
+  planned: "shell.planned",
+  ready: "shell.ready",
+  regional_profile: "shell.navRegionalProfile",
+  stale: "shell.stale",
+  summary_only: "shell.summaryOnly",
+  traffic: "shell.navRoadRail",
+  transit: "shell.navTransit",
+  warn: "shell.warn",
+  watch: "shell.watch",
+  water: "shell.navWaterAndSnow",
+  weather: "shell.navWeather",
+};
+
+function normalizeDynamicLabelToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+function resolveDynamicLabelKey(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = normalizeDynamicLabelToken(value);
+  if (!normalized) {
+    return null;
+  }
+
+  const alias = DYNAMIC_LABEL_ALIASES[normalized];
+  if (alias) {
+    return alias;
+  }
+
+  const camel = snakeToCamel(normalized);
+  const structuredCandidates = [
+    `shell.${camel}`,
+    `shell.status${camel.charAt(0).toUpperCase()}${camel.slice(1)}`,
+  ];
+
+  for (const key of structuredCandidates) {
+    if (resolveStructuredMessage("en", key)) {
+      return key;
+    }
+  }
+
+  return null;
+}
+
+function translateDynamicLabel(
+  language: LanguageMode,
+  value: string | null | undefined,
+  fallback: (label: string) => string,
+): string {
+  const messageKey = resolveDynamicLabelKey(value);
+  if (messageKey) {
+    return translateMessageKey(language, messageKey);
+  }
+
+  const label = fallback(value ?? "");
+  return label ? translateText(language, label) : "";
+}
 
 function humanizeValue(value: string | null | undefined): string {
   if (!value) {
@@ -169,13 +277,15 @@ export function translateText(language: LanguageMode, value: string): string {
 }
 
 export function translateEnumLabel(language: LanguageMode, value: string | null | undefined): string {
-  const label = humanizeValue(value);
-  return label ? translateText(language, label) : "";
+  return translateDynamicLabel(language, value, humanizeValue);
 }
 
 export function translateDataLabel(language: LanguageMode, value: string | null | undefined): string {
-  const label = value?.replaceAll("_", " ") ?? "";
-  return label ? translateText(language, label) : "";
+  return translateDynamicLabel(
+    language,
+    value,
+    (raw) => raw.replaceAll("_", " "),
+  );
 }
 
 export function I18nProvider({

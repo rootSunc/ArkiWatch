@@ -233,6 +233,25 @@
     "free": "免费",
     "provider": "数据提供方",
     "until": "直到",
-    "mapped": "已映射"
+    "mapped": "已映射",
+    "ready": "已就绪",
+    "missing": "缺失",
+    "empty": "无数据",
+    "partial": "部分就绪",
+    "failing": "故障发生",
+    "fetched": "已获取",
+    "error": "错误",
+    "summaryOnly": "仅摘要",
+    "info": "信息",
+    "medium": "中",
+    "high": "高",
+    "fresh": "数据最新",
+    "degraded": "降级运行",
+    "live": "实时",
+    "neutral": "中性",
+    "warn": "警告",
+    "bad": "差",
+    "helsinkiUusimaa": "赫尔辛基与新地区",
+    "helsinkiMetro": "赫尔辛基都会区"
   }
 }
