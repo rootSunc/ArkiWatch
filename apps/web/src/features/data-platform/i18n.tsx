@@ -20,6 +20,8 @@ import energyZhMessages from "./messages/energy.zh.json";
 import enMessages from "./messages/en.json";
 import linkedEventsEnMessages from "./messages/linkedEvents.en.json";
 import linkedEventsZhMessages from "./messages/linkedEvents.zh.json";
+import labelsEnMessages from "./messages/labels.en.json";
+import labelsZhMessages from "./messages/labels.zh.json";
 import mobilityEnMessages from "./messages/mobility.en.json";
 import mobilityZhMessages from "./messages/mobility.zh.json";
 import regionalProfileEnMessages from "./messages/regionalProfile.en.json";
@@ -56,6 +58,7 @@ type StructuredMessages = {
   dataHelp: Record<string, string>;
   auth: Record<string, string>;
   assistant: Record<string, string>;
+  labels: Record<string, string>;
 };
 
 type I18nContextValue = {
@@ -72,8 +75,8 @@ const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
 };
 
 const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages, ...dataHelpEnMessages, ...authEnMessages, ...assistantEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages, ...dataHelpZhMessages, ...authZhMessages, ...assistantZhMessages },
+  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages, ...dataHelpEnMessages, ...authEnMessages, ...assistantEnMessages, ...labelsEnMessages },
+  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages, ...dataHelpZhMessages, ...authZhMessages, ...assistantZhMessages, ...labelsZhMessages },
 };
 
 const DEFAULT_CONTEXT: I18nContextValue = {
@@ -87,7 +90,56 @@ const DEFAULT_CONTEXT: I18nContextValue = {
 const I18nContext = createContext<I18nContextValue>(DEFAULT_CONTEXT);
 
 function snakeToCamel(value: string): string {
-  return value.replace(/_([a-z])/g, (_, character) => character.toUpperCase());
+  return value.replace(/_([a-z0-9])/g, (_, character) => character.toUpperCase());
+}
+
+function camelToSnake(value: string): string {
+  return value.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+}
+
+function normalizeLabelText(value: string): string {
+  return value.trim().toLowerCase().replace(/[()]/g, "").replace(/\s+/g, " ");
+}
+
+function buildLabelTextAliases(): Record<string, string> {
+  const aliases: Record<string, string> = {};
+
+  for (const [key, text] of Object.entries(labelsEnMessages.labels)) {
+    const messageKey = `labels.${key}`;
+    aliases[normalizeLabelText(text)] = messageKey;
+    aliases[camelToSnake(key)] = messageKey;
+    aliases[camelToSnake(key).replaceAll("_", " ")] = messageKey;
+  }
+
+  return aliases;
+}
+
+const LABEL_TEXT_ALIASES = buildLabelTextAliases();
+
+function resolveLabelMessageKey(value: string | null | undefined): string | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  const normalizedText = normalizeLabelText(trimmed);
+  if (LABEL_TEXT_ALIASES[normalizedText]) {
+    return LABEL_TEXT_ALIASES[normalizedText];
+  }
+
+  const normalizedToken = normalizeDynamicLabelToken(trimmed);
+  if (normalizedToken && LABEL_TEXT_ALIASES[normalizedToken]) {
+    return LABEL_TEXT_ALIASES[normalizedToken];
+  }
+
+  if (normalizedToken) {
+    const camelKey = snakeToCamel(normalizedToken);
+    if (labelsEnMessages.labels[camelKey as keyof typeof labelsEnMessages.labels]) {
+      return `labels.${camelKey}`;
+    }
+  }
+
+  return null;
 }
 
 const DYNAMIC_LABEL_ALIASES: Record<string, string> = {
@@ -273,6 +325,11 @@ export function translateText(language: LanguageMode, value: string): string {
     return value;
   }
 
+  const labelKey = resolveLabelMessageKey(value);
+  if (labelKey) {
+    return translateMessageKey(language, labelKey);
+  }
+
   return LEGACY_MESSAGE_CATALOG.zh[value] ?? value;
 }
 
@@ -281,6 +338,11 @@ export function translateEnumLabel(language: LanguageMode, value: string | null 
 }
 
 export function translateDataLabel(language: LanguageMode, value: string | null | undefined): string {
+  const labelKey = resolveLabelMessageKey(value);
+  if (labelKey) {
+    return translateMessageKey(language, labelKey);
+  }
+
   return translateDynamicLabel(
     language,
     value,

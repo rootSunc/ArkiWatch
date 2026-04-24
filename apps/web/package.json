@@ -11,7 +11,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "generate:api-types": "openapi-typescript ../../apps/api/openapi.json -o src/lib/api-contract.ts",
-    "check": "pnpm run lint && pnpm run test && pnpm run typecheck"
+    "check": "pnpm run lint && pnpm run test && pnpm run typecheck",
+    "audit:i18n": "node scripts/audit-legacy-i18n.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
