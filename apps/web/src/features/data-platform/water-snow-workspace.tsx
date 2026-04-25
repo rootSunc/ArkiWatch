@@ -379,7 +379,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
-  const { language, tKey, dataLabel } = useI18n();
+  const { language, tKey, dataLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -505,7 +505,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 language,
               })}
             >
-              {dataLabel(metric.label)}
+              {metricLabel(metric)}
             </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>

@@ -116,7 +116,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceProps) {
-  const { language, tKey, dataLabel, enumLabel } = useI18n();
+  const { language, tKey, dataLabel, enumLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -289,7 +289,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
                 language,
               })}
             >
-              {dataLabel(metric.label)}
+              {metricLabel(metric)}
             </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>

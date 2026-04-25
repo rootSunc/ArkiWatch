@@ -209,7 +209,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
-  const { language, tKey, dataLabel } = useI18n();
+  const { language, tKey, dataLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -385,7 +385,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
                 language,
               })}
             >
-              {dataLabel(metric.label)}
+              {metricLabel(metric)}
             </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>

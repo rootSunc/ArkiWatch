@@ -656,6 +656,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Unit */
             unit?: string | null;
             /** Value */
@@ -1021,6 +1023,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Unit */
             unit?: string | null;
             /** Value */
@@ -1334,6 +1338,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Source Codes */
             source_codes: string[];
             /** Tone */
@@ -1605,6 +1611,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Unit */
             unit?: string | null;
             /** Value */
@@ -1941,6 +1949,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Unit */
             unit?: string | null;
             /** Value */
@@ -2307,6 +2317,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Label Key */
+            label_key: string;
             /** Unit */
             unit?: string | null;
             /** Value */

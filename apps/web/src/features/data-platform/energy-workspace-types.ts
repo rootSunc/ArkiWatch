@@ -23,6 +23,7 @@ export type EnergyTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
 export type PanelMetric = {
   key: string;
   label: string;
+  label_key?: string | null;
   value: string;
   unit: string | null;
   tone?: string | null;

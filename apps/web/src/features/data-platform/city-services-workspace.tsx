@@ -202,7 +202,7 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
 }
 
 export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) {
-  const { language, tKey, dataLabel, enumLabel } = useI18n();
+  const { language, tKey, enumLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -347,7 +347,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                 language,
               })}
             >
-              {dataLabel(metric.label)}
+              {metricLabel(metric)}
             </DataLabelWithHelp>
             <strong>{formatMetricValue(metric, tKey)}</strong>
           </article>

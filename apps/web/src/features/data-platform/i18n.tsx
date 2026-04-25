@@ -67,6 +67,13 @@ type I18nContextValue = {
   tKey: (key: string) => string;
   enumLabel: (value: string | null | undefined) => string;
   dataLabel: (value: string | null | undefined) => string;
+  metricLabel: (metric: MetricLabelSource | null | undefined) => string;
+};
+
+export type MetricLabelSource = {
+  key: string;
+  label?: string | null;
+  label_key?: string | null;
 };
 
 const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
@@ -85,6 +92,7 @@ const DEFAULT_CONTEXT: I18nContextValue = {
   tKey: (key) => key,
   enumLabel: (value) => humanizeValue(value),
   dataLabel: (value) => humanizeValue(value),
+  metricLabel: (metric) => metric?.label ?? metric?.key ?? "",
 };
 
 const I18nContext = createContext<I18nContextValue>(DEFAULT_CONTEXT);
@@ -350,6 +358,23 @@ export function translateDataLabel(language: LanguageMode, value: string | null 
   );
 }
 
+export function translateMetricLabel(
+  language: LanguageMode,
+  metric: MetricLabelSource | null | undefined,
+): string {
+  if (!metric) {
+    return "";
+  }
+
+  const structuredKey = metric.label_key ?? snakeToCamel(normalizeDynamicLabelToken(metric.key) ?? metric.key);
+  const resolved = resolveStructuredMessage(language, `labels.${structuredKey}`);
+  if (resolved) {
+    return resolved;
+  }
+
+  return translateDataLabel(language, metric.label ?? metric.key);
+}
+
 export function I18nProvider({
   children,
   language,
@@ -364,6 +389,7 @@ export function I18nProvider({
       tKey: (key) => translateMessageKey(language, key),
       enumLabel: (text) => translateEnumLabel(language, text),
       dataLabel: (text) => translateDataLabel(language, text),
+      metricLabel: (metric) => translateMetricLabel(language, metric),
     }),
     [language],
   );

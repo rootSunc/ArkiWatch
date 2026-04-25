@@ -7,6 +7,7 @@ import {
   translateDataLabel,
   translateEnumLabel,
   translateMessageKey,
+  translateMetricLabel,
 } from "./i18n";
 import type { MobilityTabKey } from "./mobility-workspace";
 import type {
@@ -123,6 +124,7 @@ export function buildMobilityCategory(
       {
         key: "active_events",
         label: "Active Events",
+        label_key: "activeEvents",
         value: String(activeEvents),
         tone: activeEvents > 0 ? "warn" : "good",
         unit: null,
@@ -133,6 +135,7 @@ export function buildMobilityCategory(
       {
         key: "transit_alerts",
         label: "Transit",
+        label_key: "transitAlerts",
         value: String(activeTransitAlerts),
         tone: activeTransitAlerts > 0 ? "warn" : "good",
         unit: null,
@@ -143,6 +146,7 @@ export function buildMobilityCategory(
       {
         key: "road_rail_events",
         label: "Road & Rail",
+        label_key: "roadRailEvents",
         value: String(activeRoadRailEvents),
         tone: activeRoadRailEvents > 0 ? "warn" : "good",
         unit: null,
@@ -519,8 +523,8 @@ export function signalReadout(
 
   const metric = fallbackMetric(category);
   return {
-    label: metric?.label
-      ? translateDataLabel(language, metric.label)
+    label: metric
+      ? translateMetricLabel(language, metric)
       : translateMessageKey(language, "shell.signalLevel"),
     value: formatMetricValue(metric),
     helpKey: metric?.key ?? "signal_level",

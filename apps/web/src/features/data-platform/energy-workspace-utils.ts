@@ -1,6 +1,6 @@
 import { formatRelativeAge } from "@/features/shared/format";
 
-import { translateEnumLabel, type LanguageMode } from "./i18n";
+import { translateEnumLabel, translateMetricLabel, type LanguageMode } from "./i18n";
 import {
   PRICE_CHART_HEIGHT,
   PRICE_CHART_PAD_BOTTOM,
@@ -67,14 +67,14 @@ export function displayMetricLabelKey(metric: PanelMetric | null): string | null
 export function resolveMetricLabel(
   metric: PanelMetric | null,
   tKey: (key: string) => string,
-  dataLabel: (value: string | null | undefined) => string,
+  language: LanguageMode,
 ): string {
   const key = displayMetricLabelKey(metric);
   if (key) {
     return tKey(`energy.${key}`);
   }
 
-  return metric?.label ? dataLabel(metric.label) : tKey("energy.metricUnavailable");
+  return metric ? translateMetricLabel(language, metric) : tKey("energy.metricUnavailable");
 }
 
 export function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {

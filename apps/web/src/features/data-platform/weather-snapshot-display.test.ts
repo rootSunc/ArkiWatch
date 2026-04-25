@@ -34,7 +34,7 @@ describe("weather snapshot display", () => {
   it("prefers temperature range metrics for the headline", () => {
     const weather = {
       ...baseWeather,
-      metrics: [{ key: "temperature_range", label: "Temperature", value: "3.0 to 7.0", unit: "C" }]
+      metrics: [{ key: "temperature_range", label: "Temperature", label_key: "temperatureRange", value: "3.0 to 7.0", unit: "C" }]
     };
 
     expect(weatherSnapshotHeadline(weather, "en")).toBe("3.0 to 7.0 °C");

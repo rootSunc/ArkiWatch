@@ -22,6 +22,7 @@ function category(key: string, events: PlatformEvent[] = []): PlatformCategory {
       {
         key: "source_status",
         label: "Source status",
+        label_key: "sourceStatus",
         value: "Healthy",
         tone: "good",
         unit: null,

@@ -61,6 +61,7 @@ export type PlatformTimeScope = {
 export type PlatformMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   tone: PlatformTone | string;
   unit: string | null;
@@ -187,6 +188,7 @@ export type WeatherRainWindow = {
 export type WeatherMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   unit: string | null;
 };
@@ -281,6 +283,7 @@ export type AirQualityStation = {
 export type AirQualityMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   unit: string | null;
 };
@@ -349,6 +352,7 @@ export type TransitAlert = {
 export type TransitMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   unit: string | null;
 };
@@ -429,6 +433,7 @@ export type RoadRailCorridor = {
 export type RoadRailMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   unit: string | null;
 };
@@ -510,6 +515,7 @@ export type EnergyWindow = {
 export type EnergyMetric = {
   key: string;
   label: string;
+  label_key: string;
   value: string;
   unit: string | null;
 };
