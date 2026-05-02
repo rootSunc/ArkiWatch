@@ -36,6 +36,7 @@ function camelToSnake(value) {
 const legacyZh = readJson("zh.json");
 const labelsEn = readJson("labels.en.json").labels;
 const apiCorpus = walkCode(path.join(repoRoot, "apps/api/backend")).join("\n");
+const webCorpus = walkCode(path.join(repoRoot, "apps/web/src")).join("\n");
 
 const runtimeTexts = new Set();
 const runtimeSnakes = new Set();
@@ -72,11 +73,24 @@ for (const file of [
   }
 }
 
+function metricLabelKeyFromSnake(key) {
+  if (!key) {
+    return key;
+  }
+  const [head, ...tail] = key.split("_");
+  return head + tail.map((part) => part.slice(0, 1).toUpperCase() + part.slice(1)).join("");
+}
+
 function isRuntimeLabel(key, englishText) {
   const snake = camelToSnake(key);
   return (
     runtimeTexts.has(englishText) ||
     runtimeSnakes.has(snake) ||
+    metricLabelKeyFromSnake(snake) === key ||
+    webCorpus.includes(`"${key}"`) ||
+    webCorpus.includes(`labelKey: "${key}"`) ||
+    webCorpus.includes(`fullLabelKey: "${key}"`) ||
+    webCorpus.includes(`label_key: "${key}"`) ||
     apiCorpus.includes(`"label": "${englishText}"`)
   );
 }
@@ -96,4 +110,21 @@ if (stale.length > 0) {
   }
 } else {
   console.log("\nCatalog looks clean.");
+}
+
+const legacyKeyCount = Object.keys(legacyZh).length;
+let failed = false;
+
+if (legacyKeyCount > 0) {
+  console.error(`\nFAIL: legacy zh.json still has ${legacyKeyCount} flat keys.`);
+  failed = true;
+}
+
+if (stale.length > 0) {
+  console.error(`\nFAIL: ${stale.length} labels.* keys have no API or frontend runtime match.`);
+  failed = true;
+}
+
+if (failed) {
+  process.exit(1);
 }
