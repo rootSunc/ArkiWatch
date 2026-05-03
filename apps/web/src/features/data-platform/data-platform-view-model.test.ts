@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildMobilityCategory,
+  displayTitle,
   eventMatchesSearch,
   matchesSearch,
   mergeMobilityCategories
@@ -83,5 +84,10 @@ describe("data platform view model", () => {
 
     expect(matchesSearch(category("weather", [event]), "umbrella", "en")).toBe(true);
     expect(eventMatchesSearch(event, "rain", "en")).toBe(true);
+  });
+
+  it("resolves category titles from shell nav keys", () => {
+    expect(displayTitle(category("events"), "zh")).toBe("关联活动");
+    expect(displayTitle(category("energy"), "en")).toBe("Energy");
   });
 });

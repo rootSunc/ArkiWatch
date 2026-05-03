@@ -6,6 +6,7 @@ import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
+import { displayTitle } from "./data-platform-view-model";
 import { useEventDescriptionTranslation } from "./queries/translate-queries";
 import {
   PlatformCategory,
@@ -582,7 +583,7 @@ export function LinkedEventsWorkspace({
   highlightedEventId,
   timeScope,
 }: LinkedEventsWorkspaceProps) {
-  const { language, tKey, dataLabel } = useI18n();
+  const { language, tKey } = useI18n();
   const [filter, setFilter] = useState<EventFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<EventCategoryKey>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -809,7 +810,7 @@ export function LinkedEventsWorkspace({
     <section className="linked-events-page" aria-label={tKey("linkedEvents.linkedEventsDetail")}>
       <div className="linked-events-header">
         <div>
-          <h2>{category.title ? dataLabel(category.title) : tKey("linkedEvents.linkedEvents")}</h2>
+          <h2>{category.title ? displayTitle(category, language) : tKey("linkedEvents.linkedEvents")}</h2>
           <div className="linked-events-live-status">
             <span aria-hidden="true" />
             <strong>{translateEnumLabel(language, category.status)}</strong>

@@ -39,11 +39,17 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
 const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
 
 const CATEGORY_TITLE_KEYS: Record<string, string> = {
-  [MOBILITY_NAV_KEY]: "navMobility",
+  weather: "navWeather",
   air: "navAirQuality",
+  [MOBILITY_NAV_KEY]: "navMobility",
+  transit: "navTransit",
+  energy: "navEnergy",
   traffic: "navRoadRail",
   water: "navWaterAndSnow",
+  city_services: "navCityServices",
   events: "navLinkedEvents",
+  geospatial: "navGeospatialBase",
+  regional_profile: "navRegionalProfile",
 };
 
 function titleCase(value: string): string {
