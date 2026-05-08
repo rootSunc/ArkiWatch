@@ -1,4 +1,5 @@
-import { PlatformCategory } from "./types";
+import { translateKeyDataItemLabel, type LanguageMode } from "./i18n";
+import { PlatformCategory, PlatformKeyDataItem } from "./types";
 
 const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
   weather: [
@@ -35,14 +36,57 @@ const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
   regional_profile: ["population", "age_structure", "income", "employment", "health_indicator"]
 };
 
-export function categoryKeyDataItems(category: PlatformCategory): string[] {
+export function keyDataItemLabelKey(key: string): string {
+  const [head, ...tail] = key.split("_");
+  return head + tail.map((part) => part.slice(0, 1).toUpperCase() + part.slice(1)).join("");
+}
+
+export function toKeyDataItem(key: string): PlatformKeyDataItem {
+  return { key, label_key: keyDataItemLabelKey(key) };
+}
+
+export function keyDataItemKey(item: PlatformKeyDataItem | string): string {
+  return typeof item === "string" ? item : item.key;
+}
+
+export function categoryKeyDataItems(category: PlatformCategory): PlatformKeyDataItem[] {
   if (category.key_data_items && category.key_data_items.length > 0) {
     return category.key_data_items;
   }
 
-  return CATEGORY_KEY_DATA_ITEMS[category.key] ?? [];
+  return (CATEGORY_KEY_DATA_ITEMS[category.key] ?? []).map(toKeyDataItem);
 }
 
+export function categoryKeyDataItemKeys(category: PlatformCategory): string[] {
+  return categoryKeyDataItems(category).map(keyDataItemKey);
+}
+
+export function mergeKeyDataItems(categories: PlatformCategory[]): PlatformKeyDataItem[] {
+  const seen = new Set<string>();
+  const items: PlatformKeyDataItem[] = [];
+
+  for (const category of categories) {
+    for (const item of categoryKeyDataItems(category)) {
+      const key = keyDataItemKey(item);
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      items.push(item);
+    }
+  }
+
+  return items;
+}
+
+export function keyDataItemLabel(
+  language: LanguageMode,
+  item: PlatformKeyDataItem | string,
+): string {
+  return translateKeyDataItemLabel(language, item);
+}
+
+/** @deprecated Use keyDataItemLabel with structured key_data_items instead. */
 export function formatDataItemLabel(value: string): string {
   return value.replaceAll("_", " ");
 }

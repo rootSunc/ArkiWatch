@@ -2,7 +2,7 @@
 
 import { formatRelativeAge } from "@/features/shared/format";
 
-import { formatDataItemLabel } from "./category-metadata";
+import { categoryKeyDataItems } from "./category-metadata";
 import { DataHelpIcon, DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -116,7 +116,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceProps) {
-  const { language, tKey, dataLabel, enumLabel, metricLabel } = useI18n();
+  const { language, tKey, dataLabel, dataItemLabel, enumLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -132,7 +132,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
   const recordsMetric = metricByKey(category, "records_ingested");
   const activeEventsMetric = metricByKey(category, "active_events");
   const catalogStageMetric = metricByKey(category, "catalog_stage");
-  const keyDataItems = category.key_data_items?.length ? category.key_data_items : ["population", "age_structure", "income", "employment", "health_indicator"];
+  const keyDataItems = categoryKeyDataItems(category);
   const datasets = category.sources.flatMap((s) => s.data_structures ?? []);
   const readySources = category.sources.filter((s) => statusTone(s.operational_status) === "good").length;
 
@@ -256,12 +256,12 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           </header>
           <div className="water-field-grid regional-field-grid">
             {keyDataItems.map((field) => (
-              <article key={field} className="regional-field-card">
+              <article key={field.key} className="regional-field-card">
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field] ?? "dataset"}
+                  {FIELD_ICONS[field.key] ?? "dataset"}
                 </span>
                 <div className="regional-field-card-text">
-                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
+                  <strong>{dataItemLabel(field)}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>

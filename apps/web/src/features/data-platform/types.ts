@@ -1,3 +1,8 @@
+export type PlatformKeyDataItem = {
+  key: string;
+  label_key: string;
+};
+
 export type PlatformTone = "good" | "warn" | "bad" | "neutral";
 
 export type SourceDataField = {
@@ -141,7 +146,7 @@ export type PlatformCategory = {
   stage: string;
   priority: string;
   source_codes: string[];
-  key_data_items?: string[];
+  key_data_items?: PlatformKeyDataItem[];
   summary_metrics: PlatformMetric[];
   visualizations: PlatformVisualization[];
   events: PlatformEvent[];

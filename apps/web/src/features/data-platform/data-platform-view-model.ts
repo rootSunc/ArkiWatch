@@ -1,11 +1,12 @@
 import { formatTimestamp, statusTone } from "@/features/shared/format";
 
-import { categoryKeyDataItems } from "./category-metadata";
+import { categoryKeyDataItems, mergeKeyDataItems } from "./category-metadata";
 import type { DashboardTone } from "./data-platform-shell";
 import {
   LanguageMode,
   translateDataLabel,
   translateEnumLabel,
+  translateKeyDataItemLabel,
   translateMessageKey,
   translateMetricLabel,
 } from "./i18n";
@@ -123,9 +124,7 @@ export function buildMobilityCategory(
     stage: "connected",
     priority: "P0",
     source_codes: sourceCodes,
-    key_data_items: uniqueValues(
-      mobilityCategories.flatMap((category) => categoryKeyDataItems(category)),
-    ),
+    key_data_items: mergeKeyDataItems(mobilityCategories),
     summary_metrics: [
       {
         key: "active_events",
@@ -334,10 +333,8 @@ export function matchesSearch(
     translateEnumLabel(language, category.status),
     category.stage ?? "",
     ...category.source_codes,
-    ...categoryKeyDataItems(category),
-    ...categoryKeyDataItems(category).map((item) =>
-      translateDataLabel(language, item),
-    ),
+    ...categoryKeyDataItems(category).map((item) => item.key),
+    ...categoryKeyDataItems(category).map((item) => translateKeyDataItemLabel(language, item)),
     ...category.summary_metrics.map(
       (metric) => `${metric.label} ${metric.value} ${metric.detail ?? ""}`,
     ),

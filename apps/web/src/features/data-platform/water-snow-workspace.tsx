@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 
 import { formatRelativeAge, severityTone } from "@/features/shared/format";
 
-import { formatDataItemLabel } from "./category-metadata";
+import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -379,7 +379,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
-  const { language, tKey, dataLabel, metricLabel } = useI18n();
+  const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -397,7 +397,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
   const activeEventsMetric = metricByKey(category, "active_events");
   const catalogStageMetric = metricByKey(category, "catalog_stage");
   const summaryMetrics = visibleSummaryMetrics(category);
-  const keyDataItems = category.key_data_items ?? [];
+  const keyDataItems = categoryKeyDataItems(category);
   const datasets = source?.data_structures ?? [];
   const eventSchemas = source?.normalized_event_structures ?? [];
   const events = category.events;
@@ -562,12 +562,12 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
           </header>
           <div className="water-field-grid">
             {keyDataItems.map((field) => (
-              <article key={field}>
+              <article key={field.key}>
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field] ?? "dataset"}
+                  {FIELD_ICONS[field.key] ?? "dataset"}
                 </span>
                 <div>
-                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
+                  <strong>{dataItemLabel(field)}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>
@@ -582,14 +582,14 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 ))}
               </div>
               {keyDataItems.map((field) => {
-                const activeSignals = fieldSignalKeys(field);
+                const activeSignals = fieldSignalKeys(field.key);
 
                 return (
-                  <div className="water-field-lattice-row" key={field}>
-                    <strong>{dataLabel(formatDataItemLabel(field))}</strong>
+                  <div className="water-field-lattice-row" key={field.key}>
+                    <strong>{dataItemLabel(field)}</strong>
                     {FIELD_SIGNAL_COLUMNS.map((column) => (
                       <i
-                        aria-label={`${dataLabel(formatDataItemLabel(field))} ${tKey(`waterSnow.${column.labelKey}`)}`}
+                        aria-label={`${dataItemLabel(field)} ${tKey(`waterSnow.${column.labelKey}`)}`}
                         className={activeSignals.includes(column.key) ? "active" : undefined}
                         key={column.key}
                       />
@@ -674,7 +674,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                 <p>{tKey("waterSnow.catalogFieldsMapped")}</p>
                 <div className="water-schema-fields">
                   {keyDataItems.slice(0, 4).map((field) => (
-                    <span key={field}>{dataLabel(formatDataItemLabel(field))}</span>
+                    <span key={field.key}>{dataItemLabel(field)}</span>
                   ))}
                 </div>
               </article>

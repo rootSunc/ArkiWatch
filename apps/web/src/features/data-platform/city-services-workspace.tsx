@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 
 import { formatRelativeAge, formatTimestamp, severityTone } from "@/features/shared/format";
 
+import { categoryKeyDataItemKeys } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -178,7 +179,7 @@ function latestSourceRun(category: PlatformCategory): string | null {
 }
 
 function fieldStatus(category: PlatformCategory, field: ServiceField, language: LanguageMode): string {
-  if (!category.key_data_items?.includes(field.key)) {
+  if (!categoryKeyDataItemKeys(category).includes(field.key)) {
     return translateEnumLabel(language, "Planned");
   }
 

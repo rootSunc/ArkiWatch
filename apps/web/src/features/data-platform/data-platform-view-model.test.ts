@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { toKeyDataItem } from "./category-metadata";
 import {
   buildMobilityCategory,
   displayTitle,
@@ -18,7 +19,7 @@ function category(key: string, events: PlatformEvent[] = []): PlatformCategory {
     stage: "connected",
     priority: "P0",
     source_codes: [key],
-    key_data_items: [key],
+    key_data_items: [toKeyDataItem(key)],
     summary_metrics: [
       {
         key: "source_status",

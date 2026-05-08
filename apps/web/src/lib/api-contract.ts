@@ -1240,7 +1240,7 @@ export interface components {
             /** Key */
             key: string;
             /** Key Data Items */
-            key_data_items?: string[];
+            key_data_items?: components["schemas"]["PlatformKeyDataItemRead"][];
             /**
              * Priority
              * @default P0
@@ -1329,6 +1329,13 @@ export interface components {
             transit: components["schemas"]["TransitHistorySnapshotRead"][];
             /** Weather */
             weather: components["schemas"]["WeatherHistorySnapshotRead"][];
+        };
+        /** PlatformKeyDataItemRead */
+        PlatformKeyDataItemRead: {
+            /** Key */
+            key: string;
+            /** Label Key */
+            label_key: string;
         };
         /** PlatformMetricRead */
         PlatformMetricRead: {

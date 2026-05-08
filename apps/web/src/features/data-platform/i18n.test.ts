@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   translateDataLabel,
   translateEnumLabel,
+  translateKeyDataItemLabel,
   translateMessageKey,
   translateMetricLabel,
 } from "./i18n";
@@ -35,6 +36,17 @@ describe("translateDataLabel", () => {
 
   it("maps category keys through shell nav aliases", () => {
     expect(translateDataLabel("zh", "city_services")).toBe("城市服务");
+  });
+});
+
+describe("translateKeyDataItemLabel", () => {
+  it("resolves structured key_data_items via label_key", () => {
+    expect(
+      translateKeyDataItemLabel("zh", {
+        key: "water_level",
+        label_key: "waterLevel",
+      }),
+    ).toBe("水位");
   });
 });
 

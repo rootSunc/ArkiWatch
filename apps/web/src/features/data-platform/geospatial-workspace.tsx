@@ -2,7 +2,7 @@
 
 import { formatRelativeAge } from "@/features/shared/format";
 
-import { formatDataItemLabel } from "./category-metadata";
+import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -209,7 +209,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
 }
 
 export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
-  const { language, tKey, dataLabel, metricLabel } = useI18n();
+  const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
 
   if (!category) {
     return (
@@ -226,7 +226,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
   const activeEventsMetric = metricByKey(category, "active_events");
   const catalogStageMetric = metricByKey(category, "catalog_stage");
   const summaryMetrics = visibleSummaryMetrics(category);
-  const keyDataItems = category.key_data_items?.length ? category.key_data_items : ["address", "building", "district", "parcel", "geometry"];
+  const keyDataItems = categoryKeyDataItems(category);
   const datasets = category.sources.flatMap((s) => s.data_structures ?? []);
   const readySources = category.sources.filter((s) => statusTone(s.operational_status) === "good").length;
   
@@ -335,12 +335,12 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           </header>
           <div className="water-field-grid">
             {keyDataItems.map((field) => (
-              <article key={field}>
+              <article key={field.key}>
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field] ?? "dataset"}
+                  {FIELD_ICONS[field.key] ?? "dataset"}
                 </span>
                 <div>
-                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
+                  <strong>{dataItemLabel(field)}</strong>
                   <small>{fieldState}</small>
                 </div>
               </article>
@@ -355,14 +355,14 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
               ))}
             </div>
             {keyDataItems.map((field) => {
-              const activeSignals = fieldSignalKeys(field);
+              const activeSignals = fieldSignalKeys(field.key);
 
               return (
-                <div className="water-field-lattice-row geo-field-lattice-row" key={field}>
-                  <strong>{dataLabel(formatDataItemLabel(field))}</strong>
+                <div className="water-field-lattice-row geo-field-lattice-row" key={field.key}>
+                  <strong>{dataItemLabel(field)}</strong>
                   {FIELD_SIGNAL_COLUMNS.map((column) => (
                     <i
-                      aria-label={`${dataLabel(formatDataItemLabel(field))} ${tKey(`geospatial.${column.labelKey}`)}`}
+                      aria-label={`${dataItemLabel(field)} ${tKey(`geospatial.${column.labelKey}`)}`}
                       className={`geo-field-lattice-dot ${activeSignals.includes(column.key) ? "active" : ""}`}
                       key={column.key}
                     />

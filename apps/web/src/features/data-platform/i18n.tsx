@@ -68,6 +68,7 @@ type I18nContextValue = {
   enumLabel: (value: string | null | undefined) => string;
   dataLabel: (value: string | null | undefined) => string;
   metricLabel: (metric: MetricLabelSource | null | undefined) => string;
+  dataItemLabel: (item: { key: string; label_key: string } | string) => string;
 };
 
 export type MetricLabelSource = {
@@ -93,6 +94,7 @@ const DEFAULT_CONTEXT: I18nContextValue = {
   enumLabel: (value) => humanizeValue(value),
   dataLabel: (value) => humanizeValue(value),
   metricLabel: (metric) => metric?.label ?? metric?.key ?? "",
+  dataItemLabel: (item) => (typeof item === "string" ? item : item.key),
 };
 
 const I18nContext = createContext<I18nContextValue>(DEFAULT_CONTEXT);
@@ -375,6 +377,20 @@ export function translateMetricLabel(
   return translateDataLabel(language, metric.label ?? metric.key);
 }
 
+export function translateKeyDataItemLabel(
+  language: LanguageMode,
+  item: { key: string; label_key: string } | string,
+): string {
+  if (typeof item === "string") {
+    return translateDataLabel(language, item);
+  }
+
+  return translateMetricLabel(language, {
+    key: item.key,
+    label_key: item.label_key,
+  });
+}
+
 export function I18nProvider({
   children,
   language,
@@ -390,6 +406,7 @@ export function I18nProvider({
       enumLabel: (text) => translateEnumLabel(language, text),
       dataLabel: (text) => translateDataLabel(language, text),
       metricLabel: (metric) => translateMetricLabel(language, metric),
+      dataItemLabel: (item) => translateKeyDataItemLabel(language, item),
     }),
     [language],
   );
