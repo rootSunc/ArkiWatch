@@ -18,6 +18,10 @@ import {
   type PlatformFetchResult,
   type PlatformQueryScope,
 } from "../queries/platform-queries";
+import {
+  PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForView,
+} from "../queries/platform-data-needs";
 import { appEnv } from "@/lib/env";
 import { normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
@@ -33,54 +37,87 @@ function emptyHistory(): PlatformFetchResult["history"] {
   };
 }
 
-export function usePlatformHome(scope: PlatformQueryScope): PlatformFetchResult {
-  const city = normalizeCityValue(scope.city);
-  const date = normalizeSourceDateValue(scope.date);
-  const userId = scope.userId ?? appEnv.defaultUserId;
-  const normalizedScope: PlatformQueryScope = { city, date, userId, authToken: scope.authToken };
+export type UsePlatformHomeOptions = PlatformQueryScope & {
+  activeNavKey?: string | null;
+  isHistorical?: boolean;
+  needsHistoryAvailability?: boolean;
+};
+
+export function usePlatformHome(options: UsePlatformHomeOptions): PlatformFetchResult {
+  const city = normalizeCityValue(options.city);
+  const date = normalizeSourceDateValue(options.date);
+  const userId = options.userId ?? appEnv.defaultUserId;
+  const normalizedScope: PlatformQueryScope = {
+    city,
+    date,
+    userId,
+    authToken: options.authToken,
+  };
+  const needs = platformDataNeedsForView(options.activeNavKey, {
+    isHistorical: options.isHistorical,
+    needsHistoryAvailability: options.needsHistoryAvailability,
+  });
 
   const results = useQueries({
     queries: [
       {
         queryKey: platformKeys.overview(normalizedScope),
         queryFn: async () => (await fetchPlatformOverview(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       },
       {
         queryKey: platformKeys.publicDashboard(normalizedScope),
         queryFn: async () => (await fetchPublicDashboard(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
         queryFn: async () => (await fetchWeatherForecast(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.weather,
       },
       {
         queryKey: platformKeys.airQuality(normalizedScope),
         queryFn: async () => (await fetchAirQualityCurrent(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.air,
       },
       {
         queryKey: platformKeys.energy(normalizedScope),
         queryFn: async () => (await fetchEnergyCurrent(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.energy,
       },
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
         queryFn: async () => (await fetchHouseholdEnergyCurrent(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.householdEnergy,
       },
       {
         queryKey: platformKeys.roadRail(normalizedScope),
         queryFn: async () => (await fetchRoadRailCurrent(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.roadRail,
       },
       {
         queryKey: platformKeys.transit(normalizedScope),
         queryFn: async () => (await fetchTransitCurrent(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.transit,
       },
       {
         queryKey: platformKeys.history(normalizedScope),
         queryFn: async () => (await fetchPlatformHistory(normalizedScope)).data ?? emptyHistory(),
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.history,
       },
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
         queryFn: async () =>
           (await fetchPlatformHistoryAvailability(normalizedScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        enabled: needs.historyAvailability,
       },
     ],
   });
@@ -98,7 +135,20 @@ export function usePlatformHome(scope: PlatformQueryScope): PlatformFetchResult 
     historyAvailabilityQuery,
   ] = results;
 
-  const queryErrors = results
+  const activeResults = [
+    overviewQuery,
+    publicDashboardQuery,
+    needs.weather ? weatherQuery : null,
+    needs.air ? airQualityQuery : null,
+    needs.energy ? energyQuery : null,
+    needs.householdEnergy ? householdEnergyQuery : null,
+    needs.roadRail ? roadRailQuery : null,
+    needs.transit ? transitQuery : null,
+    needs.history ? historyQuery : null,
+    needs.historyAvailability ? historyAvailabilityQuery : null,
+  ].filter((query): query is NonNullable<typeof query> => query !== null);
+
+  const queryErrors = activeResults
     .map((query) => (query.error instanceof Error ? query.error.message : null))
     .filter((message): message is string => Boolean(message));
 

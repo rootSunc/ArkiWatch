@@ -377,12 +377,14 @@ export function DateScopeSelector({
   date,
   isPending,
   language,
+  onCalendarOpen,
   onDateChange,
 }: {
   availability?: PlatformHistoryAvailabilityDay[];
   date: string | null;
   isPending: boolean;
   language: LanguageMode;
+  onCalendarOpen?: () => void;
   onDateChange: (date: string | null) => void;
 }) {
   const controlRef = useRef<HTMLDivElement | null>(null);
@@ -496,7 +498,13 @@ export function DateScopeSelector({
         disabled={isPending}
         onClick={() => {
           setVisibleMonth(monthKeyFromDateValue(displayValue));
-          setIsCalendarOpen((currentValue) => !currentValue);
+          setIsCalendarOpen((currentValue) => {
+            const nextOpen = !currentValue;
+            if (nextOpen) {
+              onCalendarOpen?.();
+            }
+            return nextOpen;
+          });
         }}
         title={inputLabel}
       />

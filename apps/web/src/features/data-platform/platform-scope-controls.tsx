@@ -26,6 +26,7 @@ type PlatformScopeControlsProps = {
   language: LanguageMode;
   notificationCount: number;
   notificationTone: DashboardTone;
+  onCalendarOpen?: () => void;
   onCityChange: (city: string) => void;
   onDateChange: (date: string | null) => void;
   onLanguageChange: (language: LanguageMode) => void;
@@ -49,6 +50,7 @@ export function PlatformScopeControls({
   language,
   notificationCount,
   notificationTone,
+  onCalendarOpen,
   onCityChange,
   onDateChange,
   onLanguageChange,
@@ -71,6 +73,7 @@ export function PlatformScopeControls({
         date={date}
         isPending={isDatePending}
         language={language}
+        onCalendarOpen={onCalendarOpen}
         onDateChange={onDateChange}
       />
       <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />

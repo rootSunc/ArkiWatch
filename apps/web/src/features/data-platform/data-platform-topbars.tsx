@@ -33,6 +33,7 @@ type ScopeControlProps = {
   language: LanguageMode;
   notificationCount: number;
   notificationTone: DashboardTone;
+  onCalendarOpen?: () => void;
   onCityChange: (city: string) => void;
   onDateChange: (date: string | null) => void;
   onLanguageChange: (language: LanguageMode) => void;
@@ -67,6 +68,7 @@ export function DataPlatformMobileHeader({
   language,
   notificationCount,
   notificationTone,
+  onCalendarOpen,
   onCityChange,
   onDateChange,
   onLanguageChange,
@@ -117,6 +119,7 @@ export function DataPlatformMobileHeader({
             date={date}
             isPending={isDatePending}
             language={language}
+            onCalendarOpen={onCalendarOpen}
             onDateChange={onDateChange}
           />
         </div>
@@ -181,6 +184,7 @@ export function DataPlatformWorkspaceTopbar({
   language,
   notificationCount,
   notificationTone,
+  onCalendarOpen,
   onCityChange,
   onDateChange,
   onLanguageChange,
@@ -231,6 +235,7 @@ export function DataPlatformWorkspaceTopbar({
           language={language}
           notificationCount={notificationCount}
           notificationTone={notificationTone}
+          onCalendarOpen={onCalendarOpen}
           onCityChange={onCityChange}
           onDateChange={onDateChange}
           onLanguageChange={onLanguageChange}
@@ -264,6 +269,7 @@ export function DataPlatformDesktopHeader({
   language,
   notificationCount,
   notificationTone,
+  onCalendarOpen,
   onCityChange,
   onDateChange,
   onLanguageChange,
@@ -317,6 +323,7 @@ export function DataPlatformDesktopHeader({
           language={language}
           notificationCount={notificationCount}
           notificationTone={notificationTone}
+          onCalendarOpen={onCalendarOpen}
           onCityChange={onCityChange}
           onDateChange={onDateChange}
           onLanguageChange={onLanguageChange}

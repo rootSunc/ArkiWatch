@@ -15,6 +15,9 @@ import {
   severityTone,
 } from "@/features/shared/format";
 
+import "./data-platform.css";
+import "@/features/assistant-widget/assistant-widget.css";
+
 import { categoryVisibleToCurrentUser } from "./category-access";
 import {
   categorySupportsCityScope,
@@ -73,17 +76,6 @@ import {
   recentEventDetails,
   RECENT_EVENT_LIMIT,
 } from "./recent-events";
-import {
-  AirQualityWorkspace,
-  CityServicesWorkspace,
-  EnergyWorkspace,
-  GeospatialWorkspace,
-  LinkedEventsWorkspace,
-  MobilityWorkspace,
-  RegionalProfileWorkspace,
-  WaterSnowWorkspace,
-  WeatherDetailView,
-} from "./workspace-panels";
 import type { MobilityTabKey } from "./mobility-workspace";
 import {
   resolveScenarioTarget,
@@ -93,6 +85,7 @@ import { buildCrossDomainTimeline } from "./cross-domain-timeline";
 import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
 import { ScenarioOverview } from "./scenario-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
+import { DataPlatformWorkspaceRouter } from "./data-platform-workspace-router";
 import {
   categorySignalAttribution,
   formatSignalAttributionLine,
@@ -149,6 +142,28 @@ export function DataPlatformHome({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [selectedCity, setSelectedCity] = useState(() =>
+    normalizeCityValue(initialCity),
+  );
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    initialDate ?? null,
+  );
+  const [selectedNavKey, setSelectedNavKey] = useState(() =>
+    resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), []),
+  );
+  const [needsHistoryAvailability, setNeedsHistoryAvailability] = useState(
+    () => Boolean(initialDate),
+  );
+  const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
+    () =>
+      resolveMobilityTabParam(
+        searchParams.get(MOBILITY_TAB_QUERY_KEY) ??
+          searchParams.get(NAV_QUERY_KEY),
+      ),
+  );
+  const [selectedEnergyTab, setSelectedEnergyTab] = useState<EnergyPanelKey>(() =>
+    resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY)),
+  );
   const {
     airQuality,
     apiBaseUrl,
@@ -164,26 +179,13 @@ export function DataPlatformHome({
     transit,
     weather,
   } = usePlatformHome({
-    city: initialCity,
-    date: initialDate,
+    city: selectedCity,
+    date: selectedDate,
     userId: defaultUserId,
+    activeNavKey: selectedNavKey,
+    isHistorical: selectedDate !== null,
+    needsHistoryAvailability,
   });
-  const initialNavCategories = (overview?.categories ?? []).filter((category) =>
-    categoryVisibleToCurrentUser(category.key),
-  );
-  const [selectedNavKey, setSelectedNavKey] = useState(() =>
-    resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), initialNavCategories),
-  );
-  const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
-    () =>
-      resolveMobilityTabParam(
-        searchParams.get(MOBILITY_TAB_QUERY_KEY) ??
-          searchParams.get(NAV_QUERY_KEY),
-      ),
-  );
-  const [selectedEnergyTab, setSelectedEnergyTab] = useState<EnergyPanelKey>(() =>
-    resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY)),
-  );
   const refreshMutation = useRefreshPlatformData();
   const signOutMutation = useSignOut();
   const {
@@ -198,12 +200,6 @@ export function DataPlatformHome({
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(() =>
-    normalizeCityValue(initialCity),
-  );
-  const [selectedDate, setSelectedDate] = useState<string | null>(
-    initialDate ?? null,
-  );
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const hasMountedRef = useRef(false);
   const [isCityRefreshPending, startCityRefresh] = useTransition();
@@ -759,8 +755,15 @@ export function DataPlatformHome({
   }
 
   function selectDate(nextDate: string | null): void {
+    if (nextDate !== null) {
+      setNeedsHistoryAvailability(true);
+    }
     setSelectedDate(nextDate);
     replaceDateParam(nextDate);
+  }
+
+  function requestHistoryAvailability(): void {
+    setNeedsHistoryAvailability(true);
   }
 
   const dashboardShellClassName = isSideNavHidden
@@ -791,6 +794,7 @@ export function DataPlatformHome({
     language: languageMode,
     notificationCount: recentNotificationCount,
     notificationTone: recentNotificationTone,
+    onCalendarOpen: requestHistoryAvailability,
     onCityChange: selectCity,
     onDateChange: selectDate,
     onLanguageChange: selectLanguageMode,
@@ -870,73 +874,47 @@ export function DataPlatformHome({
             ) : null}
 
             {selectedNavKey === TODAY_NAV_KEY ? (
-              <>
-                <ScenarioOverview
-                  isHistorical={isHistorical}
-                  language={languageMode}
-                  liveSignals={scenarioLiveSignals}
-                  planItems={todayBrief?.planItems ?? []}
-                  todayBrief={todayBrief}
-                  onOpenEvent={openRecentEvent}
-                  onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
-                  onOpenScenario={openScenario}
-                  onOpenSummaryTile={openSummaryTile}
-                  onOpenTopAction={openScenario}
-                />
-              </>
+              <ScenarioOverview
+                isHistorical={isHistorical}
+                language={languageMode}
+                liveSignals={scenarioLiveSignals}
+                planItems={todayBrief?.planItems ?? []}
+                todayBrief={todayBrief}
+                onOpenEvent={openRecentEvent}
+                onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
+                onOpenScenario={openScenario}
+                onOpenSummaryTile={openSummaryTile}
+                onOpenTopAction={openScenario}
+              />
             ) : visibleOverview ? (
-              isWeatherDetail ? (
-                <WeatherDetailView
-                  category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
-                  history={history.weather}
-                  weather={weather}
-                />
-              ) : isAirDetail ? (
-                <AirQualityWorkspace
+              isDetailPage ? (
+                <DataPlatformWorkspaceRouter
                   airQuality={airQuality}
-                  category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
-                  history={history.airQuality}
-                />
-              ) : isEnergyDetail ? (
-                <EnergyWorkspace
-                  activePanel={selectedEnergyTab}
-                  category={selectedCategory}
                   energy={energy}
                   highlightedEventId={highlightedEventId}
-                  history={history.energy}
+                  history={history}
                   householdEnergy={householdEnergy}
-                  householdHistory={history.householdEnergy}
-                  onPanelChange={selectEnergyTab}
-                />
-              ) : isMobilityDetail ? (
-                <MobilityWorkspace
-                  activeTab={selectedMobilityTab}
-                  highlightedEventId={highlightedEventId}
-                  onTabChange={selectMobilityTab}
+                  isAirDetail={isAirDetail}
+                  isCityServicesDetail={isCityServicesDetail}
+                  isEnergyDetail={isEnergyDetail}
+                  isGeospatialDetail={isGeospatialDetail}
+                  isLinkedEventsDetail={isLinkedEventsDetail}
+                  isMobilityDetail={isMobilityDetail}
+                  isRegionalProfileDetail={isRegionalProfileDetail}
+                  isWaterDetail={isWaterDetail}
+                  isWeatherDetail={isWeatherDetail}
+                  onEnergyPanelChange={selectEnergyTab}
+                  onMobilityTabChange={selectMobilityTab}
+                  overview={visibleOverview}
                   roadRail={roadRail}
                   roadRailCategory={roadRailCategory}
-                  roadRailHistory={history.roadRail}
+                  selectedCategory={selectedCategory}
+                  selectedEnergyTab={selectedEnergyTab}
+                  selectedMobilityTab={selectedMobilityTab}
                   transit={transit}
                   transitCategory={transitCategory}
-                  transitHistory={history.transit}
+                  weather={weather}
                 />
-              ) : isWaterDetail ? (
-                <WaterSnowWorkspace category={selectedCategory} />
-              ) : isCityServicesDetail ? (
-                <CityServicesWorkspace category={selectedCategory} />
-              ) : isLinkedEventsDetail ? (
-                <LinkedEventsWorkspace
-                  category={selectedCategory}
-                  highlightedEventId={highlightedEventId}
-                  checkedAt={visibleOverview.checked_at}
-                  timeScope={visibleOverview.time_scope}
-                />
-              ) : isGeospatialDetail ? (
-                <GeospatialWorkspace category={selectedCategory} />
-              ) : isRegionalProfileDetail ? (
-                <RegionalProfileWorkspace category={selectedCategory} />
               ) : (
                 <>
                   <section className="signals-console-overview" aria-label={tKey("shell.signalObservatory")}>

@@ -18,9 +18,15 @@ import type {
   TransitCurrentResponse,
   WeatherForecastResponse,
 } from "../types";
+import {
+  PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForView,
+  type PlatformDataNeedsOptions,
+} from "./platform-data-needs";
 
 export const HISTORY_DAY_COUNT = 7;
 export const HISTORY_AVAILABILITY_DAY_COUNT = 90;
+export { PLATFORM_QUERY_STALE_TIME_MS, platformDataNeedsForView };
 
 export type PlatformQueryScope = {
   city?: string | null;
@@ -262,10 +268,20 @@ export async function fetchPlatformHistoryAvailability(scope: PlatformQueryScope
   );
 }
 
+export type PrefetchPlatformHomeOptions = PlatformQueryScope & {
+  activeNavKey?: string | null;
+} & PlatformDataNeedsOptions;
+
 export async function fetchPlatformHome(
   city: string | null = DEFAULT_CITY,
   date: string | null = null,
-  options: { authToken?: string; userId?: string } = {},
+  options: {
+    authToken?: string;
+    userId?: string;
+    activeNavKey?: string | null;
+    isHistorical?: boolean;
+    needsHistoryAvailability?: boolean;
+  } = {},
 ): Promise<PlatformFetchResult> {
   const scope: PlatformQueryScope = {
     city,
@@ -274,10 +290,15 @@ export async function fetchPlatformHome(
     userId: options.userId,
   };
   const resolved = resolvePlatformScope(scope);
+  const needs = platformDataNeedsForView(options.activeNavKey, {
+    isHistorical: options.isHistorical ?? Boolean(resolved.date),
+    needsHistoryAvailability: options.needsHistoryAvailability,
+  });
+
+  const overviewResult = await fetchPlatformOverview(scope);
+  const publicDashboardResult = await fetchPublicDashboard(scope);
 
   const [
-    overviewResult,
-    publicDashboardResult,
     weatherResult,
     airQualityResult,
     energyResult,
@@ -287,16 +308,18 @@ export async function fetchPlatformHome(
     historyResult,
     historyAvailabilityResult,
   ] = await Promise.all([
-    fetchPlatformOverview(scope),
-    fetchPublicDashboard(scope),
-    fetchWeatherForecast(scope),
-    fetchAirQualityCurrent(scope),
-    fetchEnergyCurrent(scope),
-    fetchHouseholdEnergyCurrent(scope),
-    fetchRoadRailCurrent(scope),
-    fetchTransitCurrent(scope),
-    fetchPlatformHistory(scope),
-    fetchPlatformHistoryAvailability(scope),
+    needs.weather ? fetchWeatherForecast(scope) : Promise.resolve({ data: null, error: null }),
+    needs.air ? fetchAirQualityCurrent(scope) : Promise.resolve({ data: null, error: null }),
+    needs.energy ? fetchEnergyCurrent(scope) : Promise.resolve({ data: null, error: null }),
+    needs.householdEnergy
+      ? fetchHouseholdEnergyCurrent(scope)
+      : Promise.resolve({ data: null, error: null }),
+    needs.roadRail ? fetchRoadRailCurrent(scope) : Promise.resolve({ data: null, error: null }),
+    needs.transit ? fetchTransitCurrent(scope) : Promise.resolve({ data: null, error: null }),
+    needs.history ? fetchPlatformHistory(scope) : Promise.resolve({ data: null, error: null }),
+    needs.historyAvailability
+      ? fetchPlatformHistoryAvailability(scope)
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   return {
@@ -328,69 +351,124 @@ export async function fetchPlatformHome(
 
 export async function prefetchPlatformHome(
   queryClient: QueryClient,
-  scope: PlatformQueryScope,
+  scope: PrefetchPlatformHomeOptions,
 ): Promise<PlatformFetchResult> {
   const resolved = resolvePlatformScope(scope);
+  const needs = platformDataNeedsForView(scope.activeNavKey, {
+    isHistorical: scope.isHistorical ?? Boolean(resolved.date),
+    needsHistoryAvailability: scope.needsHistoryAvailability,
+  });
+  const queryScope: PlatformQueryScope = {
+    city: scope.city,
+    date: scope.date,
+    userId: scope.userId,
+    authToken: scope.authToken,
+  };
 
-  await Promise.all([
+  const tasks: Array<Promise<unknown>> = [
     queryClient.prefetchQuery({
-      queryKey: platformKeys.overview(scope),
-      queryFn: async () => (await fetchPlatformOverview(scope)).data,
+      queryKey: platformKeys.overview(queryScope),
+      queryFn: async () => (await fetchPlatformOverview(queryScope)).data,
+      staleTime: PLATFORM_QUERY_STALE_TIME_MS,
     }),
     queryClient.prefetchQuery({
-      queryKey: platformKeys.publicDashboard(scope),
-      queryFn: async () => (await fetchPublicDashboard(scope)).data,
+      queryKey: platformKeys.publicDashboard(queryScope),
+      queryFn: async () => (await fetchPublicDashboard(queryScope)).data,
+      staleTime: PLATFORM_QUERY_STALE_TIME_MS,
     }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.weather(scope),
-      queryFn: async () => (await fetchWeatherForecast(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.airQuality(scope),
-      queryFn: async () => (await fetchAirQualityCurrent(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.energy(scope),
-      queryFn: async () => (await fetchEnergyCurrent(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.householdEnergy(scope),
-      queryFn: async () => (await fetchHouseholdEnergyCurrent(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.roadRail(scope),
-      queryFn: async () => (await fetchRoadRailCurrent(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.transit(scope),
-      queryFn: async () => (await fetchTransitCurrent(scope)).data,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.history(scope),
-      queryFn: async () => (await fetchPlatformHistory(scope)).data ?? emptyHistory(),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: platformKeys.historyAvailability(scope),
-      queryFn: async () => (await fetchPlatformHistoryAvailability(scope)).data,
-    }),
-  ]);
+  ];
+
+  if (needs.weather) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.weather(queryScope),
+        queryFn: async () => (await fetchWeatherForecast(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.air) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.airQuality(queryScope),
+        queryFn: async () => (await fetchAirQualityCurrent(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.energy) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.energy(queryScope),
+        queryFn: async () => (await fetchEnergyCurrent(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.householdEnergy) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.householdEnergy(queryScope),
+        queryFn: async () => (await fetchHouseholdEnergyCurrent(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.roadRail) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.roadRail(queryScope),
+        queryFn: async () => (await fetchRoadRailCurrent(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.transit) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.transit(queryScope),
+        queryFn: async () => (await fetchTransitCurrent(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.history) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.history(queryScope),
+        queryFn: async () => (await fetchPlatformHistory(queryScope)).data ?? emptyHistory(),
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+  if (needs.historyAvailability) {
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: platformKeys.historyAvailability(queryScope),
+        queryFn: async () => (await fetchPlatformHistoryAvailability(queryScope)).data,
+        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+      }),
+    );
+  }
+
+  await Promise.all(tasks);
 
   return {
     apiBaseUrl: resolved.apiBaseUrl,
     defaultUserId: resolved.userId,
-    overview: queryClient.getQueryData(platformKeys.overview(scope)) ?? null,
-    publicDashboard: queryClient.getQueryData(platformKeys.publicDashboard(scope)) ?? null,
-    weather: queryClient.getQueryData(platformKeys.weather(scope)) ?? null,
-    airQuality: queryClient.getQueryData(platformKeys.airQuality(scope)) ?? null,
-    energy: queryClient.getQueryData(platformKeys.energy(scope)) ?? null,
-    householdEnergy: queryClient.getQueryData(platformKeys.householdEnergy(scope)) ?? null,
+    overview: queryClient.getQueryData(platformKeys.overview(queryScope)) ?? null,
+    publicDashboard: queryClient.getQueryData(platformKeys.publicDashboard(queryScope)) ?? null,
+    weather: queryClient.getQueryData(platformKeys.weather(queryScope)) ?? null,
+    airQuality: queryClient.getQueryData(platformKeys.airQuality(queryScope)) ?? null,
+    energy: queryClient.getQueryData(platformKeys.energy(queryScope)) ?? null,
+    householdEnergy: queryClient.getQueryData(platformKeys.householdEnergy(queryScope)) ?? null,
     history:
-      queryClient.getQueryData<PlatformHistoryResponse>(platformKeys.history(scope)) ??
+      queryClient.getQueryData<PlatformHistoryResponse>(platformKeys.history(queryScope)) ??
       emptyHistory(),
     historyAvailability:
-      queryClient.getQueryData(platformKeys.historyAvailability(scope)) ?? null,
-    roadRail: queryClient.getQueryData(platformKeys.roadRail(scope)) ?? null,
-    transit: queryClient.getQueryData(platformKeys.transit(scope)) ?? null,
+      queryClient.getQueryData(platformKeys.historyAvailability(queryScope)) ?? null,
+    roadRail: queryClient.getQueryData(platformKeys.roadRail(queryScope)) ?? null,
+    transit: queryClient.getQueryData(platformKeys.transit(queryScope)) ?? null,
     error: null,
   };
 }

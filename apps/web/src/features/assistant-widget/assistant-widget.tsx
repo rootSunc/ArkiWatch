@@ -461,7 +461,7 @@ export function AssistantWidget({
         >
           <div className="assistant-mascot-wrapper">
             <Image
-              src="/brand/zoro_mascot.png"
+              src="/brand/zoro_mascot_launcher.png"
               alt="Assistant mascot launcher"
               width={76}
               height={76}

@@ -1,0 +1,18 @@
+/* Subset of Material Symbols used by the app (avoids full variable font download). */
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=air,apps,bolt,calendar_today,check,check_circle,chevron_left,chevron_right,clear_day,close,cloud,cloud_sync,cloudy_snowing,commute,confirmation_number,dark_mode,database,directions_bus,directions_run,electrical_services,event,event_available,event_upcoming,expand_less,expand_more,family_restroom,filter_list,flood,history,hub,humidity_percentage,info,keyboard_arrow_down,keyboard_arrow_up,keyboard_double_arrow_left,keyboard_double_arrow_right,light_mode,link,local_library,location_city,location_on,login,logout,map,menu,monitoring,more_horiz,notifications,open_in_new,park,partly_cloudy_day,payments,pin_drop,polyline,priority_high,public,radio_button_checked,rainy,refresh,route,schedule,school,search,send,sensors,settings,speed,storm,sync,theater_comedy,thunderstorm,timeline,traffic,train,trending_flat,view_list,visibility,warning,water,water_drop,wb_sunny&display=block");
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined", sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}

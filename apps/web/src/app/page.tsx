@@ -31,6 +31,8 @@ export default async function Page({ searchParams }: PageProps) {
     date: selectedDate,
     authToken: session?.token,
     userId: session?.user.id,
+    activeNavKey: searchParams?.view ?? "today",
+    isHistorical: Boolean(selectedDate),
   });
 
   return (
