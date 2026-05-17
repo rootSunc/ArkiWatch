@@ -15,6 +15,7 @@
 @import "./styles/cross-domain-timeline.css";
 @import "./styles/overview-polish.css";
 @import "./styles/motion.css";
+@import "./styles/skeleton.css";
 @import "./styles/responsive.css";
 
 .dashboard-content article:has(.data-help-icon),

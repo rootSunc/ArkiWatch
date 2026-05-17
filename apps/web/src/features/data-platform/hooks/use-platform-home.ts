@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
+import { keepPreviousData, useQueries } from "@tanstack/react-query";
 
 import {
   fetchAirQualityCurrent,
@@ -26,6 +26,16 @@ import { appEnv } from "@/lib/env";
 import { normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
 
+/**
+ * Scope changes (city, date) mint a new query key. Without a placeholder the UI
+ * would blank out and re-enter its loading state on every switch, so hold the
+ * previous scope's data until the new one lands.
+ */
+const SCOPE_QUERY_OPTIONS = {
+  staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+  placeholderData: keepPreviousData,
+} as const;
+
 function emptyHistory(): PlatformFetchResult["history"] {
   return {
     weather: [],
@@ -43,7 +53,16 @@ export type UsePlatformHomeOptions = PlatformQueryScope & {
   needsHistoryAvailability?: boolean;
 };
 
-export function usePlatformHome(options: UsePlatformHomeOptions): PlatformFetchResult {
+export type PlatformHomeState = PlatformFetchResult & {
+  /** True until the overview lands, i.e. before the shell has anything to render. */
+  isPending: boolean;
+  /** True while any query needed by the active view is still in flight. */
+  isLoadingView: boolean;
+  /** True while the rendered data still belongs to the previously selected scope. */
+  isPreviousScope: boolean;
+};
+
+export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeState {
   const city = normalizeCityValue(options.city);
   const date = normalizeSourceDateValue(options.date);
   const userId = options.userId ?? appEnv.defaultUserId;
@@ -63,60 +82,60 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformFetchR
       {
         queryKey: platformKeys.overview(normalizedScope),
         queryFn: async () => (await fetchPlatformOverview(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
       },
       {
         queryKey: platformKeys.publicDashboard(normalizedScope),
         queryFn: async () => (await fetchPublicDashboard(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
         queryFn: async () => (await fetchWeatherForecast(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.weather,
       },
       {
         queryKey: platformKeys.airQuality(normalizedScope),
         queryFn: async () => (await fetchAirQualityCurrent(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.air,
       },
       {
         queryKey: platformKeys.energy(normalizedScope),
         queryFn: async () => (await fetchEnergyCurrent(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.energy,
       },
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
         queryFn: async () => (await fetchHouseholdEnergyCurrent(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.householdEnergy,
       },
       {
         queryKey: platformKeys.roadRail(normalizedScope),
         queryFn: async () => (await fetchRoadRailCurrent(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.roadRail,
       },
       {
         queryKey: platformKeys.transit(normalizedScope),
         queryFn: async () => (await fetchTransitCurrent(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.transit,
       },
       {
         queryKey: platformKeys.history(normalizedScope),
         queryFn: async () => (await fetchPlatformHistory(normalizedScope)).data ?? emptyHistory(),
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.history,
       },
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
         queryFn: async () =>
           (await fetchPlatformHistoryAvailability(normalizedScope)).data,
-        staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+        ...SCOPE_QUERY_OPTIONS,
         enabled: needs.historyAvailability,
       },
     ],
@@ -153,6 +172,9 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformFetchR
     .filter((message): message is string => Boolean(message));
 
   return {
+    isPending: overviewQuery.isPending && overviewQuery.data == null,
+    isLoadingView: activeResults.some((query) => query.isPending),
+    isPreviousScope: activeResults.some((query) => query.isPlaceholderData),
     apiBaseUrl: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL),
     defaultUserId: userId,
     overview: overviewQuery.data ?? null,

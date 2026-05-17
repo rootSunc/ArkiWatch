@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import "./assistant-widget.css";
+
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";

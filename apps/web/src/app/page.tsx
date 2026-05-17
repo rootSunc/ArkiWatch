@@ -26,13 +26,19 @@ export default async function Page({ searchParams }: PageProps) {
   const selectedDate = normalizeSourceDateValue(searchParams?.date);
   const queryClient = getQueryClient();
 
-  await prefetchPlatformHome(queryClient, {
+  // Deliberately not awaited: the prefetch calls register their queries
+  // synchronously, so dehydrate() below captures them as pending and React
+  // streams the results in. Awaiting here would block the whole first paint on
+  // the slowest upstream request.
+  void prefetchPlatformHome(queryClient, {
     city: selectedCity,
     date: selectedDate,
     authToken: session?.token,
     userId: session?.user.id,
     activeNavKey: searchParams?.view ?? "today",
     isHistorical: Boolean(selectedDate),
+  }).catch(() => {
+    // Failures surface through the dehydrated query state on the client.
   });
 
   return (

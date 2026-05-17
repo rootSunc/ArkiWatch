@@ -19,6 +19,7 @@ type DataPlatformSideNavProps = {
   currentUserLabel: string;
   isAuthenticated: boolean;
   onHide: () => void;
+  onPrefetchNavItem?: (item: NavItem) => void;
   onSelectNavItem: (item: NavItem) => void;
   renderAuthActionButton: (className: string, showText?: boolean) => ReactNode;
   selectedNavKey: string;
@@ -32,6 +33,7 @@ export function DataPlatformSideNav({
   currentUserLabel,
   isAuthenticated,
   onHide,
+  onPrefetchNavItem,
   onSelectNavItem,
   renderAuthActionButton,
   selectedNavKey,
@@ -85,6 +87,8 @@ export function DataPlatformSideNav({
               className={isActive ? "nav-row nav-row-active" : "nav-row"}
               key={item.key}
               onClick={() => onSelectNavItem(item)}
+              onFocus={() => onPrefetchNavItem?.(item)}
+              onMouseEnter={() => onPrefetchNavItem?.(item)}
               title={navLabel}
               type="button"
             >
@@ -110,6 +114,8 @@ export function DataPlatformSideNav({
                 className={isActive ? "nav-row nav-row-active" : "nav-row"}
                 key={item.key}
                 onClick={() => onSelectNavItem(item)}
+                onFocus={() => onPrefetchNavItem?.(item)}
+                onMouseEnter={() => onPrefetchNavItem?.(item)}
                 title={navLabel}
                 type="button"
               >

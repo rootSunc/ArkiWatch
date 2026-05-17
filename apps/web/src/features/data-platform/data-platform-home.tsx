@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -16,7 +17,6 @@ import {
 } from "@/features/shared/format";
 
 import "./data-platform.css";
-import "@/features/assistant-widget/assistant-widget.css";
 
 import { categoryVisibleToCurrentUser } from "./category-access";
 import {
@@ -47,6 +47,8 @@ import {
   translateMessageKey,
 } from "./i18n";
 import { usePlatformHome } from "./hooks/use-platform-home";
+import { usePlatformNavPrefetch } from "./hooks/use-platform-prefetch";
+import { PlatformSkeleton } from "./platform-skeleton";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
   CATEGORY_ICONS,
@@ -120,7 +122,14 @@ import {
   signalReadout,
   statusLabel,
 } from "./data-platform-view-model";
-import { AssistantWidget } from "@/features/assistant-widget/assistant-widget";
+// Floating overlay, never part of the first paint: keep it out of the route bundle.
+const AssistantWidget = dynamic(
+  () =>
+    import("@/features/assistant-widget/assistant-widget").then(
+      (module) => module.AssistantWidget,
+    ),
+  { ssr: false },
+);
 
 type DataPlatformHomeProps = {
   currentUserLabel: string;
@@ -173,6 +182,8 @@ export function DataPlatformHome({
     history,
     historyAvailability,
     householdEnergy,
+    isPending,
+    isPreviousScope,
     overview,
     publicDashboard,
     roadRail,
@@ -185,6 +196,11 @@ export function DataPlatformHome({
     activeNavKey: selectedNavKey,
     isHistorical: selectedDate !== null,
     needsHistoryAvailability,
+  });
+  const prefetchNavView = usePlatformNavPrefetch({
+    city: selectedCity,
+    date: selectedDate,
+    userId: defaultUserId,
   });
   const refreshMutation = useRefreshPlatformData();
   const signOutMutation = useSignOut();
@@ -595,6 +611,10 @@ export function DataPlatformHome({
     setIsMobileMenuOpen(false);
   }
 
+  function prefetchNavItem(item: NavItem): void {
+    prefetchNavView(item.categoryKey ?? item.key);
+  }
+
   function openRecentEventsPanel(): void {
     if (selectedNavKey === FALLBACK_NAV_KEY && isEventsExpanded) {
       setIsEventsExpanded(false);
@@ -786,8 +806,10 @@ export function DataPlatformHome({
     city: selectedCity,
     date: selectedDate,
     isAuthenticated,
-    isCityPending: isCityRefreshPending,
-    isDatePending: isDateRefreshPending,
+    // The router transition ends before the new scope's data arrives; keep the
+    // control in its pending state until the placeholder is replaced.
+    isCityPending: isCityRefreshPending || isPreviousScope,
+    isDatePending: isDateRefreshPending || isPreviousScope,
     isEventsExpanded,
     isHistorical,
     isRefreshing,
@@ -807,6 +829,13 @@ export function DataPlatformHome({
     [categories],
   );
 
+  // Streamed first paint: the overview arrives after the shell, and without the
+  // overview the nav and workspaces would render as empty states rather than as
+  // "still loading". Placed after every hook so hook order stays stable.
+  if (isPending) {
+    return <PlatformSkeleton />;
+  }
+
   return (
     <I18nProvider language={languageMode}>
       <div className={dashboardShellClassName}>
@@ -816,6 +845,7 @@ export function DataPlatformHome({
           currentUserLabel={currentUserLabel}
           isAuthenticated={isAuthenticated}
           onHide={() => setIsSideNavHidden(true)}
+          onPrefetchNavItem={prefetchNavItem}
           onSelectNavItem={selectNavItem}
           renderAuthActionButton={renderAuthActionButton}
           selectedNavKey={selectedNavKey}

@@ -8,9 +8,16 @@ export type ApiClientConfig = {
   baseUrl?: string;
   authToken?: string;
   cache?: RequestCache;
+  timeoutMs?: number;
 };
 
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api";
+
+/** A slow upstream must fail visibly rather than leave the UI spinning forever. */
+export const DEFAULT_API_TIMEOUT_MS = 8000;
+
+export const API_TIMEOUT_ERROR =
+  "Platform request timed out. The data source is not responding.";
 
 export function normalizeApiBaseUrl(rawValue: string | undefined): string {
   const normalizedValue = (rawValue ?? DEFAULT_API_BASE_URL).trim() || DEFAULT_API_BASE_URL;
@@ -53,6 +60,7 @@ export async function apiFetchJson<T>(
             Authorization: `Bearer ${config.authToken}`,
           }
         : undefined,
+      signal: AbortSignal.timeout(config.timeoutMs ?? DEFAULT_API_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -65,6 +73,14 @@ export async function apiFetchJson<T>(
 
     return { data: (await response.json()) as T, error: null, status: response.status };
   } catch (error) {
+    // DOMException is not an Error subclass everywhere, so match on name.
+    if (typeof error === "object" && error !== null && "name" in error) {
+      const { name } = error as { name?: unknown };
+      if (name === "TimeoutError" || name === "AbortError") {
+        return { data: null, error: API_TIMEOUT_ERROR, status: null };
+      }
+    }
+
     return {
       data: null,
       error: error instanceof Error ? error.message : "Unknown fetch failure.",

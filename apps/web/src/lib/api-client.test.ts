@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { apiFetchJson, normalizeApiBaseUrl } from "@/lib/api-client";
+import { API_TIMEOUT_ERROR, apiFetchJson, normalizeApiBaseUrl } from "@/lib/api-client";
 
 describe("api-client", () => {
   afterEach(() => {
@@ -30,7 +30,28 @@ describe("api-client", () => {
     expect(result.error).toBeNull();
     expect(fetch).toHaveBeenCalledWith(
       new URL("https://example.com/api/platform/overview?city=helsinki"),
-      expect.objectContaining({ cache: "no-store" }),
+      expect.objectContaining({
+        cache: "no-store",
+        signal: expect.any(AbortSignal),
+      }),
     );
+  });
+
+  it("reports a timeout instead of hanging", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new DOMException("The operation timed out.", "TimeoutError");
+      }),
+    );
+
+    const result = await apiFetchJson(
+      "/platform/overview",
+      { baseUrl: "https://example.com/api", timeoutMs: 10 },
+    );
+
+    expect(result.data).toBeNull();
+    expect(result.error).toBe(API_TIMEOUT_ERROR);
+    expect(result.status).toBeNull();
   });
 });
