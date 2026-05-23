@@ -6,8 +6,10 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import "./assistant-widget.css";
 
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
+import { demoAssistantReply } from "@/features/data-platform/demo/demo-assistant";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";
+import { appEnv } from "@/lib/env";
 
 type AssistantWidgetProps = {
   overview: PlatformOverviewResponse | null;
@@ -244,6 +246,24 @@ export function AssistantWidget({
     setIsLoading(true);
 
     try {
+      if (appEnv.demoMode) {
+        const reply = demoAssistantReply(normalizedQuestion, language);
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  text: reply.text,
+                  citations: reply.citations,
+                  answerMode: reply.answerMode,
+                  model: reply.model,
+                }
+              : message,
+          ),
+        );
+        return;
+      }
+
       const response = await fetch("/api/assistant/chat/stream", {
         method: "POST",
         cache: "no-store",
@@ -370,6 +390,7 @@ export function AssistantWidget({
             <div>
               <span className="label-text">{tKey("assistant.title")}</span>
               <h2>{tKey("assistant.subtitle")}</h2>
+              {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
             </div>
             <button
               aria-label="Close assistant"

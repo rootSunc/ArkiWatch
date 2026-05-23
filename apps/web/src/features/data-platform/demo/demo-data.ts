@@ -1,0 +1,908 @@
+import { cityLabel, normalizeCityValue } from "../city-scope";
+import { normalizeSourceDateValue } from "../time-window";
+import type {
+  AirQualityCurrentResponse,
+  DashboardSource,
+  EnergyCurrentResponse,
+  PlatformCategory,
+  PlatformEvent,
+  PlatformHistoryApiResponse,
+  PlatformHistoryAvailabilityResponse,
+  PlatformMetric,
+  PlatformOverviewResponse,
+  PlatformTimeScope,
+  PublicActionRead,
+  PublicDashboardRead,
+  PublicScenarioSectionRead,
+  PublicTimelineItemRead,
+  RoadRailCurrentResponse,
+  TransitCurrentResponse,
+  WeatherForecastResponse,
+} from "../types";
+
+export const DEMO_SNAPSHOT_DATE = "2026-08-08";
+export const DEMO_SNAPSHOT_LABEL = "Static Helsinki snapshot";
+
+const DEMO_CHECKED_AT = "2026-08-09T04:00:00.000Z";
+const DEMO_TIMEZONE = "Europe/Helsinki";
+
+export type DemoFixture = {
+  airQuality: AirQualityCurrentResponse;
+  energy: EnergyCurrentResponse;
+  householdEnergy: EnergyCurrentResponse;
+  history: PlatformHistoryApiResponse;
+  historyAvailability: PlatformHistoryAvailabilityResponse;
+  overview: PlatformOverviewResponse;
+  publicDashboard: PublicDashboardRead;
+  roadRail: RoadRailCurrentResponse;
+  transit: TransitCurrentResponse;
+  weather: WeatherForecastResponse;
+};
+
+function at(hours: number): string {
+  const timestamp = new Date(DEMO_CHECKED_AT);
+  timestamp.setUTCHours(timestamp.getUTCHours() + hours);
+  return timestamp.toISOString();
+}
+
+function timeScope(date: string | null): PlatformTimeScope {
+  return {
+    mode: date ? "historical" : "live",
+    date,
+    timezone: DEMO_TIMEZONE,
+    window_start: at(0),
+    window_end: at(18),
+  };
+}
+
+function makeSource(
+  sourceCode: string,
+  sourceName: string,
+  categories: string[],
+  documentationUrl: string,
+): DashboardSource {
+  return {
+    id: `demo-${sourceCode}`,
+    source_code: sourceCode,
+    source_name: sourceName,
+    auth_type: "public",
+    poll_interval_seconds: 600,
+    operational_status: "healthy",
+    stage: "connected",
+    categories,
+    datasets: [],
+    key_data_items: [],
+    license_label: "Public data · see provider terms",
+    documentation_url: documentationUrl,
+    last_run_status: "success",
+    last_run_started_at: at(-1),
+    last_run_finished_at: DEMO_CHECKED_AT,
+    records_ingested: 42,
+    error_message: null,
+  };
+}
+
+const SOURCES: Record<string, DashboardSource> = {
+  fmi: makeSource(
+    "fmi",
+    "Finnish Meteorological Institute",
+    ["weather"],
+    "https://en.ilmatieteenlaitos.fi/open-data",
+  ),
+  hsy: makeSource(
+    "hsy",
+    "Helsinki Region Environmental Services",
+    ["air"],
+    "https://www.hsy.fi/en/environmental-information/open-data/",
+  ),
+  digitransit: makeSource(
+    "digitransit",
+    "Digitransit / HSL",
+    ["transit"],
+    "https://digitransit.fi/en/developers/",
+  ),
+  digitraffic: makeSource(
+    "digitraffic",
+    "Digitraffic",
+    ["traffic"],
+    "https://www.digitraffic.fi/en/",
+  ),
+  fingrid: makeSource(
+    "fingrid",
+    "Fingrid",
+    ["energy"],
+    "https://data.fingrid.fi/en/",
+  ),
+  porssisahko: makeSource(
+    "porssisahko",
+    "Pörssisähkö API",
+    ["energy"],
+    "https://api.porssisahko.net/",
+  ),
+  syke: makeSource(
+    "syke",
+    "Finnish Environment Institute",
+    ["water"],
+    "https://www.syke.fi/en-US/Open_information",
+  ),
+  linkedevents: makeSource(
+    "linkedevents",
+    "Helsinki Linked Events",
+    ["events", "city_services"],
+    "https://github.com/City-of-Helsinki/linkedevents",
+  ),
+};
+
+function metric(
+  key: string,
+  label: string,
+  value: string,
+  tone: PlatformMetric["tone"],
+  sourceCodes: string[],
+  unit: string | null = null,
+): PlatformMetric {
+  return {
+    key,
+    label,
+    label_key: key,
+    value,
+    tone,
+    unit,
+    detail: null,
+    updated_at: DEMO_CHECKED_AT,
+    source_codes: sourceCodes,
+  };
+}
+
+function event(
+  id: string,
+  categoryKey: string,
+  eventType: string,
+  title: string,
+  body: string,
+  severity: string,
+  sourceCodes: string[],
+  startsAt: string,
+  endsAt: string,
+  attributes: Record<string, unknown> = {},
+): PlatformEvent {
+  return {
+    id,
+    category_key: categoryKey,
+    event_type: eventType,
+    title,
+    body,
+    severity,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    source_codes: sourceCodes,
+    evidence: [sourceCodes.map((sourceCode) => sourceCode.toUpperCase()).join(" · ")],
+    attributes,
+  };
+}
+
+function category(
+  key: string,
+  title: string,
+  description: string,
+  sourceCodes: string[],
+  events: PlatformEvent[] = [],
+  metrics: PlatformMetric[] = [],
+): PlatformCategory {
+  return {
+    key,
+    title,
+    description,
+    status: events.some((item) => ["HIGH", "CRITICAL"].includes(item.severity))
+      ? "watch"
+      : "healthy",
+    stage: "connected",
+    priority: key === "weather" || key === "air" ? "P0" : "P1",
+    source_codes: sourceCodes,
+    summary_metrics: metrics,
+    visualizations: [],
+    events,
+    sources: sourceCodes.map((sourceCode) => SOURCES[sourceCode]).filter(Boolean),
+  };
+}
+
+function action(
+  id: string,
+  scenarioKey: string,
+  title: string,
+  body: string,
+  severity: string,
+  validFrom: string,
+  validTo: string,
+  evidence: string[],
+): PublicActionRead {
+  return {
+    id,
+    scenario_key: scenarioKey,
+    title,
+    body,
+    severity,
+    area_scope: "Helsinki",
+    freshness_state: "fresh",
+    valid_from: validFrom,
+    valid_to: validTo,
+    evidence,
+  };
+}
+
+function sourceRequest(key: string, label: string, endpoint: string) {
+  return {
+    key,
+    label,
+    status: "fetched",
+    endpoint,
+    content_type: "application/json",
+    fetched_at: DEMO_CHECKED_AT,
+  };
+}
+
+function dataStage(key: string, label: string, recordCount: number) {
+  return {
+    key,
+    label,
+    status: "ready",
+    detail: "Static demo fixture",
+    record_count: recordCount,
+    updated_at: DEMO_CHECKED_AT,
+  };
+}
+
+const RAIN_EVENT = event(
+  "demo-rain-risk",
+  "weather",
+  "rain_risk",
+  "Brief rain may affect the late morning",
+  "A short rain window is likely around the late-morning commute. A light shell is enough.",
+  "MEDIUM",
+  ["fmi"],
+  at(3),
+  at(6),
+  { peak_precip_mm: 1.8 },
+);
+
+const AIR_EVENT = event(
+  "demo-air-status",
+  "air",
+  "air_quality_status",
+  "Air quality is suitable for normal outdoor activity",
+  "Station readings are in the good range across the Helsinki example network.",
+  "LOW",
+  ["hsy"],
+  at(-1),
+  at(12),
+);
+
+const TRANSIT_EVENT = event(
+  "demo-transit-delay",
+  "transit",
+  "transit_delay",
+  "Allow a few extra minutes on the westbound tram",
+  "A service alert may slow the westbound tram corridor during the morning peak.",
+  "HIGH",
+  ["digitransit"],
+  at(1),
+  at(4),
+  { route_ids: ["4", "10"] },
+);
+
+const ROAD_EVENT = event(
+  "demo-road-weather",
+  "traffic",
+  "road_weather_risk",
+  "Road surfaces may be slippery after the rain window",
+  "Keep a little extra distance if you are driving after the late-morning shower.",
+  "MEDIUM",
+  ["digitraffic"],
+  at(5),
+  at(8),
+);
+
+const ENERGY_EVENT = event(
+  "demo-cheap-energy",
+  "energy",
+  "cheap_energy_window",
+  "A lower-cost household energy window starts at noon",
+  "The example price curve is most favourable between 12:00 and 14:00.",
+  "LOW",
+  ["porssisahko"],
+  at(5),
+  at(7),
+  { average_value: 7.8, unit: "c/kWh" },
+);
+
+function buildWeather(): WeatherForecastResponse {
+  const points = Array.from({ length: 7 }, (_, index) => ({
+    timestamp: at(index * 3),
+    temperature_c: 16 + index,
+    precipitation_mm: index === 1 ? 1.8 : index === 2 ? 0.6 : 0,
+    wind_speed_ms: 3.4 + index * 0.2,
+    wind_gust_ms: 6.2 + index * 0.3,
+    wind_direction_deg: 210,
+    cloud_cover_pct: index === 1 ? 78 : 46,
+    humidity_pct: 72 - index * 2,
+    dew_point_c: 11 + index * 0.4,
+    pressure_hpa: 1011 + index,
+    visibility_m: 12000,
+    weather_symbol: index === 1 ? 9 : 2,
+    smart_symbol: index === 1 ? 9 : 2,
+  }));
+
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    status: "ready",
+    location: "Helsinki",
+    source_code: "fmi",
+    generated_at: DEMO_CHECKED_AT,
+    valid_from: DEMO_CHECKED_AT,
+    valid_to: at(18),
+    summary: "Mild and mostly clear, with a brief late-morning rain window.",
+    metrics: [
+      metric("temperature", "Temperature", "16", "good", ["fmi"], "C"),
+      metric("wind", "Wind", "3.4", "good", ["fmi"], "m/s"),
+      metric("precipitation", "Precipitation", "1.8", "warn", ["fmi"], "mm"),
+      metric("humidity", "Humidity", "72", "good", ["fmi"], "%"),
+    ],
+    points,
+    rain_windows: [
+      {
+        starts_at: at(3),
+        ends_at: at(6),
+        peak_precip_mm: 1.8,
+        peak_precip_at: at(4),
+        total_precip_mm: 2.4,
+        hours: 3,
+      },
+    ],
+    source_layers: [
+      {
+        key: "fmi_forecast",
+        label: "FMI forecast",
+        status: "ready",
+        detail: "Static demo layer",
+        updated_at: DEMO_CHECKED_AT,
+      },
+    ],
+    source_requests: [
+      sourceRequest("fmi", "Finnish Meteorological Institute", "https://opendata.fmi.fi"),
+    ],
+    data_pipeline: [
+      dataStage("raw", "Raw observation", points.length),
+      dataStage("normalized", "Normalized forecast", points.length),
+    ],
+    quality: {
+      point_count: points.length,
+      forecast_hours: 18,
+      field_coverage_pct: 98,
+      rain_window_count: 1,
+      missing_fields: [],
+      notes: ["Static demo fixture; not a live forecast."],
+    },
+    warnings: [],
+  };
+}
+
+function buildAirQuality(): AirQualityCurrentResponse {
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    status: "ready",
+    location: "Helsinki",
+    source_code: "hsy",
+    observed_at: DEMO_CHECKED_AT,
+    valid_to: at(3),
+    summary: "Good air quality across the example station network.",
+    worst_station: "kallio",
+    worst_label: "Good",
+    worst_score: 1.2,
+    metrics: [
+      metric("european_aqi", "European AQI", "1.2", "good", ["hsy"]),
+      metric("pm2_5", "PM2.5", "5.4", "good", ["hsy"], "µg/m³"),
+      metric("pm10", "PM10", "9.8", "good", ["hsy"], "µg/m³"),
+    ],
+    stations: [
+      {
+        station: "kallio",
+        label: "Kallio",
+        score: 1.2,
+        european_aqi: 1.2,
+        pm2_5: 5.4,
+        pm10: 9.8,
+        no2: 18,
+        lat: 60.184,
+        lon: 24.95,
+      },
+      {
+        station: "leppavaara",
+        label: "Leppävaara",
+        score: 0.8,
+        european_aqi: 0.8,
+        pm2_5: 3.9,
+        pm10: 7.1,
+        no2: 12,
+        lat: 60.218,
+        lon: 24.813,
+      },
+    ],
+    source_requests: [
+      sourceRequest("hsy", "HSY air quality", "https://kartta.hsy.fi/geoserver/ilmanlaatu/wfs"),
+    ],
+    data_pipeline: [dataStage("normalized", "Normalized station readings", 2)],
+    quality: {
+      station_count: 2,
+      reporting_station_count: 2,
+      field_coverage_pct: 100,
+      missing_fields: [],
+      notes: ["Static demo fixture; not a live station reading."],
+    },
+  };
+}
+
+function buildEnergy(sourceCode: string, providerName: string): EnergyCurrentResponse {
+  const isHousehold = sourceCode === "porssisahko";
+  const values = isHousehold ? [7.8, 8.1, 9.6, 12.2, 10.4, 8.5] : [890, 920, 980, 1050, 1010, 940];
+  const unit = isHousehold ? "c/kWh" : "MW";
+  const points = values.map((value, index) => ({
+    starts_at: at(index * 2),
+    ends_at: at(index * 2 + 2),
+    value,
+    unit,
+    estimated_cost_eur: isHousehold ? Number((value * 0.02).toFixed(2)) : null,
+  }));
+  const currentWindow = {
+    starts_at: at(5),
+    ends_at: at(7),
+    average_value: values[2],
+    minimum_value: Math.min(...values),
+    maximum_value: Math.max(...values),
+    unit,
+    point_count: 1,
+    severity: "LOW",
+    source: sourceCode,
+    estimated_cost_eur: isHousehold ? 0.16 : null,
+    usage_kwh: isHousehold ? 2 : null,
+    threshold_value: isHousehold ? 9 : null,
+    horizon_average_value: values.reduce((sum, value) => sum + value, 0) / values.length,
+    savings_vs_average_pct: isHousehold ? 18 : null,
+    selection_strategy: "demo-low-window",
+  };
+
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    status: "ready",
+    location: "Finland",
+    source_code: sourceCode,
+    provider_name: providerName,
+    observed_at: DEMO_CHECKED_AT,
+    valid_from: DEMO_CHECKED_AT,
+    valid_to: at(12),
+    summary: isHousehold
+      ? "The example household price is lowest around noon."
+      : "Grid load is moderate in the example morning window.",
+    unit,
+    current_window: currentWindow,
+    metrics: [
+      metric("low_energy_window", "Low-energy window", isHousehold ? "7.80" : "890", "good", [sourceCode], unit),
+      metric("average", "Average", isHousehold ? "9.50" : "965", "neutral", [sourceCode], unit),
+    ],
+    points,
+    source_requests: [
+      sourceRequest(
+        sourceCode,
+        providerName,
+        SOURCES[sourceCode]?.documentation_url ?? "https://data.fingrid.fi/en/",
+      ),
+    ],
+    data_pipeline: [dataStage("normalized", "Normalized energy curve", points.length)],
+    quality: {
+      point_count: points.length,
+      window_point_count: 1,
+      field_coverage_pct: 100,
+      minimum_value: Math.min(...values),
+      maximum_value: Math.max(...values),
+      average_value: values.reduce((sum, value) => sum + value, 0) / values.length,
+      missing_fields: [],
+      notes: ["Static demo fixture; not a live market or grid reading."],
+    },
+  };
+}
+
+function buildTransit(): TransitCurrentResponse {
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    status: "watch",
+    location: "Helsinki",
+    source_code: "digitransit",
+    observed_at: DEMO_CHECKED_AT,
+    summary: "One example service alert may affect the westbound tram corridor.",
+    metrics: [metric("active_alerts", "Active alerts", "1", "warn", ["digitransit"])],
+    alerts: [
+      {
+        id: "demo-alert-4",
+        title: "Westbound tram service is slower",
+        description: "Allow a few extra minutes during the morning peak.",
+        severity: "HIGH",
+        event_type: "transit_delay",
+        starts_at: at(1),
+        ends_at: at(4),
+        active: true,
+        cause: "TRAFFIC_JAM",
+        effect: "SIGNIFICANT_DELAYS",
+        route_ids: ["4", "10"],
+        stop_ids: [],
+        trip_ids: [],
+      },
+    ],
+    source_requests: [
+      sourceRequest("digitransit", "Digitransit alerts", "https://realtime.hsl.fi"),
+    ],
+    data_pipeline: [dataStage("normalized", "Normalized transit alerts", 1)],
+    quality: {
+      raw_alert_count: 3,
+      normalized_event_count: 1,
+      active_alert_count: 1,
+      route_alert_count: 1,
+      stop_alert_count: 0,
+      field_coverage_pct: 100,
+      missing_fields: [],
+      notes: ["Static demo fixture; not a live service alert."],
+    },
+  };
+}
+
+function buildRoadRail(): RoadRailCurrentResponse {
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    status: "watch",
+    location: "Finland",
+    source_code: "digitraffic",
+    observed_at: DEMO_CHECKED_AT,
+    summary: "One example road-weather event is worth allowing extra space for.",
+    metrics: [metric("active_events", "Active events", "1", "warn", ["digitraffic"])],
+    incidents: [
+      {
+        id: "demo-road-1",
+        title: "Wet road surface risk",
+        description: "Road surfaces may be slippery after the rain window.",
+        severity: "MEDIUM",
+        event_type: "road_weather_risk",
+        starts_at: at(5),
+        ends_at: at(8),
+        active: true,
+        location_ref: "helsinki-west",
+        message_type: "WEATHER",
+        situation_type: "SLIPPERY_ROAD",
+        location_description: "Helsinki westbound approach",
+        feature_names: ["Road weather"],
+        geometry_bbox: null,
+      },
+    ],
+    corridors: [
+      {
+        key: "helsinki-west",
+        label: "Helsinki westbound",
+        event_count: 1,
+        active_event_count: 1,
+        weather_risk_count: 1,
+        severity: "MEDIUM",
+        latest_title: "Wet road surface risk",
+        latest_valid_to: at(8),
+        geometry_bbox: null,
+      },
+    ],
+    source_requests: [
+      {
+        ...sourceRequest("digitraffic", "Digitraffic road events", "https://tie.digitraffic.fi"),
+        message_count: 2,
+      },
+    ],
+    data_pipeline: [dataStage("normalized", "Normalized road events", 1)],
+    quality: {
+      raw_message_count: 2,
+      normalized_event_count: 1,
+      active_event_count: 1,
+      road_event_count: 1,
+      rail_event_count: 0,
+      weather_risk_count: 1,
+      corridor_count: 1,
+      field_coverage_pct: 100,
+      missing_fields: [],
+      notes: ["Static demo fixture; not a live road event."],
+    },
+  };
+}
+
+function buildPublicDashboard(): PublicDashboardRead {
+  const outdoorAction = action(
+    "demo-action-outdoor",
+    "outdoor",
+    "Carry a light rain layer",
+    "A short shower may cross the late-morning commute. Keep a light shell handy.",
+    "MEDIUM",
+    at(3),
+    at(6),
+    ["FMI · rain risk · 1.8 mm peak"],
+  );
+  const commuteAction = action(
+    "demo-action-commute",
+    "commute",
+    "Leave a few minutes earlier",
+    "The westbound tram example has a service alert during the morning peak.",
+    "HIGH",
+    at(1),
+    at(4),
+    ["Digitransit · routes 4 and 10"],
+  );
+  const airAction = action(
+    "demo-action-air",
+    "home_air",
+    "Normal outdoor activity is fine",
+    "Example station readings are in the good range. Ventilate when convenient.",
+    "LOW",
+    at(-1),
+    at(12),
+    ["HSY · two reporting stations"],
+  );
+  const energyAction = action(
+    "demo-action-energy",
+    "energy",
+    "Run flexible appliances around noon",
+    "The example household price window is most favourable between 12:00 and 14:00.",
+    "LOW",
+    at(5),
+    at(7),
+    ["Pörssisähkö · 7.80 c/kWh example window"],
+  );
+  const sections: PublicScenarioSectionRead[] = [
+    {
+      key: "outdoor",
+      title: "Outdoor",
+      description: "Weather timing for the next useful decision.",
+      status_label: "Watch",
+      area_scope: "Helsinki",
+      freshness_state: "fresh",
+      valid_from: at(3),
+      valid_to: at(6),
+      evidence: outdoorAction.evidence,
+      source_codes: ["fmi"],
+      recommendation: outdoorAction,
+    },
+    {
+      key: "commute",
+      title: "Commute",
+      description: "Transit and road signals that may change your route.",
+      status_label: "Needs attention",
+      area_scope: "Helsinki",
+      freshness_state: "fresh",
+      valid_from: at(1),
+      valid_to: at(4),
+      evidence: commuteAction.evidence,
+      source_codes: ["digitransit", "digitraffic"],
+      recommendation: commuteAction,
+    },
+    {
+      key: "home_air",
+      title: "Home air",
+      description: "Outdoor air conditions for ventilation and activity.",
+      status_label: "Good",
+      area_scope: "Helsinki",
+      freshness_state: "fresh",
+      valid_from: at(-1),
+      valid_to: at(12),
+      evidence: airAction.evidence,
+      source_codes: ["hsy"],
+      recommendation: airAction,
+    },
+    {
+      key: "energy",
+      title: "Energy",
+      description: "A practical window for flexible household use.",
+      status_label: "Good window",
+      area_scope: "Finland",
+      freshness_state: "fresh",
+      valid_from: at(5),
+      valid_to: at(7),
+      evidence: energyAction.evidence,
+      source_codes: ["porssisahko", "fingrid"],
+      recommendation: energyAction,
+    },
+  ];
+  const timeline: PublicTimelineItemRead[] = [
+    {
+      scenario_key: "commute",
+      label: "Morning peak · westbound tram alert",
+      severity: "HIGH",
+      starts_at: at(1),
+      ends_at: at(4),
+    },
+    {
+      scenario_key: "outdoor",
+      label: "Late morning · brief rain window",
+      severity: "MEDIUM",
+      starts_at: at(3),
+      ends_at: at(6),
+    },
+    {
+      scenario_key: "energy",
+      label: "Noon · lower-cost household window",
+      severity: "LOW",
+      starts_at: at(5),
+      ends_at: at(7),
+    },
+  ];
+
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    app_name: "ArkiWatch",
+    timezone: DEMO_TIMEZONE,
+    coverage_area: "Helsinki / Uusimaa",
+    top_actions: [commuteAction, outdoorAction, energyAction],
+    scenario_channels: sections.map((section) => ({
+      scenario_key: section.key,
+      title: section.title,
+      description: section.description,
+    })),
+    scenario_sections: sections,
+    timeline,
+    broadcasts: [airAction],
+    sources: Object.values(SOURCES),
+  };
+}
+
+function buildOverview(): PlatformOverviewResponse {
+  const categories: PlatformCategory[] = [
+    category("weather", "Weather", "Forecast and rain timing.", ["fmi"], [RAIN_EVENT], [
+      metric("source_status", "Source status", "healthy", "good", ["fmi"]),
+      metric("rain_window", "Rain windows", "1", "warn", ["fmi"]),
+    ]),
+    category("air", "Air quality", "Station-level outdoor air quality.", ["hsy"], [AIR_EVENT], [
+      metric("source_status", "Source status", "healthy", "good", ["hsy"]),
+      metric("european_aqi", "European AQI", "1.2", "good", ["hsy"]),
+    ]),
+    category("energy", "Energy", "Grid load and household price signals.", ["fingrid", "porssisahko"], [ENERGY_EVENT], [
+      metric("source_status", "Source status", "healthy", "good", ["fingrid", "porssisahko"]),
+      metric("low_energy_window", "Low-energy window", "7.80", "good", ["porssisahko"], "c/kWh"),
+    ]),
+    category("transit", "Transit", "Public transport service alerts.", ["digitransit"], [TRANSIT_EVENT], [
+      metric("source_status", "Source status", "healthy", "good", ["digitransit"]),
+      metric("active_events", "Active events", "1", "warn", ["digitransit"]),
+    ]),
+    category("traffic", "Road & Rail", "Road and rail operational events.", ["digitraffic"], [ROAD_EVENT], [
+      metric("source_status", "Source status", "healthy", "good", ["digitraffic"]),
+      metric("active_events", "Active events", "1", "warn", ["digitraffic"]),
+    ]),
+    category("water", "Water and snow", "Hydrology and seasonal conditions.", ["syke"], [], [
+      metric("source_status", "Source status", "healthy", "good", ["syke"]),
+      metric("coverage", "Coverage", "Helsinki region", "neutral", ["syke"]),
+    ]),
+    category("events", "Linked Events", "Public events and activities.", ["linkedevents"], [], [
+      metric("source_status", "Source status", "healthy", "good", ["linkedevents"]),
+      metric("active_events", "Upcoming events", "12", "good", ["linkedevents"]),
+    ]),
+    category("city_services", "City services", "Public service locations and opening information.", ["linkedevents"], [], [
+      metric("source_status", "Source status", "healthy", "good", ["linkedevents"]),
+      metric("service_units", "Service units", "24", "good", ["linkedevents"]),
+    ]),
+    category("geospatial", "Geospatial base", "Location context for public signals.", [], [], [
+      metric("catalog_stage", "Catalog stage", "connected", "good", []),
+    ]),
+    category("regional_profile", "Regional profile", "Regional coverage and context.", [], [], [
+      metric("catalog_stage", "Catalog stage", "connected", "good", []),
+    ]),
+  ];
+  const recentEvents = [RAIN_EVENT, TRANSIT_EVENT, ROAD_EVENT, ENERGY_EVENT, AIR_EVENT];
+
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    time_scope: timeScope(null),
+    app_name: "ArkiWatch",
+    timezone: DEMO_TIMEZONE,
+    coverage_area: "Helsinki / Uusimaa",
+    health_status: "healthy",
+    categories,
+    recent_events: recentEvents,
+    sources: Object.values(SOURCES),
+  };
+}
+
+function buildHistory(): PlatformHistoryApiResponse {
+  const weather = buildWeather();
+  const airQuality = buildAirQuality();
+  const energy = buildEnergy("fingrid", "Fingrid");
+  const householdEnergy = buildEnergy("porssisahko", "Pörssisähkö API");
+  const roadRail = buildRoadRail();
+  const transit = buildTransit();
+
+  return {
+    weather: [{ date: DEMO_SNAPSHOT_DATE, data: weather, error: null }],
+    air_quality: [{ date: DEMO_SNAPSHOT_DATE, data: airQuality, error: null }],
+    energy: [{ date: DEMO_SNAPSHOT_DATE, data: energy, error: null }],
+    household_energy: [{ date: DEMO_SNAPSHOT_DATE, data: householdEnergy, error: null }],
+    road_rail: [{ date: DEMO_SNAPSHOT_DATE, data: roadRail, error: null }],
+    transit: [{ date: DEMO_SNAPSHOT_DATE, data: transit, error: null }],
+  };
+}
+
+function buildHistoryAvailability(): PlatformHistoryAvailabilityResponse {
+  return {
+    checked_at: DEMO_CHECKED_AT,
+    city: "helsinki",
+    days: [
+      {
+        date: DEMO_SNAPSHOT_DATE,
+        has_data: true,
+        record_count: 42,
+        source_codes: Object.keys(SOURCES),
+        categories: ["weather", "air", "energy", "transit", "traffic"],
+        datasets: ["demo_snapshot"],
+      },
+    ],
+  };
+}
+
+const BASE_FIXTURE: DemoFixture = {
+  airQuality: buildAirQuality(),
+  energy: buildEnergy("fingrid", "Fingrid"),
+  householdEnergy: buildEnergy("porssisahko", "Pörssisähkö API"),
+  history: buildHistory(),
+  historyAvailability: buildHistoryAvailability(),
+  overview: buildOverview(),
+  publicDashboard: buildPublicDashboard(),
+  roadRail: buildRoadRail(),
+  transit: buildTransit(),
+  weather: buildWeather(),
+};
+
+function withScope<T>(value: T, date: string | null): T & { time_scope: PlatformTimeScope } {
+  return { ...value, time_scope: timeScope(date) };
+}
+
+export function demoFixtureForScope(scope: {
+  city?: string | null;
+  date?: string | null;
+} = {}): DemoFixture {
+  const city = cityLabel(normalizeCityValue(scope.city));
+  const date = normalizeSourceDateValue(scope.date);
+  const scopeSuffix = date ? ` · ${date}` : "";
+
+  return {
+    ...BASE_FIXTURE,
+    overview: {
+      ...withScope(BASE_FIXTURE.overview, date),
+      coverage_area: `${city} / Uusimaa${scopeSuffix}`,
+      categories: BASE_FIXTURE.overview.categories,
+      sources: BASE_FIXTURE.overview.sources,
+    },
+    publicDashboard: {
+      ...BASE_FIXTURE.publicDashboard,
+      coverage_area: `${city} / Uusimaa${scopeSuffix}`,
+    },
+    weather: {
+      ...withScope(BASE_FIXTURE.weather, date),
+      location: city,
+    },
+    airQuality: {
+      ...withScope(BASE_FIXTURE.airQuality, date),
+      location: city,
+    },
+    energy: withScope(BASE_FIXTURE.energy, date),
+    householdEnergy: withScope(BASE_FIXTURE.householdEnergy, date),
+    roadRail: withScope(BASE_FIXTURE.roadRail, date),
+    transit: {
+      ...withScope(BASE_FIXTURE.transit, date),
+      location: city,
+    },
+    historyAvailability: {
+      ...BASE_FIXTURE.historyAvailability,
+      city: normalizeCityValue(scope.city),
+    },
+  };
+}

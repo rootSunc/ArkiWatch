@@ -4,6 +4,26 @@ export type ApiJsonResult<T> = {
   status: number | null;
 };
 
+/**
+ * Convert the transport-level result into a query value.
+ *
+ * React Query only sees the resolved value from a query function. Returning a
+ * nullable `data` field there would turn an HTTP/API failure into a successful
+ * query with an empty UI, so every required platform read should use this
+ * boundary before it enters the cache.
+ */
+export function unwrapApiResult<T>(result: ApiJsonResult<T>): T {
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  if (result.data === null || result.data === undefined) {
+    throw new Error("API response did not include data.");
+  }
+
+  return result.data;
+}
+
 export type ApiClientConfig = {
   baseUrl?: string;
   authToken?: string;

@@ -160,6 +160,13 @@
   line-height: 1.2;
 }
 
+.assistant-demo-note {
+  margin: 3px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
 .assistant-icon-button {
   margin-left: auto;
   width: 32px;

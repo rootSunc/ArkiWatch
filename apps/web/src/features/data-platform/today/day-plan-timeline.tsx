@@ -2,9 +2,9 @@
 
 import { formatTimestamp, severityTone } from "@/features/shared/format";
 
-import type { CrossDomainTimelineItem } from "./cross-domain-timeline";
-import { LanguageMode, useI18n } from "./i18n";
-import type { PlatformEvent } from "./types";
+import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
+import { LanguageMode, useI18n } from "../i18n";
+import type { PlatformEvent } from "../types";
 
 const CATEGORY_ICONS: Record<string, string> = {
   air: "air",
@@ -49,13 +49,8 @@ export function DayPlanTimeline({
   return (
     <section className="day-plan-timeline" aria-label={tKey("shell.todayPlan")}>
       <header className="day-plan-timeline-header">
-        <h3>
-          <span className="material-symbols-outlined" aria-hidden="true">
-            event_upcoming
-          </span>
-          {tKey("shell.todayPlan")}
-        </h3>
-        <p>{tKey("shell.todayPlanLead")}</p>
+        <span className="today-section-kicker">{tKey("shell.todayPlan")}</span>
+        <h3>{tKey("shell.todayPlanLead")}</h3>
       </header>
       {items.length > 0 ? (
         <ol className="day-plan-timeline-list">
@@ -92,7 +87,7 @@ export function DayPlanTimeline({
                   </span>
                   <span className="day-plan-timeline-detail">{item.detail}</span>
                   <time>
-                    {formatTimestamp(item.startsAt, "dateTime", language)} -{" "}
+                    {formatTimestamp(item.startsAt, "dateTime", language)} –{" "}
                     {formatTimestamp(item.endsAt, "dateTime", language)}
                   </time>
                 </button>

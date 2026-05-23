@@ -22,6 +22,30 @@ export type PlatformDataNeedsOptions = {
   needsHistoryAvailability?: boolean;
 };
 
+export const DEMO_PLATFORM_DATA_NEEDS: PlatformDataNeeds = {
+  weather: true,
+  air: true,
+  energy: true,
+  householdEnergy: true,
+  roadRail: true,
+  transit: true,
+  history: false,
+  historyAvailability: false,
+};
+
+export function platformDataNeedsForDemo(
+  navKey: string | null | undefined,
+  options: PlatformDataNeedsOptions = {},
+): PlatformDataNeeds {
+  const needs = platformDataNeedsForView(navKey, options);
+
+  return {
+    ...DEMO_PLATFORM_DATA_NEEDS,
+    history: needs.history,
+    historyAvailability: needs.historyAvailability,
+  };
+}
+
 function emptyNeeds(historyAvailability: boolean): PlatformDataNeeds {
   return {
     weather: false,

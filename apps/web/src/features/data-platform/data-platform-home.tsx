@@ -15,6 +15,7 @@ import {
   formatTimestamp,
   severityTone,
 } from "@/features/shared/format";
+import { appEnv } from "@/lib/env";
 
 import "./data-platform.css";
 
@@ -85,7 +86,7 @@ import {
 } from "./scenario-navigation";
 import { buildCrossDomainTimeline } from "./cross-domain-timeline";
 import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
-import { ScenarioOverview } from "./scenario-overview";
+import { TodayOverview } from "./today/today-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import { DataPlatformWorkspaceRouter } from "./data-platform-workspace-router";
 import {
@@ -94,7 +95,7 @@ import {
 } from "./signal-attribution";
 import { buildSignalSystemTiles } from "./signals-console";
 import { SourceHealthStrip } from "./source-health-strip";
-import { buildTodayBrief } from "./today-brief";
+import { buildTodayBrief } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import {
   ENERGY_TAB_QUERY_KEY,
@@ -183,10 +184,12 @@ export function DataPlatformHome({
     historyAvailability,
     householdEnergy,
     isPending,
+    isLoadingView,
     isPreviousScope,
     overview,
     publicDashboard,
     roadRail,
+    retry,
     transit,
     weather,
   } = usePlatformHome({
@@ -252,6 +255,12 @@ export function DataPlatformHome({
       onError: (error) => {
         console.error("Error refreshing data sources:", error);
       },
+    });
+  }
+
+  function retryPlatformData(): void {
+    void retry().catch((retryError) => {
+      console.error("Error retrying platform queries:", retryError);
     });
   }
 
@@ -605,6 +614,9 @@ export function DataPlatformHome({
     isDetailPage ||
     selectedNavKey === FALLBACK_NAV_KEY ||
     selectedNavKey === TODAY_NAV_KEY;
+  const showInlineDataError = Boolean(
+    error && (visibleOverview || selectedNavKey === TODAY_NAV_KEY),
+  );
 
   function selectNavItem(item: NavItem): void {
     selectNav(item.categoryKey ?? item.key);
@@ -892,6 +904,40 @@ export function DataPlatformHome({
                 timeScope={activeTimeScope}
               />
             ) : null}
+            {appEnv.demoMode ? (
+              <div className="demo-mode-banner" role="status">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  science
+                </span>
+                <span>{tKey("shell.demoModeNotice")}</span>
+              </div>
+            ) : null}
+            {showInlineDataError ? (
+              <div className="platform-inline-warning" role="alert">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  warning
+                </span>
+                <span className="platform-inline-warning-copy">
+                  <strong>
+                    {visibleOverview
+                      ? tKey("shell.partialDataWarning")
+                      : tKey("shell.dataUnavailableWarning")}
+                  </strong>
+                  <span>{error}</span>
+                </span>
+                <button
+                  className="platform-inline-warning-action"
+                  disabled={isLoadingView}
+                  onClick={retryPlatformData}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    refresh
+                  </span>
+                  {isLoadingView ? tKey("shell.retrying") : tKey("shell.retryData")}
+                </button>
+              </div>
+            ) : null}
             {!showsWorkspaceTopbar ? (
               <DataPlatformDesktopHeader
                 {...scopeControlProps}
@@ -904,7 +950,7 @@ export function DataPlatformHome({
             ) : null}
 
             {selectedNavKey === TODAY_NAV_KEY ? (
-              <ScenarioOverview
+              <TodayOverview
                 isHistorical={isHistorical}
                 language={languageMode}
                 liveSignals={scenarioLiveSignals}
@@ -914,7 +960,6 @@ export function DataPlatformHome({
                 onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
                 onOpenScenario={openScenario}
                 onOpenSummaryTile={openSummaryTile}
-                onOpenTopAction={openScenario}
               />
             ) : visibleOverview ? (
               isDetailPage ? (
@@ -1423,6 +1468,19 @@ export function DataPlatformHome({
                 <span>{tKey("shell.platformUnavailable")}</span>
                 <h1>{tKey("shell.dataPlatformCouldNotLoad")}</h1>
                 <p>{error ?? tKey("shell.unknownPlatformError")}</p>
+                <div className="platform-error-actions">
+                  <button
+                    className="platform-error-retry"
+                    disabled={isLoadingView}
+                    onClick={retryPlatformData}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      refresh
+                    </span>
+                    {isLoadingView ? tKey("shell.retrying") : tKey("shell.retryData")}
+                  </button>
+                </div>
                 <small>
                   {tKey("shell.apiEndpoint")}: {apiBaseUrl}
                   {defaultUserId || resolvedUserId

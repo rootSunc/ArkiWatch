@@ -2020,6 +2020,81 @@
   padding: 24px;
 }
 
+.platform-inline-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, var(--card-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--amber) 8%, var(--card-bg));
+  padding: 10px 12px;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.platform-inline-warning > .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.platform-inline-warning-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.platform-inline-warning-copy strong {
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.platform-inline-warning-copy > span {
+  overflow-wrap: anywhere;
+}
+
+.platform-inline-warning-action,
+.platform-error-retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border: 1px solid var(--outline-variant);
+  border-radius: 6px;
+  background: var(--card-bg);
+  padding: 7px 10px;
+  color: var(--on-surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.platform-inline-warning-action:hover,
+.platform-error-retry:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.platform-inline-warning-action:disabled,
+.platform-error-retry:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.platform-inline-warning-action .material-symbols-outlined,
+.platform-error-retry .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.platform-error-actions {
+  display: flex;
+}
+
 .platform-error h1 {
   color: var(--on-surface);
   font-size: 24px;

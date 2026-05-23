@@ -2,6 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { appEnv } from "@/lib/env";
+
 import type { LanguageMode } from "../i18n";
 
 const TRANSLATION_TEXT_MAX_LENGTH = 1800;
@@ -76,7 +78,9 @@ export function useEventDescriptionTranslation(input: {
         targetLanguage: input.language,
         context: input.context,
       }),
-    enabled: Boolean(input.eventId && input.shouldTranslate && input.text),
+    enabled: Boolean(
+      !appEnv.demoMode && input.eventId && input.shouldTranslate && input.text,
+    ),
     staleTime: Infinity,
     retry: 1,
   });

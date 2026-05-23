@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { API_TIMEOUT_ERROR, apiFetchJson, normalizeApiBaseUrl } from "@/lib/api-client";
+import {
+  API_TIMEOUT_ERROR,
+  apiFetchJson,
+  normalizeApiBaseUrl,
+  unwrapApiResult,
+} from "@/lib/api-client";
 
 describe("api-client", () => {
   afterEach(() => {
@@ -53,5 +58,16 @@ describe("api-client", () => {
     expect(result.data).toBeNull();
     expect(result.error).toBe(API_TIMEOUT_ERROR);
     expect(result.status).toBeNull();
+  });
+
+  it("does not let API errors become successful nullable query values", () => {
+    expect(() =>
+      unwrapApiResult({ data: null, error: "Platform is unavailable.", status: 503 }),
+    ).toThrow("Platform is unavailable.");
+
+    expect(() => unwrapApiResult({ data: null, error: null, status: 204 })).toThrow(
+      "API response did not include data.",
+    );
+    expect(unwrapApiResult({ data: { ok: true }, error: null, status: 200 })).toEqual({ ok: true });
   });
 });

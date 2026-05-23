@@ -9,6 +9,7 @@
     "send": "发送",
     "title": "数据助手",
     "subtitle": "数据解析器",
+    "demoMode": "Demo 模式 · 基于静态 fixture",
     "tooltip": "💡 需要数据协助吗？",
     "loading": "正在读取 ArkiWatch 数据...",
     "failure": "暂时无法连接数据助手。请刷新页面后再试。",

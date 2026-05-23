@@ -5,6 +5,7 @@ import { prefetchPlatformHome } from "@/features/data-platform/queries/platform-
 import { normalizeCityValue } from "@/features/data-platform/city-scope";
 import { normalizeSourceDateValue } from "@/features/data-platform/time-window";
 import { getCurrentSession } from "@/features/auth/session";
+import { appEnv } from "@/lib/env";
 import { getQueryClient } from "@/lib/query-client";
 import { QueryProvider } from "@/providers/query-provider";
 
@@ -26,23 +27,37 @@ export default async function Page({ searchParams }: PageProps) {
   const selectedDate = normalizeSourceDateValue(searchParams?.date);
   const queryClient = getQueryClient();
 
-  // Deliberately not awaited: the prefetch calls register their queries
-  // synchronously, so dehydrate() below captures them as pending and React
-  // streams the results in. Awaiting here would block the whole first paint on
-  // the slowest upstream request.
-  void prefetchPlatformHome(queryClient, {
+  const prefetch = prefetchPlatformHome(queryClient, {
     city: selectedCity,
     date: selectedDate,
     authToken: session?.token,
     userId: session?.user.id,
     activeNavKey: searchParams?.view ?? "today",
     isHistorical: Boolean(selectedDate),
-  }).catch(() => {
-    // Failures surface through the dehydrated query state on the client.
   });
 
+  if (appEnv.demoMode) {
+    // Demo fixtures resolve locally. Awaiting them keeps the server HTML and
+    // hydrated client tree identical, so the first-run path has no hydration
+    // warning or loading flash.
+    await prefetch.catch(() => undefined);
+  } else {
+    // Live upstream calls remain streamed: the shell can paint while the
+    // slowest public source finishes, and failures surface in the client state.
+    void prefetch.catch(() => undefined);
+  }
+
   return (
-    <QueryProvider dehydratedState={dehydrate(queryClient)}>
+    <QueryProvider
+      dehydratedState={dehydrate(queryClient, {
+        // Live upstream requests are intentionally allowed to continue after
+        // the shell renders. Never serialize pending queries: if an upstream
+        // later rejects, React Query would otherwise stream a rejected
+        // hydration promise into the document. The client will issue the
+        // missing query itself and expose the retryable error state.
+        shouldDehydrateQuery: (query) => query.state.status === "success",
+      })}
+    >
       <DataPlatformHome
         currentUserLabel={
           session ? session.user.name ?? session.user.email ?? session.user.id : "Demo view"

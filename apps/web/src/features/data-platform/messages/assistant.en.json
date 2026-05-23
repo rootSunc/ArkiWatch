@@ -9,6 +9,7 @@
     "send": "Send",
     "title": "Data Assistant",
     "subtitle": "Data Explainer",
+    "demoMode": "Demo mode · fixture-based answer",
     "tooltip": "💡 Need help with data?",
     "loading": "Reading ArkiWatch data...",
     "failure": "I could not reach the data assistant. Please try again after refreshing the page.",

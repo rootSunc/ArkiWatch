@@ -20,9 +20,22 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${appEnv.appName} | Unified Data Platform`,
+  metadataBase: new URL(appEnv.appOrigin),
+  title: `${appEnv.appName} | Public data. Practical decisions.`,
   description:
-    "A unified Finland public-data platform for live signals, expansion categories, source health, and guided data exploration."
+    "Practical daily guidance for life in Finland, grounded in transparent public data.",
+  openGraph: {
+    type: "website",
+    title: `${appEnv.appName} | Public data. Practical decisions.`,
+    description: "Practical daily guidance for life in Finland, grounded in transparent public data.",
+    images: [{ url: "/og.png", width: 1731, height: 909, alt: "ArkiWatch public-data life assistant" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${appEnv.appName} | Public data. Practical decisions.`,
+    description: "Practical daily guidance for life in Finland, grounded in transparent public data.",
+    images: ["/og.png"]
+  }
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

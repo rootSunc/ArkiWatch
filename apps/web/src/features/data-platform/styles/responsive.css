@@ -941,6 +941,19 @@
     padding: 20px 16px;
   }
 
+  .platform-inline-warning {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .platform-inline-warning-action {
+    grid-column: 2;
+    width: 100%;
+  }
+
   .platform-error h1 {
     font-size: 22px;
     line-height: 28px;
@@ -967,20 +980,6 @@
     flex: 0 0 min(74vw, 244px);
     min-height: 82px;
     scroll-snap-align: start;
-  }
-
-  .today-brief-summary {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-inline: 0;
-    overflow: visible;
-    padding: 0;
-    scroll-snap-type: none;
-  }
-
-  .today-brief-summary .metric-tile {
-    flex: initial;
-    min-height: 94px;
   }
 
   .summary-grid-user .metric-tile-detail {

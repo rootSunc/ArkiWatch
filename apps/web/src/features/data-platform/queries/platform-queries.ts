@@ -1,11 +1,17 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { createApiClient, normalizeApiBaseUrl } from "@/lib/api-client";
+import {
+  createApiClient,
+  normalizeApiBaseUrl,
+  type ApiJsonResult,
+  unwrapApiResult,
+} from "@/lib/api-client";
 import { appEnv } from "@/lib/env";
 
 import { filterPlatformOverviewForCurrentUser } from "../category-access";
 import { DEFAULT_CITY, normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
+import { demoFixtureForScope } from "../demo/demo-data";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -20,6 +26,7 @@ import type {
 } from "../types";
 import {
   PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForDemo,
   platformDataNeedsForView,
   type PlatformDataNeedsOptions,
 } from "./platform-data-needs";
@@ -135,6 +142,10 @@ function platformClient(scope: ReturnType<typeof resolvePlatformScope>) {
   });
 }
 
+function demoResult<T>(data: T): ApiJsonResult<T> {
+  return { data, error: null, status: 200 };
+}
+
 function withOptionalDate(
   date: string | null,
   params: Record<string, string | null | undefined>,
@@ -175,6 +186,10 @@ export function normalizeHistoryResponse(
 }
 
 export async function fetchPlatformOverview(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).overview);
+  }
+
   const resolved = resolvePlatformScope(scope);
   const result = await platformClient(resolved).get<PlatformOverviewResponse>(
     "/platform/overview",
@@ -190,11 +205,19 @@ export async function fetchPlatformOverview(scope: PlatformQueryScope) {
 }
 
 export async function fetchPublicDashboard(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).publicDashboard);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<PublicDashboardRead>("/public/dashboard");
 }
 
 export async function fetchWeatherForecast(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).weather);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<WeatherForecastResponse>(
     "/weather/forecast",
@@ -203,6 +226,10 @@ export async function fetchWeatherForecast(scope: PlatformQueryScope) {
 }
 
 export async function fetchAirQualityCurrent(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).airQuality);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<AirQualityCurrentResponse>(
     "/air-quality/current",
@@ -211,6 +238,10 @@ export async function fetchAirQualityCurrent(scope: PlatformQueryScope) {
 }
 
 export async function fetchEnergyCurrent(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).energy);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<EnergyCurrentResponse>(
     "/energy/current",
@@ -219,6 +250,10 @@ export async function fetchEnergyCurrent(scope: PlatformQueryScope) {
 }
 
 export async function fetchHouseholdEnergyCurrent(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).householdEnergy);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<EnergyCurrentResponse>(
     "/energy/current",
@@ -227,6 +262,10 @@ export async function fetchHouseholdEnergyCurrent(scope: PlatformQueryScope) {
 }
 
 export async function fetchRoadRailCurrent(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).roadRail);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<RoadRailCurrentResponse>(
     "/traffic/current",
@@ -235,6 +274,10 @@ export async function fetchRoadRailCurrent(scope: PlatformQueryScope) {
 }
 
 export async function fetchTransitCurrent(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).transit);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<TransitCurrentResponse>(
     "/transit/current",
@@ -243,6 +286,14 @@ export async function fetchTransitCurrent(scope: PlatformQueryScope) {
 }
 
 export async function fetchPlatformHistory(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    const result = demoResult(demoFixtureForScope(scope).history);
+    return {
+      ...result,
+      data: normalizeHistoryResponse(result.data),
+    };
+  }
+
   const resolved = resolvePlatformScope(scope);
   const result = await platformClient(resolved).get<PlatformHistoryApiResponse>(
     "/platform/history",
@@ -258,6 +309,10 @@ export async function fetchPlatformHistory(scope: PlatformQueryScope) {
 }
 
 export async function fetchPlatformHistoryAvailability(scope: PlatformQueryScope) {
+  if (appEnv.demoMode) {
+    return demoResult(demoFixtureForScope(scope).historyAvailability);
+  }
+
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved).get<PlatformHistoryAvailabilityResponse>(
     "/platform/history/availability",
@@ -290,13 +345,20 @@ export async function fetchPlatformHome(
     userId: options.userId,
   };
   const resolved = resolvePlatformScope(scope);
-  const needs = platformDataNeedsForView(options.activeNavKey, {
-    isHistorical: options.isHistorical ?? Boolean(resolved.date),
-    needsHistoryAvailability: options.needsHistoryAvailability,
-  });
+  const needs = appEnv.demoMode
+    ? platformDataNeedsForDemo(options.activeNavKey, {
+        isHistorical: options.isHistorical ?? Boolean(resolved.date),
+        needsHistoryAvailability: options.needsHistoryAvailability,
+      })
+    : platformDataNeedsForView(options.activeNavKey, {
+        isHistorical: options.isHistorical ?? Boolean(resolved.date),
+        needsHistoryAvailability: options.needsHistoryAvailability,
+      });
 
-  const overviewResult = await fetchPlatformOverview(scope);
-  const publicDashboardResult = await fetchPublicDashboard(scope);
+  const [overviewResult, publicDashboardResult] = await Promise.all([
+    fetchPlatformOverview(scope),
+    fetchPublicDashboard(scope),
+  ]);
 
   const [
     weatherResult,
@@ -354,10 +416,15 @@ export async function prefetchPlatformHome(
   scope: PrefetchPlatformHomeOptions,
 ): Promise<PlatformFetchResult> {
   const resolved = resolvePlatformScope(scope);
-  const needs = platformDataNeedsForView(scope.activeNavKey, {
-    isHistorical: scope.isHistorical ?? Boolean(resolved.date),
-    needsHistoryAvailability: scope.needsHistoryAvailability,
-  });
+  const needs = appEnv.demoMode
+    ? platformDataNeedsForDemo(scope.activeNavKey, {
+        isHistorical: scope.isHistorical ?? Boolean(resolved.date),
+        needsHistoryAvailability: scope.needsHistoryAvailability,
+      })
+    : platformDataNeedsForView(scope.activeNavKey, {
+        isHistorical: scope.isHistorical ?? Boolean(resolved.date),
+        needsHistoryAvailability: scope.needsHistoryAvailability,
+      });
   const queryScope: PlatformQueryScope = {
     city: scope.city,
     date: scope.date,
@@ -368,12 +435,12 @@ export async function prefetchPlatformHome(
   const tasks: Array<Promise<unknown>> = [
     queryClient.prefetchQuery({
       queryKey: platformKeys.overview(queryScope),
-      queryFn: async () => (await fetchPlatformOverview(queryScope)).data,
+      queryFn: async () => unwrapApiResult(await fetchPlatformOverview(queryScope)),
       staleTime: PLATFORM_QUERY_STALE_TIME_MS,
     }),
     queryClient.prefetchQuery({
       queryKey: platformKeys.publicDashboard(queryScope),
-      queryFn: async () => (await fetchPublicDashboard(queryScope)).data,
+      queryFn: async () => unwrapApiResult(await fetchPublicDashboard(queryScope)),
       staleTime: PLATFORM_QUERY_STALE_TIME_MS,
     }),
   ];
@@ -382,7 +449,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.weather(queryScope),
-        queryFn: async () => (await fetchWeatherForecast(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchWeatherForecast(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -391,7 +458,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.airQuality(queryScope),
-        queryFn: async () => (await fetchAirQualityCurrent(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchAirQualityCurrent(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -400,7 +467,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.energy(queryScope),
-        queryFn: async () => (await fetchEnergyCurrent(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchEnergyCurrent(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -409,7 +476,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.householdEnergy(queryScope),
-        queryFn: async () => (await fetchHouseholdEnergyCurrent(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchHouseholdEnergyCurrent(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -418,7 +485,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.roadRail(queryScope),
-        queryFn: async () => (await fetchRoadRailCurrent(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchRoadRailCurrent(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -427,7 +494,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.transit(queryScope),
-        queryFn: async () => (await fetchTransitCurrent(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchTransitCurrent(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -436,7 +503,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.history(queryScope),
-        queryFn: async () => (await fetchPlatformHistory(queryScope)).data ?? emptyHistory(),
+        queryFn: async () => unwrapApiResult(await fetchPlatformHistory(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );
@@ -445,7 +512,7 @@ export async function prefetchPlatformHome(
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: platformKeys.historyAvailability(queryScope),
-        queryFn: async () => (await fetchPlatformHistoryAvailability(queryScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchPlatformHistoryAvailability(queryScope)),
         staleTime: PLATFORM_QUERY_STALE_TIME_MS,
       }),
     );

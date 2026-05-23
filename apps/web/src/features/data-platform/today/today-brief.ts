@@ -1,12 +1,12 @@
-import type { CrossDomainTimelineItem } from "./cross-domain-timeline";
-import type { LanguageMode } from "./i18n";
-import { translateMessageKey } from "./i18n";
+import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
+import type { LanguageMode } from "../i18n";
+import { translateMessageKey } from "../i18n";
 import type {
   PublicActionRead,
   PublicDashboardRead,
   PublicScenarioSectionRead,
-} from "./types";
-import type { UserSummaryTile } from "./user-summary-stats";
+} from "../types";
+import type { UserSummaryTile } from "../user-summary-stats";
 
 export type TodayBrief = {
   checkedAt: string | null;
@@ -59,7 +59,7 @@ function buildHeadline(
   return translateMessageKey(language, "shell.coreDailyScenariosClear");
 }
 
-function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineItem[] {
+export function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineItem[] {
   return items
     .filter(
       (item) =>
@@ -73,7 +73,7 @@ function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineIt
       }
       return new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime();
     })
-    .slice(0, 5);
+    .slice(0, 3);
 }
 
 export function buildTodayBrief({

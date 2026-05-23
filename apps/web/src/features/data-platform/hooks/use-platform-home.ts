@@ -2,6 +2,8 @@
 
 import { keepPreviousData, useQueries } from "@tanstack/react-query";
 
+import { unwrapApiResult } from "@/lib/api-client";
+
 import {
   fetchAirQualityCurrent,
   fetchEnergyCurrent,
@@ -20,6 +22,7 @@ import {
 } from "../queries/platform-queries";
 import {
   PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForDemo,
   platformDataNeedsForView,
 } from "../queries/platform-data-needs";
 import { appEnv } from "@/lib/env";
@@ -60,6 +63,8 @@ export type PlatformHomeState = PlatformFetchResult & {
   isLoadingView: boolean;
   /** True while the rendered data still belongs to the previously selected scope. */
   isPreviousScope: boolean;
+  /** Refetch the currently active platform queries after a transient failure. */
+  retry: () => Promise<void>;
 };
 
 export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeState {
@@ -72,69 +77,74 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     userId,
     authToken: options.authToken,
   };
-  const needs = platformDataNeedsForView(options.activeNavKey, {
-    isHistorical: options.isHistorical,
-    needsHistoryAvailability: options.needsHistoryAvailability,
-  });
+  const needs = appEnv.demoMode
+    ? platformDataNeedsForDemo(options.activeNavKey, {
+        isHistorical: options.isHistorical,
+        needsHistoryAvailability: options.needsHistoryAvailability,
+      })
+    : platformDataNeedsForView(options.activeNavKey, {
+        isHistorical: options.isHistorical,
+        needsHistoryAvailability: options.needsHistoryAvailability,
+      });
 
   const results = useQueries({
     queries: [
       {
         queryKey: platformKeys.overview(normalizedScope),
-        queryFn: async () => (await fetchPlatformOverview(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchPlatformOverview(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
       },
       {
         queryKey: platformKeys.publicDashboard(normalizedScope),
-        queryFn: async () => (await fetchPublicDashboard(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchPublicDashboard(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
-        queryFn: async () => (await fetchWeatherForecast(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchWeatherForecast(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.weather,
       },
       {
         queryKey: platformKeys.airQuality(normalizedScope),
-        queryFn: async () => (await fetchAirQualityCurrent(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchAirQualityCurrent(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.air,
       },
       {
         queryKey: platformKeys.energy(normalizedScope),
-        queryFn: async () => (await fetchEnergyCurrent(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchEnergyCurrent(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.energy,
       },
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
-        queryFn: async () => (await fetchHouseholdEnergyCurrent(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchHouseholdEnergyCurrent(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.householdEnergy,
       },
       {
         queryKey: platformKeys.roadRail(normalizedScope),
-        queryFn: async () => (await fetchRoadRailCurrent(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchRoadRailCurrent(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.roadRail,
       },
       {
         queryKey: platformKeys.transit(normalizedScope),
-        queryFn: async () => (await fetchTransitCurrent(normalizedScope)).data,
+        queryFn: async () => unwrapApiResult(await fetchTransitCurrent(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.transit,
       },
       {
         queryKey: platformKeys.history(normalizedScope),
-        queryFn: async () => (await fetchPlatformHistory(normalizedScope)).data ?? emptyHistory(),
+        queryFn: async () => unwrapApiResult(await fetchPlatformHistory(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.history,
       },
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
         queryFn: async () =>
-          (await fetchPlatformHistoryAvailability(normalizedScope)).data,
+          unwrapApiResult(await fetchPlatformHistoryAvailability(normalizedScope)),
         ...SCOPE_QUERY_OPTIONS,
         enabled: needs.historyAvailability,
       },
@@ -171,10 +181,15 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     .map((query) => (query.error instanceof Error ? query.error.message : null))
     .filter((message): message is string => Boolean(message));
 
+  const retry = async (): Promise<void> => {
+    await Promise.all(activeResults.map((query) => query.refetch()));
+  };
+
   return {
     isPending: overviewQuery.isPending && overviewQuery.data == null,
-    isLoadingView: activeResults.some((query) => query.isPending),
+    isLoadingView: activeResults.some((query) => query.isPending || query.isFetching),
     isPreviousScope: activeResults.some((query) => query.isPlaceholderData),
+    retry,
     apiBaseUrl: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL),
     defaultUserId: userId,
     overview: overviewQuery.data ?? null,
