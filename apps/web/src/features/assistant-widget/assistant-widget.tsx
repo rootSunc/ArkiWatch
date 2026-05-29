@@ -17,6 +17,7 @@ type AssistantWidgetProps = {
   city: string;
   date: string | null;
   userId: string;
+  mode: "today" | "data";
 };
 
 type ChatMessage = {
@@ -93,6 +94,7 @@ export function AssistantWidget({
   city,
   date,
   userId,
+  mode,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -201,6 +203,15 @@ export function AssistantWidget({
   );
 
   const suggestedQuestions = useMemo(() => {
+    if (mode === "today") {
+      return [
+        tKey("assistant.whatShouldIDoToday"),
+        tKey("assistant.bestTimeToGoOutside"),
+        tKey("assistant.bestTimeToCommute"),
+        tKey("assistant.explainCurrent"),
+      ];
+    }
+
     if (!overview) {
       return [
         tKey("assistant.explainCurrent"),
@@ -215,7 +226,7 @@ export function AssistantWidget({
       tKey("assistant.whichSourceAbnormal"),
       tKey("assistant.whichExpansionPlanned")
     ];
-  }, [overview, tKey, analyzeCategory]);
+  }, [mode, overview, tKey, analyzeCategory]);
 
   const submitQuestion = async (question: string) => {
     const normalizedQuestion = question.trim();
@@ -372,28 +383,32 @@ export function AssistantWidget({
 
   return (
     <div
-      className={`assistant-widget ${isOpen ? "assistant-widget-open" : ""}`}
+      className={`assistant-widget assistant-widget-mode-${mode}${isOpen ? " assistant-widget-open" : ""}`}
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
       {isOpen ? (
-        <section className="assistant-drawer" aria-label="Data assistant">
+        <section className="assistant-drawer" aria-label={tKey("assistant.drawerLabel")}>
           <header>
             <div className="assistant-mini-person" aria-hidden="true">
               <Image
                 src="/brand/zoro_mascot.png"
-                alt="Assistant mascot"
+                alt={tKey("assistant.mascotAlt")}
                 width={36}
                 height={36}
                 className="assistant-mini-mascot-img"
               />
             </div>
             <div>
-              <span className="label-text">{tKey("assistant.title")}</span>
-              <h2>{tKey("assistant.subtitle")}</h2>
+              <span className="label-text">
+                {tKey(mode === "today" ? "assistant.todayTitle" : "assistant.title")}
+              </span>
+              <h2>
+                {tKey(mode === "today" ? "assistant.todaySubtitle" : "assistant.subtitle")}
+              </h2>
               {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
             </div>
             <button
-              aria-label="Close assistant"
+              aria-label={tKey("assistant.close")}
               className="assistant-icon-button"
               onClick={() => setIsOpen(false)}
               type="button"
@@ -455,20 +470,20 @@ export function AssistantWidget({
           
           <form className="assistant-form" onSubmit={onSubmit}>
             <input
-              aria-label="Ask about platform data"
+              aria-label={tKey("assistant.askInputLabel")}
               disabled={isLoading}
               onChange={(event) => setInputValue(event.target.value)}
               placeholder={tKey("assistant.askPlaceholder")}
               value={inputValue}
             />
-            <button disabled={isLoading} type="submit">
+            <button aria-label={tKey("assistant.send")} disabled={isLoading} type="submit">
               <span className="material-symbols-outlined">send</span>
             </button>
           </form>
         </section>
       ) : (
         <button
-          aria-label={tKey("assistant.tooltip")}
+          aria-label={tKey("assistant.openAssistant")}
           className="assistant-launcher"
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
@@ -485,13 +500,16 @@ export function AssistantWidget({
           <div className="assistant-mascot-wrapper">
             <Image
               src="/brand/zoro_mascot_launcher.png"
-              alt="Assistant mascot launcher"
+              alt={tKey("assistant.mascotAlt")}
               width={76}
               height={76}
               className="assistant-mascot-img"
               priority
             />
           </div>
+          <span className="assistant-launcher-label">
+            {tKey(mode === "today" ? "assistant.askToday" : "assistant.askData")}
+          </span>
           <span className="assistant-bubble">{tKey("assistant.tooltip")}</span>
         </button>
       )}

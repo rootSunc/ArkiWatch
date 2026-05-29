@@ -15,6 +15,15 @@ export const CITY_OPTIONS: CityScopeOption[] = [
   { value: "oulu", label: "Oulu" }
 ];
 
+export const CITY_COVERAGE_AREAS: Record<string, string> = {
+  helsinki: "Helsinki / Uusimaa",
+  espoo: "Espoo / Uusimaa",
+  vantaa: "Vantaa / Uusimaa",
+  tampere: "Tampere / Pirkanmaa",
+  turku: "Turku / Southwest Finland",
+  oulu: "Oulu / North Ostrobothnia",
+};
+
 const CITY_SCOPED_CATEGORY_KEYS = new Set(["weather", "air", "transit", "water", "city_services", "events"]);
 
 export function normalizeCityValue(value: string | null | undefined): string {
@@ -24,6 +33,10 @@ export function normalizeCityValue(value: string | null | undefined): string {
 
 export function cityLabel(value: string): string {
   return CITY_OPTIONS.find((option) => option.value === value)?.label ?? CITY_OPTIONS[0].label;
+}
+
+export function cityCoverageArea(value: string): string {
+  return CITY_COVERAGE_AREAS[value] ?? cityLabel(value);
 }
 
 export function categorySupportsCityScope(categoryKey: string): boolean {

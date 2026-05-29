@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
-import { buildPlanItems, isPlaceholderRecommendation } from "./today-brief";
+import type { PublicDashboardRead } from "../types";
+import { buildPlanItems, buildTodayBrief, isPlaceholderRecommendation } from "./today-brief";
 
 function timelineItem(
   id: string,
@@ -21,6 +22,19 @@ function timelineItem(
     scenarioKey: kind === "scenario" ? "outdoor" : undefined,
   };
 }
+
+const dashboard: PublicDashboardRead = {
+  checked_at: "2026-08-09T08:00:00Z",
+  app_name: "ArkiWatch",
+  timezone: "Europe/Helsinki",
+  coverage_area: "Helsinki/Uusimaa",
+  top_actions: [],
+  scenario_channels: [],
+  scenario_sections: [],
+  timeline: [],
+  broadcasts: [],
+  sources: [],
+};
 
 describe("buildPlanItems", () => {
   it("keeps the three most important decision moments", () => {
@@ -55,5 +69,32 @@ describe("isPlaceholderRecommendation", () => {
       isPlaceholderRecommendation("energy", "No active regional recommendation is available."),
     ).toBe(true);
     expect(isPlaceholderRecommendation("energy", "Run the dishwasher after 22:00.")).toBe(false);
+  });
+});
+
+describe("buildTodayBrief", () => {
+  it("surfaces a regional scope warning when the selected area differs", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: dashboard,
+      overviewCoverageArea: "Tampere/Pirkanmaa",
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+    });
+
+    expect(brief?.coverageArea).toBe("Tampere/Pirkanmaa");
+    expect(brief?.recommendationCoverageArea).toBe("Helsinki/Uusimaa");
+  });
+
+  it("does not add a warning when both views share the same region", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: dashboard,
+      overviewCoverageArea: "Espoo/Uusimaa",
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+    });
+
+    expect(brief?.recommendationCoverageArea).toBeNull();
   });
 });

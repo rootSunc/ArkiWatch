@@ -60,17 +60,40 @@ export function SourceHealthStrip({
         <div className="source-health-strip">
           {overview.sources.map((source) => (
             <article
+              aria-label={`${source.source_name} · ${enumLabel(source.operational_status)}`}
               className={`source-chip source-chip-${source.operational_status}`}
               key={source.id}
             >
-              <span>{source.source_code}</span>
+              <span className="source-chip-code">{source.source_code}</span>
               <strong>{enumLabel(source.operational_status)}</strong>
-              <small>
+              <small className="source-chip-age">
                 {formatRelativeAge(
                   source.last_run_finished_at ?? source.last_run_started_at,
                   language,
                 )}
               </small>
+              {source.records_ingested !== null ? (
+                <small className="source-chip-records">
+                  {source.records_ingested.toLocaleString(language === "zh" ? "zh-CN" : "en-US")} {tKey("shell.records")}
+                </small>
+              ) : null}
+              {source.documentation_url ? (
+                <a
+                  aria-label={`${source.source_name} · ${tKey("shell.providerDocs")}`}
+                  className="source-chip-doc"
+                  href={source.documentation_url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    open_in_new
+                  </span>
+                  <span className="source-chip-doc-label">{tKey("shell.providerDocs")}</span>
+                </a>
+              ) : null}
+              {source.error_message ? (
+                <small className="source-chip-error">{source.error_message}</small>
+              ) : null}
             </article>
           ))}
         </div>

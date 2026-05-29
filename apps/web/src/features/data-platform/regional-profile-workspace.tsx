@@ -258,7 +258,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             {keyDataItems.map((field) => (
               <article key={field.key} className="regional-field-card">
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field.key] ?? "dataset"}
+                  {FIELD_ICONS[field.key] ?? "database"}
                 </span>
                 <div className="regional-field-card-text">
                   <strong>{dataItemLabel(field)}</strong>

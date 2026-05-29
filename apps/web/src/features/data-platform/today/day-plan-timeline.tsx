@@ -19,6 +19,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 type DayPlanTimelineProps = {
   items: CrossDomainTimelineItem[];
   language: LanguageMode;
+  disabled?: boolean;
   onOpenEvent?: (event: PlatformEvent) => void;
   onOpenScenario?: (scenarioKey: string) => void;
 };
@@ -41,6 +42,7 @@ function timelineDotClass(severity: string): string {
 export function DayPlanTimeline({
   items,
   language,
+  disabled = false,
   onOpenEvent,
   onOpenScenario,
 }: DayPlanTimelineProps) {
@@ -67,6 +69,7 @@ export function DayPlanTimeline({
                 <span className={`day-plan-dot ${timelineDotClass(item.severity)}`} aria-hidden="true" />
                 <button
                   className="day-plan-timeline-button"
+                  disabled={disabled}
                   onClick={() => {
                     if (item.kind === "event" && item.event) {
                       onOpenEvent?.(item.event);

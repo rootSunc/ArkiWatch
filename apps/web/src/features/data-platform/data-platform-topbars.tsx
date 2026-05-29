@@ -11,6 +11,7 @@ import {
   ThemeToggleButton,
   type DashboardTone,
   type ThemeMode,
+  type WorkspaceMode,
 } from "./data-platform-shell";
 import { BRAND_LOGO_SRC, FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "./data-platform-nav-utils";
 import { SideNavRestoreButton } from "./data-platform-side-nav";
@@ -46,6 +47,7 @@ type DataPlatformMobileHeaderProps = ScopeControlProps & {
   currentUserInitials: string;
   currentUserLabel: string;
   isDetailPage: boolean;
+  workspaceMode: WorkspaceMode;
   onOpenNavigation: () => void;
   themeMode: ThemeMode;
   onToggleTheme: () => void;
@@ -79,6 +81,7 @@ export function DataPlatformMobileHeader({
   renderAuthActionButton,
   themeMode,
   userStateLabel,
+  workspaceMode,
 }: DataPlatformMobileHeaderProps) {
   const { tKey } = useI18n();
 
@@ -104,7 +107,16 @@ export function DataPlatformMobileHeader({
             width={96}
           />
         </span>
-        <strong>ArkiWatch</strong>
+        <span className="mobile-brand-copy">
+          <strong>ArkiWatch</strong>
+          <small>
+            {tKey(
+              workspaceMode === "today"
+                ? "shell.lifeAssistant"
+                : "shell.dataPlatformMode",
+            )}
+          </small>
+        </span>
       </div>
       <div className="top-actions">
         <div className="mobile-scope-switchers">
@@ -166,6 +178,7 @@ export function DataPlatformMobileHeader({
 
 type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
   isDetailPage: boolean;
+  workspaceMode: WorkspaceMode;
   onSelectNav: (navKey: string) => void;
   restoreSideNavButton: ReactNode;
 };
@@ -178,6 +191,7 @@ export function DataPlatformWorkspaceTopbar({
   isCityPending,
   isDatePending,
   isDetailPage,
+  workspaceMode,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -210,6 +224,18 @@ export function DataPlatformWorkspaceTopbar({
           />
         </span>
         <strong>ArkiWatch</strong>
+      </div>
+      <div className="workspace-context-badge">
+        <span className="material-symbols-outlined" aria-hidden="true">
+          {workspaceMode === "data" ? "hub" : "calendar_today"}
+        </span>
+        <span>
+          {tKey(
+            workspaceMode === "data"
+              ? "shell.dataPlatformMode"
+              : "shell.lifeAssistant",
+          )}
+        </span>
       </div>
       {isDetailPage ? (
         <nav aria-label={tKey("shell.detailWorkspaceNavigation")}>
@@ -289,6 +315,13 @@ export function DataPlatformDesktopHeader({
       <div className="desktop-dashboard-heading">
         {restoreSideNavButton}
         <div className="desktop-dashboard-heading-copy">
+          <span className="desktop-dashboard-kicker">
+            {tKey(
+              selectedNavKey === FALLBACK_NAV_KEY
+                ? "shell.dataPlatformMode"
+                : "shell.lifeAssistant",
+            )}
+          </span>
           <h2>
             {selectedCategory
               ? `${displayTitle(selectedCategory, language)} ${tKey("shell.dashboardSuffix")}`
@@ -296,7 +329,12 @@ export function DataPlatformDesktopHeader({
                 ? tKey("shell.navSignals")
                 : tKey("shell.navToday")}
           </h2>
-          {selectedCategory ? <p>{selectedCategory.description}</p> : null}
+          <p>
+            {selectedCategory?.description ??
+              (selectedNavKey === FALLBACK_NAV_KEY
+                ? tKey("shell.dataPlatformLead")
+                : tKey("shell.lifeAssistantLead"))}
+          </p>
         </div>
       </div>
       <div className="desktop-controls">

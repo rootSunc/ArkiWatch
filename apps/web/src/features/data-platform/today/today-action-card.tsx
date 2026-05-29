@@ -9,6 +9,7 @@ import { buildTodayActionCardView } from "./today-action-card-model";
 type TodayActionCardProps = {
   language: LanguageMode;
   liveSignals: ScenarioLiveSignals;
+  disabled?: boolean;
   onOpen: () => void;
   section: PublicScenarioSectionRead;
 };
@@ -16,15 +17,22 @@ type TodayActionCardProps = {
 export function TodayActionCard({
   language,
   liveSignals,
+  disabled = false,
   onOpen,
   section,
 }: TodayActionCardProps) {
-  const { tKey } = useI18n();
+  const { enumLabel, tKey } = useI18n();
   const view = buildTodayActionCardView(section, liveSignals, language);
+  const localizedTitle = ["good", "good window", "needs attention", "watch"].includes(
+    view.title.trim().toLowerCase(),
+  )
+    ? enumLabel(view.title)
+    : view.title;
 
   return (
     <button
       className={`today-action-card today-action-card-${view.tone}`}
+      disabled={disabled}
       onClick={onOpen}
       type="button"
     >
@@ -33,12 +41,12 @@ export function TodayActionCard({
       </span>
       <span className="today-action-card-content">
         <span className="today-action-card-label">
-          {section.title}
+          {enumLabel(section.key)}
           {view.isLiveFallback ? (
             <span className="today-action-card-live">{tKey("shell.liveSignal")}</span>
           ) : null}
         </span>
-        <strong>{view.title}</strong>
+        <strong>{localizedTitle}</strong>
         <span className="today-action-card-body">{view.body}</span>
         {view.dataPoints.length > 0 ? (
           <span className="today-action-card-data" aria-label={tKey("shell.todaySSnapshot")}>
@@ -56,7 +64,7 @@ export function TodayActionCard({
         </span>
       </span>
       <span className="today-action-card-arrow material-symbols-outlined" aria-hidden="true">
-        arrow_forward
+        chevron_right
       </span>
     </button>
   );

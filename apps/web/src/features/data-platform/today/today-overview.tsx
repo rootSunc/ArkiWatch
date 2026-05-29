@@ -17,6 +17,7 @@ type TodayOverviewProps = {
   liveSignals: ScenarioLiveSignals;
   planItems: TodayBrief["planItems"];
   isHistorical: boolean;
+  isScopePending: boolean;
   language: LanguageMode;
   onOpenSignals: () => void;
   onOpenScenario: (scenarioKey: string) => void;
@@ -29,6 +30,7 @@ export function TodayOverview({
   liveSignals,
   planItems,
   isHistorical,
+  isScopePending,
   language,
   onOpenSignals,
   onOpenScenario,
@@ -41,7 +43,7 @@ export function TodayOverview({
     return (
       <section className="today-overview today-overview-empty" aria-label={tKey("shell.navToday")}>
         <span className="material-symbols-outlined" aria-hidden="true">
-          cloud_off
+          cloud
         </span>
         <strong>{tKey("shell.scenarioOverviewUnavailable")}</strong>
         <p>{tKey("shell.publicRecommendationsCouldNotBeLoadedTryAgainOrOpenAllSignals")}</p>
@@ -56,7 +58,11 @@ export function TodayOverview({
   const focusTone = focusAction ? severityTone(focusAction.severity) : "good";
 
   return (
-    <section className="today-overview" aria-label={tKey("shell.scenarioOverview")}>
+    <section
+      className={`today-overview${isScopePending ? " today-overview-scope-pending" : ""}`}
+      aria-busy={isScopePending}
+      aria-label={tKey("shell.scenarioOverview")}
+    >
       <section className={`today-command today-command-${focusTone}`}>
         <div className="today-focus">
           <div className="today-eyebrow">
@@ -64,6 +70,11 @@ export function TodayOverview({
             <span aria-hidden="true">·</span>
             <span>{todayBrief.coverageArea}</span>
           </div>
+          {todayBrief.recommendationCoverageArea ? (
+            <p className="today-scope-note" role="note">
+              {tKey("shell.publicRecommendationsScope")} {todayBrief.recommendationCoverageArea}
+            </p>
+          ) : null}
           <h2>{todayBrief.headline}</h2>
           <p>
             {focusAction?.body ?? tKey("shell.coreDailyScenariosClear")}
@@ -71,7 +82,7 @@ export function TodayOverview({
           <div className="today-focus-footer">
             <span>
               <span className="material-symbols-outlined" aria-hidden="true">
-                verified
+                check_circle
               </span>
               {tKey("shell.dataChecked")}
               {todayBrief.checkedAt ? (
@@ -83,11 +94,12 @@ export function TodayOverview({
                 <button
                   className="today-primary-action"
                   onClick={() => onOpenScenario(focusAction.scenario_key)}
+                  disabled={isScopePending}
                   type="button"
                 >
                   {tKey("shell.reviewAction")}
                   <span className="material-symbols-outlined" aria-hidden="true">
-                    arrow_forward
+                    chevron_right
                   </span>
                 </button>
               ) : null}
@@ -104,6 +116,7 @@ export function TodayOverview({
             {todayBrief.summaryTiles.map((tile) => (
               <button
                 className={`today-glance-item today-glance-item-${tile.tone}`}
+                disabled={isScopePending}
                 key={tile.key}
                 onClick={() => onOpenSummaryTile(tile.key)}
                 type="button"
@@ -129,6 +142,7 @@ export function TodayOverview({
 
       <div className="today-content-grid">
         <DayPlanTimeline
+          disabled={isScopePending}
           items={planItems}
           language={language}
           onOpenEvent={onOpenEvent}
@@ -145,6 +159,7 @@ export function TodayOverview({
           <div className="today-action-grid">
             {todayBrief.scenarioSections.map((section) => (
               <TodayActionCard
+                disabled={isScopePending}
                 key={section.key}
                 language={language}
                 liveSignals={liveSignals}

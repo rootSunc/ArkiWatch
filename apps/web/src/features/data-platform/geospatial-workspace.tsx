@@ -337,7 +337,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             {keyDataItems.map((field) => (
               <article key={field.key}>
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field.key] ?? "dataset"}
+                  {FIELD_ICONS[field.key] ?? "database"}
                 </span>
                 <div>
                   <strong>{dataItemLabel(field)}</strong>

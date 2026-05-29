@@ -142,7 +142,7 @@ export function WeatherDetailView({
                 <span>{trendLabel}</span>
                 <strong className={trend < 0 ? "weather-trend-down" : "weather-trend-up"}>
                   <span className="material-symbols-outlined" aria-hidden="true">
-                    {trend < 0 ? "arrow_downward" : "arrow_upward"}
+                    trending_flat
                   </span>
                   {formatDegree(Math.abs(trend))}
                 </strong>
@@ -461,4 +461,3 @@ export function WeatherDetailView({
     </div>
   );
 }
-

@@ -11,6 +11,7 @@ import type { UserSummaryTile } from "../user-summary-stats";
 export type TodayBrief = {
   checkedAt: string | null;
   coverageArea: string;
+  recommendationCoverageArea: string | null;
   headline: string;
   planItems: CrossDomainTimelineItem[];
   scenarioSections: PublicScenarioSectionRead[];
@@ -59,6 +60,12 @@ function buildHeadline(
   return translateMessageKey(language, "shell.coreDailyScenariosClear");
 }
 
+function coverageRegion(value: string): string {
+  const withoutDate = value.split(" · ", 1)[0] ?? value;
+  const segments = withoutDate.split("/");
+  return (segments[segments.length - 1] ?? withoutDate).trim().toLowerCase();
+}
+
 export function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineItem[] {
   return items
     .filter(
@@ -78,11 +85,13 @@ export function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTim
 
 export function buildTodayBrief({
   publicDashboard,
+  overviewCoverageArea,
   summaryTiles,
   timelineItems,
   language,
 }: {
   publicDashboard: PublicDashboardRead | null;
+  overviewCoverageArea?: string | null;
   summaryTiles: UserSummaryTile[];
   timelineItems: CrossDomainTimelineItem[];
   language: LanguageMode;
@@ -97,7 +106,12 @@ export function buildTodayBrief({
 
   return {
     checkedAt: publicDashboard.checked_at,
-    coverageArea: publicDashboard.coverage_area,
+    coverageArea: overviewCoverageArea ?? publicDashboard.coverage_area,
+    recommendationCoverageArea:
+      overviewCoverageArea &&
+      coverageRegion(overviewCoverageArea) !== coverageRegion(publicDashboard.coverage_area)
+        ? publicDashboard.coverage_area
+        : null,
     headline: buildHeadline(topActions, summaryTiles, language),
     planItems: buildPlanItems(timelineItems),
     scenarioSections: publicDashboard.scenario_sections,

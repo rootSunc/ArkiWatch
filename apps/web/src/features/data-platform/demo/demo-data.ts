@@ -1,4 +1,4 @@
-import { cityLabel, normalizeCityValue } from "../city-scope";
+import { cityCoverageArea, cityLabel, normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
 import type {
   AirQualityCurrentResponse,
@@ -869,7 +869,9 @@ export function demoFixtureForScope(scope: {
   city?: string | null;
   date?: string | null;
 } = {}): DemoFixture {
-  const city = cityLabel(normalizeCityValue(scope.city));
+  const cityRef = normalizeCityValue(scope.city);
+  const city = cityLabel(cityRef);
+  const coverageArea = cityCoverageArea(cityRef);
   const date = normalizeSourceDateValue(scope.date);
   const scopeSuffix = date ? ` · ${date}` : "";
 
@@ -877,13 +879,13 @@ export function demoFixtureForScope(scope: {
     ...BASE_FIXTURE,
     overview: {
       ...withScope(BASE_FIXTURE.overview, date),
-      coverage_area: `${city} / Uusimaa${scopeSuffix}`,
+      coverage_area: `${coverageArea}${scopeSuffix}`,
       categories: BASE_FIXTURE.overview.categories,
       sources: BASE_FIXTURE.overview.sources,
     },
     publicDashboard: {
       ...BASE_FIXTURE.publicDashboard,
-      coverage_area: `${city} / Uusimaa${scopeSuffix}`,
+      coverage_area: `${BASE_FIXTURE.publicDashboard.coverage_area}${scopeSuffix}`,
     },
     weather: {
       ...withScope(BASE_FIXTURE.weather, date),
@@ -902,7 +904,7 @@ export function demoFixtureForScope(scope: {
     },
     historyAvailability: {
       ...BASE_FIXTURE.historyAvailability,
-      city: normalizeCityValue(scope.city),
+      city: cityRef,
     },
   };
 }

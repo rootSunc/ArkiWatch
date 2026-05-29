@@ -32,7 +32,7 @@ import {
   saveCityValue,
   storedCityValue,
 } from "./data-platform-shell";
-import type { DashboardTone, NavItem } from "./data-platform-shell";
+import type { DashboardTone, NavItem, WorkspaceMode } from "./data-platform-shell";
 import {
   DataPlatformSideNav,
   DataPlatformSideNavBackdrop,
@@ -97,6 +97,7 @@ import { buildSignalSystemTiles } from "./signals-console";
 import { SourceHealthStrip } from "./source-health-strip";
 import { buildTodayBrief } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
+import { viewerStateLabel } from "./viewer-state";
 import {
   ENERGY_TAB_QUERY_KEY,
   MOBILITY_TAB_QUERY_KEY,
@@ -239,12 +240,18 @@ export function DataPlatformHome({
       ? activeTimeScope.date ?? selectedDate
       : selectedDate;
   const isHistorical = historicalDate !== null;
-  const userStateLabel = isAuthenticated ? tKey("shell.signedIn") : tKey("shell.demoView");
+  const userStateLabel = viewerStateLabel(
+    isAuthenticated,
+    appEnv.demoMode,
+    languageMode,
+  );
   const authActionLabel = isAuthenticated ? tKey("shell.signOut") : tKey("shell.adminSignIn");
   const authActionIcon = isAuthenticated ? "logout" : "login";
   const currentUserInitials = profileInitials(currentUserLabel);
 
   const isRefreshing = refreshMutation.isPending;
+  const workspaceMode: WorkspaceMode =
+    selectedNavKey === TODAY_NAV_KEY ? "today" : "data";
 
   function triggerDataRefresh(): void {
     if (isRefreshing || !isAuthenticated || refreshMutation.isPending) {
@@ -521,11 +528,12 @@ export function DataPlatformHome({
     () =>
       buildTodayBrief({
         publicDashboard,
+        overviewCoverageArea: visibleOverview?.coverage_area,
         summaryTiles: userSummaryTiles,
         timelineItems: crossDomainTimeline,
         language: languageMode,
       }),
-    [crossDomainTimeline, languageMode, publicDashboard, userSummaryTiles],
+    [crossDomainTimeline, languageMode, publicDashboard, userSummaryTiles, visibleOverview],
   );
   const signalSystemTiles = useMemo(
     () =>
@@ -837,7 +845,12 @@ export function DataPlatformHome({
     renderAuthActionButton,
   };
   const mobileNavItems = useMemo(
-    () => PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)),
+    () => {
+      const mobilePriority = new Set(["today", "overview", "weather", "mobility"]);
+      return PRIMARY_NAV_ITEMS.filter(
+        (item) => mobilePriority.has(item.key) && navItemAvailable(item, categories),
+      );
+    },
     [categories],
   );
 
@@ -878,6 +891,7 @@ export function DataPlatformHome({
             themeMode={themeMode}
             onToggleTheme={toggleThemeMode}
             userStateLabel={userStateLabel}
+            workspaceMode={workspaceMode}
           />
 
           {showsWorkspaceTopbar ? (
@@ -886,6 +900,7 @@ export function DataPlatformHome({
               isDetailPage={isDetailPage}
               onSelectNav={selectNav}
               restoreSideNavButton={restoreSideNavButton}
+              workspaceMode={workspaceMode}
             />
           ) : null}
 
@@ -907,9 +922,25 @@ export function DataPlatformHome({
             {appEnv.demoMode ? (
               <div className="demo-mode-banner" role="status">
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  science
+                  database
                 </span>
                 <span>{tKey("shell.demoModeNotice")}</span>
+              </div>
+            ) : null}
+            {isPreviousScope ? (
+              <div className="scope-pending-banner" role="status" aria-live="polite">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  sync
+                </span>
+                <span className="scope-pending-banner-copy">
+                  <strong>{tKey("shell.scopeUpdating")}</strong>
+                  <span>
+                    {tKey("shell.scopeUpdatingDetail").replace(
+                      "{scope}",
+                      cityLabel(selectedCity),
+                    )}
+                  </span>
+                </span>
               </div>
             ) : null}
             {showInlineDataError ? (
@@ -952,6 +983,7 @@ export function DataPlatformHome({
             {selectedNavKey === TODAY_NAV_KEY ? (
               <TodayOverview
                 isHistorical={isHistorical}
+                isScopePending={isPreviousScope}
                 language={languageMode}
                 liveSignals={scenarioLiveSignals}
                 planItems={todayBrief?.planItems ?? []}
@@ -1235,9 +1267,7 @@ export function DataPlatformHome({
                                 aria-hidden="true"
                               >
                                 <span className="material-symbols-outlined">
-                                  {visibleNotificationEvents.length > 0
-                                    ? "notifications_active"
-                                    : "notifications_off"}
+                                  notifications
                                 </span>
                               </span>
                               <div className="overall-notification-copy">
@@ -1549,6 +1579,7 @@ export function DataPlatformHome({
             date={historicalDate}
             overview={overview}
             language={languageMode}
+            mode={workspaceMode}
             userId={defaultUserId ?? resolvedUserId}
           />
         </div>

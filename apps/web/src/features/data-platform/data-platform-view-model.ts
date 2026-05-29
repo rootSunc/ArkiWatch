@@ -28,6 +28,7 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   alert: "statusAlert",
   background: "statusCatalog",
   connected: "statusActive",
+  empty: "empty",
   failing: "statusAlert",
   healthy: "statusHealthy",
   inactive: "statusInactive",
@@ -216,6 +217,10 @@ export function statusLabel(
 }
 
 function categoryTone(category: PlatformCategory): DashboardTone {
+  if (category.status === "empty") {
+    return "neutral";
+  }
+
   const tone = statusTone(category.status) as DashboardTone;
   if (tone !== "neutral") {
     return tone;

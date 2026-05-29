@@ -3,15 +3,19 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
+import { appEnv } from "@/lib/env";
+
 import {
   CATALOG_NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
+  WORKSPACE_MODE_ITEMS,
   type NavItem,
   type ThemeMode,
 } from "./data-platform-shell";
 import { BRAND_LOGO_SRC, navItemAvailable } from "./data-platform-nav-utils";
 import { useI18n } from "./i18n";
 import type { PlatformCategory } from "./types";
+import { viewerStateLabel } from "./viewer-state";
 
 type DataPlatformSideNavProps = {
   categories: PlatformCategory[];
@@ -40,11 +44,12 @@ export function DataPlatformSideNav({
   themeMode,
   onToggleTheme,
 }: DataPlatformSideNavProps) {
-  const { tKey } = useI18n();
+  const { language, tKey } = useI18n();
   const themeActionLabel = tKey(
     themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
   );
-  const userStateLabel = isAuthenticated ? tKey("shell.signedIn") : tKey("shell.demoView");
+  const userStateLabel = viewerStateLabel(isAuthenticated, appEnv.demoMode, language);
+  const activeWorkspaceMode = selectedNavKey === "today" ? "today" : "data";
 
   return (
     <aside className={className} aria-label={tKey("shell.primaryNavigation")}>
@@ -76,8 +81,54 @@ export function DataPlatformSideNav({
         </button>
       </div>
 
+      <div
+        className="workspace-mode-switcher"
+        aria-label={tKey("shell.workspaceMode")}
+        role="tablist"
+      >
+        {WORKSPACE_MODE_ITEMS.map((item) => {
+          const isActive = activeWorkspaceMode === item.mode;
+          const modeLabel = tKey(
+            `shell.${item.mode === "today" ? "lifeAssistant" : "dataPlatformMode"}`,
+          );
+          return (
+            <button
+              aria-selected={isActive}
+              className={
+                isActive
+                  ? "workspace-mode-option workspace-mode-option-active"
+                  : "workspace-mode-option"
+              }
+              key={item.mode}
+              onClick={() => onSelectNavItem(item)}
+              role="tab"
+              type="button"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {item.icon}
+              </span>
+              <span>
+                <strong>{modeLabel}</strong>
+                <small>
+                  {tKey(
+                    item.mode === "today"
+                      ? "shell.lifeAssistantLead"
+                      : "shell.dataPlatformLead",
+                  )}
+                </small>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
-        {PRIMARY_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
+        {PRIMARY_NAV_ITEMS.filter(
+          (item) =>
+            item.key !== "today" &&
+            item.key !== "overview" &&
+            navItemAvailable(item, categories),
+        ).map((item) => {
           const isActive =
             selectedNavKey === item.key ||
             (item.categoryKey != null && selectedNavKey === item.categoryKey);

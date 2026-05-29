@@ -29,4 +29,11 @@ describe("demo fixture", () => {
     expect(fixture.weather.location).toBe("Espoo");
     expect(fixture.historyAvailability.city).toBe("espoo");
   });
+
+  it("does not label non-Uusimaa cities as Uusimaa", () => {
+    const fixture = demoFixtureForScope({ city: "tampere" });
+
+    expect(fixture.overview.coverage_area).toBe("Tampere / Pirkanmaa");
+    expect(fixture.publicDashboard.coverage_area).toBe("Helsinki / Uusimaa");
+  });
 });

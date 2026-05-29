@@ -6,7 +6,9 @@ import {
   displayTitle,
   eventMatchesSearch,
   matchesSearch,
-  mergeMobilityCategories
+  mergeMobilityCategories,
+  signalReadout,
+  statusLabel
 } from "./data-platform-view-model";
 import type { PlatformCategory, PlatformEvent } from "./types";
 
@@ -90,5 +92,22 @@ describe("data platform view model", () => {
   it("resolves category titles from shell nav keys", () => {
     expect(displayTitle(category("events"), "zh")).toBe("关联活动");
     expect(displayTitle(category("energy"), "en")).toBe("Energy");
+  });
+
+  it("presents an empty category as unavailable rather than healthy", () => {
+    const emptyWeather = { ...category("weather"), status: "empty" };
+    const readout = signalReadout(
+      emptyWeather,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "en"
+    );
+
+    expect(statusLabel(emptyWeather, "en")).toBe("Empty");
+    expect(statusLabel(emptyWeather, "zh")).toBe("无数据");
+    expect(readout.tone).toBe("neutral");
   });
 });

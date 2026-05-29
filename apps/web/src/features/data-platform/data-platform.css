@@ -17,6 +17,7 @@
 @import "./styles/motion.css";
 @import "./styles/skeleton.css";
 @import "./styles/responsive.css";
+@import "./styles/ui-system.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {

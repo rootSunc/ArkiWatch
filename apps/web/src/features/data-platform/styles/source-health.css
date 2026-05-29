@@ -72,6 +72,11 @@
   overflow: visible;
 }
 
+.source-health-panel-expanded .source-chip {
+  flex-wrap: wrap;
+  max-width: min(420px, 90vw);
+}
+
 .source-chip {
   display: inline-flex;
   align-items: center;
@@ -105,6 +110,44 @@
   text-transform: lowercase;
   white-space: nowrap;
   opacity: 0.85;
+}
+
+.source-chip-code {
+  flex: 0 0 auto;
+}
+
+.source-chip-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-left: 1px solid var(--outline-variant);
+  padding-left: 10px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.source-chip-doc:hover,
+.source-chip-doc:focus-visible {
+  color: var(--on-primary-container);
+  text-decoration: underline;
+}
+
+.source-chip-doc .material-symbols-outlined {
+  width: auto;
+  overflow: visible;
+  font-family: "Material Symbols Outlined";
+  font-size: 15px;
+  opacity: 1;
+}
+
+.source-chip-doc-label {
+  overflow: visible !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  text-transform: none !important;
 }
 
 .source-health-toggle {
@@ -208,4 +251,14 @@
   border-left: 1px solid var(--outline-variant);
   padding-left: 10px;
   white-space: nowrap;
+}
+
+.source-chip-error {
+  flex-basis: 100%;
+  border-left: 0 !important;
+  padding-left: 0 !important;
+  color: var(--red) !important;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal !important;
 }

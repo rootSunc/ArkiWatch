@@ -277,7 +277,7 @@ export function EnergyWorkspace({
       >
         <div className="energy-command-status">
           <span className="material-symbols-outlined energy-condition-icon" aria-hidden="true">
-            {hasActiveWindow ? "bolt" : "hourglass_empty"}
+            {hasActiveWindow ? "bolt" : "schedule"}
           </span>
           <div>
             <div className="energy-card-kicker">
@@ -848,4 +848,3 @@ export function EnergyWorkspace({
     </section>
   );
 }
-

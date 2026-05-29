@@ -23,6 +23,11 @@ describe("translateEnumLabel", () => {
     expect(translateEnumLabel("zh", "ready")).toBe("已就绪");
     expect(translateEnumLabel("en", "ready")).toBe("Ready");
   });
+
+  it("localizes recommendation status labels", () => {
+    expect(translateEnumLabel("zh", "needs_attention")).toBe("需要留意");
+    expect(translateEnumLabel("zh", "good_window")).toBe("划算时段");
+  });
 });
 
 describe("translateDataLabel", () => {

@@ -185,7 +185,7 @@ export function buildTodayActionCardView(
           language,
           recommendation.area_scope,
         )}`,
-    icon: SCENARIO_ICONS[section.key] ?? "insights",
+    icon: SCENARIO_ICONS[section.key] ?? "hub",
     isLiveFallback,
     sources: isLiveFallback
       ? liveHint?.sources ?? ""

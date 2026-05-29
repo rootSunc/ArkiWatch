@@ -78,6 +78,13 @@
   gap: 8px;
 }
 
+.today-scope-note {
+  margin: 8px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .today-focus h2 {
   max-width: 760px;
   margin: 12px 0 8px;
@@ -160,6 +167,16 @@
 .today-primary-action:hover,
 .today-secondary-action:hover {
   transform: translateY(-1px);
+}
+
+.today-primary-action:disabled,
+.today-secondary-action:disabled,
+.today-glance-item:disabled,
+.today-action-card:disabled,
+.day-plan-timeline-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .today-secondary-action:hover {

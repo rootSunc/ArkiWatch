@@ -29,6 +29,13 @@ export type NavItem = {
   categoryKey?: string;
 };
 
+export type WorkspaceMode = "today" | "data";
+
+export const WORKSPACE_MODE_ITEMS: Array<NavItem & { mode: WorkspaceMode }> = [
+  { key: "today", labelKey: "navToday", icon: "calendar_today", mode: "today" },
+  { key: "overview", labelKey: "navSignals", icon: "hub", mode: "data" },
+];
+
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { key: "today", labelKey: "navToday", icon: "calendar_today" },
   { key: "overview", labelKey: "navSignals", icon: "hub" },
@@ -105,7 +112,7 @@ export function NotificationButton({
       type="button"
     >
       <span className="material-symbols-outlined" aria-hidden="true">
-        {hasNotifications ? "notifications_active" : "notifications"}
+        notifications
       </span>
       {hasNotifications ? (
         <span className="notification-badge">{displayCount}</span>
