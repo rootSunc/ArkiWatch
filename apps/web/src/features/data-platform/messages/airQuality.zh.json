@@ -74,6 +74,12 @@
     "europeanAqi": "欧洲空气质量指数",
     "pm25": "PM2.5",
     "pm10": "PM10",
-    "no2": "NO2"
+    "no2": "NO2",
+    "categoryDescription": "监测站级户外空气质量。",
+    "demoSummary": "示例监测站网络的空气质量整体良好。",
+    "staticDemoStationNote": "静态演示数据；并非实时站点读数。",
+    "normalizedStationReadings": "标准化站点读数",
+    "hsySourceLabel": "HSY 空气质量",
+    "hsyWfsSourceLabel": "HSY 空气质量 WFS"
   }
 }

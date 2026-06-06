@@ -22,11 +22,22 @@
     "bestTimeToGoOutside": "When is the best time to go outside?",
     "bestTimeToCommute": "When should I plan my commute?",
     "demoMode": "Demo mode · fixture-based answer",
+    "scopeLabel": "Assistant scope",
+    "scopeToday": "Today · recommendations",
+    "scopeData": "Data · source evidence",
+    "scopeLive": "Live",
+    "scopeHistorical": "Historical",
     "tooltip": "💡 Need help with data?",
     "loading": "Reading ArkiWatch data...",
     "failure": "I could not reach the data assistant. Please try again after refreshing the page.",
     "basis": "Basis",
     "fallback": "Fallback",
+    "viewSources": "View source details",
+    "sourcesCount": "{count} sources",
+    "checkedAt": "Checked {time}",
+    "providerUnavailable": "The AI provider is unavailable, so this answer uses grounded data only.",
+    "streamInterrupted": "The AI response was interrupted; review the sources below before acting.",
+    "emptyResponse": "The AI provider returned no answer, so this uses grounded data only.",
     "offlinePrompt": "Platform data is temporarily unavailable. Once the overview is healthy, I can assist you with telemetry charts and logs."
   }
 }

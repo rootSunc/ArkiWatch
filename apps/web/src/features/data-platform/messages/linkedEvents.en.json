@@ -78,6 +78,7 @@
     "allFilter": "All",
     "today": "Today",
     "week7DayHorizon": "7-day horizon",
-    "freeEvents": "Free events"
+    "freeEvents": "Free events",
+    "categoryDescription": "Public events and activities."
   }
 }

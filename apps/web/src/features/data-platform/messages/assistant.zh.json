@@ -22,11 +22,22 @@
     "bestTimeToGoOutside": "什么时候适合出门？",
     "bestTimeToCommute": "什么时候出行更合适？",
     "demoMode": "Demo 模式 · 基于静态 fixture",
+    "scopeLabel": "助手数据范围",
+    "scopeToday": "今天 · 公共建议",
+    "scopeData": "数据 · 来源证据",
+    "scopeLive": "实时",
+    "scopeHistorical": "历史",
     "tooltip": "💡 需要数据协助吗？",
     "loading": "正在读取 ArkiWatch 数据...",
     "failure": "暂时无法连接数据助手。请刷新页面后再试。",
     "basis": "依据",
     "fallback": "兜底回答",
+    "viewSources": "查看来源详情",
+    "sourcesCount": "{count} 个来源",
+    "checkedAt": "核验于 {time}",
+    "providerUnavailable": "AI 服务暂时不可用，本次回答仅使用有数据依据的内容。",
+    "streamInterrupted": "AI 回答中断，请先查看下方来源再行动。",
+    "emptyResponse": "AI 服务没有返回回答，本次仅使用有数据依据的内容。",
     "offlinePrompt": "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。"
   }
 }

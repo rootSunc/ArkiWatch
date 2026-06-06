@@ -46,12 +46,18 @@ function at(hours: number): string {
 }
 
 function timeScope(date: string | null): PlatformTimeScope {
+  const scopeStart = date
+    ? new Date(`${date}T00:00:00.000+03:00`)
+    : new Date(DEMO_CHECKED_AT);
+  const scopeEnd = new Date(scopeStart);
+  scopeEnd.setUTCHours(scopeEnd.getUTCHours() + 18);
+
   return {
     mode: date ? "historical" : "live",
     date,
     timezone: DEMO_TIMEZONE,
-    window_start: at(0),
-    window_end: at(18),
+    window_start: scopeStart.toISOString(),
+    window_end: scopeEnd.toISOString(),
   };
 }
 
@@ -165,13 +171,16 @@ function event(
   startsAt: string,
   endsAt: string,
   attributes: Record<string, unknown> = {},
+  localized: Pick<PlatformEvent, "title_zh" | "body_zh"> = {},
 ): PlatformEvent {
   return {
     id,
     category_key: categoryKey,
     event_type: eventType,
     title,
+    title_zh: localized.title_zh,
     body,
+    body_zh: localized.body_zh,
     severity,
     starts_at: startsAt,
     ends_at: endsAt,
@@ -215,12 +224,15 @@ function action(
   validFrom: string,
   validTo: string,
   evidence: string[],
+  localized: Pick<PublicActionRead, "title_zh" | "body_zh"> = {},
 ): PublicActionRead {
   return {
     id,
     scenario_key: scenarioKey,
     title,
+    title_zh: localized.title_zh,
     body,
+    body_zh: localized.body_zh,
     severity,
     area_scope: "Helsinki",
     freshness_state: "fresh",
@@ -263,6 +275,10 @@ const RAIN_EVENT = event(
   at(3),
   at(6),
   { peak_precip_mm: 1.8 },
+  {
+    title_zh: "短时降雨可能影响上午晚些时候的通勤",
+    body_zh: "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+  },
 );
 
 const AIR_EVENT = event(
@@ -275,6 +291,11 @@ const AIR_EVENT = event(
   ["hsy"],
   at(-1),
   at(12),
+  {},
+  {
+    title_zh: "空气质量适合正常户外活动",
+    body_zh: "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+  },
 );
 
 const TRANSIT_EVENT = event(
@@ -288,6 +309,10 @@ const TRANSIT_EVENT = event(
   at(1),
   at(4),
   { route_ids: ["4", "10"] },
+  {
+    title_zh: "乘坐西向有轨电车请预留几分钟",
+    body_zh: "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+  },
 );
 
 const ROAD_EVENT = event(
@@ -300,6 +325,11 @@ const ROAD_EVENT = event(
   ["digitraffic"],
   at(5),
   at(8),
+  {},
+  {
+    title_zh: "降雨后路面可能湿滑",
+    body_zh: "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+  },
 );
 
 const ENERGY_EVENT = event(
@@ -313,6 +343,10 @@ const ENERGY_EVENT = event(
   at(5),
   at(7),
   { average_value: 7.8, unit: "c/kWh" },
+  {
+    title_zh: "中午开始进入较低成本的家庭用电时段",
+    body_zh: "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+  },
 );
 
 function buildWeather(): WeatherForecastResponse {
@@ -630,6 +664,10 @@ function buildPublicDashboard(): PublicDashboardRead {
     at(3),
     at(6),
     ["FMI · rain risk · 1.8 mm peak"],
+    {
+      title_zh: "带上一件轻便防雨外套",
+      body_zh: "上午晚些时候可能有一阵短时阵雨，随身准备轻便外套即可。",
+    },
   );
   const commuteAction = action(
     "demo-action-commute",
@@ -640,6 +678,10 @@ function buildPublicDashboard(): PublicDashboardRead {
     at(1),
     at(4),
     ["Digitransit · routes 4 and 10"],
+    {
+      title_zh: "提前几分钟出发",
+      body_zh: "西向有轨电车示例线路在早高峰期间有服务提醒，建议留出一些缓冲时间。",
+    },
   );
   const airAction = action(
     "demo-action-air",
@@ -650,6 +692,10 @@ function buildPublicDashboard(): PublicDashboardRead {
     at(-1),
     at(12),
     ["HSY · two reporting stations"],
+    {
+      title_zh: "可以正常进行户外活动",
+      body_zh: "示例监测站读数均处于良好范围，方便时开窗通风即可。",
+    },
   );
   const energyAction = action(
     "demo-action-energy",
@@ -660,13 +706,20 @@ function buildPublicDashboard(): PublicDashboardRead {
     at(5),
     at(7),
     ["Pörssisähkö · 7.80 c/kWh example window"],
+    {
+      title_zh: "中午安排可灵活调整的家务用电",
+      body_zh: "示例家庭电价在 12:00 至 14:00 最有利，可将洗衣等用电安排在这段时间。",
+    },
   );
   const sections: PublicScenarioSectionRead[] = [
     {
       key: "outdoor",
       title: "Outdoor",
+      title_zh: "户外",
       description: "Weather timing for the next useful decision.",
+      description_zh: "帮助你安排下一步出行的天气时段。",
       status_label: "Watch",
+      status_label_zh: "留意",
       area_scope: "Helsinki",
       freshness_state: "fresh",
       valid_from: at(3),
@@ -678,8 +731,11 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       key: "commute",
       title: "Commute",
+      title_zh: "通勤",
       description: "Transit and road signals that may change your route.",
+      description_zh: "可能影响路线选择的公共交通和道路信号。",
       status_label: "Needs attention",
+      status_label_zh: "需要留意",
       area_scope: "Helsinki",
       freshness_state: "fresh",
       valid_from: at(1),
@@ -691,8 +747,11 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       key: "home_air",
       title: "Home air",
+      title_zh: "室内空气",
       description: "Outdoor air conditions for ventilation and activity.",
+      description_zh: "帮助安排通风和户外活动的空气状况。",
       status_label: "Good",
+      status_label_zh: "良好",
       area_scope: "Helsinki",
       freshness_state: "fresh",
       valid_from: at(-1),
@@ -704,8 +763,11 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       key: "energy",
       title: "Energy",
+      title_zh: "能源",
       description: "A practical window for flexible household use.",
+      description_zh: "适合安排可灵活调整家庭用电的时间段。",
       status_label: "Good window",
+      status_label_zh: "合适时段",
       area_scope: "Finland",
       freshness_state: "fresh",
       valid_from: at(5),
@@ -719,6 +781,7 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       scenario_key: "commute",
       label: "Morning peak · westbound tram alert",
+      label_zh: "早高峰 · 西向有轨电车提醒",
       severity: "HIGH",
       starts_at: at(1),
       ends_at: at(4),
@@ -726,6 +789,7 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       scenario_key: "outdoor",
       label: "Late morning · brief rain window",
+      label_zh: "上午晚些时候 · 短时降雨",
       severity: "MEDIUM",
       starts_at: at(3),
       ends_at: at(6),
@@ -733,6 +797,7 @@ function buildPublicDashboard(): PublicDashboardRead {
     {
       scenario_key: "energy",
       label: "Noon · lower-cost household window",
+      label_zh: "中午 · 较低成本家庭用电时段",
       severity: "LOW",
       starts_at: at(5),
       ends_at: at(7),
@@ -748,7 +813,9 @@ function buildPublicDashboard(): PublicDashboardRead {
     scenario_channels: sections.map((section) => ({
       scenario_key: section.key,
       title: section.title,
+      title_zh: section.title_zh,
       description: section.description,
+      description_zh: section.description_zh,
     })),
     scenario_sections: sections,
     timeline,

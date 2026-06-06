@@ -4,7 +4,9 @@ export type CrossDomainTimelineItem = {
   id: string;
   kind: "event" | "scenario";
   title: string;
+  title_zh?: string | null;
   detail: string;
+  detail_zh?: string | null;
   severity: string;
   startsAt: string;
   endsAt: string;
@@ -25,7 +27,9 @@ function timelineFromEvent(event: PlatformEvent): CrossDomainTimelineItem {
     id: `event-${event.id}`,
     kind: "event",
     title: event.title,
+    title_zh: event.title_zh,
     detail: event.body,
+    detail_zh: event.body_zh,
     severity: event.severity,
     startsAt: event.starts_at,
     endsAt: event.ends_at,
@@ -34,12 +38,20 @@ function timelineFromEvent(event: PlatformEvent): CrossDomainTimelineItem {
   };
 }
 
-function timelineFromScenario(item: PublicTimelineItemRead): CrossDomainTimelineItem {
+function timelineFromScenario(
+  item: PublicTimelineItemRead,
+  publicDashboard: PublicDashboardRead | null,
+): CrossDomainTimelineItem {
+  const section = publicDashboard?.scenario_sections.find(
+    (candidate) => candidate.key === item.scenario_key,
+  );
   return {
     id: `scenario-${item.scenario_key}-${item.starts_at}`,
     kind: "scenario",
     title: item.label,
-    detail: item.scenario_key,
+    title_zh: item.label_zh,
+    detail: section?.description ?? item.scenario_key,
+    detail_zh: section?.description_zh,
     severity: item.severity,
     startsAt: item.starts_at,
     endsAt: item.ends_at,
@@ -58,7 +70,9 @@ export function buildCrossDomainTimeline(
   publicDashboard: PublicDashboardRead | null,
   limit = 10,
 ): CrossDomainTimelineItem[] {
-  const scenarioItems = (publicDashboard?.timeline ?? []).map(timelineFromScenario);
+  const scenarioItems = (publicDashboard?.timeline ?? []).map((item) =>
+    timelineFromScenario(item, publicDashboard),
+  );
   const eventItems = events.map(timelineFromEvent);
   const seen = new Set<string>();
 

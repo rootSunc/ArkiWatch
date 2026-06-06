@@ -15,6 +15,7 @@
     "ingestionReady": "水位、流量、地下水、雪水当量与洪水信息已就绪，等待数据接入。",
     "detailAria": "水与雪详情",
     "hydrologyTitle": "水与雪水文",
+    "hydrologySchema": "水文数据结构",
     "operatingCondition": "水与雪运行状况",
     "signalState": "水文信号状态",
     "datasets": "数据集",
@@ -63,6 +64,8 @@
     "snowLoadGuidance": "雪荷载预警指导",
     "algaeGuidance": "藻类预警指导",
     "sources": "来源",
-    "keyFields": "关键字段"
+    "keyFields": "关键字段",
+    "categoryDescription": "水文与季节性状况。",
+    "providerName": "芬兰环境研究所"
   }
 }

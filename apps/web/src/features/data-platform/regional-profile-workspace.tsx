@@ -4,6 +4,7 @@ import { formatRelativeAge } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataHelpIcon, DataLabelWithHelp, dataHelpText } from "./data-help";
+import { localizedPlatformCopy } from "./platform-copy";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -63,12 +64,12 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
   if (!metric) {
     return tKey("regionalProfile.catalog");
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
 function statusTone(status: string | null | undefined): ProfileTone {
@@ -149,7 +150,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
     catalogStageMetric?.updated_at;
 
   const heroTitle = tKey("regionalProfile.heroTitle");
-  const heroDetail = category.description || tKey("regionalProfile.registersMapped");
+  const heroDetail = localizedPlatformCopy(category.description, language) ?? tKey("regionalProfile.registersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -291,7 +292,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey)}</strong>
+            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
           </article>
         ))}
       </section>
@@ -367,8 +368,8 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             {signalMetrics.map((metric) => (
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
-                  <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, tKey)}</span>
+                  <strong>{metricLabel(metric)}</strong>
+                  <span>{formatMetricValue(metric, tKey, dataLabel)}</span>
                 </div>
                 <p>{metric.detail ?? tKey("regionalProfile.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
@@ -434,7 +435,7 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             <div className="regional-morbidity-box">
               <div className="regional-morbidity-header">
                 <span>88.5</span>
-                <span>-11.5% vs baseline</span>
+                <span>{tKey("regionalProfile.vsBaseline").replace("{value}", "-11.5")}</span>
               </div>
               <p className="regional-morbidity-desc">
                 {tKey("regionalProfile.morbidityDescription")}

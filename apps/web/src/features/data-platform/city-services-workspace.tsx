@@ -5,6 +5,8 @@ import type { CSSProperties } from "react";
 import { formatRelativeAge, formatTimestamp, severityTone } from "@/features/shared/format";
 
 import { categoryKeyDataItemKeys } from "./category-metadata";
+import { localizedContent } from "./content-localization";
+import { localizedPlatformCopy } from "./platform-copy";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -72,12 +74,12 @@ function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetr
   return metric !== null;
 }
 
-function formatMetricValue(metric: PlatformMetric | null, tKey: (key: string) => string): string {
+function formatMetricValue(metric: PlatformMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
   if (!metric) {
     return tKey("cityServices.missing");
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
 function formatNumber(value: number): string {
@@ -203,7 +205,7 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
 }
 
 export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) {
-  const { language, tKey, enumLabel, metricLabel } = useI18n();
+  const { language, tKey, enumLabel, metricLabel, dataLabel } = useI18n();
 
   if (!category) {
     return (
@@ -236,8 +238,8 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
 
   const missingMetricLabel = tKey("cityServices.missing");
   const recordsDisplay =
-    formatMetricValue(recordsMetric, tKey) !== missingMetricLabel
-      ? formatMetricValue(recordsMetric, tKey)
+    formatMetricValue(recordsMetric, tKey, dataLabel) !== missingMetricLabel
+      ? formatMetricValue(recordsMetric, tKey, dataLabel)
       : formatNumber(recordCount);
 
   return (
@@ -350,7 +352,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey)}</strong>
+            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
           </article>
         ))}
       </section>
@@ -379,8 +381,8 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <div className="city-service-main">
                       <div>
                         <time>{formatCompactTime(event.starts_at, language, tKey)}</time>
-                        <strong>{event.title}</strong>
-                        <p>{event.body}</p>
+                        <strong>{localizedContent(language, event.title, event.title_zh)}</strong>
+                        <p>{localizedContent(language, event.body, event.body_zh)}</p>
                       </div>
                       <em>{enumLabel(event.severity)}</em>
                     </div>
@@ -437,7 +439,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <strong>{source.source_name}</strong>
                     <span>{source.source_code}</span>
                   </div>
-                  <p>{source.license_label ?? tKey("cityServices.licenseUnavailable")}</p>
+                  <p>{source.license_label ? dataLabel(source.license_label) : tKey("cityServices.licenseUnavailable")}</p>
                   {source.documentation_url ? (
                     <a href={source.documentation_url} rel="noreferrer" target="_blank">
                       {tKey("cityServices.documentation")}
@@ -579,13 +581,15 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
             {tKey("cityServices.recordsLabel")}: {recordsDisplay}
           </span>
           <i aria-hidden="true" />
-          <span>{tKey("cityServices.events")}: {formatMetricValue(activeEventsMetric, tKey)}</span>
+          <span>{tKey("cityServices.events")}: {formatMetricValue(activeEventsMetric, tKey, dataLabel)}</span>
           <i aria-hidden="true" />
-          <span>{tKey("cityServices.sourceState")}: {formatMetricValue(sourceStatusMetric, tKey)}</span>
+          <span>{tKey("cityServices.sourceState")}: {sourceStatusMetric ? translateEnumLabel(language, sourceStatusMetric.value) : tKey("cityServices.missing")}</span>
         </div>
       </section>
 
-      <p className="city-detail-freshness">{category.description}</p>
+      <p className="city-detail-freshness">
+        {localizedPlatformCopy(category.description, language) ?? tKey("cityServices.signalsUnavailable")}
+      </p>
     </section>
   );
 }

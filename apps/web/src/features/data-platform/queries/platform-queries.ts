@@ -210,7 +210,10 @@ export async function fetchPublicDashboard(scope: PlatformQueryScope) {
   }
 
   const resolved = resolvePlatformScope(scope);
-  return platformClient(resolved).get<PublicDashboardRead>("/public/dashboard");
+  return platformClient(resolved).get<PublicDashboardRead>(
+    "/public/dashboard",
+    withOptionalDate(resolved.date, {}),
+  );
 }
 
 export async function fetchWeatherForecast(scope: PlatformQueryScope) {

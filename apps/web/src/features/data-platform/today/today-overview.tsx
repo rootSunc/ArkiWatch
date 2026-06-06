@@ -2,6 +2,7 @@
 
 import { formatTimestamp, severityTone } from "@/features/shared/format";
 
+import { localizedContent } from "../content-localization";
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
 import type { ScenarioLiveSignals } from "../scenario-live-hints";
@@ -16,7 +17,6 @@ type TodayOverviewProps = {
   todayBrief: TodayBrief | null;
   liveSignals: ScenarioLiveSignals;
   planItems: TodayBrief["planItems"];
-  isHistorical: boolean;
   isScopePending: boolean;
   language: LanguageMode;
   onOpenSignals: () => void;
@@ -29,7 +29,6 @@ export function TodayOverview({
   todayBrief,
   liveSignals,
   planItems,
-  isHistorical,
   isScopePending,
   language,
   onOpenSignals,
@@ -55,7 +54,18 @@ export function TodayOverview({
   }
 
   const focusAction = todayBrief.topActions[0] ?? null;
-  const focusTone = focusAction ? severityTone(focusAction.severity) : "good";
+  const isRecommendationLimited = todayBrief.recommendationMode !== "live";
+  const focusTone = focusAction && !isRecommendationLimited
+    ? severityTone(focusAction.severity)
+    : "neutral";
+  const limitedModeLabel =
+    todayBrief.recommendationMode === "historical"
+      ? tKey("shell.historicalRecommendationsReadOnly")
+      : tKey("shell.recommendationsUnavailableForScope");
+  const limitedModeDetail =
+    todayBrief.recommendationMode === "historical"
+      ? tKey("shell.historicalRecommendationsReadOnlyDetail")
+      : tKey("shell.recommendationsUnavailableForScopeDetail");
 
   return (
     <section
@@ -77,20 +87,29 @@ export function TodayOverview({
           ) : null}
           <h2>{todayBrief.headline}</h2>
           <p>
-            {focusAction?.body ?? tKey("shell.coreDailyScenariosClear")}
+            {focusAction
+              ? localizedContent(language, focusAction.body, focusAction.body_zh)
+              :
+              (isRecommendationLimited
+                ? limitedModeDetail
+                : tKey("shell.coreDailyScenariosClear"))}
           </p>
           <div className="today-focus-footer">
             <span>
               <span className="material-symbols-outlined" aria-hidden="true">
                 check_circle
               </span>
-              {tKey("shell.dataChecked")}
+              {tKey(
+                todayBrief.recommendationMode === "historical"
+                  ? "shell.historicalSnapshotGenerated"
+                  : "shell.dataChecked",
+              )}
               {todayBrief.checkedAt ? (
                 <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language)}</>
               ) : null}
             </span>
             <div className="today-focus-actions">
-              {focusAction ? (
+              {focusAction && !isRecommendationLimited ? (
                 <button
                   className="today-primary-action"
                   onClick={() => onOpenScenario(focusAction.scenario_key)}
@@ -134,9 +153,15 @@ export function TodayOverview({
         </div>
       </section>
 
-      {isHistorical ? (
-        <div className="today-historical-banner" role="status">
-          {tKey("shell.scenarioOverviewHistoricalNote")}
+      {isRecommendationLimited ? (
+        <div className="today-recommendation-limit" role="status">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            info
+          </span>
+          <span>
+            <strong>{limitedModeLabel}</strong>
+            <span>{limitedModeDetail}</span>
+          </span>
         </div>
       ) : null}
 
@@ -145,15 +170,25 @@ export function TodayOverview({
           disabled={isScopePending}
           items={planItems}
           language={language}
+          recommendationMode={todayBrief.recommendationMode}
           onOpenEvent={onOpenEvent}
           onOpenScenario={onOpenScenario}
         />
 
-        <section className="today-decisions" aria-label={tKey("shell.dailyDecisions")}>
+        <section
+          className="today-decisions"
+          aria-label={tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+        >
           <header>
             <div>
-              <span className="today-section-kicker">{tKey("shell.dailyDecisions")}</span>
-              <h3>{tKey("shell.dailyDecisionsLead")}</h3>
+              <span className="today-section-kicker">
+                {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+              </span>
+              <h3>
+                {isRecommendationLimited
+                  ? tKey("shell.localSignalsOnlyLead")
+                  : tKey("shell.dailyDecisionsLead")}
+              </h3>
             </div>
           </header>
           <div className="today-action-grid">
@@ -163,6 +198,7 @@ export function TodayOverview({
                 key={section.key}
                 language={language}
                 liveSignals={liveSignals}
+                recommendationMode={todayBrief.recommendationMode}
                 section={section}
                 onOpen={() => onOpenScenario(section.key)}
               />

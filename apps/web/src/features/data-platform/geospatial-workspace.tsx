@@ -4,6 +4,7 @@ import { formatRelativeAge } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
+import { localizedPlatformCopy } from "./platform-copy";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
@@ -71,12 +72,12 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
   if (!metric) {
     return tKey("geospatial.catalog");
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
 function statusTone(status: string | null | undefined): GeoTone {
@@ -244,7 +245,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
     catalogStageMetric?.updated_at;
 
   const heroTitle = tKey("geospatial.heroTitle");
-  const heroDetail = category.description || tKey("geospatial.layersMapped");
+  const heroDetail = localizedPlatformCopy(category.description, language) ?? tKey("geospatial.layersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -387,7 +388,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey)}</strong>
+            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
           </article>
         ))}
       </section>
@@ -477,8 +478,8 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             {signalMetrics.map((metric) => (
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
-                  <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, tKey)}</span>
+                  <strong>{metricLabel(metric)}</strong>
+                  <span>{formatMetricValue(metric, tKey, dataLabel)}</span>
                 </div>
                 <p>{metric.detail ?? tKey("geospatial.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">

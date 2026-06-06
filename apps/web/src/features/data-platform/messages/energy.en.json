@@ -94,6 +94,13 @@
     "to": "to",
     "waitingForEvent": "waiting for event",
     "windowPending2": "window pending",
-    "windowPoints": "window points"
+    "windowPoints": "window points",
+    "categoryDescription": "Grid load and household price signals.",
+    "examplePriceCurveDetail": "The example price curve is most favourable between 12:00 and 14:00.",
+    "exampleHouseholdPriceDetail": "The example household price is lowest around noon.",
+    "exampleHouseholdWindowDetail": "The example household price window is most favourable between 12:00 and 14:00.",
+    "systemSummary": "Grid load is moderate in the example morning window.",
+    "staticDemoEnergyNote": "Static demo fixture; not a live market or grid reading.",
+    "normalizedEnergyCurve": "Normalized energy curve"
   }
 }

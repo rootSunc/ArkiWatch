@@ -42,6 +42,21 @@ describe("translateDataLabel", () => {
   it("maps category keys through shell nav aliases", () => {
     expect(translateDataLabel("zh", "city_services")).toBe("城市服务");
   });
+
+  it("localizes dynamic coverage values without changing numeric values", () => {
+    expect(translateDataLabel("zh", "Helsinki region")).toBe("赫尔辛基地区");
+    expect(translateDataLabel("zh", "healthy")).toBe("运行正常");
+    expect(translateDataLabel("zh", "98")).toBe("98");
+  });
+
+  it("translates workspace metric labels that are also used as data keys", () => {
+    expect(translateMetricLabel("zh", { key: "source_status", label: "Source status" })).toBe(
+      "来源状态",
+    );
+    expect(translateMetricLabel("zh", { key: "low_energy_window", label: "Low-energy window" })).toBe(
+      "低能耗时段",
+    );
+  });
 });
 
 describe("translateKeyDataItemLabel", () => {

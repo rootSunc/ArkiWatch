@@ -2648,7 +2648,9 @@ export interface operations {
     };
     get_public_dashboard_api_dashboard_get: {
         parameters: {
-            query?: never;
+            query?: {
+                date?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2662,6 +2664,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicDashboardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2950,7 +2961,9 @@ export interface operations {
     };
     get_public_dashboard_api_public_dashboard_get: {
         parameters: {
-            query?: never;
+            query?: {
+                date?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2964,6 +2977,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicDashboardRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -80,7 +80,9 @@ export type PlatformEvent = {
   category_key: string;
   event_type: string;
   title: string;
+  title_zh?: string | null;
   body: string;
+  body_zh?: string | null;
   severity: string;
   starts_at: string;
   ends_at: string;
@@ -617,7 +619,9 @@ export type PublicActionRead = {
   id: string;
   scenario_key: string;
   title: string;
+  title_zh?: string | null;
   body: string;
+  body_zh?: string | null;
   severity: string;
   area_scope: string;
   freshness_state: string;
@@ -629,8 +633,11 @@ export type PublicActionRead = {
 export type PublicScenarioSectionRead = {
   key: string;
   title: string;
+  title_zh?: string | null;
   description: string;
+  description_zh?: string | null;
   status_label: string;
+  status_label_zh?: string | null;
   area_scope: string;
   freshness_state: string;
   valid_from: string;
@@ -643,6 +650,7 @@ export type PublicScenarioSectionRead = {
 export type PublicTimelineItemRead = {
   scenario_key: string;
   label: string;
+  label_zh?: string | null;
   severity: string;
   starts_at: string;
   ends_at: string;
@@ -651,7 +659,9 @@ export type PublicTimelineItemRead = {
 export type ScenarioChannelRead = {
   scenario_key: string;
   title: string;
+  title_zh?: string | null;
   description: string;
+  description_zh?: string | null;
 };
 
 export type PublicDashboardRead = {

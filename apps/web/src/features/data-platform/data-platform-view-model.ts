@@ -283,12 +283,12 @@ function toneProgress(tone: DashboardTone): number {
   return 56;
 }
 
-function formatMetricValue(metric: PlatformMetric | null): string {
+function formatMetricValue(metric: PlatformMetric | null, language: LanguageMode): string {
   if (!metric) {
-    return "n/a";
+    return translateMessageKey(language, "shell.na");
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  return `${translateDataLabel(language, metric.value)}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
 function scoreLabel(
@@ -386,7 +386,7 @@ export function signalReadout(
       label: translateMessageKey(language, "shell.lastSync"),
       value: generatedAt
         ? formatTimestamp(generatedAt, "dateTime", language)
-        : formatMetricValue(metricByKey(category, "source_status")),
+        : formatMetricValue(metricByKey(category, "source_status"), language),
       helpKey: "last_sync",
       progress: tone === "warn" ? 40 : toneProgress(tone),
       tone,
@@ -399,7 +399,7 @@ export function signalReadout(
       label: translateMessageKey(language, "shell.aqiAvg"),
       value:
         score === null || score === undefined
-          ? formatMetricValue(fallbackMetric(category))
+          ? formatMetricValue(fallbackMetric(category), language)
           : `${scoreLabel(score, airQuality?.worst_label, language)} (${Math.round(score)}/5)`,
       helpKey: "aqi_avg",
       progress:
@@ -502,7 +502,7 @@ export function signalReadout(
       value:
         window !== null && window !== undefined
           ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
-          : formatMetricValue(metricByKey(category, "low_energy_window")),
+          : formatMetricValue(metricByKey(category, "low_energy_window"), language),
       helpKey: window?.unit?.includes("kWh") ? "best_price" : "best_window",
       progress:
         energy?.quality.field_coverage_pct !== undefined
@@ -519,7 +519,7 @@ export function signalReadout(
       value:
         category.events.length > 0
           ? `${category.events.length}`
-          : formatMetricValue(metricByKey(category, "active_events")),
+          : formatMetricValue(metricByKey(category, "active_events"), language),
       helpKey: "upcoming_events",
       progress:
         category.events.length > 0
@@ -534,7 +534,7 @@ export function signalReadout(
     label: metric
       ? translateMetricLabel(language, metric)
       : translateMessageKey(language, "shell.signalLevel"),
-    value: formatMetricValue(metric),
+    value: formatMetricValue(metric, language),
     helpKey: metric?.key ?? "signal_level",
     progress: metric
       ? numericPercent(metric.value, toneProgress(tone))

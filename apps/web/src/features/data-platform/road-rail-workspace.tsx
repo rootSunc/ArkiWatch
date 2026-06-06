@@ -23,6 +23,7 @@ import {
 } from "./incident-timeline-pager";
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 
 type RoadRailWorkspaceProps = {
   category: PlatformCategory | null;
@@ -315,7 +316,7 @@ function roadRailRiskState(activeIncidents: RoadRailIncident[], allIncidents: Ro
 
   if (highActive > 0) {
     return {
-      detail: `${highActive} high-severity incident${highActive === 1 ? "" : "s"} active across the Digitraffic feed.`,
+      detail: tKey("roadRail.highSeverityIncidentsActiveDetail").replace("{count}", String(highActive)),
       icon: "warning",
       title: tKey("roadRail.highImpactActive")
     };
@@ -323,7 +324,7 @@ function roadRailRiskState(activeIncidents: RoadRailIncident[], allIncidents: Ro
 
   if (weatherActive > 0) {
     return {
-      detail: `${weatherActive} weather-linked incident${weatherActive === 1 ? "" : "s"} may affect road conditions or timing.`,
+      detail: tKey("roadRail.weatherIncidentsMayAffectTimingDetail").replace("{count}", String(weatherActive)),
       icon: "thunderstorm",
       title: tKey("roadRail.weatherRiskActive")
     };
@@ -331,7 +332,7 @@ function roadRailRiskState(activeIncidents: RoadRailIncident[], allIncidents: Ro
 
   if (activeIncidents.length > 0) {
     return {
-      detail: `${activeIncidents.length} active incident${activeIncidents.length === 1 ? "" : "s"} may affect corridor choice or timing.`,
+      detail: tKey("roadRail.activeIncidentsMayAffectTimingDetail").replace("{count}", String(activeIncidents.length)),
       icon: "traffic",
       title: tKey("roadRail.corridorEventsActive")
     };
@@ -339,7 +340,7 @@ function roadRailRiskState(activeIncidents: RoadRailIncident[], allIncidents: Ro
 
   if (highUpcoming > 0) {
     return {
-      detail: `${highUpcoming} high-severity incident${highUpcoming === 1 ? "" : "s"} are scheduled or pending in the feed.`,
+      detail: tKey("roadRail.highSeverityIncidentsUpcomingDetail").replace("{count}", String(highUpcoming)),
       icon: "schedule",
       title: tKey("roadRail.highImpactUpcoming")
     };
@@ -511,6 +512,7 @@ function detailLocationItems(incident: RoadRailIncident, tKey: (key: string) => 
 
 function renderCorridor(
   corridor: RoadRailCorridor,
+  language: LanguageMode,
   tKey: (key: string) => string,
   enumLabel: (value: string | null | undefined) => string,
   maxEventCount: number,
@@ -523,10 +525,10 @@ function renderCorridor(
   return (
     <article className={`road-rail-corridor road-rail-corridor-${tone}`} key={corridor.key}>
       <div>
-        <strong>{corridor.label}</strong>
+        <strong>{localizedPlatformCopy(corridor.label, language) ?? corridor.label}</strong>
         <span>{enumLabel(corridor.severity)}</span>
       </div>
-      <p>{corridor.latest_title}</p>
+      <p>{localizedPlatformCopy(corridor.latest_title, language) ?? corridor.latest_title}</p>
       <span className={`road-rail-corridor-load road-rail-corridor-load-${tone}`} aria-hidden="true">
         <span style={{ width: `${totalWidth}%` }}>
           <i style={{ width: `${activeWidth}%` }} />
@@ -887,8 +889,8 @@ export function RoadRailWorkspace({
                             <RoadRailIncidentStatusBadge incident={incident} language={language} tKey={tKey} />
                             <span>{enumLabel(incident.severity)}</span>
                           </div>
-                          <strong>{incident.title}</strong>
-                          <p>{incident.description}</p>
+                            <strong>{localizedPlatformCopy(incident.title, language) ?? incident.title}</strong>
+                            <p>{localizedPlatformCopy(incident.description, language) ?? incident.description}</p>
                           <small className="road-rail-incident-scope-preview">{scopePreview(incident, tKey)}</small>
                         </div>
                         <em>{eventTypeLabel(incident.event_type, language)}</em>
@@ -922,11 +924,11 @@ export function RoadRailWorkspace({
                   <header>
                     <div>
                       <RoadRailIncidentStatusBadge incident={selectedIncident} language={language} tKey={tKey} />
-                      <strong>{selectedIncident.title}</strong>
+                      <strong>{localizedPlatformCopy(selectedIncident.title, language) ?? selectedIncident.title}</strong>
                     </div>
                     <em>{enumLabel(selectedIncident.severity)}</em>
                   </header>
-                  <p>{selectedIncident.description}</p>
+                  <p>{localizedPlatformCopy(selectedIncident.description, language) ?? selectedIncident.description}</p>
                   <RoadRailIncidentLiveLayer incident={selectedIncident} language={language} nowTimestamp={nowTimestamp} tKey={tKey} />
                   <div className="road-rail-incident-detail-meta">
                     <div>
@@ -1069,7 +1071,7 @@ export function RoadRailWorkspace({
             </header>
             <div>
               {topCorridors.length > 0 ? (
-                topCorridors.map((corridor) => renderCorridor(corridor, tKey, enumLabel, maxCorridorEvents))
+                topCorridors.map((corridor) => renderCorridor(corridor, language, tKey, enumLabel, maxCorridorEvents))
               ) : (
                 <p>{tKey("roadRail.noCorridorGroupsAreActiveInThisWindow")}</p>
               )}
@@ -1116,7 +1118,7 @@ export function RoadRailWorkspace({
       </section>
 
       <p className="road-rail-detail-freshness">
-        {roadRail.summary ?? category?.description ?? tKey("roadRail.latestNormalizedDigitrafficRoadAndRailSignals")}
+        {localizedPlatformCopy(roadRail.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? tKey("roadRail.latestNormalizedDigitrafficRoadAndRailSignals")}
       </p>
 
       <details className="road-rail-glass-panel road-rail-diagnostics-panel">
@@ -1157,7 +1159,7 @@ export function RoadRailWorkspace({
                 : tKey("roadRail.allTrackedRawMessageFieldsArePresent")}
             </p>
             {roadRail.quality.notes.map((note) => (
-              <small key={note}>{note}</small>
+              <small key={note}>{localizedPlatformCopy(note, language) ?? note}</small>
             ))}
           </section>
 
@@ -1178,11 +1180,11 @@ export function RoadRailWorkspace({
               {roadRail.data_pipeline.map((stage) => (
                 <article className={`road-rail-stage road-rail-stage-${statusTone(stage.status)}`} key={stage.key}>
                   <div>
-                    <strong>{stage.label}</strong>
+                    <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
                     <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
-                    {stage.detail}
+                    {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
                     {stage.record_count !== null ? ` - ${stage.record_count} ${tKey("roadRail.records")}` : ""}
                   </p>
                   <span className="road-rail-stage-meter" aria-hidden="true">
@@ -1210,7 +1212,7 @@ export function RoadRailWorkspace({
               {roadRail.source_requests.map((request: RoadRailSourceRequest) => (
                 <article className={`road-rail-request road-rail-request-${statusTone(request.status)}`} key={request.key}>
                   <div>
-                    <strong>{request.label}</strong>
+                    <strong>{localizedPlatformCopy(request.label, language) ?? request.label}</strong>
                     <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>

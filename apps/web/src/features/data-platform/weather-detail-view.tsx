@@ -8,6 +8,7 @@ import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { useI18n } from "./i18n";
 import { TrendChart } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 import type { WeatherSourceLayer } from "./types";
 import {
   CHART_MODES,
@@ -89,7 +90,7 @@ export function WeatherDetailView({
   const sourceRequest = weather?.source_requests[0];
   const syncTime = weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
   const metricCards = currentMetricCards(current, language, tKey);
-  const historyPoints = weatherHistoryPoints(history);
+  const historyPoints = weatherHistoryPoints(history, tKey);
 
   if (!weather) {
     return (
@@ -354,7 +355,7 @@ export function WeatherDetailView({
           </div>
           <p>{fieldCoverageLabel(weather, tKey)}</p>
           {weather.quality.notes.map((note) => (
-            <small key={note}>{note}</small>
+            <small key={note}>{localizedPlatformCopy(note, language) ?? note}</small>
           ))}
         </article>
 
@@ -378,13 +379,13 @@ export function WeatherDetailView({
             {weather.data_pipeline.map((stage) => (
               <article className={`weather-pipeline-stage weather-pipeline-${sourceTone(stage.status)}`} key={stage.key}>
                 <div>
-                    <strong>{stage.label}</strong>
-                    <span>{enumLabel(stage.status)}</span>
-                  </div>
-                  <p>
-                    {stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("weather.records")}` : ""}
-                  </p>
+                  <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
+                  <span>{enumLabel(stage.status)}</span>
+                </div>
+                <p>
+                  {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
+                  {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("weather.records")}` : ""}
+                </p>
                 <span className="weather-pipeline-meter" aria-hidden="true">
                   <span style={{ width: `${stageProgress(stage)}%` }} />
                 </span>
@@ -415,10 +416,10 @@ export function WeatherDetailView({
               return (
                 <article className={`weather-source-layer weather-source-${sourceTone(layer.status)}`} key={layer.key}>
                   <div>
-                    <strong>{layer.label}</strong>
+                    <strong>{localizedPlatformCopy(layer.label, language) ?? layer.label}</strong>
                     <span>{enumLabel(layer.status)}</span>
                   </div>
-                  <p>{layer.detail}</p>
+                  <p>{localizedPlatformCopy(layer.detail, language) ?? layer.detail}</p>
                   <small>
                     {request ? `${sourceRequestHost(request.endpoint, tKey)} · ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
                   </small>
@@ -439,7 +440,7 @@ export function WeatherDetailView({
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            {weather.source_code.toUpperCase()} (Finnish Meteorological Institute)
+            {localizedPlatformCopy("FMI (Finnish Meteorological Institute)", language)}
           </span>
           <i aria-hidden="true" />
           <span>
@@ -456,7 +457,7 @@ export function WeatherDetailView({
       </section>
 
       <p className="weather-detail-freshness">
-        {tKey("weather.forecastFeedChecked")} {formatRelativeAge(weather.checked_at, language)}. {weather.summary ?? category?.description}
+        {tKey("weather.forecastFeedChecked")} {formatRelativeAge(weather.checked_at, language)}. {localizedPlatformCopy(weather.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? ""}
       </p>
     </div>
   );

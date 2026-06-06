@@ -18,6 +18,7 @@ import {
   SourceNormalizedEventStructure
 } from "./types";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
@@ -99,12 +100,12 @@ function metricByKey(category: PlatformCategory, key: string): PlatformMetric | 
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
+function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
   if (!metric) {
     return tKey("waterSnow.missing");
   }
 
-  return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
 }
 
 function statusTone(status: string | null | undefined): WaterTone {
@@ -437,7 +438,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
     (category.stage === "connected" ? tKey("waterSnow.feedActive") : tKey("waterSnow.sourceMapped"));
   const heroDetail =
     latest?.body ??
-    category.description ??
+    localizedPlatformCopy(category.description, language) ??
     tKey("waterSnow.ingestionReady");
   const signalMetrics = [
     activeEventsMetric,
@@ -489,7 +490,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
           </div>
           <div>
             <span>{tKey("waterSnow.recordsIngested")}</span>
-            <strong>{formatMetricValue(recordsMetric, tKey)}</strong>
+            <strong>{formatMetricValue(recordsMetric, tKey, dataLabel)}</strong>
           </div>
         </div>
       </section>
@@ -507,7 +508,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey)}</strong>
+            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
           </article>
         ))}
       </section>
@@ -668,7 +669,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             ) : (
               <article className="water-schema-card">
                   <div>
-                    <strong>Hydrology schema</strong>
+                  <strong>{tKey("waterSnow.hydrologySchema")}</strong>
                   <span>{translateEnumLabel(language, category.stage ?? "planned")}</span>
                 </div>
                 <p>{tKey("waterSnow.catalogFieldsMapped")}</p>
@@ -685,10 +686,10 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             {signalMetrics.map((metric) => (
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
-                  <strong>{metric.label}</strong>
-                  <span>{formatMetricValue(metric, tKey)}</span>
+                  <strong>{metricLabel(metric)}</strong>
+                  <span>{metric ? `${dataLabel(metric.value)}${metric.unit ? ` ${metric.unit}` : ""}` : formatMetricValue(metric, tKey)}</span>
                 </div>
-                <p>{metric.detail ?? tKey("waterSnow.metricNotProduced")}</p>
+                <p>{localizedPlatformCopy(metric.detail, language) ?? tKey("waterSnow.metricNotProduced")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
                   <span style={{ width: `${metricProgress(metric)}%` }} />
                 </span>
@@ -706,9 +707,9 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             <div className="water-source-facts">
               <span>{datasetCount} {tKey("waterSnow.datasetsLower")}</span>
               <span>{pollIntervalLabel(source?.poll_interval_seconds, tKey)} {tKey("waterSnow.poll")}</span>
-              <span>{source?.license_label ?? tKey("waterSnow.openData")}</span>
+              <span>{source?.license_label ? dataLabel(source.license_label) : tKey("waterSnow.openData")}</span>
             </div>
-            <p>{providerName}</p>
+            <p>{localizedPlatformCopy(providerName, language) ?? providerName}</p>
             {source?.documentation_url ? (
               <a href={source.documentation_url} rel="noreferrer" target="_blank">
                 {tKey("waterSnow.openDataDocumentation")}
@@ -828,7 +829,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                           <span style={{ width: `${row.width}%` }} />
                         </i>
                       </div>
-                      <em>{row.status}</em>
+                      <em>{translateEnumLabel(language, row.status)}</em>
                     </article>
                   ))}
                 </div>
@@ -862,7 +863,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            {providerName}
+            {localizedPlatformCopy(providerName, language) ?? providerName}
           </span>
           <i aria-hidden="true" />
           <span>
@@ -876,7 +877,9 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
         </div>
       </section>
 
-      <p className="water-detail-freshness">{category.description}</p>
+      <p className="water-detail-freshness">
+        {localizedPlatformCopy(category.description, language) ?? tKey("waterSnow.ingestionReady")}
+      </p>
     </section>
   );
 }

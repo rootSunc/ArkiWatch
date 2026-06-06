@@ -129,7 +129,10 @@ export function dataHelpText({
 }: DataHelpTextOptions): string | null {
   const messageKey = resolveHelpMessageKey(normalizeHelpKey(key), normalizeHelpLabel(label));
   if (messageKey) {
-    return translateMessageKey(language, messageKey);
+    const translated = translateMessageKey(language, messageKey);
+    // A newly introduced API key should never leak into the UI while the
+    // message catalog catches up. Prefer the caller's contextual explanation.
+    return translated === messageKey ? detail ?? null : translated;
   }
 
   return detail ?? null;

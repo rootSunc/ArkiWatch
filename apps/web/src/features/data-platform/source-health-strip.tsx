@@ -2,18 +2,13 @@ import { useState } from "react";
 
 import { formatRelativeAge } from "@/features/shared/format";
 import { useI18n } from "./i18n";
+import { healthySourceCount, sourceHealthTone } from "./source-health";
 import { PlatformOverviewResponse } from "./types";
 
 type SourceHealthStripProps = {
   overview: PlatformOverviewResponse;
   defaultExpanded?: boolean;
 };
-
-function healthySourceCount(sources: PlatformOverviewResponse["sources"]): number {
-  return sources.filter((source) =>
-    ["healthy", "ready", "connected", "fetched"].includes(source.operational_status),
-  ).length;
-}
 
 export function SourceHealthStrip({
   overview,
@@ -61,7 +56,7 @@ export function SourceHealthStrip({
           {overview.sources.map((source) => (
             <article
               aria-label={`${source.source_name} · ${enumLabel(source.operational_status)}`}
-              className={`source-chip source-chip-${source.operational_status}`}
+              className={`source-chip source-chip-${sourceHealthTone(source.operational_status)}`}
               key={source.id}
             >
               <span className="source-chip-code">{source.source_code}</span>

@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import { useI18n } from "./i18n";
+
 type TrendTone = "primary" | "good" | "warn" | "bad" | "neutral";
 
 export type TrendChartPoint = {
@@ -17,6 +19,12 @@ type TrendChartProps = {
   tone?: TrendTone;
   maximumFractionDigits?: number;
   emptyMessage?: string;
+  statLabels?: {
+    latest?: string;
+    low?: string;
+    peak?: string;
+    unavailable?: string;
+  };
 };
 
 const CHART_WIDTH = 640;
@@ -126,8 +134,16 @@ export function TrendChart({
   unit = null,
   tone = "primary",
   maximumFractionDigits = 1,
-  emptyMessage = "No historical chart data is available."
+  emptyMessage = "No historical chart data is available.",
+  statLabels,
 }: TrendChartProps) {
+  const { tKey } = useI18n();
+  const resolvedStatLabels = {
+    latest: statLabels?.latest ?? tKey("shell.latest"),
+    low: statLabels?.low ?? tKey("shell.low"),
+    peak: statLabels?.peak ?? tKey("shell.peak"),
+    unavailable: statLabels?.unavailable ?? tKey("shell.nA"),
+  };
   const chartPoints = finitePoints(points);
   const latestPoint = chartPoints[chartPoints.length - 1] ?? null;
   const peakPoint = chartPoints.reduce<TrendChartPoint | null>(
@@ -152,7 +168,9 @@ export function TrendChart({
           <h3>{title}</h3>
         </div>
         <strong>
-          {latestPoint ? formatValue(latestPoint.value, unit, maximumFractionDigits) : "n/a"}
+          {latestPoint
+            ? formatValue(latestPoint.value, unit, maximumFractionDigits)
+            : resolvedStatLabels.unavailable}
         </strong>
       </header>
 
@@ -198,18 +216,18 @@ export function TrendChart({
 
       <div className="trend-chart-stats">
         <span>
-          Latest
-          <strong>{latestPoint ? formatValue(latestPoint.value, unit, maximumFractionDigits) : "n/a"}</strong>
+          {resolvedStatLabels.latest}
+          <strong>{latestPoint ? formatValue(latestPoint.value, unit, maximumFractionDigits) : resolvedStatLabels.unavailable}</strong>
           {latestPoint?.detail ? <small>{latestPoint.detail}</small> : null}
         </span>
         <span>
-          Low
-          <strong>{lowPoint ? formatValue(lowPoint.value, unit, maximumFractionDigits) : "n/a"}</strong>
+          {resolvedStatLabels.low}
+          <strong>{lowPoint ? formatValue(lowPoint.value, unit, maximumFractionDigits) : resolvedStatLabels.unavailable}</strong>
           {lowPoint?.detail ? <small>{lowPoint.detail}</small> : null}
         </span>
         <span>
-          Peak
-          <strong>{peakPoint ? formatValue(peakPoint.value, unit, maximumFractionDigits) : "n/a"}</strong>
+          {resolvedStatLabels.peak}
+          <strong>{peakPoint ? formatValue(peakPoint.value, unit, maximumFractionDigits) : resolvedStatLabels.unavailable}</strong>
           {peakPoint?.detail ? <small>{peakPoint.detail}</small> : null}
         </span>
       </div>

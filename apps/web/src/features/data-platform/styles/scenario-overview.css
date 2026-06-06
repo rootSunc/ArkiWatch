@@ -279,13 +279,33 @@
   white-space: nowrap;
 }
 
-.today-historical-banner {
+.today-recommendation-limit {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
   border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--amber) 10%, transparent);
+  background: color-mix(in srgb, var(--amber) 9%, transparent);
   padding: 10px 13px;
   color: var(--on-surface-variant);
   font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.today-recommendation-limit > .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.today-recommendation-limit > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.today-recommendation-limit strong {
+  color: var(--on-surface);
+  font-weight: 750;
 }
 
 .demo-mode-banner {

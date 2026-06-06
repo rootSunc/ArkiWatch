@@ -15,6 +15,7 @@
     "ingestionReady": "Water level, discharge, groundwater, snow-water equivalent, and flood context are ready for ingestion.",
     "detailAria": "Water and snow detail",
     "hydrologyTitle": "Water & Snow Hydrology",
+    "hydrologySchema": "Hydrology schema",
     "operatingCondition": "Water and snow operating condition",
     "signalState": "Hydrology Signal State",
     "datasets": "Datasets",
@@ -63,6 +64,8 @@
     "snowLoadGuidance": "Snow-load guidance",
     "algaeGuidance": "Algae guidance",
     "sources": "Sources",
-    "keyFields": "Key fields"
+    "keyFields": "Key fields",
+    "categoryDescription": "Hydrology and seasonal conditions.",
+    "providerName": "Finnish Environment Institute"
   }
 }

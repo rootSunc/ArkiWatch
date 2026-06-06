@@ -27,6 +27,9 @@
     "high": "High",
     "highImpactActive": "High impact active",
     "highImpactUpcoming": "High impact upcoming",
+    "highSeverityAlertsActiveDetail": "{count} high-severity alerts are active across the HSL feed.",
+    "activeAlertsMayAffectTimingDetail": "{count} active alerts may affect route choice or timing.",
+    "highSeverityAlertsUpcomingDetail": "{count} high-severity alerts are scheduled or pending in the feed.",
     "highestSeverity": "Highest Severity",
     "impactScope": "Impact scope",
     "inEffect": "In effect",
@@ -111,6 +114,15 @@
     "stops2": "stops",
     "storedEventRows": "stored event rows",
     "trips2": "trips",
-    "until": "until"
+    "until": "until",
+    "categoryDescription": "Public transport service alerts.",
+    "demoSummary": "One example service alert may affect the westbound tram corridor.",
+    "demoAlertTitle": "Westbound tram service is slower",
+    "demoAlertDescription": "Allow a few extra minutes during the morning peak.",
+    "normalizedTransitAlerts": "Normalized transit alerts",
+    "staticDemoTransitNote": "Static demo fixture; not a live service alert.",
+    "hslSourceLabel": "HSL GTFS-RT Service Alerts",
+    "historyPointDetail": "{active} active · {routes} route scoped",
+    "digitransitSourceLabel": "Digitransit alerts"
   }
 }

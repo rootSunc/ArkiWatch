@@ -48,6 +48,7 @@
     "providerStatusAria": "Geospatial provider status",
     "providerStatus": "Provider Status",
     "records": "Records",
-    "planned": "planned"
+    "planned": "planned",
+    "categoryDescription": "Location context for public signals."
   }
 }

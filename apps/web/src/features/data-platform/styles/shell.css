@@ -1242,6 +1242,106 @@
   min-width: 0;
 }
 
+.signal-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 10px;
+}
+
+.signal-section-header p {
+  max-width: 680px;
+  margin: -4px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.signal-catalog-disclosure {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-bg) 76%, transparent);
+}
+
+.signal-section-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 58px;
+  cursor: pointer;
+  list-style: none;
+  padding: 0 14px;
+}
+
+.signal-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.signal-section-summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+
+.signal-section-summary > span:first-child,
+.signal-section-summary > span:first-child > span:last-child,
+.signal-section-summary-meta {
+  display: flex;
+  align-items: center;
+}
+
+.signal-section-summary > span:first-child {
+  min-width: 0;
+  gap: 9px;
+}
+
+.signal-section-summary > span:first-child > .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 19px;
+}
+
+.signal-section-summary > span:first-child > span:last-child {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.signal-section-summary strong {
+  color: var(--on-surface);
+  font-size: 15px;
+}
+
+.signal-section-summary small {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signal-section-summary-meta {
+  flex: 0 0 auto;
+  gap: 8px;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.signal-section-summary-meta > .material-symbols-outlined {
+  transition: transform 160ms ease;
+}
+
+.signal-catalog-disclosure[open] .signal-section-summary-meta > .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.signal-grid-catalog {
+  padding: 0 14px 14px;
+}
+
 .signal-section h3 {
   display: flex;
   align-items: center;

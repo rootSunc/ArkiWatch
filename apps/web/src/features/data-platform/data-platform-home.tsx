@@ -25,6 +25,7 @@ import {
   cityLabel,
   normalizeCityValue,
 } from "./city-scope";
+import { localizedContent } from "./content-localization";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import {
   HistoricalWarningBanner,
@@ -60,15 +61,14 @@ import {
   TODAY_NAV_KEY,
   categoryByKey,
   currentSearchParams,
+  isCatalogCategoryKey,
   navItemAvailable,
   pathWithParams,
   profileInitials,
   resolveNavKey,
 } from "./data-platform-nav-utils";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
-import {
-  PlatformEvent,
-} from "./types";
+import type { PlatformCategory, PlatformEvent } from "./types";
 import {
   buildAirQualityRecentEvents,
   buildWeatherRecentEvents,
@@ -218,6 +218,7 @@ export function DataPlatformHome({
   } = useClientPreferences();
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
+  const [isCatalogExpanded, setIsCatalogExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -529,11 +530,12 @@ export function DataPlatformHome({
       buildTodayBrief({
         publicDashboard,
         overviewCoverageArea: visibleOverview?.coverage_area,
+        isHistorical,
         summaryTiles: userSummaryTiles,
         timelineItems: crossDomainTimeline,
         language: languageMode,
       }),
-    [crossDomainTimeline, languageMode, publicDashboard, userSummaryTiles, visibleOverview],
+    [crossDomainTimeline, isHistorical, languageMode, publicDashboard, userSummaryTiles, visibleOverview],
   );
   const signalSystemTiles = useMemo(
     () =>
@@ -549,6 +551,12 @@ export function DataPlatformHome({
   const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
   const visibleCategories = selectedCategories.filter((category) =>
     matchesSearch(category, searchValue, languageMode),
+  );
+  const primaryVisibleCategories = visibleCategories.filter(
+    (category) => !isCatalogCategoryKey(category.key),
+  );
+  const catalogVisibleCategories = visibleCategories.filter((category) =>
+    isCatalogCategoryKey(category.key),
   );
   const visibleEvents = (
     selectedCategory
@@ -594,10 +602,20 @@ export function DataPlatformHome({
         )}`
       : `${overallScopeLabel} · ${tKey("shell.noActiveNotifications")}`;
   const overallNotificationBody = priorityVisibleEvent
-    ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${priorityVisibleEvent.title}`
+    ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${localizedContent(
+        languageMode,
+        priorityVisibleEvent.title,
+        priorityVisibleEvent.title_zh,
+      )}`
     : tKey("shell.noActiveCrossSignalNotificationsInThisView");
   const overallNotificationDetail =
-    priorityVisibleEvent?.body ??
+    (priorityVisibleEvent
+      ? localizedContent(
+          languageMode,
+          priorityVisibleEvent.body,
+          priorityVisibleEvent.body_zh,
+        )
+      : null) ??
     tKey("shell.recentEventsRemainAvailableBelowForSourceLevelInspection");
   const isWeatherDetail = selectedCategory?.key === "weather";
   const isAirDetail = selectedCategory?.key === "air";
@@ -806,6 +824,87 @@ export function DataPlatformHome({
     setNeedsHistoryAvailability(true);
   }
 
+  function renderSignalCard(category: PlatformCategory) {
+    const readout = signalReadout(
+      category,
+      weather,
+      airQuality,
+      energy,
+      roadRail,
+      transit,
+      languageMode,
+    );
+    const attribution = formatSignalAttributionLine(
+      categorySignalAttribution(
+        category,
+        weather,
+        airQuality,
+        energy,
+        householdEnergy,
+        roadRail,
+        transit,
+      ),
+      languageMode,
+    );
+    const tone = readout.tone;
+    const followsSelectedCity = categorySupportsCityScope(category.key);
+
+    return (
+      <button
+        className={`signal-card signal-card-${tone}`}
+        key={category.key}
+        onClick={() => selectNav(category.key)}
+        type="button"
+      >
+        <span className="signal-card-top">
+          <span className="signal-title">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {CATEGORY_ICONS[category.key] ?? "database"}
+            </span>
+            <strong>{displayTitle(category, languageMode)}</strong>
+          </span>
+          <span className={`status-badge status-badge-${tone}`}>
+            {statusLabel(category, languageMode)}
+          </span>
+        </span>
+        <span className="signal-card-bottom">
+          <span className="signal-readout">
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: readout.helpKey,
+                label: readout.label,
+                language: languageMode,
+              })}
+            >
+              {readout.label}
+            </DataLabelWithHelp>
+            <strong>{readout.value}</strong>
+          </span>
+          <span
+            className={
+              followsSelectedCity
+                ? "signal-scope-chip signal-scope-chip-city"
+                : "signal-scope-chip"
+            }
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {followsSelectedCity ? "location_on" : "public"}
+            </span>
+            <span>
+              {followsSelectedCity
+                ? cityLabel(selectedCity)
+                : tKey("shell.regionalScope")}
+            </span>
+          </span>
+          <span className="signal-meter" aria-hidden="true">
+            <span style={{ width: `${readout.progress}%` }} />
+          </span>
+          <span className="signal-card-attribution">{attribution}</span>
+        </span>
+      </button>
+    );
+  }
+
   const dashboardShellClassName = isSideNavHidden
     ? "dashboard-shell dashboard-shell-nav-hidden"
     : "dashboard-shell";
@@ -982,7 +1081,6 @@ export function DataPlatformHome({
 
             {selectedNavKey === TODAY_NAV_KEY ? (
               <TodayOverview
-                isHistorical={isHistorical}
                 isScopePending={isPreviousScope}
                 language={languageMode}
                 liveSignals={scenarioLiveSignals}
@@ -1067,6 +1165,7 @@ export function DataPlatformHome({
                   </section>
 
                   <CrossDomainTimelinePanel
+                    collapsible
                     items={signalEventTimeline}
                     language={languageMode}
                     onOpenEvent={openRecentEvent}
@@ -1080,129 +1179,71 @@ export function DataPlatformHome({
                         : "dashboard-main-grid dashboard-main-grid-events-collapsed"
                     }
                   >
-                    <section
-                      className="signal-section"
-                      aria-label={tKey("shell.signalStatusArray")}
-                    >
-                      <h3>
-                        <span
-                          className="material-symbols-outlined"
-                          aria-hidden="true"
-                        >
-                          sensors
-                        </span>
-                        {tKey("shell.allSignals")}
-                      </h3>
-
-                      <div className="signal-grid">
-                        {visibleCategories.length > 0 ? (
-                          visibleCategories.map((category) => {
-                            const readout = signalReadout(
-                              category,
-                              weather,
-                              airQuality,
-                              energy,
-                              roadRail,
-                              transit,
-                              languageMode,
-                            );
-                            const attribution = formatSignalAttributionLine(
-                              categorySignalAttribution(
-                                category,
-                                weather,
-                                airQuality,
-                                energy,
-                                householdEnergy,
-                                roadRail,
-                                transit,
-                              ),
-                              languageMode,
-                            );
-                            const tone = readout.tone;
-                            const followsSelectedCity =
-                              categorySupportsCityScope(category.key);
-                            return (
-                              <button
-                                className={`signal-card signal-card-${tone}`}
-                                key={category.key}
-                                onClick={() => selectNav(category.key)}
-                                type="button"
+                    {primaryVisibleCategories.length > 0 || catalogVisibleCategories.length === 0 ? (
+                      <section
+                        className="signal-section"
+                        aria-label={tKey("shell.signalStatusArray")}
+                      >
+                        <header className="signal-section-header">
+                          <div>
+                            <h3>
+                              <span
+                                className="material-symbols-outlined"
+                                aria-hidden="true"
                               >
-                                <span className="signal-card-top">
-                                  <span className="signal-title">
-                                    <span
-                                      className="material-symbols-outlined"
-                                      aria-hidden="true"
-                                    >
-                                      {CATEGORY_ICONS[category.key] ??
-                                        "database"}
-                                    </span>
-                                    <strong>
-                                      {displayTitle(category, languageMode)}
-                                    </strong>
-                                  </span>
-                                  <span
-                                    className={`status-badge status-badge-${tone}`}
-                                  >
-                                    {statusLabel(category, languageMode)}
-                                  </span>
-                                </span>
-                                <span className="signal-card-bottom">
-                                  <span className="signal-readout">
-                                    <DataLabelWithHelp
-                                      helpText={dataHelpText({
-                                        key: readout.helpKey,
-                                        label: readout.label,
-                                        language: languageMode,
-                                      })}
-                                    >
-                                      {readout.label}
-                                    </DataLabelWithHelp>
-                                    <strong>{readout.value}</strong>
-                                  </span>
-                                  <span
-                                    className={
-                                      followsSelectedCity
-                                        ? "signal-scope-chip signal-scope-chip-city"
-                                        : "signal-scope-chip"
-                                    }
-                                  >
-                                    <span
-                                      className="material-symbols-outlined"
-                                      aria-hidden="true"
-                                    >
-                                      {followsSelectedCity
-                                        ? "location_on"
-                                        : "public"}
-                                    </span>
-                                    <span>
-                                      {followsSelectedCity
-                                        ? cityLabel(selectedCity)
-                                        : tKey("shell.regionalScope")}
-                                    </span>
-                                  </span>
-                                  <span
-                                    className="signal-meter"
-                                    aria-hidden="true"
-                                  >
-                                    <span
-                                      style={{ width: `${readout.progress}%` }}
-                                    />
-                                  </span>
-                                  <span className="signal-card-attribution">
-                                    {attribution}
-                                  </span>
-                                </span>
-                              </button>
-                            );
-                          })
-                        ) : (
-                          <div className="dashboard-empty-state">
-                            {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
+                                sensors
+                              </span>
+                              {tKey("shell.coreSignals")}
+                            </h3>
+                            <p>{tKey("shell.coreSignalsLead")}</p>
                           </div>
-                        )}
-                      </div>
-                    </section>
+                        </header>
+
+                        <div className="signal-grid">
+                          {primaryVisibleCategories.length > 0 ? (
+                            primaryVisibleCategories.map(renderSignalCard)
+                          ) : (
+                            <div className="dashboard-empty-state">
+                              {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    ) : null}
+
+                    {catalogVisibleCategories.length > 0 ? (
+                      <details
+                        className="signal-section signal-catalog-disclosure"
+                        open={isCatalogExpanded || Boolean(searchValue.trim())}
+                        onToggle={(event) =>
+                          setIsCatalogExpanded(event.currentTarget.open)
+                        }
+                      >
+                        <summary
+                          aria-label={tKey("shell.toggleCatalogSignals")}
+                          className="signal-section-summary"
+                        >
+                          <span>
+                            <span className="material-symbols-outlined" aria-hidden="true">
+                              database
+                            </span>
+                            <span>
+                              <strong>{tKey("shell.catalogSignals")}</strong>
+                              <small>{tKey("shell.catalogSignalsLead")}</small>
+                            </span>
+                          </span>
+                          <span className="signal-section-summary-meta">
+                            <span>{catalogVisibleCategories.length}</span>
+                            <span className="material-symbols-outlined" aria-hidden="true">
+                              expand_more
+                            </span>
+                          </span>
+                        </summary>
+                        <div className="signal-grid signal-grid-catalog">
+                          {catalogVisibleCategories.map(renderSignalCard)}
+                        </div>
+                      </details>
+                    ) : null}
 
                     {isEventsExpanded ? (
                       <aside
@@ -1239,7 +1280,11 @@ export function DataPlatformHome({
                               </span>
                               <span className="events-panel-summary">
                                 {latestUnreadEvent
-                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode)} · ${latestUnreadEvent.title}`
+                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode)} · ${localizedContent(
+                                      languageMode,
+                                      latestUnreadEvent.title,
+                                      latestUnreadEvent.title_zh,
+                                    )}`
                                   : tKey("shell.noRecentEventsMatchTheCurrentView")}
                               </span>
                             </span>
@@ -1315,7 +1360,13 @@ export function DataPlatformHome({
                                     )}{" "}
                                     · {attributeLabel(selectedEvent.event_type)}
                                   </span>
-                                  <strong>{selectedEvent.title}</strong>
+                                  <strong>
+                                    {localizedContent(
+                                      languageMode,
+                                      selectedEvent.title,
+                                      selectedEvent.title_zh,
+                                    )}
+                                  </strong>
                                 </div>
                                 <button
                                   aria-label={tKey("shell.closeEventDetail")}
@@ -1346,7 +1397,13 @@ export function DataPlatformHome({
                                   </span>
                                 </button>
                               </header>
-                              <p>{selectedEvent.body}</p>
+                              <p>
+                                {localizedContent(
+                                  languageMode,
+                                  selectedEvent.body,
+                                  selectedEvent.body_zh,
+                                )}
+                              </p>
                               <div className="event-detail-meta">
                                 <span>
                                   {tKey("shell.validity")}:{" "}
@@ -1427,7 +1484,11 @@ export function DataPlatformHome({
                                   />
                                   <button
                                     aria-expanded={isSelected}
-                                    aria-label={`${tKey("shell.openEventDetail")}: ${event.title}`}
+                                    aria-label={`${tKey("shell.openEventDetail")}: ${localizedContent(
+                                      languageMode,
+                                      event.title,
+                                      event.title_zh,
+                                    )}`}
                                     className="timeline-item-content"
                                     onClick={() => {
                                       markRecentEventRead(event.id);
@@ -1445,7 +1506,13 @@ export function DataPlatformHome({
                                       )}
                                     </time>
                                     <span className="timeline-item-heading">
-                                      <h4>{event.title}</h4>
+                                      <h4>
+                                        {localizedContent(
+                                          languageMode,
+                                          event.title,
+                                          event.title_zh,
+                                        )}
+                                      </h4>
                                       <span
                                         className={
                                           isRead
@@ -1456,7 +1523,13 @@ export function DataPlatformHome({
                                         {isRead ? tKey("shell.read") : tKey("shell.unread")}
                                       </span>
                                     </span>
-                                    <p>{event.body}</p>
+                                    <p>
+                                      {localizedContent(
+                                        languageMode,
+                                        event.body,
+                                        event.body_zh,
+                                      )}
+                                    </p>
                                     {details.length > 0 ? (
                                       <div className="event-detail-chips">
                                         {details.map((detail) => (

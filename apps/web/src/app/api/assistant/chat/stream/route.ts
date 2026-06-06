@@ -47,8 +47,10 @@ export async function POST(request: NextRequest) {
   return new Response(backendResponse.body, {
     status: backendResponse.status,
     headers: {
-      "Cache-Control": "no-cache",
+      "Cache-Control": backendResponse.headers.get("cache-control") ?? "no-cache, no-transform",
       "Content-Type": backendResponse.headers.get("content-type") ?? "text/event-stream",
+      "Connection": backendResponse.headers.get("connection") ?? "keep-alive",
+      "X-Accel-Buffering": backendResponse.headers.get("x-accel-buffering") ?? "no",
     },
   });
 }

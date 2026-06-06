@@ -18,6 +18,7 @@ import {
 } from "./types";
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 
 const AirQualityStationMap = dynamic(
   () => import("./air-quality-station-map").then((module) => module.AirQualityStationMap),
@@ -779,7 +780,7 @@ export function AirQualityWorkspace({
                 : tKey("airQuality.allTrackedStationFieldsArePresent")}
             </p>
             {airQuality.quality.notes.map((note) => (
-              <small key={note}>{note}</small>
+              <small key={note}>{localizedPlatformCopy(note, language) ?? note}</small>
             ))}
           </article>
 
@@ -803,11 +804,11 @@ export function AirQualityWorkspace({
               {airQuality.data_pipeline.map((stage) => (
                 <article className={`air-stage air-stage-${stageTone(stage)}`} key={stage.key}>
                   <div>
-                    <strong>{stage.label}</strong>
+                    <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
                     <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
-                    {stage.detail}
+                    {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
                     {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("airQuality.records")}` : ""}
                   </p>
                 </article>
@@ -832,7 +833,7 @@ export function AirQualityWorkspace({
               {airQuality.source_requests.map((request) => (
                 <article className={`air-request air-request-${stageTone(request)}`} key={request.key}>
                   <div>
-                    <strong>{request.label}</strong>
+                    <strong>{localizedPlatformCopy(request.label, language) ?? request.label}</strong>
                     <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
@@ -857,7 +858,7 @@ export function AirQualityWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            HSY Air Quality WFS
+            {localizedPlatformCopy("HSY Air Quality WFS", language)}
           </span>
           <i aria-hidden="true" />
           <span>
@@ -872,7 +873,7 @@ export function AirQualityWorkspace({
       </section>
 
       <p className="air-detail-freshness">
-        {airQuality.summary ?? category?.description ?? tKey("airQuality.latestNormalizedHsyAirQualityStationSignals")}
+        {localizedPlatformCopy(airQuality.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? tKey("airQuality.latestNormalizedHsyAirQualityStationSignals")}
       </p>
     </section>
   );

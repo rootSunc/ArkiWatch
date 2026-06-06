@@ -12,6 +12,14 @@ export const FALLBACK_NAV_KEY = "overview";
 export const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
 export const CROSS_TIMELINE_LIMIT = 10;
 
+// Keep this allowlist in the view-model layer so server evaluation never needs
+// to call methods on values exported by the client-only shell module.
+const CATALOG_CATEGORY_KEYS = new Set([
+  "city_services",
+  "geospatial",
+  "regional_profile",
+]);
+
 export const CATEGORY_ICONS: Record<string, string> = {
   air: "air",
   city_services: "location_city",
@@ -50,6 +58,10 @@ export function categoryByKey(
   }
 
   return categories.find((category) => category.key === key) ?? null;
+}
+
+export function isCatalogCategoryKey(categoryKey: string): boolean {
+  return CATALOG_CATEGORY_KEYS.has(categoryKey);
 }
 
 export function loadReadRecentEventIds(): Set<string> {

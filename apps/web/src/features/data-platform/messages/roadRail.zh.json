@@ -29,6 +29,10 @@
     "highestSeverity": "最高严重级别",
     "highImpactActive": "高影响且活跃",
     "highImpactUpcoming": "高影响且即将发生",
+    "highSeverityIncidentsActiveDetail": "Digitraffic 数据流中当前有 {count} 起高严重级别事件生效。",
+    "weatherIncidentsMayAffectTimingDetail": "当前有 {count} 起天气相关事件可能影响道路状况或出行时间。",
+    "activeIncidentsMayAffectTimingDetail": "当前有 {count} 起活跃事件可能影响通道选择或出行时间。",
+    "highSeverityIncidentsUpcomingDetail": "数据流中有 {count} 起高严重级别事件已计划或待处理。",
     "history": "历史",
     "incidentDetails": "事件详情",
     "incidentStatus": "事件状态",
@@ -112,6 +116,13 @@
     "weatherRisk": "天气风险",
     "weatherRiskSummary": "天气风险",
     "weatherRiskActive": "天气风险活跃",
-    "window": "时段"
+    "window": "时段",
+    "demoSummary": "示例道路天气事件提示出行时应适当留出更大安全距离。",
+    "demoIncidentTitle": "路面湿滑风险",
+    "demoIncidentDescription": "降雨时段过后路面可能湿滑。",
+    "demoCorridor": "赫尔辛基西向通道",
+    "normalizedRoadEvents": "标准化道路事件",
+    "staticDemoRoadNote": "静态演示数据；并非实时道路事件。",
+    "digitrafficSourceLabel": "Digitraffic 道路事件"
   }
 }

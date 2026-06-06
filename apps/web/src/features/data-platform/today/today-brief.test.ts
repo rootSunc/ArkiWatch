@@ -96,5 +96,97 @@ describe("buildTodayBrief", () => {
     });
 
     expect(brief?.recommendationCoverageArea).toBeNull();
+    expect(brief?.recommendationMode).toBe("live");
+  });
+
+  it("hides regional recommendations outside their covered area", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: {
+        ...dashboard,
+        coverage_area: "Helsinki/Uusimaa",
+        top_actions: [
+          {
+            id: "commute-action",
+            scenario_key: "commute",
+            title: "Leave earlier",
+            body: "A regional transit alert is active.",
+            severity: "HIGH",
+            area_scope: "helsinki_metro",
+            freshness_state: "fresh",
+            valid_from: "2026-08-09T08:00:00Z",
+            valid_to: "2026-08-09T09:00:00Z",
+            evidence: ["DIGITRANSIT"],
+          },
+        ],
+        timeline: [
+          {
+            scenario_key: "outdoor",
+            label: "Regional scenario",
+            severity: "HIGH",
+            starts_at: "2026-08-09T08:00:00Z",
+            ends_at: "2026-08-09T09:00:00Z",
+          },
+        ],
+      },
+      overviewCoverageArea: "Tampere/Pirkanmaa",
+      summaryTiles: [],
+      timelineItems: [
+        timelineItem("regional-scenario", "HIGH", "2026-08-09T08:00:00Z"),
+        timelineItem("local-event", "HIGH", "2026-08-09T09:00:00Z", "event"),
+      ],
+      language: "en",
+    });
+
+    expect(brief?.recommendationMode).toBe("out_of_scope");
+    expect(brief?.topActions).toEqual([]);
+    expect(brief?.planItems).toEqual([]);
+    expect(brief?.headline).toBe("Recommendations are not available for this area");
+  });
+
+  it("marks historical Today as evidence-only", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: dashboard,
+      overviewCoverageArea: "Helsinki/Uusimaa",
+      isHistorical: true,
+      summaryTiles: [],
+      timelineItems: [timelineItem("historical-event", "HIGH", "2026-08-09T09:00:00Z")],
+      language: "en",
+    });
+
+    expect(brief?.recommendationMode).toBe("historical");
+    expect(brief?.topActions).toEqual([]);
+    expect(brief?.planItems).toEqual([]);
+    expect(brief?.headline).toBe("Historical view · recommendations are read-only");
+  });
+
+  it("localizes the urgent headline without mutating the API copy", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: {
+        ...dashboard,
+        top_actions: [
+          {
+            id: "commute-action",
+            scenario_key: "commute",
+            title: "Leave a few minutes earlier",
+            title_zh: "提前几分钟出发",
+            body: "A regional transit alert is active.",
+            body_zh: "早高峰期间有公共交通提醒。",
+            severity: "HIGH",
+            area_scope: "Helsinki",
+            freshness_state: "fresh",
+            valid_from: "2026-08-09T08:00:00Z",
+            valid_to: "2026-08-09T09:00:00Z",
+            evidence: ["DIGITRANSIT"],
+          },
+        ],
+      },
+      overviewCoverageArea: "Helsinki/Uusimaa",
+      summaryTiles: [],
+      timelineItems: [],
+      language: "zh",
+    });
+
+    expect(brief?.headline).toBe("提前几分钟出发");
+    expect(brief?.topActions[0]?.title).toBe("Leave a few minutes earlier");
   });
 });

@@ -26,6 +26,12 @@ describe("demo fixture", () => {
     expect(fixture.overview.coverage_area).toBe("Espoo / Uusimaa · 2026-08-08");
     expect(fixture.overview.time_scope?.mode).toBe("historical");
     expect(fixture.overview.time_scope?.date).toBe(DEMO_SNAPSHOT_DATE);
+    expect(fixture.overview.time_scope?.window_start).toBe(
+      "2026-08-07T21:00:00.000Z",
+    );
+    expect(fixture.overview.time_scope?.window_end).toBe(
+      "2026-08-08T15:00:00.000Z",
+    );
     expect(fixture.weather.location).toBe("Espoo");
     expect(fixture.historyAvailability.city).toBe("espoo");
   });

@@ -45,6 +45,7 @@
     "serviceLocationDetail": "Units, coordinates, and municipal service metadata",
     "openingHoursDetail": "Daily availability and exception schedules",
     "temporaryClosuresDetail": "Closure windows and facility availability",
-    "accessibilityDetail": "Access attributes for service-unit matching"
+    "accessibilityDetail": "Access attributes for service-unit matching",
+    "categoryDescription": "Public service locations and opening information."
   }
 }

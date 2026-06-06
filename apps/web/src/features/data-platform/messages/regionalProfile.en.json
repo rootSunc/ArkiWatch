@@ -45,6 +45,8 @@
     "providerStatus": "Provider Status",
     "daily": "daily",
     "records": "Records",
-    "planned": "planned"
+    "planned": "planned",
+    "categoryDescription": "Regional coverage and context.",
+    "vsBaseline": "{value}% vs baseline"
   }
 }

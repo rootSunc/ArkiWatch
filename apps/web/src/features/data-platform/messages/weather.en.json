@@ -105,6 +105,15 @@
     "areaChart": "Area chart",
     "coverageBand": "Coverage band",
     "dualLineChart": "Dual-line chart",
-    "lineChart": "Line chart"
+    "lineChart": "Line chart",
+    "categoryDescription": "Forecast and rain timing.",
+    "demoSummary": "Mild and mostly clear, with a brief late-morning rain window.",
+    "staticDemoForecastNote": "Static demo fixture; not a live forecast.",
+    "rawObservation": "Raw observation",
+    "normalizedForecast": "Normalized forecast",
+    "fmiForecast": "FMI forecast",
+    "staticDemoLayer": "Static demo layer",
+    "fmiProviderLabel": "FMI (Finnish Meteorological Institute)",
+    "historyPointDetail": "{rain} mm rain · {points} points"
   }
 }

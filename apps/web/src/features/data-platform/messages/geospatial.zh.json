@@ -48,6 +48,7 @@
     "providerStatusAria": "地理空间数据源状态",
     "providerStatus": "数据源状态",
     "records": "数据记录",
-    "planned": "已规划"
+    "planned": "已规划",
+    "categoryDescription": "公共信号的空间位置背景。"
   }
 }

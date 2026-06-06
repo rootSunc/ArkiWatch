@@ -174,6 +174,7 @@ const DYNAMIC_LABEL_ALIASES: Record<string, string> = {
   good_window: "shell.goodWindow",
   geospatial: "shell.navGeospatialBase",
   healthy: "shell.healthy",
+  helsinki_region: "shell.helsinkiRegion",
   helsinki_metro: "shell.helsinkiMetro",
   helsinki_uusimaa: "shell.helsinkiUusimaa",
   high: "shell.high",

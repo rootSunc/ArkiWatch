@@ -3,6 +3,8 @@ import { formatTimestamp } from "@/features/shared/format";
 import type { DashboardTone } from "./data-platform-shell";
 import type { LanguageMode } from "./i18n";
 import { translateMessageKey } from "./i18n";
+import { isCatalogCategoryKey } from "./data-platform-nav-utils";
+import { healthySourceCount } from "./source-health";
 import type {
   DashboardSource,
   PlatformCategory,
@@ -19,10 +21,6 @@ export type SignalSystemTile = {
   icon: string;
   valueStyle?: "emphasis" | "body";
 };
-
-function sourceIsHealthy(source: DashboardSource): boolean {
-  return ["healthy", "ready", "connected", "fetched"].includes(source.operational_status);
-}
 
 function severeEventCount(events: PlatformEvent[]): number {
   return events.filter((event) => ["HIGH", "CRITICAL"].includes(event.severity.toUpperCase())).length;
@@ -42,11 +40,16 @@ export function buildSignalSystemTiles({
   language: LanguageMode;
 }): SignalSystemTile[] {
 
-  const healthySources = sources.filter(sourceIsHealthy).length;
+  const healthySources = healthySourceCount(sources);
   const issueSources = Math.max(0, sources.length - healthySources);
   const severeEvents = severeEventCount(recentEvents);
-  const connectedCategories = categories.filter(
-    (category) => category.stage === "connected" || category.status === "connected",
+  const catalogCategoryCount = categories.filter((category) =>
+    isCatalogCategoryKey(category.key),
+  ).length;
+  const connectedCoreCategories = categories.filter(
+    (category) =>
+      !isCatalogCategoryKey(category.key) &&
+      (category.stage === "connected" || category.status === "connected"),
   ).length;
 
   return [
@@ -54,7 +57,7 @@ export function buildSignalSystemTiles({
       key: "signal_categories",
       label: translateMessageKey(language, "shell.signalCategories"),
       value: String(categories.length),
-      detail: `${connectedCategories} ${translateMessageKey(language, "shell.active")} · ${Math.max(0, categories.length - connectedCategories)} ${translateMessageKey(language, "shell.catalog")}`,
+      detail: `${connectedCoreCategories} ${translateMessageKey(language, "shell.active")} · ${catalogCategoryCount} ${translateMessageKey(language, "shell.catalog")}`,
       tone: categories.length > 0 ? "good" : "neutral",
       icon: "hub",
       valueStyle: "emphasis",

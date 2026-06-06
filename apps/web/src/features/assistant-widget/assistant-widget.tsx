@@ -6,9 +6,17 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import "./assistant-widget.css";
 
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
+import { formatAssistantScopeDate } from "@/features/assistant-widget/assistant-scope";
+import {
+  AssistantApiCitation,
+  localizeAssistantError,
+  parseAssistantStream,
+} from "@/features/assistant-widget/assistant-stream";
 import { demoAssistantReply } from "@/features/data-platform/demo/demo-assistant";
+import { cityLabel } from "@/features/data-platform/city-scope";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";
+import { formatTimestamp } from "@/features/shared/format";
 import { appEnv } from "@/lib/env";
 
 type AssistantWidgetProps = {
@@ -30,62 +38,12 @@ type ChatMessage = {
   model?: string | null;
 };
 
-type AssistantApiCitation = {
-  source: string;
-  checked_at: string | null;
-  detail: string;
-};
-
-type AssistantStreamPayload = {
-  content?: string;
-  message?: string;
-  citations?: AssistantApiCitation[];
-  model?: string | null;
-  answer_mode?: "deepseek" | "fallback";
-  error_message?: string | null;
-  answer?: string;
-};
-
-type AssistantStreamEvent = {
-  event: string;
-  data: AssistantStreamPayload;
-};
-
-function parseAssistantStream(
-  buffer: string,
-): { events: AssistantStreamEvent[]; remainder: string } {
-  const normalizedBuffer = buffer.replace(/\r\n/g, "\n");
-  const parts = normalizedBuffer.split("\n\n");
-  const remainder = parts.pop() ?? "";
-  const events = parts
-    .map((part) => {
-      const lines = part.split("\n");
-      const eventLine = lines.find((line) => line.startsWith("event:"));
-      const dataLines = lines.filter((line) => line.startsWith("data:"));
-      if (!dataLines.length) {
-        return null;
-      }
-
-      try {
-        return {
-          event: eventLine?.replace("event:", "").trim() || "message",
-          data: JSON.parse(
-            dataLines.map((line) => line.replace("data:", "").trimStart()).join("\n"),
-          ) as AssistantStreamPayload,
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter((event): event is AssistantStreamEvent => event !== null);
-
-  return { events, remainder };
-}
-
-function citationLabel(citation: AssistantApiCitation): string {
-  return citation.checked_at
-    ? `${citation.source} @ ${citation.checked_at}`
-    : citation.source;
+function citationTime(value: string, language: LanguageMode): string {
+  try {
+    return formatTimestamp(value, "dateTime", language);
+  } catch {
+    return value;
+  }
 }
 
 export function AssistantWidget({
@@ -106,6 +64,12 @@ export function AssistantWidget({
     (category: string) => tKey("assistant.analyzeCategory").replace("{category}", category),
     [tKey],
   );
+  const assistantScopeLabel = mode === "today"
+    ? tKey("assistant.scopeToday")
+    : tKey("assistant.scopeData");
+  const assistantScopeDate = date
+    ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
+    : tKey("assistant.scopeLive");
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -406,6 +370,11 @@ export function AssistantWidget({
                 {tKey(mode === "today" ? "assistant.todaySubtitle" : "assistant.subtitle")}
               </h2>
               {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
+              <div className="assistant-scope" aria-label={tKey("assistant.scopeLabel")}>
+                <span>{assistantScopeLabel}</span>
+                <span>{cityLabel(city)}</span>
+                <span>{assistantScopeDate}</span>
+              </div>
             </div>
             <button
               aria-label={tKey("assistant.close")}
@@ -430,15 +399,49 @@ export function AssistantWidget({
                   ) : (
                     <span>{message.text}</span>
                   )}
+                  {message.role === "assistant" && message.errorMessage ? (
+                    <p className="assistant-message-warning" role="status">
+                      <span className="material-symbols-outlined" aria-hidden="true">
+                        info
+                      </span>
+                      <span>{localizeAssistantError(message.errorMessage, tKey)}</span>
+                    </p>
+                  ) : null}
                   {message.role === "assistant" && message.citations?.length ? (
                     <footer className="assistant-citations">
-                      <span>{tKey("assistant.basis")}</span>
-                      {message.answerMode === "fallback" ? <em>{tKey("assistant.fallback")}</em> : null}
-                      {message.citations.slice(0, 4).map((citation) => (
-                        <small key={`${message.id}-${citation.source}`}>
-                          {citationLabel(citation)}
+                      <div className="assistant-citation-heading">
+                        <span>{tKey("assistant.basis")}</span>
+                        {message.answerMode === "fallback" ? (
+                          <em>{tKey("assistant.fallback")}</em>
+                        ) : null}
+                        <small>
+                          {tKey("assistant.sourcesCount").replace(
+                            "{count}",
+                            String(message.citations.length),
+                          )}
                         </small>
-                      ))}
+                      </div>
+                      <details className="assistant-citation-details">
+                        <summary>{tKey("assistant.viewSources")}</summary>
+                        <ul>
+                          {message.citations.slice(0, 4).map((citation) => (
+                            <li key={`${message.id}-${citation.source}`}>
+                              <div>
+                                <strong>{citation.source}</strong>
+                                {citation.checked_at ? (
+                                  <time dateTime={citation.checked_at}>
+                                    {tKey("assistant.checkedAt").replace(
+                                      "{time}",
+                                      citationTime(citation.checked_at, language),
+                                    )}
+                                  </time>
+                                ) : null}
+                              </div>
+                              {citation.detail ? <span>{citation.detail}</span> : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
                     </footer>
                   ) : null}
                 </article>

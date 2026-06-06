@@ -94,6 +94,13 @@
     "to": "至",
     "waitingForEvent": "等待事件",
     "windowPending2": "时段待定",
-    "windowPoints": "时段点位"
+    "windowPoints": "时段点位",
+    "categoryDescription": "电网负荷与家庭电价信号。",
+    "examplePriceCurveDetail": "示例价格曲线在 12:00 至 14:00 之间最划算。",
+    "exampleHouseholdPriceDetail": "示例家庭电价在中午左右最低。",
+    "exampleHouseholdWindowDetail": "示例家庭电价时段在 12:00 至 14:00 之间最划算。",
+    "systemSummary": "示例上午时段的电网负荷处于中等水平。",
+    "staticDemoEnergyNote": "静态演示数据；并非实时市场或电网读数。",
+    "normalizedEnergyCurve": "标准化能源曲线"
   }
 }

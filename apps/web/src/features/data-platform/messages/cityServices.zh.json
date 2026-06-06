@@ -45,6 +45,7 @@
     "serviceLocationDetail": "服务单位、坐标及市政服务元数据",
     "openingHoursDetail": "每日可用时段及例外安排",
     "temporaryClosuresDetail": "关闭时段及设施可用性",
-    "accessibilityDetail": "用于服务单位匹配的无障碍属性"
+    "accessibilityDetail": "用于服务单位匹配的无障碍属性",
+    "categoryDescription": "公共服务地点与开放信息。"
   }
 }

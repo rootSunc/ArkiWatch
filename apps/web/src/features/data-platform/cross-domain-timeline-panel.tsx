@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import { formatTimestamp, severityTone } from "@/features/shared/format";
 
 import type { CrossDomainTimelineItem } from "./cross-domain-timeline";
+import { localizedContent } from "./content-localization";
 import { LanguageMode, useI18n } from "./i18n";
 import type { PlatformEvent } from "./types";
 
@@ -17,6 +20,8 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 type CrossDomainTimelinePanelProps = {
+  collapsible?: boolean;
+  defaultOpen?: boolean;
   items: CrossDomainTimelineItem[];
   language: LanguageMode;
   onOpenEvent?: (event: PlatformEvent) => void;
@@ -39,70 +44,115 @@ function timelineDotClass(severity: string): string {
 }
 
 export function CrossDomainTimelinePanel({
+  collapsible = false,
+  defaultOpen = false,
   items,
   language,
   onOpenEvent,
   onOpenScenario,
 }: CrossDomainTimelinePanelProps) {
   const { tKey, enumLabel } = useI18n();
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   if (items.length === 0) {
     return null;
   }
 
+  const title = tKey("shell.crossSignalTimeline");
+  const lead = tKey("shell.crossSignalTimelineLead");
+  const countLabel = tKey("shell.crossSignalTimelineCount").replace(
+    "{count}",
+    String(items.length),
+  );
+
+  const timelineItems = (
+    <ol className="cross-domain-timeline-list">
+      {items.map((item) => {
+        const tone = severityTone(item.severity);
+        const icon = CATEGORY_ICONS[item.categoryKey] ?? "notifications";
+        const categoryLabel = enumLabel(item.categoryKey);
+
+        return (
+          <li className={`cross-domain-timeline-item cross-domain-timeline-item-${tone}`} key={item.id}>
+            <span className={`cross-timeline-dot ${timelineDotClass(item.severity)}`} aria-hidden="true" />
+            <button
+              className="cross-domain-timeline-button"
+              onClick={() => {
+                if (item.kind === "event" && item.event) {
+                  onOpenEvent?.(item.event);
+                  return;
+                }
+                if (item.scenarioKey) {
+                  onOpenScenario?.(item.scenarioKey);
+                }
+              }}
+              type="button"
+            >
+              <span className="cross-domain-timeline-top">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {icon}
+                </span>
+                <strong>{localizedContent(language, item.title, item.title_zh)}</strong>
+                <span className={`status-badge status-badge-${tone}`}>{categoryLabel}</span>
+              </span>
+              <span className="cross-domain-timeline-detail">
+                {localizedContent(language, item.detail, item.detail_zh)}
+              </span>
+              <time>
+                {formatTimestamp(item.startsAt, "dateTime", language)} –{" "}
+                {formatTimestamp(item.endsAt, "dateTime", language)}
+              </time>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  if (collapsible) {
+    return (
+      <details
+        className="cross-domain-timeline cross-domain-timeline-collapsible"
+        open={isOpen}
+        onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      >
+        <summary
+          aria-label={tKey("shell.toggleCrossSignalTimeline")}
+          className="cross-domain-timeline-summary"
+        >
+          <span className="cross-domain-timeline-summary-copy">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              timeline
+            </span>
+            <span>
+              <strong>{title}</strong>
+              <small>{lead}</small>
+            </span>
+          </span>
+          <span className="cross-domain-timeline-summary-meta">
+            <span>{countLabel}</span>
+            <span className="material-symbols-outlined" aria-hidden="true">
+              expand_more
+            </span>
+          </span>
+        </summary>
+        <div className="cross-domain-timeline-body">{timelineItems}</div>
+      </details>
+    );
+  }
+
   return (
-    <section className="cross-domain-timeline" aria-label={tKey("shell.crossSignalTimeline")}>
+    <section className="cross-domain-timeline" aria-label={title}>
       <header className="cross-domain-timeline-header">
         <h3>
           <span className="material-symbols-outlined" aria-hidden="true">
             timeline
           </span>
-          {tKey("shell.crossSignalTimeline")}
+          {title}
         </h3>
-        <p>{tKey("shell.crossSignalTimelineLead")}</p>
+        <p>{lead}</p>
       </header>
-      <ol className="cross-domain-timeline-list">
-        {items.map((item) => {
-          const tone = severityTone(item.severity);
-          const icon = CATEGORY_ICONS[item.categoryKey] ?? "notifications";
-          const categoryLabel =
-            item.kind === "scenario"
-              ? enumLabel(item.scenarioKey ?? item.categoryKey)
-              : enumLabel(item.categoryKey);
-
-          return (
-            <li className={`cross-domain-timeline-item cross-domain-timeline-item-${tone}`} key={item.id}>
-              <span className={`cross-timeline-dot ${timelineDotClass(item.severity)}`} aria-hidden="true" />
-              <button
-                className="cross-domain-timeline-button"
-                onClick={() => {
-                  if (item.kind === "event" && item.event) {
-                    onOpenEvent?.(item.event);
-                    return;
-                  }
-                  if (item.scenarioKey) {
-                    onOpenScenario?.(item.scenarioKey);
-                  }
-                }}
-                type="button"
-              >
-                <span className="cross-domain-timeline-top">
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    {icon}
-                  </span>
-                  <strong>{item.title}</strong>
-                  <span className={`status-badge status-badge-${tone}`}>{categoryLabel}</span>
-                </span>
-                <span className="cross-domain-timeline-detail">{item.detail}</span>
-                <time>
-                  {formatTimestamp(item.startsAt, "dateTime", language)} –{" "}
-                  {formatTimestamp(item.endsAt, "dateTime", language)}
-                </time>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+      {timelineItems}
     </section>
   );
 }

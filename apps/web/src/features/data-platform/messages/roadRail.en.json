@@ -29,6 +29,10 @@
     "highestSeverity": "Highest Severity",
     "highImpactActive": "High impact active",
     "highImpactUpcoming": "High impact upcoming",
+    "highSeverityIncidentsActiveDetail": "{count} high-severity incidents are active across the Digitraffic feed.",
+    "weatherIncidentsMayAffectTimingDetail": "{count} weather-linked incidents may affect road conditions or timing.",
+    "activeIncidentsMayAffectTimingDetail": "{count} active incidents may affect corridor choice or timing.",
+    "highSeverityIncidentsUpcomingDetail": "{count} high-severity incidents are scheduled or pending in the feed.",
     "history": "HISTORY",
     "incidentDetails": "Incident details",
     "incidentStatus": "Incident status",
@@ -111,6 +115,13 @@
     "weatherRelatedEvents": "weather-related events",
     "weatherRisk": "Weather Risk",
     "weatherRiskActive": "Weather risk active",
-    "window": "Window"
+    "window": "Window",
+    "demoSummary": "One example road-weather event is worth allowing extra space for.",
+    "demoIncidentTitle": "Wet road surface risk",
+    "demoIncidentDescription": "Road surfaces may be slippery after the rain window.",
+    "demoCorridor": "Helsinki westbound",
+    "normalizedRoadEvents": "Normalized road events",
+    "staticDemoRoadNote": "Static demo fixture; not a live road event.",
+    "digitrafficSourceLabel": "Digitraffic road events"
   }
 }

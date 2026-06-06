@@ -5,12 +5,14 @@ import { useI18n } from "../i18n";
 import type { ScenarioLiveSignals } from "../scenario-live-hints";
 import type { PublicScenarioSectionRead } from "../types";
 import { buildTodayActionCardView } from "./today-action-card-model";
+import type { TodayRecommendationMode } from "./today-brief";
 
 type TodayActionCardProps = {
   language: LanguageMode;
   liveSignals: ScenarioLiveSignals;
   disabled?: boolean;
   onOpen: () => void;
+  recommendationMode?: TodayRecommendationMode;
   section: PublicScenarioSectionRead;
 };
 
@@ -19,10 +21,11 @@ export function TodayActionCard({
   liveSignals,
   disabled = false,
   onOpen,
+  recommendationMode = "live",
   section,
 }: TodayActionCardProps) {
   const { enumLabel, tKey } = useI18n();
-  const view = buildTodayActionCardView(section, liveSignals, language);
+  const view = buildTodayActionCardView(section, liveSignals, language, recommendationMode);
   const localizedTitle = ["good", "good window", "needs attention", "watch"].includes(
     view.title.trim().toLowerCase(),
   )
@@ -42,8 +45,8 @@ export function TodayActionCard({
       <span className="today-action-card-content">
         <span className="today-action-card-label">
           {enumLabel(section.key)}
-          {view.isLiveFallback ? (
-            <span className="today-action-card-live">{tKey("shell.liveSignal")}</span>
+          {view.signalLabel ? (
+            <span className="today-action-card-live">{view.signalLabel}</span>
           ) : null}
         </span>
         <strong>{localizedTitle}</strong>

@@ -1,5 +1,8 @@
 import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
 
+import { localizedContent } from "./content-localization";
+import { localizedPlatformCopy } from "./platform-copy";
+
 import type { LanguageMode } from "./i18n";
 import type { TrendChartPoint } from "./lazy-trend-chart";
 import type {
@@ -319,8 +322,8 @@ export function buildTimelineItems(
         return {
           id: event.id,
           time: startsAt <= now && endsAt >= now ? tKey("weather.activeNow") : formatTimelineTime(event.starts_at, language),
-          title: event.title,
-          body: event.body,
+          title: localizedContent(language, event.title, event.title_zh),
+          body: localizedContent(language, event.body, event.body_zh),
           tone: eventTone(event),
           active: startsAt <= now && endsAt >= now
         };
@@ -375,7 +378,7 @@ export function buildTimelineItems(
       id: "system-clearance",
       time: weather?.valid_to ? formatTimelineTime(weather.valid_to, language) : tKey("weather.nextWindow"),
       title: tKey("weather.systemClearance"),
-      body: weather?.summary ?? tKey("weather.noActiveWarningOrDisruptionEventIsPresentInTheCurrentWeatherFeed"),
+      body: localizedPlatformCopy(weather?.summary, language) ?? tKey("weather.noActiveWarningOrDisruptionEventIsPresentInTheCurrentWeatherFeed"),
       tone: "good",
       active: false
     });
@@ -568,7 +571,8 @@ export function average(values: number[]): number | null {
 }
 
 export function weatherHistoryPoints(
-  history: PlatformHistoricalSnapshot<WeatherForecastResponse>[]
+  history: PlatformHistoricalSnapshot<WeatherForecastResponse>[],
+  tKey: (key: string) => string,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -593,7 +597,9 @@ export function weatherHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date),
         value: averageTemperature,
-        detail: `${formatNumber(totalRain, 1)} mm rain · ${data.quality.point_count} pts`
+        detail: tKey("weather.historyPointDetail")
+          .replace("{rain}", formatNumber(totalRain, 1))
+          .replace("{points}", String(data.quality.point_count))
       }
     ];
   });

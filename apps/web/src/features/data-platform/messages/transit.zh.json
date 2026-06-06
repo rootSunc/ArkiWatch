@@ -6,7 +6,7 @@
     "disruptions": "服务中断",
     "delays": "延误",
     "routeScopedSummary": "线路范围",
-    "rawFeed": "原始 feed",
+    "rawFeed": "原始数据流",
     "active": "活跃",
     "activeAndUpcomingServiceAlerts": "当前及即将发生的服务提醒",
     "alertScope": "提醒范围",
@@ -27,6 +27,9 @@
     "high": "高",
     "highImpactActive": "高影响且活跃",
     "highImpactUpcoming": "高影响且即将发生",
+    "highSeverityAlertsActiveDetail": "HSL 数据流中当前有 {count} 条高严重级别提醒生效。",
+    "activeAlertsMayAffectTimingDetail": "当前有 {count} 条生效提醒可能影响路线选择或出行时间。",
+    "highSeverityAlertsUpcomingDetail": "数据流中有 {count} 条高严重级别提醒已计划或待处理。",
     "highestSeverity": "最高严重级别",
     "impactScope": "影响范围",
     "inEffect": "生效中",
@@ -111,6 +114,15 @@
     "stops2": "公交站点",
     "storedEventRows": "已存事件数",
     "trips2": "车次",
-    "until": "直到"
+    "until": "直到",
+    "categoryDescription": "公共交通服务提醒。",
+    "demoSummary": "示例服务提醒可能影响西向有轨电车通道。",
+    "demoAlertTitle": "西向有轨电车运行较慢",
+    "demoAlertDescription": "早高峰出行请额外预留几分钟。",
+    "normalizedTransitAlerts": "标准化公共交通提醒",
+    "staticDemoTransitNote": "静态演示数据；并非实时服务提醒。",
+    "hslSourceLabel": "HSL GTFS-RT 服务提醒",
+    "historyPointDetail": "{active} 条生效 · {routes} 条线路级",
+    "digitransitSourceLabel": "Digitransit 服务提醒"
   }
 }

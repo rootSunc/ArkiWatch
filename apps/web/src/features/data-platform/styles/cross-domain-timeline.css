@@ -5,6 +5,87 @@
   background: color-mix(in srgb, var(--panel-surface, #fff) 92%, transparent);
 }
 
+.cross-domain-timeline-collapsible {
+  padding: 0;
+}
+
+.cross-domain-timeline-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 68px;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.85rem 1.1rem;
+}
+
+.cross-domain-timeline-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cross-domain-timeline-summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+
+.cross-domain-timeline-summary-copy,
+.cross-domain-timeline-summary-copy > span:last-child,
+.cross-domain-timeline-summary-meta {
+  display: flex;
+  align-items: center;
+}
+
+.cross-domain-timeline-summary-copy {
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.cross-domain-timeline-summary-copy > .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.cross-domain-timeline-summary-copy > span:last-child {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.cross-domain-timeline-summary-copy strong {
+  font-size: 1rem;
+}
+
+.cross-domain-timeline-summary-copy small {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cross-domain-timeline-summary-meta {
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cross-domain-timeline-summary-meta > .material-symbols-outlined {
+  transition: transform 160ms ease;
+}
+
+.cross-domain-timeline-collapsible[open] .cross-domain-timeline-summary-meta > .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.cross-domain-timeline-body {
+  padding: 0 1.1rem 1rem;
+}
+
 .cross-domain-timeline-header {
   margin-bottom: 0.75rem;
 }
@@ -120,6 +201,23 @@
   .cross-domain-timeline {
     padding: 0.85rem 0.9rem;
     border-radius: 12px;
+  }
+
+  .cross-domain-timeline-collapsible {
+    padding: 0;
+  }
+
+  .cross-domain-timeline-summary {
+    min-height: 60px;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .cross-domain-timeline-summary-copy small {
+    max-width: 52vw;
+  }
+
+  .cross-domain-timeline-body {
+    padding: 0 0.9rem 0.85rem;
   }
 
   .cross-domain-timeline-header h3 {

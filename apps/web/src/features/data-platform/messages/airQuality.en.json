@@ -74,6 +74,12 @@
     "europeanAqi": "European AQI",
     "pm25": "PM2.5",
     "pm10": "PM10",
-    "no2": "NO2"
+    "no2": "NO2",
+    "categoryDescription": "Station-level outdoor air quality.",
+    "demoSummary": "Good air quality across the example station network.",
+    "staticDemoStationNote": "Static demo fixture; not a live station reading.",
+    "normalizedStationReadings": "Normalized station readings",
+    "hsySourceLabel": "HSY air quality",
+    "hsyWfsSourceLabel": "HSY Air Quality WFS"
   }
 }

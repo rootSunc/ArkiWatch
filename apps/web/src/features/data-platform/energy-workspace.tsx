@@ -6,6 +6,7 @@ import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { translateEnumLabel, useI18n } from "./i18n";
 import { TrendChart } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 import {
   DEFAULT_HOUSEHOLD_PRICE_PROVIDER,
   ENERGY_PANEL_PROFILES,
@@ -69,7 +70,7 @@ export function EnergyWorkspace({
   householdHistory,
   onPanelChange,
 }: EnergyWorkspaceProps) {
-  const { language, tKey } = useI18n();
+  const { language, tKey, dataLabel } = useI18n();
   const [internalPanel, setInternalPanel] = useState<EnergyPanelKey>("porssisahko");
   const activePanel = controlledPanel ?? internalPanel;
 
@@ -147,7 +148,7 @@ export function EnergyWorkspace({
   const householdUsageMetric = householdWindowUsage !== null
     ? {
       key: "window_usage",
-      label: "Window usage",
+      label: tKey("energy.windowUsage"),
       value: `${householdWindowUsage.toFixed(2)}`,
       unit: "kWh",
       tone: "neutral",
@@ -181,8 +182,8 @@ export function EnergyWorkspace({
       : tKey("energy.noActiveWindow");
   const heroDetail =
     (isPricePanel && window
-      ? activeEnergy?.summary ?? `${tKey("energy.averageSpotPrice")}: ${windowAverageLabel}.`
-      : activeEnergy?.summary) ??
+      ? localizedPlatformCopy(activeEnergy?.summary, language) ?? `${tKey("energy.averageSpotPrice")}: ${windowAverageLabel}.`
+      : localizedPlatformCopy(activeEnergy?.summary, language)) ??
     lowWindowMetric?.detail ??
     latestEvent?.body ??
     (isPricePanel
@@ -668,7 +669,7 @@ export function EnergyWorkspace({
                 <span>{tKey("energy.points")}</span>
               </article>
             </div>
-            <p>{activeSourceName} · {activeSource?.license_label ?? tKey("energy.licenseUnavailable")}</p>
+            <p>{activeSourceName} · {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
             {activeSource?.error_message ? <p>{activeSource.error_message}</p> : null}
             {activeSource?.documentation_url ? (
               <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">
@@ -694,8 +695,8 @@ export function EnergyWorkspace({
               {activeVolumePoints.map((point) => (
                 <article className={`energy-volume-row energy-volume-row-${point.tone ?? "neutral"}`} key={point.label}>
                   <div>
-                    <strong>{point.label}</strong>
-                    <span>{point.detail ? translateEnumLabel(language, point.detail) : tKey("energy.records2")}</span>
+                    <strong>{localizedPlatformCopy(point.label, language) ?? point.label}</strong>
+                    <span>{point.detail ? localizedPlatformCopy(point.detail, language) ?? translateEnumLabel(language, point.detail) : tKey("energy.records2")}</span>
                   </div>
                   <em>{point.value}</em>
                   <span className="energy-volume-meter" aria-hidden="true">
@@ -748,7 +749,7 @@ export function EnergyWorkspace({
               </div>
             )}
             {activeEnergy?.quality.notes.map((note) => (
-              <p key={note}>{note}</p>
+              <p key={note}>{localizedPlatformCopy(note, language) ?? note}</p>
             ))}
           </article>
         </div>
@@ -777,7 +778,7 @@ export function EnergyWorkspace({
                     : window.source === "raw_preview"
                       ? tKey("energy.previewEnergyTimingWindow")
                       : tKey("energy.detectedEnergyTimingWindow"),
-                  detail: activeEnergy?.summary ?? tKey("energy.flexibleElectricityUseWindowIsReady"),
+                  detail: localizedPlatformCopy(activeEnergy?.summary, language) ?? tKey("energy.flexibleElectricityUseWindowIsReady"),
                   severity: window.severity,
                   starts_at: window.starts_at,
                   ends_at: window.ends_at
@@ -843,7 +844,7 @@ export function EnergyWorkspace({
       </section>
 
       <p className="energy-detail-freshness">
-        {category.description}
+        {localizedPlatformCopy(category.description, language) ?? tKey("energy.energyDetail")}
       </p>
     </section>
   );

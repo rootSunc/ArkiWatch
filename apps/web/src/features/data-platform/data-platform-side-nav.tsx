@@ -49,6 +49,7 @@ export function DataPlatformSideNav({
     themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
   );
   const userStateLabel = viewerStateLabel(isAuthenticated, appEnv.demoMode, language);
+  const displayUserLabel = isAuthenticated ? currentUserLabel : userStateLabel;
   const activeWorkspaceMode = selectedNavKey === "today" ? "today" : "data";
 
   return (
@@ -208,12 +209,12 @@ export function DataPlatformSideNav({
           <div
             className="nav-row side-nav-utility-row side-nav-user-row"
             aria-label={userStateLabel}
-            title={currentUserLabel}
+            title={displayUserLabel}
           >
             <span className="material-symbols-outlined" aria-hidden="true">
               {isAuthenticated ? "manage_accounts" : "visibility"}
             </span>
-            <span>{currentUserLabel}</span>
+            <span>{displayUserLabel}</span>
           </div>
           {renderAuthActionButton("nav-row side-nav-utility-row", true)}
         </div>

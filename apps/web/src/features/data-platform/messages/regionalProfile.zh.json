@@ -45,6 +45,8 @@
     "providerStatus": "数据源状态",
     "daily": "每日",
     "records": "数据记录",
-    "planned": "已规划"
+    "planned": "已规划",
+    "categoryDescription": "区域覆盖与背景信息。",
+    "vsBaseline": "较基准 {value}%"
   }
 }

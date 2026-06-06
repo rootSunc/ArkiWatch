@@ -22,6 +22,7 @@ import {
 } from "./incident-timeline-pager";
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
+import { localizedPlatformCopy } from "./platform-copy";
 
 type TransitWorkspaceProps = {
   category: PlatformCategory | null;
@@ -391,7 +392,7 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
 
   if (highActive > 0) {
     return {
-      detail: `${highActive} high-severity alert${highActive === 1 ? "" : "s"} active now across the HSL feed.`,
+      detail: tKey("transit.highSeverityAlertsActiveDetail").replace("{count}", String(highActive)),
       icon: "warning",
       title: tKey("transit.highImpactActive")
     };
@@ -399,7 +400,7 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
 
   if (activeAlerts.length > 0) {
     return {
-      detail: `${activeAlerts.length} active alert${activeAlerts.length === 1 ? "" : "s"} may affect route choice or timing.`,
+      detail: tKey("transit.activeAlertsMayAffectTimingDetail").replace("{count}", String(activeAlerts.length)),
       icon: "directions_bus",
       title: tKey("transit.serviceAlertsActive")
     };
@@ -407,7 +408,7 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
 
   if (highUpcoming > 0) {
     return {
-      detail: `${highUpcoming} high-severity alert${highUpcoming === 1 ? "" : "s"} are scheduled or pending in the feed.`,
+      detail: tKey("transit.highSeverityAlertsUpcomingDetail").replace("{count}", String(highUpcoming)),
       icon: "schedule",
       title: tKey("transit.highImpactUpcoming")
     };
@@ -540,7 +541,8 @@ function formatHistoryDate(value: string): string {
 }
 
 function transitHistoryPoints(
-  history: PlatformHistoricalSnapshot<TransitCurrentResponse>[]
+  history: PlatformHistoricalSnapshot<TransitCurrentResponse>[],
+  tKey: (key: string) => string,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -552,7 +554,9 @@ function transitHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date),
         value: data.quality.normalized_event_count,
-        detail: `${data.quality.active_alert_count} active · ${data.quality.route_alert_count} route scoped`
+        detail: tKey("transit.historyPointDetail")
+          .replace("{active}", String(data.quality.active_alert_count))
+          .replace("{routes}", String(data.quality.route_alert_count))
       }
     ];
   });
@@ -691,7 +695,7 @@ export function TransitWorkspace({
   const scopeRows = transitScopeMetrics(transit.alerts, tKey);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
-  const historyPoints = transitHistoryPoints(history);
+  const historyPoints = transitHistoryPoints(history, tKey);
   const transitSummaryMetrics = [
     ["active_alerts", "activeNowSummary"],
     ["high_severity", "highSeverity"],
@@ -850,8 +854,8 @@ export function TransitWorkspace({
                             <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
                             <span>{enumLabel(alert.severity)}</span>
                           </div>
-                          <strong>{alert.title}</strong>
-                          <p>{alert.description}</p>
+                          <strong>{localizedPlatformCopy(alert.title, language) ?? alert.title}</strong>
+                          <p>{localizedPlatformCopy(alert.description, language) ?? alert.description}</p>
                           <small className="transit-alert-scope-preview">{scopePreview(alert, tKey)}</small>
                         </div>
                         <em>{eventTypeLabel(alert.event_type)}</em>
@@ -886,11 +890,11 @@ export function TransitWorkspace({
                   <header>
                     <div>
                       <TransitAlertStatusBadge alert={selectedAlert} language={language} tKey={tKey} />
-                      <strong>{selectedAlert.title}</strong>
+                      <strong>{localizedPlatformCopy(selectedAlert.title, language) ?? selectedAlert.title}</strong>
                     </div>
                     <em>{enumLabel(selectedAlert.severity)}</em>
                   </header>
-                  <p>{selectedAlert.description}</p>
+                  <p>{localizedPlatformCopy(selectedAlert.description, language) ?? selectedAlert.description}</p>
                   <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} tKey={tKey} />
                   <div className="transit-alert-detail-meta">
                     <div>
@@ -1094,7 +1098,7 @@ export function TransitWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               database
             </span>
-            HSL GTFS-RT Service Alerts
+            {localizedPlatformCopy("HSL GTFS-RT Service Alerts", language)}
           </span>
           <i aria-hidden="true" />
           <span>
@@ -1109,7 +1113,7 @@ export function TransitWorkspace({
       </section>
 
       <p className="transit-detail-freshness">
-        {transit.summary ?? category?.description ?? tKey("transit.latestNormalizedHslTransitServiceAlertSignals")}
+        {localizedPlatformCopy(transit.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? tKey("transit.latestNormalizedHslTransitServiceAlertSignals")}
       </p>
 
       <details className="transit-glass-panel transit-diagnostics-panel">
@@ -1132,11 +1136,11 @@ export function TransitWorkspace({
               {transit.data_pipeline.map((stage) => (
                 <article className={`transit-stage transit-stage-${statusTone(stage.status)}`} key={stage.key}>
                   <div>
-                    <strong>{stage.label}</strong>
+                    <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
                     <span>{enumLabel(stage.status)}</span>
                   </div>
                   <p>
-                    {stage.detail}
+                    {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
                     {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("transit.records")}` : ""}
                   </p>
                   <span className="transit-stage-meter" aria-hidden="true">
@@ -1156,7 +1160,7 @@ export function TransitWorkspace({
               {transit.source_requests.map((request: TransitSourceRequest) => (
                 <article className={`transit-request transit-request-${statusTone(request.status)}`} key={request.key}>
                   <div>
-                    <strong>{request.label}</strong>
+                    <strong>{localizedPlatformCopy(request.label, language) ?? request.label}</strong>
                     <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
@@ -1176,7 +1180,7 @@ export function TransitWorkspace({
             </header>
             <div>
               {transit.quality.notes.map((note) => (
-                <p key={note}>{note}</p>
+                <p key={note}>{localizedPlatformCopy(note, language) ?? note}</p>
               ))}
             </div>
           </section>

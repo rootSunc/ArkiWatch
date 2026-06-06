@@ -5,8 +5,12 @@ import {
   formatScenarioHintAge,
   type ScenarioLiveSignals,
 } from "../scenario-live-hints";
+import { localizedContent } from "../content-localization";
 import type { PublicScenarioSectionRead } from "../types";
-import { isPlaceholderRecommendation } from "./today-brief";
+import {
+  isPlaceholderRecommendation,
+  type TodayRecommendationMode,
+} from "./today-brief";
 
 export type TodayActionTone = "good" | "warn" | "bad" | "neutral";
 
@@ -20,7 +24,7 @@ export type TodayActionCardView = {
   dataPoints: TodayActionDataPoint[];
   detail: string | null;
   icon: string;
-  isLiveFallback: boolean;
+  signalLabel: string | null;
   sources: string;
   title: string;
   tone: TodayActionTone;
@@ -170,27 +174,62 @@ export function buildTodayActionCardView(
   section: PublicScenarioSectionRead,
   signals: ScenarioLiveSignals,
   language: LanguageMode,
+  recommendationMode: TodayRecommendationMode = "live",
 ): TodayActionCardView {
   const recommendation = section.recommendation;
   const isPlaceholder = isPlaceholderRecommendation(recommendation.id, recommendation.body);
   const liveHint = buildScenarioLiveHint(section.key, signals, language);
-  const isLiveFallback = isPlaceholder && Boolean(liveHint);
+  const isScopeLimited = recommendationMode !== "live";
+  const isSignalFallback = isScopeLimited ? Boolean(liveHint) : isPlaceholder && Boolean(liveHint);
+  const limitedTitle =
+    recommendationMode === "historical"
+      ? translateMessageKey(language, "shell.historicalSignalOnly")
+      : translateMessageKey(language, "shell.noScopedRecommendation");
+  const limitedBody =
+    recommendationMode === "historical"
+      ? translateMessageKey(language, "shell.historicalDataDisclaimer")
+      : translateMessageKey(language, "shell.openSignalWorkspaceForGuidance");
 
   return {
-    body: isLiveFallback ? liveHint?.detail ?? section.description : recommendation.body || section.description,
+    body: isSignalFallback
+      ? liveHint?.detail ?? localizedContent(language, section.description, section.description_zh)
+      : isScopeLimited
+        ? limitedBody
+        : localizedContent(
+            language,
+            recommendation.body || section.description,
+            recommendation.body
+              ? recommendation.body_zh
+              : section.description_zh,
+          ),
     dataPoints: buildActionDataPoints(section.key, signals, language),
-    detail: isLiveFallback
+    detail: isSignalFallback
       ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language)
-      : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(
-          language,
-          recommendation.area_scope,
-        )}`,
+      : isScopeLimited
+        ? null
+        : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(
+            language,
+            recommendation.area_scope,
+          )}`,
     icon: SCENARIO_ICONS[section.key] ?? "hub",
-    isLiveFallback,
-    sources: isLiveFallback
+    signalLabel: isSignalFallback
+      ? translateMessageKey(
+          language,
+          recommendationMode === "historical" ? "shell.historicalSignal" : "shell.liveSignal",
+        )
+      : null,
+    sources: isSignalFallback
       ? liveHint?.sources ?? ""
-      : section.source_codes.map((source) => source.toUpperCase()).join(" · "),
-    title: isLiveFallback ? liveHint?.headline ?? section.status_label : section.status_label,
-    tone: recommendationTone(recommendation.severity, isPlaceholder && !liveHint),
+      : isScopeLimited
+        ? ""
+        : section.source_codes.map((source) => source.toUpperCase()).join(" · "),
+    title: isSignalFallback
+      ? liveHint?.headline ?? localizedContent(language, section.status_label, section.status_label_zh)
+      : isScopeLimited
+        ? limitedTitle
+        : localizedContent(language, section.status_label, section.status_label_zh),
+    tone: isScopeLimited
+      ? "neutral"
+      : recommendationTone(recommendation.severity, isPlaceholder && !liveHint),
   };
 }
