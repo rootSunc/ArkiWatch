@@ -433,6 +433,13 @@ export function DataPlatformHome({
     [categories, selectedEnergyTab, selectedMobilityTab, updateNavQuery],
   );
 
+  const openAssistantView = useCallback(
+    (view: string): void => {
+      openNavigationTarget({ navKey: view });
+    },
+    [openNavigationTarget],
+  );
+
   const selectNav = useCallback(
     (
       nextNavKey: string,
@@ -941,6 +948,7 @@ export function DataPlatformHome({
     onLanguageChange: selectLanguageMode,
     onNotificationsClick: openRecentEventsPanel,
     onRefresh: triggerDataRefresh,
+    showExport: workspaceMode === "data" && !appEnv.demoMode,
     renderAuthActionButton,
   };
   const mobileNavItems = useMemo(
@@ -1653,6 +1661,7 @@ export function DataPlatformHome({
             overview={overview}
             language={languageMode}
             mode={workspaceMode}
+            onOpenView={openAssistantView}
             userId={defaultUserId ?? resolvedUserId}
           />
         </div>

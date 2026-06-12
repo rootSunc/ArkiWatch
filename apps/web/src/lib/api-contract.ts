@@ -293,6 +293,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/overview/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Platform Overview
+         * @description Export the anonymous public platform snapshot for analysis or reuse.
+         */
+        get: operations["export_platform_overview_api_platform_overview_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/dashboard": {
         parameters: {
             query?: never;
@@ -2946,6 +2966,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformOverviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_platform_overview_api_platform_overview_export_get: {
+        parameters: {
+            query?: {
+                city?: string | null;
+                date?: string | null;
+                format?: "json" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public platform snapshot as JSON or CSV. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformOverviewRead"];
+                    "text/csv": string;
                 };
             };
             /** @description Validation Error */

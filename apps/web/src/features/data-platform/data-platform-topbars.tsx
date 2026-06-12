@@ -17,6 +17,7 @@ import { BRAND_LOGO_SRC, FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "./data-platform
 import { SideNavRestoreButton } from "./data-platform-side-nav";
 import { LanguageSwitchButton, type LanguageMode, useI18n } from "./i18n";
 import { PlatformScopeControls } from "./platform-scope-controls";
+import { ExportSnapshotButton } from "./export-snapshot-button";
 import { ShareViewLinkButton } from "./share-view-link-button";
 import type { PlatformCategory, PlatformHistoryAvailabilityDay } from "./types";
 import { displayTitle } from "./data-platform-view-model";
@@ -41,6 +42,7 @@ type ScopeControlProps = {
   onNotificationsClick: () => void;
   onRefresh: () => void;
   renderAuthActionButton: (className: string) => ReactNode;
+  showExport?: boolean;
 };
 
 type DataPlatformMobileHeaderProps = ScopeControlProps & {
@@ -79,6 +81,7 @@ export function DataPlatformMobileHeader({
   onRefresh,
   onToggleTheme,
   renderAuthActionButton,
+  showExport,
   themeMode,
   userStateLabel,
   workspaceMode,
@@ -145,6 +148,9 @@ export function DataPlatformMobileHeader({
               onRefresh={onRefresh}
             />
           ) : null}
+          {showExport ? (
+            <ExportSnapshotButton city={city} date={date} language={language} />
+          ) : null}
           <ShareViewLinkButton language={language} />
           <NotificationButton
             count={notificationCount}
@@ -207,6 +213,7 @@ export function DataPlatformWorkspaceTopbar({
   onSelectNav,
   renderAuthActionButton,
   restoreSideNavButton,
+  showExport,
 }: DataPlatformWorkspaceTopbarProps) {
   const { tKey } = useI18n();
 
@@ -268,6 +275,7 @@ export function DataPlatformWorkspaceTopbar({
           onNotificationsClick={onNotificationsClick}
           onRefresh={onRefresh}
           renderAuthActionButton={renderAuthActionButton}
+          showExport={showExport}
         />
       </div>
     </header>
@@ -307,6 +315,7 @@ export function DataPlatformDesktopHeader({
   searchValue,
   selectedCategory,
   selectedNavKey,
+  showExport,
 }: DataPlatformDesktopHeaderProps) {
   const { tKey } = useI18n();
 
@@ -368,6 +377,7 @@ export function DataPlatformDesktopHeader({
           onNotificationsClick={onNotificationsClick}
           onRefresh={onRefresh}
           renderAuthActionButton={renderAuthActionButton}
+          showExport={showExport}
         />
       </div>
     </div>

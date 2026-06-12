@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 
 import "./assistant-widget.css";
 
+import { AssistantCitationList } from "@/features/assistant-widget/assistant-citations";
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { formatAssistantScopeDate } from "@/features/assistant-widget/assistant-scope";
 import {
@@ -16,7 +17,6 @@ import { demoAssistantReply } from "@/features/data-platform/demo/demo-assistant
 import { cityLabel } from "@/features/data-platform/city-scope";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";
-import { formatTimestamp } from "@/features/shared/format";
 import { appEnv } from "@/lib/env";
 
 type AssistantWidgetProps = {
@@ -26,6 +26,7 @@ type AssistantWidgetProps = {
   date: string | null;
   userId: string;
   mode: "today" | "data";
+  onOpenView?: (view: string) => void;
 };
 
 type ChatMessage = {
@@ -38,14 +39,6 @@ type ChatMessage = {
   model?: string | null;
 };
 
-function citationTime(value: string, language: LanguageMode): string {
-  try {
-    return formatTimestamp(value, "dateTime", language);
-  } catch {
-    return value;
-  }
-}
-
 export function AssistantWidget({
   overview,
   language,
@@ -53,6 +46,7 @@ export function AssistantWidget({
   date,
   userId,
   mode,
+  onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -423,24 +417,16 @@ export function AssistantWidget({
                       </div>
                       <details className="assistant-citation-details">
                         <summary>{tKey("assistant.viewSources")}</summary>
-                        <ul>
-                          {message.citations.slice(0, 4).map((citation) => (
-                            <li key={`${message.id}-${citation.source}`}>
-                              <div>
-                                <strong>{citation.source}</strong>
-                                {citation.checked_at ? (
-                                  <time dateTime={citation.checked_at}>
-                                    {tKey("assistant.checkedAt").replace(
-                                      "{time}",
-                                      citationTime(citation.checked_at, language),
-                                    )}
-                                  </time>
-                                ) : null}
-                              </div>
-                              {citation.detail ? <span>{citation.detail}</span> : null}
-                            </li>
-                          ))}
-                        </ul>
+                        <AssistantCitationList
+                          citations={message.citations}
+                          language={language}
+                          messageId={message.id}
+                          onOpenView={(view) => {
+                            setIsOpen(false);
+                            onOpenView?.(view);
+                          }}
+                          tKey={tKey}
+                        />
                       </details>
                     </footer>
                   ) : null}

@@ -10,6 +10,7 @@ import {
   type DashboardTone,
 } from "./data-platform-shell";
 import { LanguageSwitchButton, type LanguageMode } from "./i18n";
+import { ExportSnapshotButton } from "./export-snapshot-button";
 import { ShareViewLinkButton } from "./share-view-link-button";
 import type { PlatformHistoryAvailabilityDay } from "./types";
 
@@ -33,6 +34,7 @@ type PlatformScopeControlsProps = {
   onNotificationsClick: () => void;
   onRefresh: () => void;
   renderAuthActionButton: (className: string) => ReactNode;
+  showExport?: boolean;
   showNotifications?: boolean;
   showRefresh?: boolean;
 };
@@ -57,6 +59,7 @@ export function PlatformScopeControls({
   onNotificationsClick,
   onRefresh,
   renderAuthActionButton,
+  showExport = false,
   showNotifications = true,
   showRefresh = true,
 }: PlatformScopeControlsProps) {
@@ -83,6 +86,9 @@ export function PlatformScopeControls({
           language={language}
           onRefresh={onRefresh}
         />
+      ) : null}
+      {showExport ? (
+        <ExportSnapshotButton city={city} date={date} language={language} />
       ) : null}
       <ShareViewLinkButton language={language} />
       {showNotifications ? (

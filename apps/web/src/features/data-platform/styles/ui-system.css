@@ -196,9 +196,18 @@
 .dashboard-search input,
 .city-scope-control,
 .date-scope-control,
-.language-switcher {
+.language-switcher,
+.export-snapshot-button {
   border-color: var(--ui-border-subtle);
   background: var(--surface-container-lowest);
+}
+
+.export-snapshot-button-success {
+  color: var(--primary);
+}
+
+.export-snapshot-button-error {
+  color: var(--error);
 }
 
 .dashboard-search input {
