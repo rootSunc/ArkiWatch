@@ -175,36 +175,44 @@ export function TodayOverview({
           onOpenScenario={onOpenScenario}
         />
 
-        <section
-          className="today-decisions"
-          aria-label={tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
-        >
-          <header>
-            <div>
-              <span className="today-section-kicker">
-                {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+        {todayBrief.scenarioSections.length > 0 ? (
+          <details
+            className="today-decisions"
+            aria-label={tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+          >
+            <summary className="today-decisions-summary">
+              <span className="today-decisions-summary-copy">
+                <span className="today-section-kicker">
+                  {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+                </span>
+                <span className="today-decisions-title">
+                  {isRecommendationLimited
+                    ? tKey("shell.localSignalsOnlyLead")
+                    : tKey("shell.dailyDecisionsLead")}
+                </span>
               </span>
-              <h3>
-                {isRecommendationLimited
-                  ? tKey("shell.localSignalsOnlyLead")
-                  : tKey("shell.dailyDecisionsLead")}
-              </h3>
+              <span className="today-decisions-summary-meta">
+                <span>{todayBrief.scenarioSections.length}</span>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  expand_more
+                </span>
+              </span>
+            </summary>
+            <div className="today-action-grid">
+              {todayBrief.scenarioSections.map((section) => (
+                <TodayActionCard
+                  disabled={isScopePending}
+                  key={section.key}
+                  language={language}
+                  liveSignals={liveSignals}
+                  recommendationMode={todayBrief.recommendationMode}
+                  section={section}
+                  onOpen={() => onOpenScenario(section.key)}
+                />
+              ))}
             </div>
-          </header>
-          <div className="today-action-grid">
-            {todayBrief.scenarioSections.map((section) => (
-              <TodayActionCard
-                disabled={isScopePending}
-                key={section.key}
-                language={language}
-                liveSignals={liveSignals}
-                recommendationMode={todayBrief.recommendationMode}
-                section={section}
-                onOpen={() => onOpenScenario(section.key)}
-              />
-            ))}
-          </div>
-        </section>
+          </details>
+        ) : null}
       </div>
     </section>
   );

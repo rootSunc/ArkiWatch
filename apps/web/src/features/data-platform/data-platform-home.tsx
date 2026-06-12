@@ -159,6 +159,8 @@ export function DataPlatformHome({
   const [selectedDate, setSelectedDate] = useState<string | null>(
     initialDate ?? null,
   );
+  const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
+  const assistantNavButtonRef = useRef<HTMLButtonElement>(null);
   const [selectedNavKey, setSelectedNavKey] = useState(() =>
     resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), []),
   );
@@ -903,10 +905,9 @@ export function DataPlatformHome({
                 : tKey("shell.regionalScope")}
             </span>
           </span>
-          <span className="signal-meter" aria-hidden="true">
-            <span style={{ width: `${readout.progress}%` }} />
+          <span className="signal-card-attribution" title={attribution}>
+            {attribution}
           </span>
-          <span className="signal-card-attribution">{attribution}</span>
         </span>
       </button>
     );
@@ -994,7 +995,9 @@ export function DataPlatformHome({
             currentUserInitials={currentUserInitials}
             currentUserLabel={currentUserLabel}
             isDetailPage={isDetailPage}
+            onSearchChange={setSearchValue}
             onOpenNavigation={() => setIsMobileMenuOpen(true)}
+            searchValue={searchValue}
             themeMode={themeMode}
             onToggleTheme={toggleThemeMode}
             userStateLabel={userStateLabel}
@@ -1005,8 +1008,10 @@ export function DataPlatformHome({
             <DataPlatformWorkspaceTopbar
               {...scopeControlProps}
               isDetailPage={isDetailPage}
+              onSearchChange={setSearchValue}
               onSelectNav={selectNav}
               restoreSideNavButton={restoreSideNavButton}
+              searchValue={searchValue}
               workspaceMode={workspaceMode}
             />
           ) : null}
@@ -1653,6 +1658,18 @@ export function DataPlatformHome({
                 </span>
                 <span>{tKey("shell.more")}</span>
               </button>
+              <button
+                className="mobile-bottom-nav-item mobile-bottom-nav-assistant"
+                onClick={() => setAssistantOpenRequest((current) => current + 1)}
+                ref={assistantNavButtonRef}
+                title={tKey("assistant.openAssistant")}
+                type="button"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  hub
+                </span>
+                <span>{tKey("shell.assistant")}</span>
+              </button>
             </nav>
           </footer>
           <AssistantWidget
@@ -1661,6 +1678,8 @@ export function DataPlatformHome({
             overview={overview}
             language={languageMode}
             mode={workspaceMode}
+            focusReturnRef={assistantNavButtonRef}
+            openRequest={assistantOpenRequest}
             onOpenView={openAssistantView}
             userId={defaultUserId ?? resolvedUserId}
           />

@@ -109,5 +109,6 @@ describe("data platform view model", () => {
     expect(statusLabel(emptyWeather, "en")).toBe("Empty");
     expect(statusLabel(emptyWeather, "zh")).toBe("无数据");
     expect(readout.tone).toBe("neutral");
+    expect("progress" in readout).toBe(false);
   });
 });

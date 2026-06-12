@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import "./assistant-widget.css";
 
@@ -26,6 +34,8 @@ type AssistantWidgetProps = {
   date: string | null;
   userId: string;
   mode: "today" | "data";
+  openRequest?: number;
+  focusReturnRef?: RefObject<HTMLElement>;
   onOpenView?: (view: string) => void;
 };
 
@@ -46,6 +56,8 @@ export function AssistantWidget({
   date,
   userId,
   mode,
+  openRequest,
+  focusReturnRef,
   onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +81,20 @@ export function AssistantWidget({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const totalMovement = useRef(0);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const lastOpenRequest = useRef(0);
+
+  useEffect(() => {
+    if (openRequest === undefined || openRequest === lastOpenRequest.current) {
+      return;
+    }
+
+    lastOpenRequest.current = openRequest;
+    setIsOpen(true);
+  }, [openRequest]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -86,6 +112,7 @@ export function AssistantWidget({
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 0) return;
       const touch = e.touches[0];
+      e.preventDefault();
       const dx = touch.clientX - dragStart.current.x;
       const dy = touch.clientY - dragStart.current.y;
       totalMovement.current = Math.sqrt(dx * dx + dy * dy);
@@ -111,6 +138,75 @@ export function AssistantWidget({
       window.removeEventListener("touchend", handleMouseUp);
     };
   }, [isDragging]);
+
+  const closeAssistant = useCallback(() => {
+    setIsOpen(false);
+    window.requestAnimationFrame(() => {
+      const launcher = launcherRef.current;
+      if (launcher && launcher.getClientRects().length > 0) {
+        launcher.focus();
+        return;
+      }
+
+      focusReturnRef?.current?.focus();
+    });
+  }, [focusReturnRef]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeAssistant();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const drawer = drawerRef.current;
+      if (!drawer) {
+        return;
+      }
+
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), summary, [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === first || !drawer.contains(activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (activeElement === last || !drawer.contains(activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeAssistant, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left click
@@ -154,6 +250,14 @@ export function AssistantWidget({
       return currentMessages;
     });
   }, [language, tKey]);
+
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (!container) {
+      return;
+    }
+    container.scrollTop = container.scrollHeight;
+  }, [isLoading, messages]);
 
   const hasUserMessages = useMemo(
     () => messages.some((message) => message.role === "user"),
@@ -345,7 +449,14 @@ export function AssistantWidget({
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
       {isOpen ? (
-        <section className="assistant-drawer" aria-label={tKey("assistant.drawerLabel")}>
+        <section
+          aria-describedby="assistant-scope-label"
+          aria-labelledby="assistant-dialog-title"
+          aria-modal="true"
+          className="assistant-drawer"
+          ref={drawerRef}
+          role="dialog"
+        >
           <header>
             <div className="assistant-mini-person" aria-hidden="true">
               <Image
@@ -360,11 +471,15 @@ export function AssistantWidget({
               <span className="label-text">
                 {tKey(mode === "today" ? "assistant.todayTitle" : "assistant.title")}
               </span>
-              <h2>
+              <h2 id="assistant-dialog-title">
                 {tKey(mode === "today" ? "assistant.todaySubtitle" : "assistant.subtitle")}
               </h2>
               {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
-              <div className="assistant-scope" aria-label={tKey("assistant.scopeLabel")}>
+              <div
+                aria-label={tKey("assistant.scopeLabel")}
+                className="assistant-scope"
+                id="assistant-scope-label"
+              >
                 <span>{assistantScopeLabel}</span>
                 <span>{cityLabel(city)}</span>
                 <span>{assistantScopeDate}</span>
@@ -373,14 +488,20 @@ export function AssistantWidget({
             <button
               aria-label={tKey("assistant.close")}
               className="assistant-icon-button"
-              onClick={() => setIsOpen(false)}
+              onClick={closeAssistant}
               type="button"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
           </header>
           
-          <div className="assistant-messages">
+          <div
+            aria-busy={isLoading}
+            aria-live="polite"
+            className="assistant-messages"
+            ref={messagesRef}
+            role="log"
+          >
             {messages.map((message) => {
               if (message.role === "assistant" && !message.text.trim()) {
                 return null;
@@ -422,7 +543,7 @@ export function AssistantWidget({
                           language={language}
                           messageId={message.id}
                           onOpenView={(view) => {
-                            setIsOpen(false);
+                            closeAssistant();
                             onOpenView?.(view);
                           }}
                           tKey={tKey}
@@ -463,6 +584,7 @@ export function AssistantWidget({
               disabled={isLoading}
               onChange={(event) => setInputValue(event.target.value)}
               placeholder={tKey("assistant.askPlaceholder")}
+              ref={inputRef}
               value={inputValue}
             />
             <button aria-label={tKey("assistant.send")} disabled={isLoading} type="submit">
@@ -474,6 +596,7 @@ export function AssistantWidget({
         <button
           aria-label={tKey("assistant.openAssistant")}
           className="assistant-launcher"
+          ref={launcherRef}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onClick={(e) => {

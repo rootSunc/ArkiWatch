@@ -1535,33 +1535,6 @@
   color: var(--on-surface);
 }
 
-.signal-meter {
-  display: block;
-  height: 4px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: var(--surface-container-low);
-}
-
-.signal-meter span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--primary);
-}
-
-.signal-card-warn .signal-meter span {
-  background: var(--tertiary);
-}
-
-.signal-card-bad .signal-meter span {
-  background: var(--error);
-}
-
-.signal-card-neutral .signal-meter span {
-  background: var(--outline);
-}
-
 .events-panel {
   display: flex;
   align-self: start;

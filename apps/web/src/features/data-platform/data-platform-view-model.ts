@@ -256,33 +256,6 @@ function fallbackMetric(category: PlatformCategory): PlatformMetric | null {
   );
 }
 
-function numericPercent(value: string, fallback: number): number {
-  const match = value.replace(",", ".").match(/-?\d+(\.\d+)?/);
-  if (!match) {
-    return fallback;
-  }
-
-  const numericValue = Number.parseFloat(match[0]);
-  if (!Number.isFinite(numericValue)) {
-    return fallback;
-  }
-
-  return Math.max(8, Math.min(100, numericValue));
-}
-
-function toneProgress(tone: DashboardTone): number {
-  if (tone === "bad") {
-    return 94;
-  }
-  if (tone === "warn") {
-    return 42;
-  }
-  if (tone === "good") {
-    return 78;
-  }
-  return 56;
-}
-
 function formatMetricValue(metric: PlatformMetric | null, language: LanguageMode): string {
   if (!metric) {
     return translateMessageKey(language, "shell.na");
@@ -388,7 +361,6 @@ export function signalReadout(
         ? formatTimestamp(generatedAt, "dateTime", language)
         : formatMetricValue(metricByKey(category, "source_status"), language),
       helpKey: "last_sync",
-      progress: tone === "warn" ? 40 : toneProgress(tone),
       tone,
     };
   }
@@ -402,10 +374,6 @@ export function signalReadout(
           ? formatMetricValue(fallbackMetric(category), language)
           : `${scoreLabel(score, airQuality?.worst_label, language)} (${Math.round(score)}/5)`,
       helpKey: "aqi_avg",
-      progress:
-        score === null || score === undefined
-          ? toneProgress(tone)
-          : Math.max(12, (score / 5) * 100),
       tone: score !== null && score !== undefined && score >= 4 ? "bad" : tone,
     };
   }
@@ -426,12 +394,6 @@ export function signalReadout(
           : category.events.length > 0
             ? `${category.events.length}`
             : translateMessageKey(language, "shell.nominal"),
-      progress:
-        rawSignals > 0
-          ? Math.max(12, Math.min(100, (activeEvents / rawSignals) * 100))
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
       tone: activeEvents > 0 ? "warn" : tone,
     };
   }
@@ -446,20 +408,6 @@ export function signalReadout(
             ? `${category.events.length}`
             : translateMessageKey(language, "shell.nominal"),
       helpKey: "active_events",
-      progress:
-        transit?.quality.raw_alert_count !== undefined
-          ? Math.max(
-              12,
-              Math.min(
-                100,
-                (transit.quality.active_alert_count /
-                  Math.max(1, transit.quality.raw_alert_count)) *
-                  100,
-              ),
-            )
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
       tone: transit && transit.quality.active_alert_count > 0 ? "warn" : tone,
     };
   }
@@ -474,20 +422,6 @@ export function signalReadout(
             ? `${category.events.length}`
             : translateMessageKey(language, "shell.nominal"),
       helpKey: "active_events",
-      progress:
-        roadRail?.quality.raw_message_count !== undefined
-          ? Math.max(
-              12,
-              Math.min(
-                100,
-                (roadRail.quality.active_event_count /
-                  Math.max(1, roadRail.quality.raw_message_count)) *
-                  100,
-              ),
-            )
-          : category.events.length > 0
-            ? Math.min(100, 28 + category.events.length * 14)
-            : 85,
       tone: roadRail && roadRail.quality.active_event_count > 0 ? "warn" : tone,
     };
   }
@@ -504,10 +438,6 @@ export function signalReadout(
           ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
           : formatMetricValue(metricByKey(category, "low_energy_window"), language),
       helpKey: window?.unit?.includes("kWh") ? "best_price" : "best_window",
-      progress:
-        energy?.quality.field_coverage_pct !== undefined
-          ? Math.max(8, Math.min(100, energy.quality.field_coverage_pct))
-          : toneProgress(tone),
       tone: window ? "good" : tone,
     };
   }
@@ -521,10 +451,6 @@ export function signalReadout(
           ? `${category.events.length}`
           : formatMetricValue(metricByKey(category, "active_events"), language),
       helpKey: "upcoming_events",
-      progress:
-        category.events.length > 0
-          ? Math.min(100, 22 + category.events.length * 10)
-          : toneProgress(tone),
       tone: freeMetric && freeMetric.value !== "0" ? "good" : tone,
     };
   }
@@ -536,9 +462,6 @@ export function signalReadout(
       : translateMessageKey(language, "shell.signalLevel"),
     value: formatMetricValue(metric, language),
     helpKey: metric?.key ?? "signal_level",
-    progress: metric
-      ? numericPercent(metric.value, toneProgress(tone))
-      : toneProgress(tone),
     tone,
   };
 }

@@ -345,13 +345,11 @@
   padding: 20px;
 }
 
-.day-plan-timeline-header,
-.today-decisions > header {
+.day-plan-timeline-header {
   margin-bottom: 16px;
 }
 
-.day-plan-timeline-header h3,
-.today-decisions h3 {
+.day-plan-timeline-header h3 {
   margin-top: 5px;
   color: var(--on-surface);
   font-size: 1rem;
@@ -477,13 +475,71 @@
 }
 
 .today-decisions {
-  padding: 20px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.today-decisions-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  color: inherit;
+  cursor: pointer;
+  list-style: none;
+  text-align: left;
+}
+
+.today-decisions-summary::-webkit-details-marker {
+  display: none;
+}
+
+.today-decisions-summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: -3px;
+}
+
+.today-decisions-summary-copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.today-decisions-title {
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.today-decisions-summary-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--on-surface-variant);
+  font-size: 0.78rem;
+}
+
+.today-decisions-summary-meta .material-symbols-outlined {
+  transition: transform 160ms ease;
+}
+
+.today-decisions[open] .today-decisions-summary {
+  border-bottom: 1px solid var(--card-border);
+}
+
+.today-decisions[open] .today-decisions-summary-meta .material-symbols-outlined {
+  transform: rotate(180deg);
 }
 
 .today-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  padding: 0 18px 18px;
 }
 
 .today-action-card {
@@ -691,6 +747,9 @@
   .day-plan-timeline,
   .today-decisions {
     border-radius: 14px;
+  }
+
+  .today-decisions-summary {
     padding: 16px;
   }
 }
@@ -723,6 +782,10 @@
   .today-primary-action,
   .today-secondary-action,
   .today-action-card {
+    transition: none;
+  }
+
+  .today-decisions-summary-meta .material-symbols-outlined {
     transition: none;
   }
 }

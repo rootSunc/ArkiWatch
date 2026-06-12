@@ -49,8 +49,10 @@ type DataPlatformMobileHeaderProps = ScopeControlProps & {
   currentUserInitials: string;
   currentUserLabel: string;
   isDetailPage: boolean;
+  onSearchChange: (value: string) => void;
   workspaceMode: WorkspaceMode;
   onOpenNavigation: () => void;
+  searchValue: string;
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   userStateLabel: string;
@@ -66,6 +68,7 @@ export function DataPlatformMobileHeader({
   isCityPending,
   isDatePending,
   isDetailPage,
+  onSearchChange,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -81,6 +84,7 @@ export function DataPlatformMobileHeader({
   onRefresh,
   onToggleTheme,
   renderAuthActionButton,
+  searchValue,
   showExport,
   themeMode,
   userStateLabel,
@@ -178,6 +182,19 @@ export function DataPlatformMobileHeader({
           {renderAuthActionButton("icon-button mobile-overflow-action")}
         </div>
       </div>
+      {workspaceMode === "data" ? (
+        <label className="dashboard-search mobile-dashboard-search">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            search
+          </span>
+          <input
+            aria-label={tKey("shell.searchSignalsPlaceholder")}
+            onChange={(event) => onSearchChange(event.currentTarget.value)}
+            placeholder={tKey("shell.searchSignalsPlaceholder")}
+            value={searchValue}
+          />
+        </label>
+      ) : null}
     </header>
   );
 }
@@ -185,8 +202,10 @@ export function DataPlatformMobileHeader({
 type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
   isDetailPage: boolean;
   workspaceMode: WorkspaceMode;
+  onSearchChange: (value: string) => void;
   onSelectNav: (navKey: string) => void;
   restoreSideNavButton: ReactNode;
+  searchValue: string;
 };
 
 export function DataPlatformWorkspaceTopbar({
@@ -198,6 +217,7 @@ export function DataPlatformWorkspaceTopbar({
   isDatePending,
   isDetailPage,
   workspaceMode,
+  onSearchChange,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -213,6 +233,7 @@ export function DataPlatformWorkspaceTopbar({
   onSelectNav,
   renderAuthActionButton,
   restoreSideNavButton,
+  searchValue,
   showExport,
 }: DataPlatformWorkspaceTopbarProps) {
   const { tKey } = useI18n();
@@ -255,6 +276,19 @@ export function DataPlatformWorkspaceTopbar({
         </nav>
       ) : null}
       <div className="detail-topbar-actions">
+        {workspaceMode === "data" && !isDetailPage ? (
+          <label className="dashboard-search workspace-search">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              search
+            </span>
+            <input
+              aria-label={tKey("shell.searchSignalsPlaceholder")}
+              onChange={(event) => onSearchChange(event.currentTarget.value)}
+              placeholder={tKey("shell.searchSignalsPlaceholder")}
+              value={searchValue}
+            />
+          </label>
+        ) : null}
         <PlatformScopeControls
           availability={availability}
           city={city}
