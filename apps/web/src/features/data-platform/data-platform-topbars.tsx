@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode, RefObject } from "react";
 import Image from "next/image";
 
 import {
@@ -45,10 +45,61 @@ type ScopeControlProps = {
   showExport?: boolean;
 };
 
+type DashboardSearchProps = {
+  className?: string;
+  clearLabel: string;
+  label: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  value: string;
+};
+
+function DashboardSearch({
+  className,
+  clearLabel,
+  label,
+  onChange,
+  placeholder,
+  value,
+}: DashboardSearchProps) {
+  function handleChange(event: ChangeEvent<HTMLInputElement>): void {
+    onChange(event.currentTarget.value);
+  }
+
+  return (
+    <div className={`dashboard-search${className ? ` ${className}` : ""}`}>
+      <span className="material-symbols-outlined" aria-hidden="true">
+        search
+      </span>
+      <input
+        aria-label={label}
+        onChange={handleChange}
+        placeholder={placeholder}
+        value={value}
+      />
+      {value ? (
+        <button
+          aria-label={clearLabel}
+          className="dashboard-search-clear"
+          onClick={() => onChange("")}
+          title={clearLabel}
+          type="button"
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 type DataPlatformMobileHeaderProps = ScopeControlProps & {
   currentUserInitials: string;
   currentUserLabel: string;
   isDetailPage: boolean;
+  isMobileMenuOpen: boolean;
+  navigationButtonRef: RefObject<HTMLButtonElement>;
   onSearchChange: (value: string) => void;
   workspaceMode: WorkspaceMode;
   onOpenNavigation: () => void;
@@ -68,6 +119,8 @@ export function DataPlatformMobileHeader({
   isCityPending,
   isDatePending,
   isDetailPage,
+  isMobileMenuOpen,
+  navigationButtonRef,
   onSearchChange,
   isEventsExpanded,
   isHistorical,
@@ -96,9 +149,12 @@ export function DataPlatformMobileHeader({
     <header className="mobile-dashboard-header">
       <div className="mobile-brand">
         <button
+          aria-controls="arkiwatch-mobile-navigation"
+          aria-expanded={isMobileMenuOpen}
           className="icon-button"
           aria-label={tKey("shell.openNavigation")}
           onClick={onOpenNavigation}
+          ref={navigationButtonRef}
           type="button"
         >
           <span className="material-symbols-outlined" aria-hidden="true">
@@ -155,7 +211,10 @@ export function DataPlatformMobileHeader({
           {showExport ? (
             <ExportSnapshotButton city={city} date={date} language={language} />
           ) : null}
-          <ShareViewLinkButton language={language} />
+          <ShareViewLinkButton
+            language={language}
+            scopeKey={`${city}:${date ?? "live"}`}
+          />
           <NotificationButton
             count={notificationCount}
             isActive={isEventsExpanded && !isDetailPage}
@@ -163,15 +222,6 @@ export function DataPlatformMobileHeader({
             onClick={onNotificationsClick}
             tone={notificationTone}
           />
-          <button
-            className="icon-button mobile-overflow-action"
-            aria-label={tKey("shell.settings")}
-            type="button"
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              settings
-            </span>
-          </button>
           <span
             className="profile-avatar mobile-overflow-action"
             aria-label={userStateLabel}
@@ -182,25 +232,24 @@ export function DataPlatformMobileHeader({
           {renderAuthActionButton("icon-button mobile-overflow-action")}
         </div>
       </div>
-      {workspaceMode === "data" ? (
-        <label className="dashboard-search mobile-dashboard-search">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            search
-          </span>
-          <input
-            aria-label={tKey("shell.searchSignalsPlaceholder")}
-            onChange={(event) => onSearchChange(event.currentTarget.value)}
-            placeholder={tKey("shell.searchSignalsPlaceholder")}
-            value={searchValue}
-          />
-        </label>
+      {workspaceMode === "data" && !isDetailPage ? (
+        <DashboardSearch
+          className="mobile-dashboard-search"
+          clearLabel={tKey("shell.clearSearch")}
+          label={tKey("shell.searchSignalsPlaceholder")}
+          onChange={onSearchChange}
+          placeholder={tKey("shell.searchSignalsPlaceholder")}
+          value={searchValue}
+        />
       ) : null}
     </header>
   );
 }
 
 type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
+  assistantButtonRef?: RefObject<HTMLButtonElement>;
   isDetailPage: boolean;
+  onOpenAssistant?: () => void;
   workspaceMode: WorkspaceMode;
   onSearchChange: (value: string) => void;
   onSelectNav: (navKey: string) => void;
@@ -210,12 +259,14 @@ type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
 
 export function DataPlatformWorkspaceTopbar({
   availability,
+  assistantButtonRef,
   city,
   date,
   isAuthenticated,
   isCityPending,
   isDatePending,
   isDetailPage,
+  onOpenAssistant,
   workspaceMode,
   onSearchChange,
   isEventsExpanded,
@@ -277,17 +328,14 @@ export function DataPlatformWorkspaceTopbar({
       ) : null}
       <div className="detail-topbar-actions">
         {workspaceMode === "data" && !isDetailPage ? (
-          <label className="dashboard-search workspace-search">
-            <span className="material-symbols-outlined" aria-hidden="true">
-              search
-            </span>
-            <input
-              aria-label={tKey("shell.searchSignalsPlaceholder")}
-              onChange={(event) => onSearchChange(event.currentTarget.value)}
-              placeholder={tKey("shell.searchSignalsPlaceholder")}
-              value={searchValue}
-            />
-          </label>
+          <DashboardSearch
+            className="workspace-search"
+            clearLabel={tKey("shell.clearSearch")}
+            label={tKey("shell.searchSignalsPlaceholder")}
+            onChange={onSearchChange}
+            placeholder={tKey("shell.searchSignalsPlaceholder")}
+            value={searchValue}
+          />
         ) : null}
         <PlatformScopeControls
           availability={availability}
@@ -311,6 +359,20 @@ export function DataPlatformWorkspaceTopbar({
           renderAuthActionButton={renderAuthActionButton}
           showExport={showExport}
         />
+        {workspaceMode === "data" && onOpenAssistant ? (
+          <button
+            aria-label={tKey("assistant.openAssistant")}
+            className="icon-button workspace-topbar-assistant"
+            onClick={onOpenAssistant}
+            ref={assistantButtonRef}
+            title={tKey("assistant.openAssistant")}
+            type="button"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              hub
+            </span>
+          </button>
+        ) : null}
       </div>
     </header>
   );
@@ -381,16 +443,13 @@ export function DataPlatformDesktopHeader({
         </div>
       </div>
       <div className="desktop-controls">
-        <label className="dashboard-search">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            search
-          </span>
-          <input
-            onChange={(event) => onSearchChange(event.currentTarget.value)}
-            placeholder={tKey("shell.searchSignalsPlaceholder")}
-            value={searchValue}
-          />
-        </label>
+        <DashboardSearch
+          clearLabel={tKey("shell.clearSearch")}
+          label={tKey("shell.searchSignalsPlaceholder")}
+          onChange={onSearchChange}
+          placeholder={tKey("shell.searchSignalsPlaceholder")}
+          value={searchValue}
+        />
         <PlatformScopeControls
           availability={availability}
           city={city}

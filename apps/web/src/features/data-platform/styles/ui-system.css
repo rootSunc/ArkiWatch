@@ -214,6 +214,13 @@
   border-radius: var(--ui-radius-sm);
 }
 
+.dashboard-search-status {
+  margin: -8px 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .city-scope-control,
 .date-scope-control {
   border-radius: var(--ui-radius-sm);
@@ -329,6 +336,25 @@
 .scope-pending-banner-copy strong {
   color: var(--on-surface);
   font-size: 11px;
+}
+
+.dashboard-scope-content {
+  position: relative;
+  min-width: 0;
+}
+
+.dashboard-scope-content-pending {
+  opacity: 0.72;
+  user-select: none;
+}
+
+.dashboard-scope-content-pending::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: color-mix(in srgb, var(--surface-container-lowest) 26%, transparent);
+  content: "";
+  cursor: wait;
 }
 
 .signals-console-overview {
@@ -502,11 +528,6 @@
   cursor: wait;
 }
 
-.detail-footer {
-  border-top-color: var(--ui-border-subtle);
-  background: var(--surface-container-lowest);
-}
-
 .mobile-brand-copy {
   display: grid;
   min-width: 0;
@@ -542,6 +563,11 @@
 @media (max-width: 1023px) {
   .dashboard-content {
     padding: 18px 14px calc(84px + env(safe-area-inset-bottom));
+  }
+
+  /* Keep the Today decision stream readable after the UI-system base grid. */
+  .today-content-grid {
+    grid-template-columns: 1fr;
   }
 
   .workspace-mode-switcher {

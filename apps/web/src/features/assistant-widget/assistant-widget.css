@@ -574,6 +574,29 @@
   font-size: 18px;
 }
 
+/* Keep the modal's declared aria-modal behavior aligned with pointer and scroll behavior. */
+body:has(.assistant-widget-open)::before {
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  background: color-mix(in srgb, var(--on-surface) 12%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+body:has(.assistant-widget-open) .dashboard-content {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body:has(.assistant-widget-open) .dashboard-side-nav,
+body:has(.assistant-widget-open) .desktop-dashboard-header,
+body:has(.assistant-widget-open) .detail-topbar,
+body:has(.assistant-widget-open) .mobile-dashboard-header,
+body:has(.assistant-widget-open) .mobile-dashboard-footer {
+  pointer-events: none;
+}
+
 @media (max-width: 480px) {
   body:has(.events-panel-expanded) .assistant-widget {
     display: none;

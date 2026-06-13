@@ -193,8 +193,10 @@
   line-height: 20px;
 }
 
-.weather-hero-footer .material-symbols-outlined {
-  font-size: 14px;
+.weather-trend-symbol {
+  font-family: var(--font-inter), ui-sans-serif, sans-serif;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .weather-trend-down {
@@ -203,6 +205,10 @@
 
 .weather-trend-up {
   color: var(--primary) !important;
+}
+
+.weather-trend-flat {
+  color: var(--on-surface-variant) !important;
 }
 
 .weather-detail-metrics {

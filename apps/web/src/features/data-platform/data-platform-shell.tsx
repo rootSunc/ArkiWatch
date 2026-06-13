@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
 
@@ -395,6 +395,9 @@ export function DateScopeSelector({
   onDateChange: (date: string | null) => void;
 }) {
   const controlRef = useRef<HTMLDivElement | null>(null);
+  const dateTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const restoreDateTriggerFocusRef = useRef(false);
+  const calendarId = `arkiwatch-date-calendar-${useId().replace(/:/g, "")}`;
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const label = translateMessageKey(language, "shell.selectedDate");
   const todayStr = todayDateValue();
@@ -434,6 +437,20 @@ export function DateScopeSelector({
     earliestAvailabilityMonth === null || previousMonth >= earliestAvailabilityMonth;
   const canGoNext = nextMonth <= todayMonth;
 
+  const closeCalendar = useCallback(() => {
+    restoreDateTriggerFocusRef.current = true;
+    setIsCalendarOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (isCalendarOpen || !restoreDateTriggerFocusRef.current) {
+      return;
+    }
+
+    restoreDateTriggerFocusRef.current = false;
+    window.requestAnimationFrame(() => dateTriggerRef.current?.focus());
+  }, [date, isCalendarOpen]);
+
   useEffect(() => {
     setVisibleMonth(monthKeyFromDateValue(displayValue));
   }, [displayValue]);
@@ -443,7 +460,7 @@ export function DateScopeSelector({
       return undefined;
     }
 
-    const closeCalendar = (event: MouseEvent) => {
+    const closeOnOutsideClick = (event: MouseEvent) => {
       if (
         controlRef.current &&
         event.target instanceof Node &&
@@ -454,17 +471,18 @@ export function DateScopeSelector({
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsCalendarOpen(false);
+        event.preventDefault();
+        closeCalendar();
       }
     };
 
-    document.addEventListener("mousedown", closeCalendar);
+    document.addEventListener("mousedown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
     return () => {
-      document.removeEventListener("mousedown", closeCalendar);
+      document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [isCalendarOpen]);
+  }, [closeCalendar, isCalendarOpen]);
 
   const selectCalendarDate = (value: string) => {
     if (isPending || value > todayStr) {
@@ -472,7 +490,7 @@ export function DateScopeSelector({
     }
 
     onDateChange(value === todayStr ? null : value);
-    setIsCalendarOpen(false);
+    closeCalendar();
   };
 
   return (
@@ -500,9 +518,11 @@ export function DateScopeSelector({
         className="date-scope-trigger"
         type="button"
         aria-label={inputLabel}
+        aria-controls={calendarId}
         aria-expanded={isCalendarOpen}
         aria-haspopup="dialog"
         disabled={isPending}
+        ref={dateTriggerRef}
         onClick={() => {
           setVisibleMonth(monthKeyFromDateValue(displayValue));
           setIsCalendarOpen((currentValue) => {
@@ -523,6 +543,7 @@ export function DateScopeSelector({
           onClick={(event) => {
             event.preventDefault();
             onDateChange(null);
+            closeCalendar();
           }}
           title={translateMessageKey(language, "shell.returnToLive")}
           type="button"
@@ -542,6 +563,7 @@ export function DateScopeSelector({
       {isCalendarOpen ? (
         <div
           className="date-calendar-popover"
+          id={calendarId}
           role="dialog"
           aria-label={translateMessageKey(language, "shell.availableHistoricalData")}
         >
@@ -622,7 +644,7 @@ export function DateScopeSelector({
             <button
               onClick={() => {
                 onDateChange(null);
-                setIsCalendarOpen(false);
+                closeCalendar();
               }}
               type="button"
             >
@@ -632,7 +654,7 @@ export function DateScopeSelector({
               onClick={() => {
                 onDateChange(null);
                 setVisibleMonth(monthKeyFromDateValue(todayStr));
-                setIsCalendarOpen(false);
+                closeCalendar();
               }}
               type="button"
             >
@@ -690,8 +712,8 @@ export function HistoricalWarningBanner({
         onClick={onReturnToLive}
         type="button"
       >
-        <span className="material-symbols-outlined" aria-hidden="true">
-          trending_flat
+        <span className="historical-banner-arrow" aria-hidden="true">
+          →
         </span>
         {translateMessageKey(language, "shell.returnToLive")}
       </button>

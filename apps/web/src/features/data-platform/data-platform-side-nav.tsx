@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import Image from "next/image";
 
 import { appEnv } from "@/lib/env";
@@ -22,6 +22,8 @@ type DataPlatformSideNavProps = {
   className: string;
   currentUserLabel: string;
   isAuthenticated: boolean;
+  isMobileMenuOpen: boolean;
+  navigationRef: RefObject<HTMLElement>;
   onHide: () => void;
   onPrefetchNavItem?: (item: NavItem) => void;
   onSelectNavItem: (item: NavItem) => void;
@@ -36,6 +38,8 @@ export function DataPlatformSideNav({
   className,
   currentUserLabel,
   isAuthenticated,
+  isMobileMenuOpen,
+  navigationRef,
   onHide,
   onPrefetchNavItem,
   onSelectNavItem,
@@ -51,9 +55,19 @@ export function DataPlatformSideNav({
   const userStateLabel = viewerStateLabel(isAuthenticated, appEnv.demoMode, language);
   const displayUserLabel = isAuthenticated ? currentUserLabel : userStateLabel;
   const activeWorkspaceMode = selectedNavKey === "today" ? "today" : "data";
+  const navigationActionLabel = tKey(
+    isMobileMenuOpen ? "shell.closeNavigation" : "shell.hideNavigation",
+  );
 
   return (
-    <aside className={className} aria-label={tKey("shell.primaryNavigation")}>
+    <aside
+      aria-label={tKey("shell.primaryNavigation")}
+      aria-modal={isMobileMenuOpen ? true : undefined}
+      className={className}
+      id="arkiwatch-mobile-navigation"
+      ref={navigationRef}
+      role={isMobileMenuOpen ? "dialog" : undefined}
+    >
       <div className="brand-panel">
         <div className="brand-icon" aria-hidden="true">
           <Image
@@ -71,21 +85,20 @@ export function DataPlatformSideNav({
         </div>
         <button
           className="icon-button side-nav-collapse-button"
-          aria-label={tKey("shell.hideNavigation")}
+          aria-label={navigationActionLabel}
           onClick={onHide}
-          title={tKey("shell.hideNavigation")}
+          title={navigationActionLabel}
           type="button"
         >
           <span className="material-symbols-outlined" aria-hidden="true">
-            keyboard_double_arrow_left
+            {isMobileMenuOpen ? "close" : "keyboard_double_arrow_left"}
           </span>
         </button>
       </div>
 
-      <div
+      <nav
         className="workspace-mode-switcher"
         aria-label={tKey("shell.workspaceMode")}
-        role="tablist"
       >
         {WORKSPACE_MODE_ITEMS.map((item) => {
           const isActive = activeWorkspaceMode === item.mode;
@@ -94,7 +107,7 @@ export function DataPlatformSideNav({
           );
           return (
             <button
-              aria-selected={isActive}
+              aria-current={isActive ? "page" : undefined}
               className={
                 isActive
                   ? "workspace-mode-option workspace-mode-option-active"
@@ -102,7 +115,6 @@ export function DataPlatformSideNav({
               }
               key={item.mode}
               onClick={() => onSelectNavItem(item)}
-              role="tab"
               type="button"
             >
               <span className="material-symbols-outlined" aria-hidden="true">
@@ -121,7 +133,7 @@ export function DataPlatformSideNav({
             </button>
           );
         })}
-      </div>
+      </nav>
 
       <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
         {PRIMARY_NAV_ITEMS.filter(
@@ -136,6 +148,7 @@ export function DataPlatformSideNav({
           const navLabel = tKey(`shell.${item.labelKey}`);
           return (
             <button
+              aria-current={isActive ? "page" : undefined}
               className={isActive ? "nav-row nav-row-active" : "nav-row"}
               key={item.key}
               onClick={() => onSelectNavItem(item)}
@@ -163,6 +176,7 @@ export function DataPlatformSideNav({
             const navLabel = tKey(`shell.${item.labelKey}`);
             return (
               <button
+                aria-current={isActive ? "page" : undefined}
                 className={isActive ? "nav-row nav-row-active" : "nav-row"}
                 key={item.key}
                 onClick={() => onSelectNavItem(item)}
@@ -183,17 +197,6 @@ export function DataPlatformSideNav({
 
       <nav className="side-nav-footer" aria-label={tKey("shell.systemControls")}>
         <div className="side-nav-utility-group">
-          <button
-            className="nav-row side-nav-utility-row"
-            aria-label={tKey("shell.settings")}
-            title={tKey("shell.settings")}
-            type="button"
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              settings
-            </span>
-            <span>{tKey("shell.settings")}</span>
-          </button>
           <button
             className="nav-row side-nav-utility-row"
             aria-label={themeActionLabel}

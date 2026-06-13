@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { normalizeApiBaseUrl } from "@/lib/api-client";
 
@@ -38,6 +38,7 @@ export function ExportSnapshotButton({
   language,
 }: ExportSnapshotButtonProps) {
   const [state, setState] = useState<ExportState>("idle");
+  const activeExportRef = useRef<AbortController | null>(null);
   const label = translateMessageKey(
     language,
     state === "loading"
@@ -55,8 +56,14 @@ export function ExportSnapshotButton({
     }
 
     setState("loading");
+    const requestController = new AbortController();
+    activeExportRef.current?.abort();
+    activeExportRef.current = requestController;
     try {
-      const response = await fetch(exportUrl(city, date), { cache: "no-store" });
+      const response = await fetch(exportUrl(city, date), {
+        cache: "no-store",
+        signal: requestController.signal,
+      });
       if (!response.ok) {
         throw new Error(`Export failed with ${response.status}.`);
       }
@@ -70,11 +77,32 @@ export function ExportSnapshotButton({
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
-      setState("success");
+      if (activeExportRef.current === requestController) {
+        setState("success");
+      }
     } catch {
-      setState("error");
+      if (!requestController.signal.aborted && activeExportRef.current === requestController) {
+        setState("error");
+      }
+    } finally {
+      if (activeExportRef.current === requestController) {
+        activeExportRef.current = null;
+      }
     }
   }, [city, date, state]);
+
+  useEffect(() => {
+    activeExportRef.current?.abort();
+    activeExportRef.current = null;
+    setState("idle");
+  }, [city, date]);
+
+  useEffect(
+    () => () => {
+      activeExportRef.current?.abort();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (state !== "success" && state !== "error") {

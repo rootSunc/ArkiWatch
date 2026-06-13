@@ -72,6 +72,7 @@ export function WeatherDetailView({
         : (nextTrendPoint?.temperature_c ?? current.temperature_c) - current.temperature_c
       : null;
   const trendLabel = previous ? tKey("weather.trend3h") : tKey("weather.next3h");
+  const trendArrow = trend === null ? null : trend > 0 ? "↑" : trend < 0 ? "↓" : "→";
   const timelineItems = buildTimelineItems(
     weather,
     category,
@@ -141,9 +142,17 @@ export function WeatherDetailView({
             {trend !== null ? (
               <div>
                 <span>{trendLabel}</span>
-                <strong className={trend < 0 ? "weather-trend-down" : "weather-trend-up"}>
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    trending_flat
+                <strong
+                  className={
+                    trend < 0
+                      ? "weather-trend-down"
+                      : trend > 0
+                        ? "weather-trend-up"
+                        : "weather-trend-flat"
+                  }
+                >
+                  <span className="weather-trend-symbol" aria-hidden="true">
+                    {trendArrow}
                   </span>
                   {formatDegree(Math.abs(trend))}
                 </strong>

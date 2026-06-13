@@ -1,6 +1,8 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { dataHelpText } from "./data-help";
+import { DataHelpIcon, dataHelpText } from "./data-help";
 
 describe("dataHelpText", () => {
   it("resolves common domain help keys in both supported languages", () => {
@@ -23,5 +25,15 @@ describe("dataHelpText", () => {
         language: "zh",
       }),
     ).toBe("A temporary explanation");
+  });
+
+  it("exposes help copy to assistive technology without adding a nested button", () => {
+    const markup = renderToStaticMarkup(
+      createElement(DataHelpIcon, { text: "Explains the current signal." }),
+    );
+
+    expect(markup).toContain('role="img"');
+    expect(markup).toContain('aria-label="Explains the current signal."');
+    expect(markup).not.toMatch(/^<span[^>]*aria-hidden="true"/);
   });
 });

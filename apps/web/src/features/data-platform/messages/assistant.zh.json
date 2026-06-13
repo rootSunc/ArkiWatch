@@ -34,6 +34,7 @@
     "fallback": "兜底回答",
     "viewSources": "查看来源详情",
     "sourcesCount": "{count} 个来源",
+    "sourcesMore": "另有 {count} 个",
     "checkedAt": "核验于 {time}",
     "openSource": "打开 {source} 工作区",
     "sourcePlatformOverview": "平台总览",

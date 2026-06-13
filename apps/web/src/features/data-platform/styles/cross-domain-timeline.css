@@ -2,7 +2,11 @@
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   padding: 1rem 1.1rem;
-  background: color-mix(in srgb, var(--panel-surface, #fff) 92%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--panel-surface, var(--surface-container-lowest)) 92%,
+    transparent
+  );
 }
 
 .cross-domain-timeline-collapsible {
@@ -129,15 +133,15 @@
 }
 
 .cross-timeline-dot-good {
-  background: var(--good-color, #15803d);
+  background: var(--good-color, var(--success));
 }
 
 .cross-timeline-dot-warn {
-  background: var(--warn-color, #b45309);
+  background: var(--warn-color, var(--amber));
 }
 
 .cross-timeline-dot-bad {
-  background: var(--bad-color, #b91c1c);
+  background: var(--bad-color, var(--red));
 }
 
 .cross-timeline-dot-neutral {
@@ -150,7 +154,11 @@
   border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
   border-radius: 10px;
   padding: 0.6rem 0.75rem;
-  background: color-mix(in srgb, var(--card-bg, #fff) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--card-bg, var(--surface-container-lowest)) 70%,
+    transparent
+  );
   color: inherit;
   cursor: pointer;
   display: flex;
@@ -161,7 +169,11 @@
 
 .cross-domain-timeline-button:hover {
   border-color: color-mix(in srgb, currentColor 24%, transparent);
-  background: color-mix(in srgb, var(--card-bg, #fff) 95%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--card-bg, var(--surface-container-lowest)) 95%,
+    transparent
+  );
 }
 
 .cross-domain-timeline-top {

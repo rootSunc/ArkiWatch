@@ -145,9 +145,10 @@ export function DataHelpIcon({ text }: DataHelpIconProps) {
 
   return (
     <span
-      aria-hidden="true"
+      aria-label={text}
       className="data-help-icon"
       data-tooltip={text}
+      role="img"
       title={text}
     >
       <span className="material-symbols-outlined" aria-hidden="true">

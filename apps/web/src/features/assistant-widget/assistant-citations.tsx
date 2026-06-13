@@ -22,6 +22,8 @@ type AssistantCitationListProps = {
   tKey: (key: string) => string;
 };
 
+export const MAX_VISIBLE_ASSISTANT_CITATIONS = 4;
+
 const SOURCE_DEFINITIONS: Record<string, { labelKey: string; view: string }> = {
   platform_overview: { labelKey: "assistant.sourcePlatformOverview", view: "overview" },
   weather: { labelKey: "assistant.sourceWeather", view: "weather" },
@@ -111,12 +113,12 @@ export function AssistantCitationList({
 }: AssistantCitationListProps): ReactNode {
   return (
     <ul>
-      {citations.slice(0, 4).map((citation) => {
+      {citations.slice(0, MAX_VISIBLE_ASSISTANT_CITATIONS).map((citation, index) => {
         const sourceLabel = assistantCitationSourceLabel(citation.source, language);
         const sourceView = assistantCitationView(citation.source);
 
         return (
-          <li key={`${messageId}-${citation.source}`}>
+          <li key={`${messageId}-${index}-${citation.source}-${citation.checked_at ?? ""}`}>
             <div>
               {sourceView && onOpenView ? (
                 <button

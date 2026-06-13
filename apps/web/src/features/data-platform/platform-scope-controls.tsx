@@ -90,7 +90,10 @@ export function PlatformScopeControls({
       {showExport ? (
         <ExportSnapshotButton city={city} date={date} language={language} />
       ) : null}
-      <ShareViewLinkButton language={language} />
+      <ShareViewLinkButton
+        language={language}
+        scopeKey={`${city}:${date ?? "live"}`}
+      />
       {showNotifications ? (
         <NotificationButton
           count={notificationCount}

@@ -13,7 +13,10 @@ import {
 
 import "./assistant-widget.css";
 
-import { AssistantCitationList } from "@/features/assistant-widget/assistant-citations";
+import {
+  AssistantCitationList,
+  MAX_VISIBLE_ASSISTANT_CITATIONS,
+} from "@/features/assistant-widget/assistant-citations";
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { formatAssistantScopeDate } from "@/features/assistant-widget/assistant-scope";
 import {
@@ -34,8 +37,11 @@ type AssistantWidgetProps = {
   date: string | null;
   userId: string;
   mode: "today" | "data";
+  scopeKey?: string;
   openRequest?: number;
   focusReturnRef?: RefObject<HTMLElement>;
+  focusReturnRefs?: Array<RefObject<HTMLElement>>;
+  showLauncher?: boolean;
   onOpenView?: (view: string) => void;
 };
 
@@ -56,8 +62,11 @@ export function AssistantWidget({
   date,
   userId,
   mode,
+  scopeKey = "",
   openRequest,
   focusReturnRef,
+  focusReturnRefs,
+  showLauncher = true,
   onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -76,6 +85,14 @@ export function AssistantWidget({
   const assistantScopeDate = date
     ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
     : tKey("assistant.scopeLive");
+  const assistantScopeKey = [
+    mode,
+    scopeKey,
+    city,
+    date ?? "live",
+    userId,
+    overview?.checked_at ?? "",
+  ].join(":");
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -85,6 +102,7 @@ export function AssistantWidget({
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
+  const activeRequestRef = useRef<AbortController | null>(null);
   const lastOpenRequest = useRef(0);
 
   useEffect(() => {
@@ -148,9 +166,13 @@ export function AssistantWidget({
         return;
       }
 
-      focusReturnRef?.current?.focus();
+      const focusTargets = focusReturnRefs ?? (focusReturnRef ? [focusReturnRef] : []);
+      const focusTarget = focusTargets.find(
+        (target) => target.current && target.current.getClientRects().length > 0,
+      );
+      focusTarget?.current?.focus();
     });
-  }, [focusReturnRef]);
+  }, [focusReturnRef, focusReturnRefs]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -243,13 +265,25 @@ export function AssistantWidget({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setMessages((currentMessages) => {
-      if (currentMessages.length === 1 && currentMessages[0]?.id === "welcome") {
-        return [{ id: "welcome", role: "assistant", text: tKey("assistant.welcome") }];
-      }
-      return currentMessages;
-    });
-  }, [language, tKey]);
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+    setIsLoading(false);
+    setInputValue("");
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        text: tKey("assistant.welcome"),
+      },
+    ]);
+  }, [assistantScopeKey, tKey]);
+
+  useEffect(
+    () => () => {
+      activeRequestRef.current?.abort();
+    },
+    [],
+  );
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -304,6 +338,9 @@ export function AssistantWidget({
     };
     const assistantMessageId = `assistant-${timestamp}`;
     const requestMessages = [...messages, userMessage].slice(-10);
+    const requestController = new AbortController();
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = requestController;
 
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -321,6 +358,9 @@ export function AssistantWidget({
     try {
       if (appEnv.demoMode) {
         const reply = demoAssistantReply(normalizedQuestion, language);
+        if (activeRequestRef.current !== requestController) {
+          return;
+        }
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === assistantMessageId
@@ -343,6 +383,7 @@ export function AssistantWidget({
         headers: {
           "Content-Type": "application/json"
         },
+        signal: requestController.signal,
         body: JSON.stringify({
           messages: requestMessages.map((message) => ({
             role: message.role,
@@ -374,6 +415,10 @@ export function AssistantWidget({
         buffer = parsed.remainder;
 
         for (const event of parsed.events) {
+          if (activeRequestRef.current !== requestController) {
+            return;
+          }
+
           if (event.event === "token" && event.data.content) {
             assistantText += event.data.content;
             setMessages((currentMessages) =>
@@ -420,7 +465,7 @@ export function AssistantWidget({
         }
       }
 
-      if (!assistantText.trim()) {
+      if (activeRequestRef.current === requestController && !assistantText.trim()) {
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
@@ -428,13 +473,19 @@ export function AssistantWidget({
         );
       }
     } catch {
+      if (requestController.signal.aborted || activeRequestRef.current !== requestController) {
+        return;
+      }
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
           message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
         )
       );
     } finally {
-      setIsLoading(false);
+      if (activeRequestRef.current === requestController) {
+        activeRequestRef.current = null;
+        setIsLoading(false);
+      }
     }
   };
 
@@ -532,9 +583,22 @@ export function AssistantWidget({
                         <small>
                           {tKey("assistant.sourcesCount").replace(
                             "{count}",
-                            String(message.citations.length),
+                            String(
+                              Math.min(
+                                message.citations.length,
+                                MAX_VISIBLE_ASSISTANT_CITATIONS,
+                              ),
+                            ),
                           )}
                         </small>
+                        {message.citations.length > MAX_VISIBLE_ASSISTANT_CITATIONS ? (
+                          <small>
+                            {tKey("assistant.sourcesMore").replace(
+                              "{count}",
+                              String(message.citations.length - MAX_VISIBLE_ASSISTANT_CITATIONS),
+                            )}
+                          </small>
+                        ) : null}
                       </div>
                       <details className="assistant-citation-details">
                         <summary>{tKey("assistant.viewSources")}</summary>
@@ -592,7 +656,7 @@ export function AssistantWidget({
             </button>
           </form>
         </section>
-      ) : (
+      ) : showLauncher ? (
         <button
           aria-label={tKey("assistant.openAssistant")}
           className="assistant-launcher"
@@ -624,7 +688,7 @@ export function AssistantWidget({
           </span>
           <span className="assistant-bubble">{tKey("assistant.tooltip")}</span>
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

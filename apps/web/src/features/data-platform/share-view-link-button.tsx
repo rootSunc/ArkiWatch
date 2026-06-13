@@ -7,13 +7,52 @@ import type { LanguageMode } from "./i18n";
 
 type ShareViewLinkButtonProps = {
   language: LanguageMode;
+  scopeKey?: string;
 };
 
-export function ShareViewLinkButton({ language }: ShareViewLinkButtonProps) {
-  const [copied, setCopied] = useState(false);
+type CopyState = "idle" | "success" | "error";
+
+export async function copyTextToClipboard(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Fall through to the legacy copy path for restricted browser contexts.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    if (!document.execCommand("copy")) {
+      throw new Error("Clipboard copy command was rejected.");
+    }
+  } finally {
+    textarea.remove();
+  }
+}
+
+export function ShareViewLinkButton({ language, scopeKey = "" }: ShareViewLinkButtonProps) {
+  const [copyState, setCopyState] = useState<CopyState>("idle");
 
   const copyLabel = translateMessageKey(language, "shell.copyViewLink");
   const copiedLabel = translateMessageKey(language, "shell.linkCopied");
+  const failedLabel = translateMessageKey(language, "shell.linkCopyFailed");
+  const label =
+    copyState === "success"
+      ? copiedLabel
+      : copyState === "error"
+        ? failedLabel
+        : copyLabel;
 
   const copyLink = useCallback(async () => {
     if (typeof window === "undefined") {
@@ -23,44 +62,40 @@ export function ShareViewLinkButton({ language }: ShareViewLinkButtonProps) {
     const url = window.location.href;
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = url;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "absolute";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-      setCopied(true);
+      await copyTextToClipboard(url);
+      setCopyState("success");
     } catch {
-      setCopied(false);
+      setCopyState("error");
     }
   }, []);
 
   useEffect(() => {
-    if (!copied) {
+    if (copyState === "idle") {
       return;
     }
 
-    const timeout = window.setTimeout(() => setCopied(false), 2200);
+    const timeout = window.setTimeout(() => setCopyState("idle"), 2200);
     return () => window.clearTimeout(timeout);
-  }, [copied]);
+  }, [copyState]);
+
+  useEffect(() => {
+    setCopyState("idle");
+  }, [scopeKey]);
 
   return (
     <button
-      className={`icon-button share-view-link-button${copied ? " share-view-link-button-copied" : ""}`}
-      aria-label={copied ? copiedLabel : copyLabel}
+      className={`icon-button share-view-link-button share-view-link-button-${copyState}`}
+      aria-label={label}
       onClick={copyLink}
-      title={copied ? copiedLabel : copyLabel}
+      title={label}
       type="button"
     >
       <span className="material-symbols-outlined" aria-hidden="true">
-        {copied ? "check" : "link"}
+        {copyState === "success"
+          ? "check"
+          : copyState === "error"
+            ? "error"
+            : "link"}
       </span>
     </button>
   );
