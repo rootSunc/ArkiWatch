@@ -17,6 +17,11 @@ type RecentEventTarget = {
 
 type CuratedRecentEventOptions = {
   city?: string | null;
+  /**
+   * Use the source snapshot time instead of the browser clock when curating
+   * events. This keeps static/demo and historical views internally coherent.
+   */
+  referenceAt?: string | null;
 };
 
 export type RecentEventDetail = {
@@ -652,7 +657,10 @@ export function curatedRecentEvents(
   limit = RECENT_EVENT_LIMIT,
   options: CuratedRecentEventOptions = {},
 ): PlatformEvent[] {
-  const now = Date.now();
+  const referenceTimestamp = options.referenceAt
+    ? new Date(options.referenceAt).getTime()
+    : Number.NaN;
+  const now = Number.isFinite(referenceTimestamp) ? referenceTimestamp : Date.now();
   const earliestStart = now - 6 * 60 * 60 * 1000;
   const latestStart = now + 48 * 60 * 60 * 1000;
   const uniqueEvents = [...new Map(events.map((event) => [event.id, event])).values()]
@@ -749,6 +757,7 @@ export function recentEventDetails(
   event: PlatformEvent,
   language: LanguageMode,
   tKey: (key: string) => string,
+  timezone?: string,
 ): RecentEventDetail[] {
   const details: RecentEventDetail[] = [];
   const place =
@@ -838,7 +847,7 @@ export function recentEventDetails(
   details.push({
     key: "until",
     label: tKey("shell.until"),
-    value: formatTimestamp(event.ends_at, "dateTime", language),
+    value: formatTimestamp(event.ends_at, "dateTime", language, timezone),
   });
 
   return details.slice(0, 4);

@@ -14,6 +14,7 @@ export type TodayRecommendationMode = "live" | "out_of_scope" | "historical";
 export type TodayBrief = {
   checkedAt: string | null;
   coverageArea: string;
+  timezone: string;
   recommendationCoverageArea: string | null;
   headline: string;
   recommendationMode: TodayRecommendationMode;
@@ -147,6 +148,7 @@ export function buildTodayBrief({
   return {
     checkedAt: publicDashboard.checked_at,
     coverageArea: overviewCoverageArea ?? publicDashboard.coverage_area,
+    timezone: publicDashboard.timezone,
     recommendationCoverageArea,
     headline:
       recommendationMode === "historical"

@@ -12,19 +12,20 @@ import { QueryProvider } from "@/providers/query-provider";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     city?: string;
     date?: string;
     view?: string;
     mobilityTab?: string;
     energyTab?: string;
-  };
+  }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const session = await getCurrentSession();
-  const selectedCity = normalizeCityValue(searchParams?.city);
-  const selectedDate = normalizeSourceDateValue(searchParams?.date);
+  const selectedCity = normalizeCityValue(resolvedSearchParams?.city);
+  const selectedDate = normalizeSourceDateValue(resolvedSearchParams?.date);
   const queryClient = getQueryClient();
 
   const prefetch = prefetchPlatformHome(queryClient, {
@@ -32,7 +33,7 @@ export default async function Page({ searchParams }: PageProps) {
     date: selectedDate,
     authToken: session?.token,
     userId: session?.user.id,
-    activeNavKey: searchParams?.view ?? "today",
+    activeNavKey: resolvedSearchParams?.view ?? "today",
     isHistorical: Boolean(selectedDate),
   });
 
@@ -65,7 +66,7 @@ export default async function Page({ searchParams }: PageProps) {
         defaultUserId={session?.user.id}
         initialCity={selectedCity}
         initialDate={selectedDate}
-        initialView={searchParams?.view ?? null}
+        initialView={resolvedSearchParams?.view ?? null}
         isAuthenticated={Boolean(session)}
       />
     </QueryProvider>

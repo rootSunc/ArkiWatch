@@ -23,6 +23,7 @@ import {
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 type TransitWorkspaceProps = {
   category: PlatformCategory | null;
@@ -60,7 +61,6 @@ type TransitScopeMetric = {
   width: number;
 };
 
-const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
 const ALERTS_PER_PAGE = INCIDENT_TIMELINE_PAGE_SIZE;
 const HSL_STOP_DETAILS: Record<string, { address: string; code: string; name: string; zone: string }> = {
@@ -88,7 +88,12 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+function formatCompactTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("transit.notObserved");
   }
@@ -99,7 +104,7 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(new Date(value))
     .toUpperCase();
@@ -132,12 +137,17 @@ function liveStatusTone(status: string | null | undefined): "ready" | "stale" | 
   return "empty";
 }
 
-function exactObservedLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
+function exactObservedLabel(
+  value: string | null,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("transit.notObserved");
   }
 
-  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
+  return `${formatTimestamp(value, "dateTime", language, timeZone)} (${formatRelativeAge(value, language)})`;
 }
 
 function severityTone(severity: string): TransitTone {
@@ -374,7 +384,12 @@ function highestSeverityLabel(alerts: TransitAlert[]): string {
   return SEVERITY_LABELS.find((severity) => alerts.some((alert) => alert.severity.toUpperCase() === severity)) ?? "NONE";
 }
 
-function nextActiveEndLabel(activeAlerts: TransitAlert[], language: LanguageMode, tKey: (key: string) => string): string {
+function nextActiveEndLabel(
+  activeAlerts: TransitAlert[],
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (activeAlerts.length === 0) {
     return tKey("transit.noActiveWindow");
   }
@@ -383,7 +398,7 @@ function nextActiveEndLabel(activeAlerts: TransitAlert[], language: LanguageMode
     (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
   )[0];
 
-  return `${tKey("transit.until")} ${formatCompactTime(nextEndingAlert.ends_at, language, tKey)}`;
+  return `${tKey("transit.until")} ${formatCompactTime(nextEndingAlert.ends_at, language, tKey, timeZone)}`;
 }
 
 function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[], tKey: (key: string) => string) {
@@ -525,7 +540,7 @@ function timelinePercent(value: number, bounds: { startsAt: number; endsAt: numb
   return Math.max(0, Math.min(100, ((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100));
 }
 
-function formatHistoryDate(value: string): string {
+function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -534,7 +549,7 @@ function formatHistoryDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(parsed)
     .toUpperCase();
@@ -543,6 +558,7 @@ function formatHistoryDate(value: string): string {
 function transitHistoryPoints(
   history: PlatformHistoricalSnapshot<TransitCurrentResponse>[],
   tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -552,7 +568,7 @@ function transitHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date),
+        label: formatHistoryDate(snapshot.date, timeZone),
         value: data.quality.normalized_event_count,
         detail: tKey("transit.historyPointDetail")
           .replace("{active}", String(data.quality.active_alert_count))
@@ -565,10 +581,12 @@ function transitHistoryPoints(
 function TransitAlertStatusBadge({
   alert,
   language,
+  timeZone,
   tKey,
 }: {
   alert: TransitAlert;
   language: LanguageMode;
+  timeZone?: string;
   tKey: (key: string) => string;
 }) {
   return (
@@ -576,7 +594,7 @@ function TransitAlertStatusBadge({
       <span className="material-symbols-outlined" aria-hidden="true">
         {alert.active ? "radio_button_checked" : "schedule"}
       </span>
-      <span>{alert.active ? tKey("transit.activeNow") : formatCompactTime(alert.starts_at, language, tKey)}</span>
+      <span>{alert.active ? tKey("transit.activeNow") : formatCompactTime(alert.starts_at, language, tKey, timeZone)}</span>
     </span>
   );
 }
@@ -585,11 +603,13 @@ function TransitAlertLiveLayer({
   alert,
   language,
   nowTimestamp,
+  timeZone,
   tKey,
 }: {
   alert: TransitAlert;
   language: LanguageMode;
   nowTimestamp: number;
+  timeZone?: string;
   tKey: (key: string) => string;
 }) {
   const progress = alertWindowProgress(alert, nowTimestamp);
@@ -600,13 +620,13 @@ function TransitAlertLiveLayer({
       aria-label={tKey("transit.alertStatus")}
     >
       <div className="transit-alert-live-copy">
-        <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
+        <TransitAlertStatusBadge alert={alert} language={language} timeZone={timeZone} tKey={tKey} />
         <div>
           <strong>{alert.active ? tKey("transit.inEffect") : tKey("transit.scheduled")}</strong>
           <span>
             {alert.active
-              ? `${tKey("transit.until")} ${formatCompactTime(alert.ends_at, language, tKey)}`
-              : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey)}`}
+              ? `${tKey("transit.until")} ${formatCompactTime(alert.ends_at, language, tKey, timeZone)}`
+              : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey, timeZone)}`}
           </span>
         </div>
       </div>
@@ -616,7 +636,7 @@ function TransitAlertLiveLayer({
       <dl className="transit-alert-live-facts">
         <div>
           <dt>{tKey("transit.window")}</dt>
-          <dd>{formatCompactTime(alert.starts_at, language, tKey)} - {formatCompactTime(alert.ends_at, language, tKey)}</dd>
+          <dd>{formatCompactTime(alert.starts_at, language, tKey, timeZone)} - {formatCompactTime(alert.ends_at, language, tKey, timeZone)}</dd>
         </div>
         <div>
           <dt>{tKey("transit.impactScope")}</dt>
@@ -677,6 +697,8 @@ export function TransitWorkspace({
     );
   }
 
+  const dataTimezone = resolveDataTimezone(transit.time_scope?.timezone);
+
   const nowTimestamp = transitReferenceTimestamp(transit);
   const activeTone = activeAlertTone(activeAlerts, transit.alerts);
   const riskState = transitRiskState(activeAlerts, transit.alerts, tKey);
@@ -695,7 +717,7 @@ export function TransitWorkspace({
   const scopeRows = transitScopeMetrics(transit.alerts, tKey);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
-  const historyPoints = transitHistoryPoints(history, tKey);
+  const historyPoints = transitHistoryPoints(history, tKey, dataTimezone);
   const transitSummaryMetrics = [
     ["active_alerts", "activeNowSummary"],
     ["high_severity", "highSeverity"],
@@ -716,7 +738,7 @@ export function TransitWorkspace({
             <strong>{transit.status === "ready" ? tKey("transit.hslFeedActive") : tKey("transit.feedDelayed")}</strong>
           </div>
         </div>
-        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey)}</div>
+        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}</div>
       </div>
 
       <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={tKey("transit.transitAlertCondition")}>
@@ -727,7 +749,7 @@ export function TransitWorkspace({
           <div>
             <div className="transit-card-kicker">
               <span>{tKey("transit.currentTransitRisk")}</span>
-              <time>{exactObservedLabel(transit.observed_at, language, tKey)}</time>
+              <time>{exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}</time>
             </div>
             <strong>{transit.quality.active_alert_count}</strong>
             <p>
@@ -744,7 +766,7 @@ export function TransitWorkspace({
           </div>
           <div>
             <span>{tKey("transit.nextClear")}</span>
-            <strong>{nextActiveEndLabel(activeAlerts, language, tKey)}</strong>
+            <strong>{nextActiveEndLabel(activeAlerts, language, tKey, dataTimezone)}</strong>
           </div>
           <div>
             <span>{tKey("transit.scopedImpact")}</span>
@@ -818,7 +840,7 @@ export function TransitWorkspace({
                       const width = Math.max(4, right - left);
                       return (
                         <article className={`transit-timeband-row transit-timeband-row-${severityTone(alert.severity)}`} key={alert.id}>
-                          <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
+                          <TransitAlertStatusBadge alert={alert} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <i aria-hidden="true">
                             <span
                               style={
@@ -851,7 +873,7 @@ export function TransitWorkspace({
                       <div className="transit-alert-main">
                         <div>
                           <div className="transit-alert-time-row">
-                            <TransitAlertStatusBadge alert={alert} language={language} tKey={tKey} />
+                            <TransitAlertStatusBadge alert={alert} language={language} timeZone={dataTimezone} tKey={tKey} />
                             <span>{enumLabel(alert.severity)}</span>
                           </div>
                           <strong>{localizedPlatformCopy(alert.title, language) ?? alert.title}</strong>
@@ -867,7 +889,7 @@ export function TransitWorkspace({
                         <span>{causeLabel(alert.cause, language, tKey)}</span>
                         <span>{effectLabel(alert.effect, language, tKey)}</span>
                         <span>{scopeLabel(alert, tKey)}</span>
-                        <span>{tKey("transit.until")} {formatCompactTime(alert.ends_at, language, tKey)}</span>
+                        <span>{tKey("transit.until")} {formatCompactTime(alert.ends_at, language, tKey, dataTimezone)}</span>
                       </div>
                     </button>
                   ))
@@ -889,13 +911,13 @@ export function TransitWorkspace({
                 <section className={`transit-alert-detail transit-alert-detail-${severityTone(selectedAlert.severity)}`}>
                   <header>
                     <div>
-                      <TransitAlertStatusBadge alert={selectedAlert} language={language} tKey={tKey} />
+                      <TransitAlertStatusBadge alert={selectedAlert} language={language} timeZone={dataTimezone} tKey={tKey} />
                       <strong>{localizedPlatformCopy(selectedAlert.title, language) ?? selectedAlert.title}</strong>
                     </div>
                     <em>{enumLabel(selectedAlert.severity)}</em>
                   </header>
                   <p>{localizedPlatformCopy(selectedAlert.description, language) ?? selectedAlert.description}</p>
-                  <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} tKey={tKey} />
+                  <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} timeZone={dataTimezone} tKey={tKey} />
                   <div className="transit-alert-detail-meta">
                     <div>
                       <span>{tKey("transit.type")}</span>
@@ -1105,7 +1127,7 @@ export function TransitWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("transit.lastSync")}: {exactObservedLabel(transit.observed_at, language, tKey)}
+            {tKey("transit.lastSync")}: {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}
           </span>
           <i aria-hidden="true" />
           <span className="transit-provider-coverage">{tKey("transit.coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>

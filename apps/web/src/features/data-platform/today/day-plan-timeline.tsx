@@ -23,6 +23,7 @@ type DayPlanTimelineProps = {
   language: LanguageMode;
   disabled?: boolean;
   recommendationMode?: TodayRecommendationMode;
+  timezone?: string;
   onOpenEvent?: (event: PlatformEvent) => void;
   onOpenScenario?: (scenarioKey: string) => void;
 };
@@ -47,6 +48,7 @@ export function DayPlanTimeline({
   language,
   disabled = false,
   recommendationMode = "live",
+  timezone,
   onOpenEvent,
   onOpenScenario,
 }: DayPlanTimelineProps) {
@@ -106,8 +108,8 @@ export function DayPlanTimeline({
                     {localizedContent(language, item.detail, item.detail_zh)}
                   </span>
                   <time>
-                    {formatTimestamp(item.startsAt, "dateTime", language)} –{" "}
-                    {formatTimestamp(item.endsAt, "dateTime", language)}
+                    {formatTimestamp(item.startsAt, "dateTime", language, timezone)} –{" "}
+                    {formatTimestamp(item.endsAt, "dateTime", language, timezone)}
                   </time>
                 </button>
               </li>

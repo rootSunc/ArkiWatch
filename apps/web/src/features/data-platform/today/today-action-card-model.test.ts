@@ -39,6 +39,81 @@ describe("buildActionDataPoints", () => {
       { label: "Road & Rail", value: "7" },
     ]);
   });
+
+  it("keeps energy windows in the public dashboard timezone", () => {
+    const points = buildActionDataPoints(
+      "energy",
+      {
+        weather: null,
+        airQuality: null,
+        transit: null,
+        roadRail: null,
+        householdEnergy: {
+          current_window: {
+            starts_at: "2026-08-09T12:00:00Z",
+            ends_at: "2026-08-09T13:00:00Z",
+            average_value: 9.5,
+            unit: "c/kWh",
+          },
+        } as never,
+        systemEnergy: null,
+      },
+      "en",
+      "Europe/Helsinki",
+    );
+
+    expect(points).toEqual([
+      { label: "Window", value: "15:00–16:00" },
+      { label: "Average", value: "9.50 c/kWh" },
+    ]);
+  });
+
+  it("localizes air metrics and skips malformed numeric readings", () => {
+    const points = buildActionDataPoints(
+      "home_air",
+      {
+        weather: null,
+        airQuality: {
+          stations: [
+            { station: "Kallio", pm2_5: 5.4, no2: Number.NaN },
+          ],
+          worst_station: "Kallio",
+        } as never,
+        transit: null,
+        roadRail: null,
+        householdEnergy: null,
+        systemEnergy: null,
+      },
+      "zh",
+    );
+
+    expect(points).toEqual([{ label: "PM2.5", value: "5.4 µg/m³" }]);
+  });
+
+  it("falls back safely when a deployment timezone is invalid", () => {
+    const points = buildActionDataPoints(
+      "energy",
+      {
+        weather: null,
+        airQuality: null,
+        transit: null,
+        roadRail: null,
+        householdEnergy: {
+          current_window: {
+            starts_at: "2026-08-09T12:00:00Z",
+            ends_at: "2026-08-09T13:00:00Z",
+            average_value: Number.NaN,
+            unit: "c/kWh",
+          },
+        } as never,
+        systemEnergy: null,
+      },
+      "en",
+      "not/a-timezone",
+    );
+
+    expect(points).toEqual([{ label: "Window", value: "15:00–16:00" }]);
+  });
 });
 
 describe("buildTodayActionCardView", () => {

@@ -16,8 +16,8 @@ import type {
   WeatherWarning,
 } from "./types";
 import type { CurrentMetricCard, TimelineItem } from "./weather-detail-types";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
-const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const OUTDOOR_MAX_GUST_MS = 14;
 const OUTDOOR_MIN_VISIBILITY_M = 5000;
 const HEAVY_RAIN_PEAK_MM = 5;
@@ -53,7 +53,11 @@ export function formatDegree(value: number | null | undefined): string {
   return `${formatNumber(value, 1)}°`;
 }
 
-export function formatCompactTime(value: string | null | undefined, language: LanguageMode = "en"): string {
+export function formatCompactTime(
+  value: string | null | undefined,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return "n/a";
   }
@@ -62,7 +66,7 @@ export function formatCompactTime(value: string | null | undefined, language: La
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone: resolveDataTimezone(timeZone)
   }).format(new Date(value));
 }
 
@@ -76,15 +80,51 @@ export function liveStatusTone(status: string | null | undefined): "ready" | "st
   return "empty";
 }
 
-export function exactDataTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+export function exactDataTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("weather.notObserved");
   }
 
-  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
+  return `${formatTimestamp(value, "dateTime", language, resolveDataTimezone(timeZone))} (${formatRelativeAge(value, language)})`;
 }
 
-export function formatTimelineTime(value: string | null | undefined, language: LanguageMode): string {
+export function formatTimeZoneName(
+  value: string | null | undefined,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  if (!value) {
+    return "EET";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "EET";
+  }
+
+  const timeZoneName = new Intl.DateTimeFormat(
+    language === "zh" ? "zh-CN" : "en-GB",
+    {
+      timeZone: resolveDataTimezone(timeZone),
+      timeZoneName: "short",
+    },
+  )
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value;
+
+  return timeZoneName ?? "EET";
+}
+
+export function formatTimelineTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return "PENDING";
   }
@@ -95,7 +135,7 @@ export function formatTimelineTime(value: string | null | undefined, language: L
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(new Date(value))
     .toUpperCase();
@@ -295,7 +335,8 @@ export function buildTimelineItems(
   category: PlatformCategory | null,
   language: LanguageMode,
   tKey: (key: string) => string,
-  highlightedEventId?: string | null
+  highlightedEventId?: string | null,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TimelineItem[] {
   const now = Date.now();
   const isActiveWindow = (startsAt: string, endsAt: string): boolean => {
@@ -306,7 +347,7 @@ export function buildTimelineItems(
   const warningItems =
     weather?.warnings.map((warning, index) => ({
       id: `warning-${index}-${warning.title}`,
-      time: warning.published_at ? formatTimelineTime(warning.published_at, language) : tKey("weather.activeNow"),
+      time: warning.published_at ? formatTimelineTime(warning.published_at, language, timeZone) : tKey("weather.activeNow"),
       title: warning.title,
       body: warning.description ?? tKey("weather.weatherWarningFromTheProviderFeed"),
       tone: warningTone(warning),
@@ -321,7 +362,7 @@ export function buildTimelineItems(
         const endsAt = new Date(event.ends_at).getTime();
         return {
           id: event.id,
-          time: startsAt <= now && endsAt >= now ? tKey("weather.activeNow") : formatTimelineTime(event.starts_at, language),
+          time: startsAt <= now && endsAt >= now ? tKey("weather.activeNow") : formatTimelineTime(event.starts_at, language, timeZone),
           title: localizedContent(language, event.title, event.title_zh),
           body: localizedContent(language, event.body, event.body_zh),
           tone: eventTone(event),
@@ -340,7 +381,7 @@ export function buildTimelineItems(
     const gustEndsAt = new Date(new Date(gustPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
     syntheticItems.push({
       id: "gust-advisory",
-      time: formatTimelineTime(gustPoint.timestamp, language),
+      time: formatTimelineTime(gustPoint.timestamp, language, timeZone),
       title: tKey("weather.highWindAdvisory"),
       body: `${tKey("weather.gustsNear")} ${formatNumber(peakGust)} m/s ${tKey("weather.acrossTheForecastWindow")}`,
       tone: "warn",
@@ -351,7 +392,7 @@ export function buildTimelineItems(
     const visibilityEndsAt = new Date(new Date(visibilityPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
     syntheticItems.push({
       id: "visibility-advisory",
-      time: formatTimelineTime(visibilityPoint.timestamp, language),
+      time: formatTimelineTime(visibilityPoint.timestamp, language, timeZone),
       title: tKey("weather.reducedVisibility"),
       body: `${tKey("weather.visibilityIs")} ${formatNumber(minVisibility / 1000)} km. ${tKey("weather.slowMovementWindowsMayNeedExtraMargin")}`,
       tone: "bad",
@@ -365,7 +406,7 @@ export function buildTimelineItems(
   ) {
     syntheticItems.push({
       id: "rain-advisory",
-      time: formatTimelineTime(rainWindow.starts_at, language),
+      time: formatTimelineTime(rainWindow.starts_at, language, timeZone),
       title: tKey("weather.heavyRainAdvisory"),
       body: `${tKey("weather.peakRain")} ${formatNumber(rainWindow.peak_precip_mm)} mm/h · ${tKey("weather.rainTotal")} ${formatNumber(rainWindow.total_precip_mm)} mm.`,
       tone: "warn",
@@ -376,7 +417,7 @@ export function buildTimelineItems(
   if (warningItems.length + eventItems.length + syntheticItems.length === 0) {
     syntheticItems.push({
       id: "system-clearance",
-      time: weather?.valid_to ? formatTimelineTime(weather.valid_to, language) : tKey("weather.nextWindow"),
+      time: weather?.valid_to ? formatTimelineTime(weather.valid_to, language, timeZone) : tKey("weather.nextWindow"),
       title: tKey("weather.systemClearance"),
       body: localizedPlatformCopy(weather?.summary, language) ?? tKey("weather.noActiveWarningOrDisruptionEventIsPresentInTheCurrentWeatherFeed"),
       tone: "good",
@@ -436,8 +477,13 @@ export function sourceTone(status: string): "good" | "warn" | "bad" | "neutral" 
   return "neutral";
 }
 
-export function formatRainWindow(window: WeatherRainWindow, language: LanguageMode, tKey: (key: string) => string): string {
-  return `${formatCompactTime(window.starts_at, language)} ${tKey("weather.to")} ${formatCompactTime(window.ends_at, language)}`;
+export function formatRainWindow(
+  window: WeatherRainWindow,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  return `${formatCompactTime(window.starts_at, language, timeZone)} ${tKey("weather.to")} ${formatCompactTime(window.ends_at, language, timeZone)}`;
 }
 
 export function maxRainWindowTotal(windows: WeatherRainWindow[]): number {
@@ -466,7 +512,12 @@ export function sourceRequestHost(endpoint: string | null, tKey: (key: string) =
   }
 }
 
-export function currentMetricCards(current: WeatherForecastPoint | null, language: LanguageMode, tKey: (key: string) => string): CurrentMetricCard[] {
+export function currentMetricCards(
+  current: WeatherForecastPoint | null,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): CurrentMetricCard[] {
   if (!current) {
     return [];
   }
@@ -491,7 +542,7 @@ export function currentMetricCards(current: WeatherForecastPoint | null, languag
           label: tKey("weather.maxGust"),
           value: formatNumber(current.wind_gust_ms, 1),
           unit: "m/s",
-          detail: `${tKey("weather.peak")}: ${formatCompactTime(current.timestamp, language)}`,
+          detail: `${tKey("weather.peak")}: ${formatCompactTime(current.timestamp, language, timeZone)}`,
           progress: Math.min(100, (current.wind_gust_ms / 26) * 100),
           tone: current.wind_gust_ms >= OUTDOOR_MAX_GUST_MS ? "warn" : "primary"
         }
@@ -547,7 +598,7 @@ export function currentMetricCards(current: WeatherForecastPoint | null, languag
   ].filter((item): item is CurrentMetricCard => item !== null);
 }
 
-export function formatHistoryDate(value: string): string {
+export function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -556,7 +607,7 @@ export function formatHistoryDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(parsed)
     .toUpperCase();
@@ -573,6 +624,7 @@ export function average(values: number[]): number | null {
 export function weatherHistoryPoints(
   history: PlatformHistoricalSnapshot<WeatherForecastResponse>[],
   tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -595,7 +647,7 @@ export function weatherHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date),
+        label: formatHistoryDate(snapshot.date, timeZone),
         value: averageTemperature,
         detail: tKey("weather.historyPointDetail")
           .replace("{rain}", formatNumber(totalRain, 1))

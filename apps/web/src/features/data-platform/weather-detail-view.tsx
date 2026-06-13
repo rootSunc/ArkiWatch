@@ -9,6 +9,7 @@ import { useI18n } from "./i18n";
 import { TrendChart } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { resolveDataTimezone } from "./data-timezone";
 import type { WeatherSourceLayer } from "./types";
 import {
   CHART_MODES,
@@ -33,6 +34,7 @@ import {
   forecastWindow,
   formatCompactTime,
   formatDegree,
+  formatTimeZoneName,
   formatNumber,
   formatRainWindow,
   latestPoint,
@@ -56,6 +58,7 @@ export function WeatherDetailView({
 }: WeatherDetailViewProps) {
   const { language, tKey, enumLabel } = useI18n();
   const [chartMode, setChartMode] = useState<ChartMode>("temperature");
+  const dataTimezone = resolveDataTimezone(weather?.time_scope?.timezone);
   const points = useMemo(() => forecastWindow(weather?.points ?? []), [weather]);
   const current = latestPoint(points.length > 0 ? points : weather?.points ?? []);
   const previous = pointThreeHoursEarlier(weather?.points ?? [], current);
@@ -79,19 +82,20 @@ export function WeatherDetailView({
     language,
     tKey,
     highlightedEventId,
+    dataTimezone,
   );
   const activeChartConfig = chartConfig(chartMode);
-  const chartData = chartPoints(points, chartMode, language);
+  const chartData = chartPoints(points, chartMode, language, dataTimezone);
   const secondaryChartData = activeChartConfig.pairedKey
-    ? chartPoints(points, activeChartConfig.pairedKey, language)
+    ? chartPoints(points, activeChartConfig.pairedKey, language, dataTimezone)
     : [];
   const chartScaleValue = chartScale(activeChartConfig, chartData, secondaryChartData);
   const axis = chartAxis(chartScaleValue, activeChartConfig);
   const chartLabels = chartXAxisLabels(chartData);
   const sourceRequest = weather?.source_requests[0];
   const syncTime = weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
-  const metricCards = currentMetricCards(current, language, tKey);
-  const historyPoints = weatherHistoryPoints(history, tKey);
+  const metricCards = currentMetricCards(current, language, tKey, dataTimezone);
+  const historyPoints = weatherHistoryPoints(history, tKey, dataTimezone);
 
   if (!weather) {
     return (
@@ -116,14 +120,17 @@ export function WeatherDetailView({
             <strong>{weather.status === "stale" ? tKey("weather.syncDelayed") : tKey("weather.liveSyncActive")}</strong>
           </div>
         </div>
-        <div>{tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey)} / LAT 60.1699 N / LON 24.9384 E</div>
+        <div>{tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone)} / LAT 60.1699 N / LON 24.9384 E</div>
       </div>
 
       <section className="weather-bento-grid" aria-label={tKey("weather.weatherConditions")}>
         <article className="weather-hero-card weather-glass-panel">
           <div className="weather-card-kicker">
             <span>{tKey("weather.currentCondition")}</span>
-            <time>{formatCompactTime(current?.timestamp ?? weather.checked_at, language)} EET</time>
+            <time>
+              {formatCompactTime(current?.timestamp ?? weather.checked_at, language, dataTimezone)}{" "}
+              {formatTimeZoneName(current?.timestamp ?? weather.checked_at, language, dataTimezone)}
+            </time>
           </div>
           <div className="weather-current-cluster">
             <span className="material-symbols-outlined weather-condition-icon" aria-hidden="true">
@@ -322,12 +329,12 @@ export function WeatherDetailView({
               weather.rain_windows.map((window) => (
                 <article key={`${window.starts_at}-${window.ends_at}`}>
                   <div>
-                    <strong>{formatRainWindow(window, language, tKey)}</strong>
+                    <strong>{formatRainWindow(window, language, tKey, dataTimezone)}</strong>
                     <span>{window.hours}h</span>
                   </div>
                   <p>
                     {tKey("weather.peak")} {formatNumber(window.peak_precip_mm, 1)} mm {tKey("weather.at")}{" "}
-                    {formatCompactTime(window.peak_precip_at, language)} · {tKey("weather.total")}{" "}
+                    {formatCompactTime(window.peak_precip_at, language, dataTimezone)} · {tKey("weather.total")}{" "}
                     {formatNumber(window.total_precip_mm, 1)} mm
                   </p>
                   <span className="weather-rain-meter" aria-hidden="true">

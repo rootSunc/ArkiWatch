@@ -10,7 +10,7 @@ import {
 import type { AuthSession, SessionUser } from "./config";
 
 export async function getCurrentSession(): Promise<AuthSession | null> {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   if (!token) {
     return null;
   }

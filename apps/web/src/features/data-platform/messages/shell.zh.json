@@ -115,6 +115,8 @@
     "navRoadRail": "道路与铁路状况",
     "activeEvent": "个活跃事件",
     "activeEvents": "活跃事件",
+    "recentEvent": "最近事件",
+    "recentEventsCount": "最近事件",
     "ongoingUntil": "持续到",
     "aqiAvg": "AQI 平均值",
     "activeEventsLabel": "活跃事件",

@@ -680,10 +680,11 @@ export function HistoricalWarningBanner({
 }) {
   const windowLabel =
     timeScope?.window_start && timeScope.window_end
-      ? `${formatTimestamp(timeScope.window_start, "dateTime", language)} - ${formatTimestamp(
+      ? `${formatTimestamp(timeScope.window_start, "dateTime", language, timeScope.timezone)} - ${formatTimestamp(
           timeScope.window_end,
           "dateTime",
           language,
+          timeScope.timezone,
         )}`
       : null;
 

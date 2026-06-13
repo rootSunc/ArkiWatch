@@ -24,6 +24,7 @@ import type {
 } from "./types";
 import type { EnergyPanelKey } from "./workspace-query-params";
 import type { EnergyDisplayPoint, EnergyTone, PanelMetric } from "./energy-workspace-types";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 export function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
   if (!metric) {
@@ -77,7 +78,12 @@ export function resolveMetricLabel(
   return metric ? translateMetricLabel(language, metric) : tKey("energy.metricUnavailable");
 }
 
-export function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+export function formatCompactTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("energy.notScheduled");
   }
@@ -88,7 +94,7 @@ export function formatCompactTime(value: string | null | undefined, language: La
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "Europe/Helsinki"
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(new Date(value))
     .toUpperCase();
@@ -433,7 +439,7 @@ export function isNoActiveWindowLabel(value: string): boolean {
   return normalizedValue.startsWith("no active") || normalizedValue.includes("not available yet");
 }
 
-export function formatHistoryDate(value: string): string {
+export function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -442,7 +448,7 @@ export function formatHistoryDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: "Europe/Helsinki"
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(parsed)
     .toUpperCase();
@@ -459,7 +465,8 @@ export function averagePointValue(points: EnergyPoint[]): number | null {
 export function energyHistoryPoints(
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[],
   tKey: (key: string) => string,
-  showEstimatedCost: boolean
+  showEstimatedCost: boolean,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -494,7 +501,7 @@ export function energyHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date),
+        label: formatHistoryDate(snapshot.date, timeZone),
         value: averageValue,
         detail: data.current_window
           ? `${rangeDetail} · ${data.current_window.point_count} ${tKey("energy.windowPoints")}`

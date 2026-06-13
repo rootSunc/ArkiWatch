@@ -107,7 +107,7 @@ import {
 } from "./workspace-query-params";
 import {
   MOBILITY_NAV_KEY,
-  activeEventLabel,
+  recentEventLabel,
   attributeLabel,
   buildMobilityCategory,
   displayTitle,
@@ -250,6 +250,8 @@ export function DataPlatformHome({
     roadRail?.time_scope ??
     transit?.time_scope ??
     null;
+  const platformTimezone =
+    activeTimeScope?.timezone ?? overview?.timezone ?? "Europe/Helsinki";
   const historicalDate =
     activeTimeScope?.mode === "historical"
       ? activeTimeScope.date ?? selectedDate
@@ -334,6 +336,10 @@ export function DataPlatformHome({
     () => mergeMobilityCategories(categories, mobilityCategory),
     [categories, mobilityCategory],
   );
+  const eventReferenceAt =
+    activeTimeScope?.mode === "historical"
+      ? activeTimeScope.window_start ?? overview?.checked_at ?? null
+      : overview?.checked_at ?? activeTimeScope?.window_start ?? null;
   const recentEventCandidates = useMemo(
     () =>
       [
@@ -348,8 +354,9 @@ export function DataPlatformHome({
     () =>
       curatedRecentEvents(recentEventCandidates, RECENT_EVENT_LIMIT, {
         city: selectedCity,
+        referenceAt: eventReferenceAt,
       }),
-    [recentEventCandidates, selectedCity],
+    [eventReferenceAt, recentEventCandidates, selectedCity],
   );
   const sources = useMemo(
     () =>
@@ -529,22 +536,24 @@ export function DataPlatformHome({
       buildCrossDomainTimeline(
         curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
           city: selectedCity,
+          referenceAt: eventReferenceAt,
         }),
         publicDashboard,
         CROSS_TIMELINE_LIMIT,
       ),
-    [publicDashboard, recentEventCandidates, selectedCity],
+    [eventReferenceAt, publicDashboard, recentEventCandidates, selectedCity],
   );
   const signalEventTimeline = useMemo(
     () =>
       buildCrossDomainTimeline(
         curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
           city: selectedCity,
+          referenceAt: eventReferenceAt,
         }),
         null,
         CROSS_TIMELINE_LIMIT,
       ),
-    [recentEventCandidates, selectedCity],
+    [eventReferenceAt, recentEventCandidates, selectedCity],
   );
   const todayBrief = useMemo(
     () =>
@@ -566,8 +575,9 @@ export function DataPlatformHome({
         sources,
         recentEvents,
         language: languageMode,
+        timezone: platformTimezone,
       }),
-    [displayCategories, languageMode, recentEvents, sources, visibleOverview],
+    [displayCategories, languageMode, platformTimezone, recentEvents, sources, visibleOverview],
   );
   const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
   const visibleCategories = selectedCategories.filter((category) =>
@@ -583,6 +593,7 @@ export function DataPlatformHome({
     selectedCategory
       ? curatedRecentEvents(selectedCategory.events, RECENT_EVENT_LIMIT, {
           city: selectedCity,
+          referenceAt: eventReferenceAt,
         })
       : recentEvents
   ).filter((event) => eventMatchesSearch(event, searchValue, languageMode));
@@ -617,7 +628,7 @@ export function DataPlatformHome({
     : tKey("shell.overall");
   const overallNotificationTitle =
     visibleNotificationEvents.length > 0
-      ? `${overallScopeLabel} · ${activeEventLabel(
+      ? `${overallScopeLabel} · ${recentEventLabel(
           visibleNotificationEvents.length,
           languageMode,
         )}`
@@ -955,6 +966,7 @@ export function DataPlatformHome({
       roadRail,
       transit,
       languageMode,
+      platformTimezone,
     );
     const attribution = formatSignalAttributionLine(
       categorySignalAttribution(
@@ -1321,6 +1333,7 @@ export function DataPlatformHome({
                     collapsible
                     items={signalEventTimeline}
                     language={languageMode}
+                    timezone={platformTimezone}
                     onOpenEvent={openRecentEvent}
                     onOpenScenario={openScenario}
                   />
@@ -1433,7 +1446,7 @@ export function DataPlatformHome({
                               </span>
                               <span className="events-panel-summary">
                                 {latestUnreadEvent
-                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode)} · ${localizedContent(
+                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode, eventReferenceAt, platformTimezone)} · ${localizedContent(
                                       languageMode,
                                       latestUnreadEvent.title,
                                       latestUnreadEvent.title_zh,
@@ -1484,6 +1497,7 @@ export function DataPlatformHome({
                                   visibleOverview.checked_at,
                                   "dateTime",
                                   languageMode,
+                                  platformTimezone,
                                 )}
                               </span>
                               <span
@@ -1564,12 +1578,14 @@ export function DataPlatformHome({
                                     selectedEvent.starts_at,
                                     "dateTime",
                                     languageMode,
+                                    platformTimezone,
                                   )}{" "}
                                   -{" "}
                                   {formatTimestamp(
                                     selectedEvent.ends_at,
                                     "dateTime",
                                     languageMode,
+                                    platformTimezone,
                                   )}
                                 </span>
                                 <span>
@@ -1616,6 +1632,7 @@ export function DataPlatformHome({
                                 event,
                                 languageMode,
                                 tKey,
+                                platformTimezone,
                               );
                               return (
                                 <article
@@ -1656,6 +1673,8 @@ export function DataPlatformHome({
                                         categories,
                                         event,
                                         languageMode,
+                                        eventReferenceAt,
+                                        platformTimezone,
                                       )}
                                     </time>
                                     <span className="timeline-item-heading">

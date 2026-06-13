@@ -5,8 +5,10 @@ import {
   buildMobilityCategory,
   displayTitle,
   eventMatchesSearch,
+  eventTimeLabel,
   matchesSearch,
   mergeMobilityCategories,
+  recentEventLabel,
   signalReadout,
   statusLabel
 } from "./data-platform-view-model";
@@ -110,5 +112,35 @@ describe("data platform view model", () => {
     expect(statusLabel(emptyWeather, "zh")).toBe("无数据");
     expect(readout.tone).toBe("neutral");
     expect("progress" in readout).toBe(false);
+  });
+
+  it("evaluates event status and time labels against the snapshot context", () => {
+    const event: PlatformEvent = {
+      id: "snapshot-event",
+      category_key: "weather",
+      event_type: "rain_risk",
+      title: "Rain risk",
+      body: "A short shower is expected.",
+      severity: "MEDIUM",
+      starts_at: "2026-08-09T05:00:00Z",
+      ends_at: "2026-08-09T08:00:00Z",
+      source_codes: ["fmi"],
+      evidence: [],
+    };
+
+    expect(
+      eventTimeLabel(
+        [category("weather")],
+        event,
+        "en",
+        "2026-08-09T06:00:00Z",
+        "Europe/Helsinki",
+      ),
+    ).toContain("Ongoing until 09 Aug, 11:00");
+  });
+
+  it("labels the event panel count as recent rather than active", () => {
+    expect(recentEventLabel(2, "en")).toBe("2 recent events");
+    expect(recentEventLabel(1, "zh")).toBe("1 最近事件");
   });
 });

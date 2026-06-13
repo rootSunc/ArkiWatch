@@ -16,9 +16,11 @@ import {
   PlatformTone
 } from "./types";
 import { eventAnchorId } from "./recent-events";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 type CityServicesWorkspaceProps = {
   category: PlatformCategory | null;
+  timezone?: string;
 };
 
 type CityTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -29,8 +31,6 @@ type ServiceField = {
   ownerKey: string;
   detailKey: string;
 };
-
-const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 
 const SUMMARY_KEYS = [
   "source_status",
@@ -86,7 +86,12 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-GB").format(value);
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+function formatCompactTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("cityServices.notScheduled");
   }
@@ -97,7 +102,7 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: HELSINKI_TIME_ZONE
+    timeZone
   })
     .format(new Date(value))
     .toUpperCase();
@@ -204,8 +209,9 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
   return translateEnumLabel(language, value);
 }
 
-export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) {
+export function CityServicesWorkspace({ category, timezone: requestedTimezone }: CityServicesWorkspaceProps) {
   const { language, tKey, enumLabel, metricLabel, dataLabel } = useI18n();
+  const timezone = resolveDataTimezone(requestedTimezone);
 
   if (!category) {
     return (
@@ -259,7 +265,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
         <article className={`city-glass-panel city-hero city-hero-${cityTone}`}>
           <div className="city-card-kicker">
             <span>{tKey("cityServices.serviceCoverage")}</span>
-            <time>{formatTimestamp(latestRun ?? latest?.starts_at ?? null, "dateTime", language)}</time>
+            <time>{formatTimestamp(latestRun ?? latest?.starts_at ?? null, "dateTime", language, timezone)}</time>
           </div>
           <div className="city-current-cluster">
             <span className="material-symbols-outlined city-condition-icon" aria-hidden="true">
@@ -380,7 +386,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     <span className="city-service-dot" aria-hidden="true" />
                     <div className="city-service-main">
                       <div>
-                        <time>{formatCompactTime(event.starts_at, language, tKey)}</time>
+                        <time>{formatCompactTime(event.starts_at, language, tKey, timezone)}</time>
                         <strong>{localizedContent(language, event.title, event.title_zh)}</strong>
                         <p>{localizedContent(language, event.body, event.body_zh)}</p>
                       </div>
@@ -388,7 +394,7 @@ export function CityServicesWorkspace({ category }: CityServicesWorkspaceProps) 
                     </div>
                     <div className="city-service-meta">
                       <span>{eventTypeLabel(event.category_key, language)}</span>
-                      <span>{tKey("cityServices.until")} {formatCompactTime(event.ends_at, language, tKey)}</span>
+                      <span>{tKey("cityServices.until")} {formatCompactTime(event.ends_at, language, tKey, timezone)}</span>
                     </div>
                   </article>
                 );

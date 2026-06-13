@@ -1,13 +1,14 @@
 export function formatTimestamp(
   value: string | null,
   mode: "dateTime" | "date" = "dateTime",
-  language: "en" | "zh" = "en"
+  language: "en" | "zh" = "en",
+  timeZone?: string,
 ): string {
   if (!value) {
     return language === "zh" ? "暂无数据" : "Not available";
   }
 
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+  const options: Intl.DateTimeFormatOptions = {
     day: "2-digit",
     month: "short",
     ...(mode === "dateTime"
@@ -15,8 +16,22 @@ export function formatTimestamp(
           hour: "2-digit",
           minute: "2-digit"
         }
-      : {})
-  }).format(new Date(value));
+      : {}),
+    ...(timeZone ? { timeZone } : {}),
+  };
+
+  try {
+    return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", options).format(
+      new Date(value),
+    );
+  } catch {
+    // Keep a malformed deployment timezone from breaking a data surface.
+    const safeOptions = { ...options };
+    delete safeOptions.timeZone;
+    return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", safeOptions).format(
+      new Date(value),
+    );
+  }
 }
 
 export function formatRelativeAge(value: string | null, language: "en" | "zh" = "en"): string {

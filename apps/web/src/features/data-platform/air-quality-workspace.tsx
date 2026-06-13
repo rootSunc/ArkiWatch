@@ -19,6 +19,7 @@ import {
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 const AirQualityStationMap = dynamic(
   () => import("./air-quality-station-map").then((module) => module.AirQualityStationMap),
@@ -229,12 +230,17 @@ function scoreDistribution(
   });
 }
 
-function observedExactLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
+function observedExactLabel(
+  value: string | null,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("airQuality.notObserved");
   }
 
-  return `${formatTimestamp(value, "dateTime", language)} (${formatRelativeAge(value, language)})`;
+  return `${formatTimestamp(value, "dateTime", language, timeZone)} (${formatRelativeAge(value, language)})`;
 }
 
 function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
@@ -313,7 +319,7 @@ function readyFieldCount(fields: FieldSignal[]): string {
   return `${fields.filter((field) => field.ready).length}/${fields.length}`;
 }
 
-function formatHistoryDate(value: string): string {
+function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
@@ -322,7 +328,7 @@ function formatHistoryDate(value: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: "Europe/Helsinki"
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(parsed)
     .toUpperCase();
@@ -342,7 +348,8 @@ function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | nul
 
 function airHistoryPoints(
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[],
-  tKey: (key: string) => string
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
     const data = snapshot.data;
@@ -357,7 +364,7 @@ function airHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date),
+        label: formatHistoryDate(snapshot.date, timeZone),
         value: worstScore,
         detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatNumber(data.quality.field_coverage_pct, 0)}% ${tKey("airQuality.coverage")}`
       }
@@ -467,13 +474,14 @@ export function AirQualityWorkspace({
   const topStations = ranked.slice(0, 8);
   const fields = fieldSignals(stations, tKey);
   const currentScore = airQuality.worst_score;
+  const dataTimezone = resolveDataTimezone(airQuality.time_scope?.timezone);
   const currentTone = scoreTone(currentScore);
   const indexValues = stations.map(stationIndex).filter(hasNumber);
   const peakIndex = indexValues.length > 0 ? Math.max(...indexValues) : null;
   const lowIndex = indexValues.length > 0 ? Math.min(...indexValues) : null;
   const pollutantFieldsReady = POLLUTANT_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
-  const historyPoints = airHistoryPoints(history, tKey);
+  const historyPoints = airHistoryPoints(history, tKey, dataTimezone);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
   const highlightedCategoryEvent =
     (highlightedEventId
@@ -494,7 +502,7 @@ export function AirQualityWorkspace({
             <strong>{airQuality.status === "ready" ? tKey("airQuality.hsySyncActive") : tKey("airQuality.syncDelayed")}</strong>
           </div>
         </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey)}</div>
+        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}</div>
       </div>
 
       <section className="air-bento-grid" aria-label={tKey("airQuality.airQualityCurrentCondition")}>
@@ -504,7 +512,7 @@ export function AirQualityWorkspace({
         >
           <div className="air-card-kicker">
             <span>{tKey("airQuality.currentNetworkCondition")}</span>
-            <time>{observedExactLabel(airQuality.observed_at, language, tKey)}</time>
+            <time>{observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}</time>
           </div>
           <div className="air-current-score">
             <div
@@ -865,7 +873,7 @@ export function AirQualityWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("airQuality.lastSync")}: {observedExactLabel(airQuality.observed_at, language, tKey)}
+            {tKey("airQuality.lastSync")}: {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}
           </span>
           <i aria-hidden="true" />
           <span className="air-provider-coverage">{tKey("airQuality.coverage2")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>

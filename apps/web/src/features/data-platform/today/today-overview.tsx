@@ -105,7 +105,7 @@ export function TodayOverview({
                   : "shell.dataChecked",
               )}
               {todayBrief.checkedAt ? (
-                <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language)}</>
+                <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}</>
               ) : null}
             </span>
             <div className="today-focus-actions">
@@ -171,6 +171,7 @@ export function TodayOverview({
           items={planItems}
           language={language}
           recommendationMode={todayBrief.recommendationMode}
+          timezone={todayBrief.timezone}
           onOpenEvent={onOpenEvent}
           onOpenScenario={onOpenScenario}
         />
@@ -207,6 +208,7 @@ export function TodayOverview({
                   liveSignals={liveSignals}
                   recommendationMode={todayBrief.recommendationMode}
                   section={section}
+                  timezone={todayBrief.timezone}
                   onOpen={() => onOpenScenario(section.key)}
                 />
               ))}

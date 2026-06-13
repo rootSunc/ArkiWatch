@@ -32,12 +32,14 @@ export function buildSignalSystemTiles({
   sources,
   recentEvents,
   language,
+  timezone,
 }: {
   overview: PlatformOverviewResponse | null;
   categories: PlatformCategory[];
   sources: DashboardSource[];
   recentEvents: PlatformEvent[];
   language: LanguageMode;
+  timezone?: string;
 }): SignalSystemTile[] {
 
   const healthySources = healthySourceCount(sources);
@@ -63,8 +65,11 @@ export function buildSignalSystemTiles({
       valueStyle: "emphasis",
     },
     {
-      key: "active_events",
-      label: translateMessageKey(language, "shell.activeEvents"),
+      key: "recent_events",
+      // The source list includes upcoming decision moments as well as events
+      // that are active at the snapshot time. Say what the number actually
+      // represents instead of implying every item is active right now.
+      label: translateMessageKey(language, "shell.recentEvents"),
       value: String(recentEvents.length),
       detail:
         severeEvents > 0
@@ -89,7 +94,7 @@ export function buildSignalSystemTiles({
     {
       key: "last_platform_check",
       label: translateMessageKey(language, "shell.lastPlatformCheck"),
-      value: formatTimestamp(overview?.checked_at ?? null, "dateTime", language),
+      value: formatTimestamp(overview?.checked_at ?? null, "dateTime", language, timezone),
       detail: overview?.coverage_area ?? translateMessageKey(language, "shell.regionalScope"),
       tone: overview ? "good" : "neutral",
       icon: "schedule",

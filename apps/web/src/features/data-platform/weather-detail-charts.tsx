@@ -143,7 +143,8 @@ export function chartValue(point: WeatherForecastPoint, mode: ChartMode): number
 export function chartPoints(
   points: WeatherForecastPoint[],
   mode: ChartMode,
-  language: LanguageMode
+  language: LanguageMode,
+  timeZone?: string,
 ): ForecastChartPoint[] {
   return points.flatMap((point, index) => {
     const value = chartValue(point, mode);
@@ -153,7 +154,7 @@ export function chartPoints(
 
     return [
       {
-        label: formatCompactTime(point.timestamp, language),
+        label: formatCompactTime(point.timestamp, language, timeZone),
         sourceCount: points.length,
         sourceIndex: index,
         timestamp: point.timestamp,

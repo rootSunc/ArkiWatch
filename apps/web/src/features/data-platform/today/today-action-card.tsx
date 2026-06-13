@@ -14,6 +14,7 @@ type TodayActionCardProps = {
   onOpen: () => void;
   recommendationMode?: TodayRecommendationMode;
   section: PublicScenarioSectionRead;
+  timezone?: string;
 };
 
 export function TodayActionCard({
@@ -23,9 +24,16 @@ export function TodayActionCard({
   onOpen,
   recommendationMode = "live",
   section,
+  timezone,
 }: TodayActionCardProps) {
   const { enumLabel, tKey } = useI18n();
-  const view = buildTodayActionCardView(section, liveSignals, language, recommendationMode);
+  const view = buildTodayActionCardView(
+    section,
+    liveSignals,
+    language,
+    recommendationMode,
+    timezone,
+  );
   const localizedTitle = ["good", "good window", "needs attention", "watch"].includes(
     view.title.trim().toLowerCase(),
   )
@@ -61,10 +69,12 @@ export function TodayActionCard({
             ))}
           </span>
         ) : null}
-        <span className="today-action-card-meta">
-          <span>{view.detail}</span>
-          <span>{view.sources}</span>
-        </span>
+        {view.detail || view.sources ? (
+          <span className="today-action-card-meta">
+            {view.detail ? <span>{view.detail}</span> : null}
+            {view.sources ? <span>{view.sources}</span> : null}
+          </span>
+        ) : null}
       </span>
       <span className="today-action-card-arrow material-symbols-outlined" aria-hidden="true">
         chevron_right

@@ -171,9 +171,10 @@ export function buildScenarioLiveHint(
 export function formatScenarioHintAge(
   updatedAt: string | null,
   language: LanguageMode,
+  timeZone?: string,
 ): string | null {
   if (!updatedAt) {
     return null;
   }
-  return `${translateMessageKey(language, "shell.updated")} ${formatRelativeAge(updatedAt, language)} · ${formatTimestamp(updatedAt, "dateTime", language)}`;
+  return `${translateMessageKey(language, "shell.updated")} ${formatRelativeAge(updatedAt, language)} · ${formatTimestamp(updatedAt, "dateTime", language, timeZone)}`;
 }

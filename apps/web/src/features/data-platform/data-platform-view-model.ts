@@ -347,6 +347,7 @@ export function signalReadout(
   roadRail: RoadRailCurrentResponse | null,
   transit: TransitCurrentResponse | null,
   language: LanguageMode,
+  timezone?: string,
 ) {
   const tone = categoryTone(category);
 
@@ -358,7 +359,7 @@ export function signalReadout(
     return {
       label: translateMessageKey(language, "shell.lastSync"),
       value: generatedAt
-        ? formatTimestamp(generatedAt, "dateTime", language)
+        ? formatTimestamp(generatedAt, "dateTime", language, timezone)
         : formatMetricValue(metricByKey(category, "source_status"), language),
       helpKey: "last_sync",
       tone,
@@ -493,23 +494,26 @@ export function eventTimeLabel(
   categories: PlatformCategory[],
   event: PlatformEvent,
   language: LanguageMode,
+  referenceAt?: string | null,
+  timezone?: string,
 ): string {
   const startsAt = new Date(event.starts_at).getTime();
   const endsAt = new Date(event.ends_at).getTime();
-  const now = Date.now();
+  const referenceTimestamp = referenceAt ? new Date(referenceAt).getTime() : Number.NaN;
+  const now = Number.isFinite(referenceTimestamp) ? referenceTimestamp : Date.now();
   const categoryLabel = eventCategoryLabel(categories, event, language);
 
   if (Number.isFinite(startsAt) && Number.isFinite(endsAt)) {
     if (startsAt <= now && endsAt >= now) {
-      return `${translateMessageKey(language, "shell.ongoingUntil")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
+      return `${translateMessageKey(language, "shell.ongoingUntil")} ${formatTimestamp(event.ends_at, "dateTime", language, timezone)} - ${categoryLabel}`;
     }
 
     if (endsAt < now) {
-      return `${translateMessageKey(language, "shell.ended")} ${formatTimestamp(event.ends_at, "dateTime", language)} - ${categoryLabel}`;
+      return `${translateMessageKey(language, "shell.ended")} ${formatTimestamp(event.ends_at, "dateTime", language, timezone)} - ${categoryLabel}`;
     }
   }
 
-  return `${formatTimestamp(event.starts_at, "dateTime", language)} - ${categoryLabel}`;
+  return `${formatTimestamp(event.starts_at, "dateTime", language, timezone)} - ${categoryLabel}`;
 }
 
 export function eventSeverityRank(event: PlatformEvent): number {
@@ -579,11 +583,11 @@ export function notificationToneForEvents(
   return "neutral";
 }
 
-export function activeEventLabel(
+export function recentEventLabel(
   count: number,
   language: LanguageMode,
 ): string {
-  return `${count} ${translateMessageKey(language, count === 1 ? "shell.activeEvent" : "shell.activeEvents")}`;
+  return `${count} ${translateMessageKey(language, count === 1 ? "shell.recentEvent" : "shell.recentEventsCount")}`;
 }
 
 export function attributeLabel(key: string): string {

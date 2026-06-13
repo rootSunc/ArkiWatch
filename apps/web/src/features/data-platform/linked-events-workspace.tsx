@@ -15,6 +15,7 @@ import {
   PlatformTone,
 } from "./types";
 import { eventAnchorId } from "./recent-events";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 const LinkedEventsCoordinateMap = dynamic(
   () => import("./linked-events-coordinate-map").then((module) => module.LinkedEventsCoordinateMap),
@@ -66,7 +67,6 @@ type EventDescriptionSource = {
   shouldTranslate: boolean;
 };
 
-const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const DESCRIPTION_MAX_LENGTH = 520;
 
 const EVENT_CATEGORY_DEFINITIONS: Array<{
@@ -182,52 +182,52 @@ function attributeLinks(event: PlatformEvent | null, key: string): EventLink[] {
   });
 }
 
-function localDateKey(value: Date): string {
+function localDateKey(value: Date, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "2-digit",
-    timeZone: HELSINKI_TIME_ZONE,
+    timeZone: resolveDataTimezone(timeZone),
     year: "numeric",
   }).formatToParts(value);
   const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "00";
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function formatEventDateTime(value: string, language: LanguageMode): string {
+function formatEventDateTime(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     hour: "2-digit",
     hour12: false,
     minute: "2-digit",
     month: "short",
-    timeZone: HELSINKI_TIME_ZONE,
+    timeZone: resolveDataTimezone(timeZone),
     weekday: "short",
   }).format(new Date(value));
 }
 
-function formatEventDate(value: string, language: LanguageMode): string {
+function formatEventDate(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: HELSINKI_TIME_ZONE,
+    timeZone: resolveDataTimezone(timeZone),
     weekday: "short",
   }).format(new Date(value));
 }
 
-function formatEventTime(value: string, language: LanguageMode): string {
+function formatEventTime(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     hour: "2-digit",
     hour12: false,
     minute: "2-digit",
-    timeZone: HELSINKI_TIME_ZONE,
+    timeZone: resolveDataTimezone(timeZone),
   }).format(new Date(value));
 }
 
-function formatEventMonthDay(value: string, language: LanguageMode): string {
+function formatEventMonthDay(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
-    timeZone: HELSINKI_TIME_ZONE,
+    timeZone: resolveDataTimezone(timeZone),
   }).format(new Date(value));
 }
 
@@ -334,9 +334,14 @@ function sortEventsBySelectedTime(events: PlatformEvent[], referenceDate: Date):
   });
 }
 
-function filterEvents(events: PlatformEvent[], filter: EventFilter, referenceDate: Date): PlatformEvent[] {
+function filterEvents(
+  events: PlatformEvent[],
+  filter: EventFilter,
+  referenceDate: Date,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): PlatformEvent[] {
   const referenceTime = referenceDate.getTime();
-  const selectedDay = localDateKey(referenceDate);
+  const selectedDay = localDateKey(referenceDate, timeZone);
   const weekLimit = referenceTime + 7 * 24 * 60 * 60 * 1000;
 
   return events.filter((event) => {
@@ -344,7 +349,7 @@ function filterEvents(events: PlatformEvent[], filter: EventFilter, referenceDat
       return attributeBoolean(event, "is_free");
     }
     if (filter === "today") {
-      return localDateKey(new Date(event.starts_at)) === selectedDay || isEventOngoingAt(event, referenceDate);
+      return localDateKey(new Date(event.starts_at), timeZone) === selectedDay || isEventOngoingAt(event, referenceDate);
     }
     if (filter === "week") {
       const startsAt = eventStartsAt(event);
@@ -496,23 +501,41 @@ function eventStatusLabel(status: string | null, language: LanguageMode, tKey: (
   return translateEnumLabel(language, normalized);
 }
 
-function eventPrimaryTimeLabel(event: PlatformEvent | null, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
+function eventPrimaryTimeLabel(
+  event: PlatformEvent | null,
+  referenceDate: Date,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!event) {
     return tKey("linkedEvents.notScheduled");
   }
   return isEventOngoingAt(event, referenceDate)
     ? tKey("linkedEvents.ongoing")
-    : formatEventDateTime(event.starts_at, language);
+    : formatEventDateTime(event.starts_at, language, timeZone);
 }
 
-function eventRailTimeLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
-  return isEventOngoingAt(event, referenceDate) ? tKey("linkedEvents.ongoing") : formatEventTime(event.starts_at, language);
+function eventRailTimeLabel(
+  event: PlatformEvent,
+  referenceDate: Date,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  return isEventOngoingAt(event, referenceDate) ? tKey("linkedEvents.ongoing") : formatEventTime(event.starts_at, language, timeZone);
 }
 
-function eventRailDateLabel(event: PlatformEvent, referenceDate: Date, language: LanguageMode, tKey: (key: string) => string): string {
+function eventRailDateLabel(
+  event: PlatformEvent,
+  referenceDate: Date,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   return isEventOngoingAt(event, referenceDate)
-    ? `${tKey("linkedEvents.until")} ${formatEventMonthDay(event.ends_at, language)}`
-    : formatEventDate(event.starts_at, language);
+    ? `${tKey("linkedEvents.until")} ${formatEventMonthDay(event.ends_at, language, timeZone)}`
+    : formatEventDate(event.starts_at, language, timeZone);
 }
 
 function searchableEventText(event: PlatformEvent): string {
@@ -590,6 +613,7 @@ export function LinkedEventsWorkspace({
   const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   const [activeVenue, setActiveVenue] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
+  const dataTimezone = resolveDataTimezone(timeScope?.timezone);
 
   const referenceDate = useMemo(
     () => selectedReferenceDate(timeScope, checkedAt),
@@ -614,7 +638,7 @@ export function LinkedEventsWorkspace({
 
   const filteredEvents = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    let result = filterEvents(sortedEvents, filter, referenceDate);
+    let result = filterEvents(sortedEvents, filter, referenceDate, dataTimezone);
     if (categoryFilter !== "all") {
       result = result.filter((event) => eventCategoryKey(event) === categoryFilter);
     }
@@ -628,7 +652,7 @@ export function LinkedEventsWorkspace({
       result = result.filter((event) => searchableEventText(event).includes(query));
     }
     return result;
-  }, [filter, sortedEvents, categoryFilter, activeKeyword, activeVenue, searchText, referenceDate, tKey]);
+  }, [filter, sortedEvents, categoryFilter, activeKeyword, activeVenue, searchText, referenceDate, tKey, dataTimezone]);
 
   useEffect(() => {
     if (!highlightedEventId) {
@@ -722,9 +746,9 @@ export function LinkedEventsWorkspace({
     : tKey("linkedEvents.noActivitiesAreAvailableForTheSelectedCityYetTheCitySpecificFeedMayNeedAFreshCollection");
   const filterOptions: Array<{ key: EventFilter; labelKey: string; count: number }> = [
     { key: "all", labelKey: "allFilter", count: sortedEvents.length },
-    { key: "today", labelKey: "today", count: filterEvents(sortedEvents, "today", referenceDate).length },
-    { key: "week", labelKey: "week7DayHorizon", count: filterEvents(sortedEvents, "week", referenceDate).length },
-    { key: "free", labelKey: "freeEvents", count: filterEvents(sortedEvents, "free", referenceDate).length },
+    { key: "today", labelKey: "today", count: filterEvents(sortedEvents, "today", referenceDate, dataTimezone).length },
+    { key: "week", labelKey: "week7DayHorizon", count: filterEvents(sortedEvents, "week", referenceDate, dataTimezone).length },
+    { key: "free", labelKey: "freeEvents", count: filterEvents(sortedEvents, "free", referenceDate, dataTimezone).length },
   ];
 
   function renderVenueDensityChart() {
@@ -823,7 +847,7 @@ export function LinkedEventsWorkspace({
         <article className={`linked-events-panel linked-events-hero linked-events-hero-${selectedTone}`}>
           <div className="linked-events-kicker">
             <span>{tKey("linkedEvents.selectedActivity")}</span>
-            <time>{eventPrimaryTimeLabel(selectedEvent, referenceDate, language, tKey)}</time>
+            <time>{eventPrimaryTimeLabel(selectedEvent, referenceDate, language, tKey, dataTimezone)}</time>
           </div>
           <div className="linked-events-focus">
             <span className="material-symbols-outlined linked-events-focus-icon" aria-hidden="true">
@@ -961,8 +985,8 @@ export function LinkedEventsWorkspace({
                     type="button"
                   >
                     <span className="linked-events-date-rail">
-                      <strong>{eventRailTimeLabel(event, referenceDate, language, tKey)}</strong>
-                      <small>{eventRailDateLabel(event, referenceDate, language, tKey)}</small>
+                      <strong>{eventRailTimeLabel(event, referenceDate, language, tKey, dataTimezone)}</strong>
+                      <small>{eventRailDateLabel(event, referenceDate, language, tKey, dataTimezone)}</small>
                     </span>
                     <span className="linked-events-row-main">
                       <strong>{event.title}</strong>
@@ -1000,11 +1024,11 @@ export function LinkedEventsWorkspace({
               <dl>
                 <div>
                   <dt>{tKey("linkedEvents.starts")}</dt>
-                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.starts_at, language) : tKey("linkedEvents.notScheduled")}</dd>
+                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.starts_at, language, dataTimezone) : tKey("linkedEvents.notScheduled")}</dd>
                 </div>
                 <div>
                   <dt>{tKey("linkedEvents.ends")}</dt>
-                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.ends_at, language) : tKey("linkedEvents.notScheduled")}</dd>
+                  <dd>{selectedEvent ? formatEventDateTime(selectedEvent.ends_at, language, dataTimezone) : tKey("linkedEvents.notScheduled")}</dd>
                 </div>
                 <div>
                   <dt>{tKey("linkedEvents.duration")}</dt>

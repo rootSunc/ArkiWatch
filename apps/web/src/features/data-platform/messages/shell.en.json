@@ -115,6 +115,8 @@
     "navRoadRail": "Road & Rail",
     "activeEvent": "active event",
     "activeEvents": "active events",
+    "recentEvent": "recent event",
+    "recentEventsCount": "recent events",
     "ongoingUntil": "Ongoing until",
     "aqiAvg": "AQI Avg",
     "activeEventsLabel": "Active Events",

@@ -36,6 +36,8 @@ type SignalMetric = {
   unit: string | null;
 };
 
+const DEFAULT_TIME_ZONE = "Europe/Helsinki";
+
 const SCENARIO_ICONS: Record<string, string> = {
   outdoor: "wb_sunny",
   commute: "commute",
@@ -67,7 +69,7 @@ function findMetric(metrics: SignalMetric[] | undefined, key: string): SignalMet
 }
 
 function formatMetric(metric: SignalMetric | null, language: LanguageMode): string | null {
-  if (!metric || metric.value.toLowerCase() === "n/a") {
+  if (!metric || !metric.value?.trim() || metric.value.trim().toLowerCase() === "n/a") {
     return null;
   }
 
@@ -93,7 +95,11 @@ function formatNumber(value: number | null | undefined, digits = 1): string | nu
     : value.toFixed(digits);
 }
 
-function formatTime(value: string | null, language: LanguageMode): string | null {
+function formatTime(
+  value: string | null,
+  language: LanguageMode,
+  timeZone = DEFAULT_TIME_ZONE,
+): string | null {
   if (!value) {
     return null;
   }
@@ -101,10 +107,20 @@ function formatTime(value: string | null, language: LanguageMode): string | null
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  try {
+    return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    }).format(date);
+  } catch {
+    // A malformed deployment setting should not make Today unusable.
+    return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: DEFAULT_TIME_ZONE,
+    }).format(date);
+  }
 }
 
 function addPoint(
@@ -121,6 +137,7 @@ export function buildActionDataPoints(
   scenarioKey: string,
   signals: ScenarioLiveSignals,
   language: LanguageMode,
+  timeZone = DEFAULT_TIME_ZONE,
 ): TodayActionDataPoint[] {
   const t = (key: string) => translateMessageKey(language, key);
   const points: TodayActionDataPoint[] = [];
@@ -143,8 +160,18 @@ export function buildActionDataPoints(
       signals.airQuality.stations.find(
         (item) => item.station === signals.airQuality?.worst_station,
       ) ?? signals.airQuality.stations[0];
-    addPoint(points, "PM2.5", formatNumber(station?.pm2_5) ? `${formatNumber(station?.pm2_5)} ug/m3` : null);
-    addPoint(points, "NO2", formatNumber(station?.no2) ? `${formatNumber(station?.no2)} ug/m3` : null);
+    const pm25 = formatNumber(station?.pm2_5);
+    const no2 = formatNumber(station?.no2);
+    addPoint(
+      points,
+      t("airQuality.pm25"),
+      pm25 ? `${pm25} µg/m³` : null,
+    );
+    addPoint(
+      points,
+      t("airQuality.no2"),
+      no2 ? `${no2} µg/m³` : null,
+    );
   }
 
   if (scenarioKey === "commute" && (signals.transit || signals.roadRail)) {
@@ -155,15 +182,14 @@ export function buildActionDataPoints(
   if (scenarioKey === "energy") {
     const energy = signals.householdEnergy ?? signals.systemEnergy;
     const window = energy?.current_window;
-    const startsAt = formatTime(window?.starts_at ?? null, language);
-    const endsAt = formatTime(window?.ends_at ?? null, language);
+    const startsAt = formatTime(window?.starts_at ?? null, language, timeZone);
+    const endsAt = formatTime(window?.ends_at ?? null, language, timeZone);
     addPoint(points, t("shell.window"), startsAt && endsAt ? `${startsAt}–${endsAt}` : null);
+    const average = formatNumber(window?.average_value, 2);
     addPoint(
       points,
       t("shell.average"),
-      window
-        ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
-        : null,
+      average ? `${average}${window?.unit ? ` ${window.unit}` : ""}` : null,
     );
   }
 
@@ -175,6 +201,7 @@ export function buildTodayActionCardView(
   signals: ScenarioLiveSignals,
   language: LanguageMode,
   recommendationMode: TodayRecommendationMode = "live",
+  timeZone = DEFAULT_TIME_ZONE,
 ): TodayActionCardView {
   const recommendation = section.recommendation;
   const isPlaceholder = isPlaceholderRecommendation(recommendation.id, recommendation.body);
@@ -202,9 +229,9 @@ export function buildTodayActionCardView(
               ? recommendation.body_zh
               : section.description_zh,
           ),
-    dataPoints: buildActionDataPoints(section.key, signals, language),
+    dataPoints: buildActionDataPoints(section.key, signals, language, timeZone),
     detail: isSignalFallback
-      ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language)
+      ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language, timeZone)
       : isScopeLimited
         ? null
         : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(

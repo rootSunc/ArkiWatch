@@ -19,9 +19,11 @@ import {
 } from "./types";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
+  timezone?: string;
 };
 
 type WaterTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -181,7 +183,12 @@ function relativeTime(value: string | null | undefined, language: LanguageMode, 
   return value ? formatRelativeAge(value, language) : tKey("waterSnow.notObserved");
 }
 
-function formatCompactTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
+function formatCompactTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   if (!value) {
     return tKey("waterSnow.notScheduled");
   }
@@ -192,13 +199,13 @@ function formatCompactTime(value: string | null | undefined, language: LanguageM
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "Europe/Helsinki"
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(new Date(value))
     .toUpperCase();
 }
 
-function formatTimelineBoundary(value: number, language: LanguageMode): string {
+function formatTimelineBoundary(value: number, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -206,7 +213,7 @@ function formatTimelineBoundary(value: number, language: LanguageMode): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "Europe/Helsinki"
+    timeZone: resolveDataTimezone(timeZone)
   })
     .format(new Date(value))
     .toUpperCase();
@@ -379,7 +386,7 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
   return translateEnumLabel(language, category.stage ?? "catalog");
 }
 
-export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
+export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE }: WaterSnowWorkspaceProps) {
   const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
 
   if (!category) {
@@ -766,8 +773,8 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
                     <header>
                       <span>{tKey("waterSnow.timeWindows")}</span>
                       <span>
-                        {formatTimelineBoundary(waterTimelineBounds.startsAt, language)} -{" "}
-                        {formatTimelineBoundary(waterTimelineBounds.endsAt, language)}
+                        {formatTimelineBoundary(waterTimelineBounds.startsAt, language, timezone)} -{" "}
+                        {formatTimelineBoundary(waterTimelineBounds.endsAt, language, timezone)}
                       </span>
                     </header>
                     <div>
@@ -787,7 +794,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 
                         return (
                           <article className={`water-timeband-row water-timeband-row-${eventTone(item)}`} key={item.id}>
-                            <span>{formatCompactTime(item.starts_at, language, tKey)}</span>
+                            <span>{formatCompactTime(item.starts_at, language, tKey, timezone)}</span>
                             <i aria-hidden="true">
                               <span style={bandStyle} />
                             </i>
@@ -807,7 +814,7 @@ export function WaterSnowWorkspace({ category }: WaterSnowWorkspaceProps) {
 	                    >
                       <span className="water-event-dot" aria-hidden="true" />
                       <div>
-                        <time>{formatCompactTime(item.starts_at, language, tKey)}</time>
+                        <time>{formatCompactTime(item.starts_at, language, tKey, timezone)}</time>
                         <strong>{item.label}</strong>
                         <p>{item.detail}</p>
                       </div>

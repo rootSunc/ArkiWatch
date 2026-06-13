@@ -59,6 +59,7 @@ import {
 } from "./energy-workspace-utils";
 import type { EnergyPoint } from "./types";
 import type { PanelMetric } from "./energy-workspace-types";
+import { resolveDataTimezone } from "./data-timezone";
 
 export function EnergyWorkspace({
   activePanel: controlledPanel,
@@ -107,6 +108,7 @@ export function EnergyWorkspace({
   const isPricePanel = activePanel === "porssisahko";
   const activeProfile = ENERGY_PANEL_PROFILES[activePanel];
   const activeEnergy = isPricePanel ? householdEnergy : energy;
+  const dataTimezone = resolveDataTimezone(activeEnergy?.time_scope?.timezone);
   const activeHistory = isPricePanel ? householdHistory : history;
   const activeSource = sourceByCode(category, activePanel);
   const priceProviderName = householdEnergy?.provider_name ?? DEFAULT_HOUSEHOLD_PRICE_PROVIDER;
@@ -135,14 +137,14 @@ export function EnergyWorkspace({
     timelineItems.some((item) => !isNoActiveWindowLabel(item.label)) ||
     (latestEvent !== null && !isNoActiveWindowLabel(latestEvent.title));
   const startLabel = window
-    ? formatCompactTime(window.starts_at, language, tKey)
+    ? formatCompactTime(window.starts_at, language, tKey, dataTimezone)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.starts_at, language, tKey)
+      ? formatCompactTime(latestEvent.starts_at, language, tKey, dataTimezone)
       : tKey("energy.windowPending2");
   const endLabel = window
-    ? formatCompactTime(window.ends_at, language, tKey)
+    ? formatCompactTime(window.ends_at, language, tKey, dataTimezone)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.ends_at, language, tKey)
+      ? formatCompactTime(latestEvent.ends_at, language, tKey, dataTimezone)
       : tKey("energy.waitingForEvent");
   const householdWindowUsage = isPricePanel && window?.usage_kwh != null ? window.usage_kwh : null;
   const householdUsageMetric = householdWindowUsage !== null
@@ -209,7 +211,7 @@ export function EnergyWorkspace({
     return ticks;
   })() : [];
 
-  const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel);
+  const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel, dataTimezone);
   const activeSourceLabel = sourceStatusLabel(activeSource, activeStatus, language);
   const activeTitle = isPricePanel ? `${priceProviderName} ${tKey("energy.householdEnergyPrice")}` : tKey("energy.fingridEnergySignals");
   const activeDataFeedName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
@@ -432,7 +434,7 @@ export function EnergyWorkspace({
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: false,
-                    timeZone: "Europe/Helsinki"
+                    timeZone: dataTimezone
                   }).format(date);
 
                   return (
@@ -600,7 +602,7 @@ export function EnergyWorkspace({
                 >
                   <div className="energy-tooltip-content">
                     <div className="energy-tooltip-time">
-                      {formatCompactTime(hoveredPoint.point.starts_at, language, tKey)}
+                      {formatCompactTime(hoveredPoint.point.starts_at, language, tKey, dataTimezone)}
                     </div>
                     <div className="energy-tooltip-value">
                       <strong>{formatEnergyPointValue(hoveredPoint.point, chartUnit)}</strong>
@@ -624,9 +626,9 @@ export function EnergyWorkspace({
                   const inWindow = isWindowPoint(display, window?.starts_at, window?.ends_at);
                   return (
                     <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={display.starts_at}>
-                      <span>{formatCompactTime(display.starts_at, language, tKey)}</span>
+                      <span>{formatCompactTime(display.starts_at, language, tKey, dataTimezone)}</span>
                       <strong>{formatEnergyPointValue(display, chartUnit)}</strong>
-                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, tKey)}</em>
+                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, tKey, dataTimezone)}</em>
                     </article>
                   );
                 })}
@@ -793,7 +795,7 @@ export function EnergyWorkspace({
                 <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
                   <div>
                     <strong>{"label" in item ? item.label : item.title}</strong>
-                    <span>{formatCompactTime(item.starts_at, language, tKey)} - {formatCompactTime(item.ends_at, language, tKey)}</span>
+                    <span>{formatCompactTime(item.starts_at, language, tKey, dataTimezone)} - {formatCompactTime(item.ends_at, language, tKey, dataTimezone)}</span>
                   </div>
                   <p>{"detail" in item ? item.detail : item.body}</p>
                 </article>

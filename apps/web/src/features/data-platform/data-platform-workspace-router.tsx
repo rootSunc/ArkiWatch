@@ -133,11 +133,11 @@ export function DataPlatformWorkspaceRouter({
   }
 
   if (isWaterDetail) {
-    return <WaterSnowWorkspace category={selectedCategory} />;
+    return <WaterSnowWorkspace category={selectedCategory} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
   if (isCityServicesDetail) {
-    return <CityServicesWorkspace category={selectedCategory} />;
+    return <CityServicesWorkspace category={selectedCategory} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
   if (isLinkedEventsDetail) {

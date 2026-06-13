@@ -24,6 +24,7 @@ type CrossDomainTimelinePanelProps = {
   defaultOpen?: boolean;
   items: CrossDomainTimelineItem[];
   language: LanguageMode;
+  timezone?: string;
   onOpenEvent?: (event: PlatformEvent) => void;
   onOpenScenario?: (scenarioKey: string) => void;
 };
@@ -48,6 +49,7 @@ export function CrossDomainTimelinePanel({
   defaultOpen = false,
   items,
   language,
+  timezone,
   onOpenEvent,
   onOpenScenario,
 }: CrossDomainTimelinePanelProps) {
@@ -99,8 +101,8 @@ export function CrossDomainTimelinePanel({
                 {localizedContent(language, item.detail, item.detail_zh)}
               </span>
               <time>
-                {formatTimestamp(item.startsAt, "dateTime", language)} –{" "}
-                {formatTimestamp(item.endsAt, "dateTime", language)}
+                {formatTimestamp(item.startsAt, "dateTime", language, timezone)} –{" "}
+                {formatTimestamp(item.endsAt, "dateTime", language, timezone)}
               </time>
             </button>
           </li>

@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import type { PlatformCategory } from "./types";
-import { buildTimelineItems } from "./weather-detail-utils";
+import { buildTimelineItems, formatTimeZoneName } from "./weather-detail-utils";
+
+describe("formatTimeZoneName", () => {
+  it("uses daylight-saving time for Finnish summer timestamps", () => {
+    expect(formatTimeZoneName("2026-08-09T12:00:00Z", "en")).toBe("EEST");
+  });
+
+  it("uses standard time for Finnish winter timestamps", () => {
+    expect(formatTimeZoneName("2026-01-09T12:00:00Z", "en")).toBe("EET");
+  });
+});
 
 describe("buildTimelineItems", () => {
   it("uses localized event copy when the weather workspace is Chinese", () => {
