@@ -38,3 +38,9 @@ export function healthySourceCount(
 ): number {
   return sources.filter(isSourceHealthy).length;
 }
+
+export function sourceIssueCount(
+  sources: Array<Pick<DashboardSource, "operational_status">>,
+): number {
+  return sources.filter((source) => !isSourceHealthy(source)).length;
+}

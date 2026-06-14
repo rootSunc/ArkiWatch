@@ -1814,6 +1814,11 @@
   .mobile-bottom-nav-assistant:focus-visible {
     color: var(--on-primary-container);
   }
+
+  .mobile-bottom-nav-assistant > .assistant-glyph {
+    width: 21px;
+    height: 21px;
+  }
 }
 
 @media (max-width: 400px) {

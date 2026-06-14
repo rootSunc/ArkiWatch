@@ -31,6 +31,14 @@ export function isPlaceholderRecommendation(id: string, body: string): boolean {
   return /data will appear here after|no active regional recommendation/i.test(body);
 }
 
+export function isRecommendationExpired(
+  recommendation: Pick<PublicActionRead, "valid_to">,
+  now = Date.now(),
+): boolean {
+  const validTo = Date.parse(recommendation.valid_to);
+  return !Number.isFinite(validTo) || validTo < now;
+}
+
 function severityRank(severity: string): number {
   switch (severity.toUpperCase()) {
     case "CRITICAL":
@@ -95,10 +103,14 @@ export function recommendationModeForToday({
   return "live";
 }
 
-export function buildPlanItems(items: CrossDomainTimelineItem[]): CrossDomainTimelineItem[] {
+export function buildPlanItems(
+  items: CrossDomainTimelineItem[],
+  now = Date.now(),
+): CrossDomainTimelineItem[] {
   return items
     .filter(
       (item) =>
+        Number.isFinite(Date.parse(item.endsAt)) && Date.parse(item.endsAt) >= now &&
         !/^no active .+ recommendation/i.test(item.title) &&
         (item.kind === "scenario" || severityRank(item.severity) >= 2),
     )
@@ -119,6 +131,7 @@ export function buildTodayBrief({
   summaryTiles,
   timelineItems,
   language,
+  now = Date.now(),
 }: {
   publicDashboard: PublicDashboardRead | null;
   overviewCoverageArea?: string | null;
@@ -126,13 +139,16 @@ export function buildTodayBrief({
   summaryTiles: UserSummaryTile[];
   timelineItems: CrossDomainTimelineItem[];
   language: LanguageMode;
+  now?: number;
 }): TodayBrief | null {
   if (!publicDashboard) {
     return null;
   }
 
   const topActions = publicDashboard.top_actions.filter(
-    (action) => !isPlaceholderRecommendation(action.id, action.body),
+    (action) =>
+      !isPlaceholderRecommendation(action.id, action.body) &&
+      !isRecommendationExpired(action, now),
   );
   const recommendationCoverageArea =
     overviewCoverageArea &&
@@ -159,6 +175,7 @@ export function buildTodayBrief({
     recommendationMode,
     planItems: buildPlanItems(
       recommendationMode === "live" ? timelineItems : [],
+      now,
     ),
     scenarioSections: publicDashboard.scenario_sections,
     summaryTiles,

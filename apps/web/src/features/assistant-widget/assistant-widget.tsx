@@ -23,7 +23,10 @@ import {
   AssistantApiCitation,
   localizeAssistantError,
   parseAssistantStream,
+  readAssistantError,
 } from "@/features/assistant-widget/assistant-stream";
+import { firstAssistantCategoryLabel } from "@/features/assistant-widget/assistant-suggestions";
+import { AssistantRetryButton } from "@/features/assistant-widget/assistant-retry-button";
 import { demoAssistantReply } from "@/features/data-platform/demo/demo-assistant";
 import { cityLabel } from "@/features/data-platform/city-scope";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
@@ -39,6 +42,7 @@ type AssistantWidgetProps = {
   mode: "today" | "data";
   scopeKey?: string;
   openRequest?: number;
+  openQuestion?: string | null;
   focusReturnRef?: RefObject<HTMLElement>;
   focusReturnRefs?: Array<RefObject<HTMLElement>>;
   showLauncher?: boolean;
@@ -52,7 +56,10 @@ type ChatMessage = {
   citations?: AssistantApiCitation[];
   answerMode?: "deepseek" | "fallback";
   errorMessage?: string | null;
+  retryAfterSeconds?: number | null;
   model?: string | null;
+  canRetry?: boolean;
+  retryQuestion?: string;
 };
 
 export function AssistantWidget({
@@ -64,6 +71,7 @@ export function AssistantWidget({
   mode,
   scopeKey = "",
   openRequest,
+  openQuestion,
   focusReturnRef,
   focusReturnRefs,
   showLauncher = true,
@@ -112,7 +120,7 @@ export function AssistantWidget({
 
     lastOpenRequest.current = openRequest;
     setIsOpen(true);
-  }, [openRequest]);
+  }, [openQuestion, openRequest]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -278,6 +286,14 @@ export function AssistantWidget({
     ]);
   }, [assistantScopeKey, tKey]);
 
+  useEffect(() => {
+    if (openRequest === undefined) {
+      return;
+    }
+
+    setInputValue(openQuestion?.trim() ?? "");
+  }, [openQuestion, openRequest]);
+
   useEffect(
     () => () => {
       activeRequestRef.current?.abort();
@@ -315,14 +331,14 @@ export function AssistantWidget({
         tKey("assistant.whichExpansionPlanned")
       ];
     }
-    const firstCat = overview.categories[0]?.title ?? "Weather";
+    const firstCat = firstAssistantCategoryLabel(overview, language);
     return [
       tKey("assistant.explainCurrent"),
       analyzeCategory(firstCat),
       tKey("assistant.whichSourceAbnormal"),
       tKey("assistant.whichExpansionPlanned")
     ];
-  }, [mode, overview, tKey, analyzeCategory]);
+  }, [analyzeCategory, language, mode, overview, tKey]);
 
   const submitQuestion = async (question: string) => {
     const normalizedQuestion = question.trim();
@@ -337,7 +353,10 @@ export function AssistantWidget({
       text: normalizedQuestion
     };
     const assistantMessageId = `assistant-${timestamp}`;
-    const requestMessages = [...messages, userMessage].slice(-10);
+    const requestMessages = [
+      ...messages.filter((message) => !message.canRetry),
+      userMessage,
+    ].slice(-10);
     const requestController = new AbortController();
     activeRequestRef.current?.abort();
     activeRequestRef.current = requestController;
@@ -397,7 +416,12 @@ export function AssistantWidget({
       });
 
       if (!response.ok || !response.body) {
-        throw new Error("Assistant stream failed.");
+        const details = await readAssistantError(response);
+        const error = new Error(details.message) as Error & {
+          retryAfterSeconds?: number | null;
+        };
+        error.retryAfterSeconds = details.retryAfterSeconds;
+        throw error;
       }
 
       const reader = response.body.getReader();
@@ -456,7 +480,9 @@ export function AssistantWidget({
                         event.data.error_message ??
                         event.data.message ??
                         event.data.content ??
-                        tKey("assistant.failure")
+                        tKey("assistant.failure"),
+                      canRetry: true,
+                      retryQuestion: normalizedQuestion,
                     }
                   : message
               )
@@ -468,17 +494,41 @@ export function AssistantWidget({
       if (activeRequestRef.current === requestController && !assistantText.trim()) {
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
-            message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  text: tKey("assistant.failure"),
+                  canRetry: true,
+                  retryQuestion: normalizedQuestion,
+                }
+              : message
           )
         );
       }
-    } catch {
+    } catch (error) {
       if (requestController.signal.aborted || activeRequestRef.current !== requestController) {
         return;
       }
+      const isAssistantHttpError =
+        error instanceof Error && "retryAfterSeconds" in error;
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
-          message.id === assistantMessageId ? { ...message, text: tKey("assistant.failure") } : message
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                text: tKey("assistant.failure"),
+                errorMessage: isAssistantHttpError && error instanceof Error
+                  ? error.message
+                  : null,
+                retryAfterSeconds:
+                  isAssistantHttpError && error instanceof Error
+                    ? (error as Error & { retryAfterSeconds?: number | null })
+                        .retryAfterSeconds
+                    : null,
+                canRetry: true,
+                retryQuestion: normalizedQuestion,
+              }
+            : message
         )
       );
     } finally {
@@ -570,8 +620,23 @@ export function AssistantWidget({
                       <span className="material-symbols-outlined" aria-hidden="true">
                         info
                       </span>
-                      <span>{localizeAssistantError(message.errorMessage, tKey)}</span>
+                      <span>
+                        {localizeAssistantError(
+                          message.errorMessage,
+                          tKey,
+                          message.retryAfterSeconds,
+                        )}
+                      </span>
                     </p>
+                  ) : null}
+                  {message.role === "assistant" && message.canRetry && message.retryQuestion ? (
+                    <AssistantRetryButton
+                      disabled={isLoading}
+                      language={language}
+                      onRetry={() => {
+                        void submitQuestion(message.retryQuestion ?? "");
+                      }}
+                    />
                   ) : null}
                   {message.role === "assistant" && message.citations?.length ? (
                     <footer className="assistant-citations">

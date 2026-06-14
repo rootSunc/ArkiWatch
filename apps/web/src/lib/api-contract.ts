@@ -554,6 +554,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user/commute-profiles/{profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Commute Profile */
+        put: operations["update_commute_profile_api_user_commute_profiles__profile_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user/locations": {
         parameters: {
             query?: never;
@@ -566,6 +583,23 @@ export interface paths {
         put?: never;
         /** Create Location */
         post: operations["create_location_api_user_locations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/locations/{location_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Location */
+        put: operations["update_location_api_user_locations__location_id__put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1525,8 +1559,12 @@ export interface components {
         RecommendationRead: {
             /** Advice Body */
             advice_body: string;
+            /** Advice Body Zh */
+            advice_body_zh?: string | null;
             /** Advice Title */
             advice_title: string;
+            /** Advice Title Zh */
+            advice_title_zh?: string | null;
             /** Event Severity */
             event_severity: string;
             /** Event Type */
@@ -1889,8 +1927,12 @@ export interface components {
             severity: string;
             /** Summary */
             summary: string;
+            /** Summary Zh */
+            summary_zh?: string | null;
             /** Title */
             title: string;
+            /** Title Zh */
+            title_zh?: string | null;
             /** Type */
             type: string;
             /** Valid To */
@@ -2104,6 +2146,26 @@ export interface components {
             /** Weekdays */
             weekdays: number[];
         };
+        /** UserCommuteProfileUpdate */
+        UserCommuteProfileUpdate: {
+            /** Departure Time Local */
+            departure_time_local: string;
+            /** Destination Location Id */
+            destination_location_id: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Origin Location Id */
+            origin_location_id: string;
+            /** @default TRANSIT */
+            preferred_mode: components["schemas"]["CommuteMode"];
+            /** Weekdays */
+            weekdays: number[];
+        };
         /** UserLocationCreate */
         UserLocationCreate: {
             /** City */
@@ -2154,6 +2216,29 @@ export interface components {
             lon: number;
             /** User Id */
             user_id: string;
+        };
+        /** UserLocationUpdate */
+        UserLocationUpdate: {
+            /** City */
+            city: string;
+            /**
+             * Country Code
+             * @default FI
+             */
+            country_code: string;
+            /** District */
+            district?: string | null;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+            /** Label */
+            label: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
         };
         /** UserPreferenceRead */
         UserPreferenceRead: {
@@ -2817,7 +2902,6 @@ export interface operations {
     get_platform_category_api_platform_categories__category_key__get: {
         parameters: {
             query?: {
-                user_id?: string | null;
                 city?: string | null;
                 date?: string | null;
             };
@@ -2949,7 +3033,6 @@ export interface operations {
     get_platform_overview_api_platform_overview_get: {
         parameters: {
             query?: {
-                user_id?: string | null;
                 city?: string | null;
                 date?: string | null;
             };
@@ -3507,6 +3590,41 @@ export interface operations {
             };
         };
     };
+    update_commute_profile_api_user_commute_profiles__profile_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCommuteProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserCommuteProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_locations_api_user_locations_get: {
         parameters: {
             query: {
@@ -3553,6 +3671,41 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserLocationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_location_api_user_locations__location_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserLocationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

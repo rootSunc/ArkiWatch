@@ -11,6 +11,7 @@ type TodayActionCardProps = {
   language: LanguageMode;
   liveSignals: ScenarioLiveSignals;
   disabled?: boolean;
+  now?: number;
   onOpen: () => void;
   recommendationMode?: TodayRecommendationMode;
   section: PublicScenarioSectionRead;
@@ -21,6 +22,7 @@ export function TodayActionCard({
   language,
   liveSignals,
   disabled = false,
+  now,
   onOpen,
   recommendationMode = "live",
   section,
@@ -33,6 +35,7 @@ export function TodayActionCard({
     language,
     recommendationMode,
     timezone,
+    now,
   );
   const localizedTitle = ["good", "good window", "needs attention", "watch"].includes(
     view.title.trim().toLowerCase(),

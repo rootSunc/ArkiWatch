@@ -1,8 +1,17 @@
 import { MOBILITY_NAV_KEY } from "../data-platform-view-model";
 import { FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "../data-platform-nav-utils";
 
-/** Domain data rarely changes faster than collector intervals. */
-export const PLATFORM_QUERY_STALE_TIME_MS = 10 * 60 * 1000;
+/** Keep live platform cards responsive to the scheduler's five-minute cadence. */
+export const PLATFORM_QUERY_STALE_TIME_MS = 2 * 60 * 1000;
+export const PLATFORM_QUERY_REFETCH_INTERVAL_MS = 5 * 60 * 1000;
+
+export function platformQueryRefreshOptions(isHistorical: boolean) {
+  return {
+    staleTime: PLATFORM_QUERY_STALE_TIME_MS,
+    refetchOnWindowFocus: true,
+    refetchInterval: isHistorical ? false : PLATFORM_QUERY_REFETCH_INTERVAL_MS,
+  } as const;
+}
 
 export type PlatformDataNeeds = {
   weather: boolean;

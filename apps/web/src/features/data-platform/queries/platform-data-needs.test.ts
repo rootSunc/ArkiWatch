@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { platformDataNeedsForView } from "./platform-data-needs";
+import {
+  PLATFORM_QUERY_REFETCH_INTERVAL_MS,
+  PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForView,
+  platformQueryRefreshOptions,
+} from "./platform-data-needs";
 
 describe("platformDataNeedsForView", () => {
+  it("defines a bounded live refresh cadence", () => {
+    expect(PLATFORM_QUERY_STALE_TIME_MS).toBe(2 * 60 * 1000);
+    expect(PLATFORM_QUERY_REFETCH_INTERVAL_MS).toBe(5 * 60 * 1000);
+    expect(platformQueryRefreshOptions(false)).toMatchObject({
+      refetchOnWindowFocus: true,
+      refetchInterval: PLATFORM_QUERY_REFETCH_INTERVAL_MS,
+    });
+    expect(platformQueryRefreshOptions(true)).toMatchObject({
+      refetchOnWindowFocus: true,
+      refetchInterval: false,
+    });
+  });
+
   it("keeps today and overview on core queries only", () => {
     expect(platformDataNeedsForView("today")).toEqual({
       weather: false,

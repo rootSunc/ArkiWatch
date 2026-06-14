@@ -308,6 +308,309 @@
   font-weight: 750;
 }
 
+.today-source-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--amber) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--amber) 9%, transparent);
+  padding: 10px 13px;
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.today-source-warning > .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.today-source-warning-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.today-source-warning-copy strong {
+  color: var(--on-surface);
+  font-weight: 750;
+}
+
+.today-source-warning-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  border-radius: 7px;
+  color: var(--on-surface);
+  font-size: 0.75rem;
+  font-weight: 750;
+  padding: 6px 8px;
+}
+
+.today-source-warning-action:hover,
+.today-source-warning-action:focus-visible {
+  background: var(--surface-container-low);
+  outline: none;
+}
+
+.today-source-warning-action .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.today-personal-context {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(120px, 180px) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--surface-container-lowest);
+  padding: 11px 13px;
+}
+
+.today-personal-context-good {
+  border-color: color-mix(in srgb, var(--blue) 24%, var(--card-border));
+}
+
+.today-personal-context-warn {
+  border-color: color-mix(in srgb, var(--amber) 30%, var(--card-border));
+}
+
+.today-personal-context-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--status-neutral-bg);
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.today-personal-context-good .today-personal-context-icon {
+  background: var(--status-good-bg);
+  color: var(--blue);
+}
+
+.today-personal-context-warn .today-personal-context-icon {
+  background: var(--status-warn-bg);
+  color: var(--amber);
+}
+
+.today-personal-context-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.today-personal-context-copy strong {
+  color: var(--on-surface);
+  font-size: 0.84rem;
+}
+
+.today-personal-context-copy > span:last-child {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-personal-context-progress {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container-high);
+}
+
+.today-personal-context-progress > span {
+  display: block;
+  width: var(--today-personal-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 180ms ease;
+}
+
+.today-personal-context-good .today-personal-context-progress > span {
+  background: var(--blue);
+}
+
+.today-personal-context-warn .today-personal-context-progress > span {
+  background: var(--amber);
+}
+
+.today-personal-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--amber) 32%, var(--card-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--amber) 8%, var(--surface-container-lowest));
+  padding: 11px 13px;
+  color: var(--on-surface-variant);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.today-personal-warning > .material-symbols-outlined {
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.today-personal-warning-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.today-personal-warning-copy strong {
+  color: var(--on-surface);
+  font-size: 0.78rem;
+}
+
+.today-personal-warning-copy small {
+  overflow-wrap: anywhere;
+  color: var(--on-surface-variant);
+  font-size: 0.67rem;
+}
+
+.today-personal-recommendations {
+  display: grid;
+  gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--card-border));
+  border-radius: 16px;
+  background: var(--surface-container-lowest);
+  padding: 18px;
+}
+
+.today-personal-recommendations-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 5px 12px;
+}
+
+.today-personal-recommendations-header .today-section-kicker,
+.today-personal-recommendations-header h3 {
+  grid-column: 1;
+}
+
+.today-personal-recommendations-header h3 {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.today-personal-recommendations-count {
+  display: inline-grid;
+  min-width: 24px;
+  height: 24px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.today-personal-recommendations-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-personal-recommendation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 11px;
+  background: var(--surface-container-low);
+  padding: 11px;
+}
+
+.today-personal-recommendation-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--status-neutral-bg);
+  color: var(--on-surface-variant);
+  font-size: 17px;
+}
+
+.today-personal-recommendation-good .today-personal-recommendation-icon {
+  background: var(--status-good-bg);
+  color: var(--blue);
+}
+
+.today-personal-recommendation-warn .today-personal-recommendation-icon {
+  background: var(--status-warn-bg);
+  color: var(--amber);
+}
+
+.today-personal-recommendation-bad .today-personal-recommendation-icon {
+  background: var(--status-bad-bg);
+  color: var(--red);
+}
+
+.today-personal-recommendation-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.today-personal-recommendation-type {
+  color: var(--on-surface-variant);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.today-personal-recommendation-copy strong {
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-personal-recommendation-copy > span:not(.today-personal-recommendation-type) {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.74rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.today-personal-recommendation-copy time {
+  color: var(--on-surface-variant);
+  font-size: 0.66rem;
+}
+
+.today-personal-recommendations-action {
+  justify-self: start;
+}
+
 .demo-mode-banner {
   display: flex;
   align-items: center;
@@ -325,6 +628,17 @@
 .demo-mode-banner .material-symbols-outlined {
   color: var(--primary);
   font-size: 18px;
+}
+
+.demo-mode-banner-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.demo-mode-banner-copy time {
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
 }
 
 .today-content-grid {
@@ -752,15 +1066,47 @@
   .today-decisions-summary {
     padding: 16px;
   }
+
+  .today-source-warning {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .today-source-warning-copy {
+    flex-basis: calc(100% - 38px);
+  }
+
+  .today-source-warning-action {
+    margin-left: 28px;
+  }
+
+  .today-personal-warning {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .today-personal-warning .today-source-warning-action {
+    grid-column: 2;
+    justify-self: start;
+    margin-left: 0;
+  }
+
+  .today-personal-context {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .today-personal-context-progress {
+    grid-column: 2 / -1;
+  }
 }
 
 @media (max-width: 420px) {
   .today-glance-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .today-glance-item {
-    min-height: 58px;
+    min-height: 62px;
+    padding: 8px;
   }
 
   .today-primary-action,
@@ -775,6 +1121,22 @@
 
   .today-action-card-meta > span:last-child {
     text-align: left;
+  }
+
+  .today-personal-context {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .today-personal-context .today-secondary-action {
+    grid-column: 1 / -1;
+  }
+
+  .today-personal-context-progress {
+    grid-column: 2;
+  }
+
+  .today-personal-warning .today-source-warning-action {
+    grid-column: 1 / -1;
   }
 }
 

@@ -2,6 +2,7 @@
 
 import type { ReactNode, RefObject } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { appEnv } from "@/lib/env";
 
@@ -219,6 +220,19 @@ export function DataPlatformSideNav({
             </span>
             <span>{displayUserLabel}</span>
           </div>
+          {isAuthenticated ? (
+            <Link
+              aria-label={tKey("shell.personalSettingsTitle")}
+              className="nav-row side-nav-utility-row"
+              href="/settings"
+              title={tKey("shell.personalSettingsTitle")}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                tune
+              </span>
+              <span>{tKey("shell.personalSettingsTitle")}</span>
+            </Link>
+          ) : null}
           {renderAuthActionButton("nav-row side-nav-utility-row", true)}
         </div>
       </nav>

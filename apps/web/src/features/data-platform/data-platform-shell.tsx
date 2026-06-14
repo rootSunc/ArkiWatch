@@ -126,7 +126,7 @@ function isThemeMode(value: string | null): value is ThemeMode {
 }
 
 export function preferredThemeMode(): ThemeMode {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return "light";
   }
 
@@ -193,6 +193,42 @@ export function RefreshDataButton({
         refresh
       </span>
     </button>
+  );
+}
+
+export function RefreshErrorBanner({
+  error,
+  language,
+  onDismiss,
+}: {
+  error: string;
+  language: LanguageMode;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="refresh-error-banner" role="alert">
+      <span className="material-symbols-outlined" aria-hidden="true">
+        sync_problem
+      </span>
+      <span className="refresh-error-banner-copy">
+        <strong>{translateMessageKey(language, "shell.refreshFailed")}</strong>
+        <span>
+          {translateMessageKey(language, "shell.refreshFailedDetail")}
+        </span>
+        <small>{error}</small>
+      </span>
+      <button
+        aria-label={translateMessageKey(language, "shell.dismissRefreshError")}
+        className="refresh-error-banner-dismiss"
+        onClick={onDismiss}
+        title={translateMessageKey(language, "shell.dismissRefreshError")}
+        type="button"
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          close
+        </span>
+      </button>
+    </div>
   );
 }
 

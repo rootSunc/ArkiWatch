@@ -1,0 +1,825 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+
+import type { SessionUser } from "@/features/auth/config";
+
+import {
+  fetchPersonalContext,
+  savePersonalContext,
+  type PersonalChannel,
+  type PersonalCommuteInput,
+  type PersonalContextRead,
+  type PersonalLocationInput,
+  type PersonalPreferenceInput,
+} from "./personal-context";
+import {
+  I18nProvider,
+  useI18n,
+} from "./i18n";
+import { useClientPreferences } from "./hooks/use-client-preferences";
+import styles from "./personal-settings.module.css";
+
+type SetupSection = "location" | "preferences" | "commute" | "telegram";
+
+const SECTIONS: Array<{
+  key: SetupSection;
+  icon: string;
+  labelKey: string;
+}> = [
+  { key: "location", icon: "location_on", labelKey: "personalStepLocation" },
+  { key: "preferences", icon: "tune", labelKey: "personalStepPreferences" },
+  { key: "commute", icon: "route", labelKey: "personalStepCommute" },
+  { key: "telegram", icon: "send", labelKey: "personalStepTelegram" },
+];
+
+const WEEKDAYS = [
+  { value: 1, labelKey: "personalSettingsMon" },
+  { value: 2, labelKey: "personalSettingsTue" },
+  { value: 3, labelKey: "personalSettingsWed" },
+  { value: 4, labelKey: "personalSettingsThu" },
+  { value: 5, labelKey: "personalSettingsFri" },
+  { value: 6, labelKey: "personalSettingsSat" },
+  { value: 7, labelKey: "personalSettingsSun" },
+] as const;
+
+const DEFAULT_LOCATION: PersonalLocationInput = {
+  label: "Home",
+  country_code: "FI",
+  city: "Helsinki",
+  district: "",
+  lat: 60.1699,
+  lon: 24.9384,
+  is_default: true,
+};
+
+const DEFAULT_PREFERENCES: PersonalPreferenceInput = {
+  cares_energy: false,
+  cares_air_quality: true,
+  cares_weather: true,
+  cares_commute: true,
+  allergy_sensitive: false,
+  quiet_hours_start: "22:00",
+  quiet_hours_end: "07:00",
+  max_notifications_per_day: 6,
+};
+
+const DEFAULT_COMMUTE: PersonalCommuteInput = {
+  name: "Weekday commute",
+  origin_location_id: "",
+  destination_location_id: "",
+  preferred_mode: "TRANSIT",
+  departure_time_local: "08:00",
+  weekdays: [1, 2, 3, 4, 5],
+  is_active: true,
+};
+
+type LocationForm = {
+  id?: string;
+  label: string;
+  country_code: string;
+  city: string;
+  district: string;
+  lat: string;
+  lon: string;
+  is_default: boolean;
+};
+
+function locationFormFromDefault(): LocationForm {
+  return {
+    ...DEFAULT_LOCATION,
+    id: undefined,
+    district: "",
+    lat: String(DEFAULT_LOCATION.lat),
+    lon: String(DEFAULT_LOCATION.lon),
+  };
+}
+
+function locationFormFromSaved(
+  location: PersonalContextRead["locations"][number],
+): LocationForm {
+  return {
+    id: location.id,
+    label: location.label,
+    country_code: location.country_code,
+    city: location.city,
+    district: location.district ?? "",
+    lat: String(location.lat),
+    lon: String(location.lon),
+    is_default: location.is_default,
+  };
+}
+
+function completionState(context: PersonalContextRead | null): Record<SetupSection, boolean> {
+  return {
+    location: Boolean(context?.locations.some((location) => location.is_default)),
+    preferences: Boolean(context?.preferences),
+    commute: Boolean(context?.commuteProfiles.some((profile) => profile.is_active)),
+    telegram: Boolean(
+      context?.channels.some(
+        (channel) => channel.channel_type === "TELEGRAM" && channel.is_active && channel.is_verified,
+      ),
+    ),
+  };
+}
+
+function channelForTelegram(channels: PersonalChannel[]): PersonalChannel | null {
+  return channels.find((channel) => channel.channel_type === "TELEGRAM") ?? null;
+}
+
+export function PersonalSettingsPage({ user }: { user: SessionUser }) {
+  const { languageMode, selectLanguageMode, themeMode, toggleThemeMode } = useClientPreferences();
+
+  return (
+    <I18nProvider language={languageMode}>
+      <PersonalSettingsContent
+        language={languageMode}
+        onLanguageChange={selectLanguageMode}
+        onThemeToggle={toggleThemeMode}
+        themeMode={themeMode}
+        user={user}
+      />
+    </I18nProvider>
+  );
+}
+
+function PersonalSettingsContent({
+  language,
+  onLanguageChange,
+  onThemeToggle,
+  themeMode,
+  user,
+}: {
+  language: "en" | "zh";
+  onLanguageChange: (language: "en" | "zh") => void;
+  onThemeToggle: () => void;
+  themeMode: "light" | "dark";
+  user: SessionUser;
+}) {
+  const { tKey } = useI18n();
+  const [context, setContext] = useState<PersonalContextRead | null>(null);
+  const [activeSection, setActiveSection] = useState<SetupSection>("location");
+  const [locationForm, setLocationForm] = useState<LocationForm>(locationFormFromDefault);
+  const [preferenceForm, setPreferenceForm] = useState<PersonalPreferenceInput>(DEFAULT_PREFERENCES);
+  const [commuteForm, setCommuteForm] = useState<PersonalCommuteInput>(DEFAULT_COMMUTE);
+  const [telegramId, setTelegramId] = useState("");
+  const [telegramActive, setTelegramActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+
+  const completion = completionState(context);
+  const completedCount = Object.values(completion).filter(Boolean).length;
+  const completionPercent = Math.round((completedCount / SECTIONS.length) * 100);
+
+  const refreshContext = async () => {
+    setIsLoading(true);
+    const result = await fetchPersonalContext();
+    if (result.error || !result.data) {
+      setNotice({ tone: "error", text: result.error ?? "Personal context could not be loaded." });
+      setIsLoading(false);
+      return;
+    }
+
+    const nextContext = result.data;
+    setContext(nextContext);
+    if (nextContext.locations.length > 0) {
+      const defaultLocation =
+        nextContext.locations.find((location) => location.is_default) ?? nextContext.locations[0];
+      setLocationForm(locationFormFromSaved(defaultLocation));
+    }
+    if (nextContext.preferences) {
+      setPreferenceForm({
+        cares_energy: nextContext.preferences.cares_energy,
+        cares_air_quality: nextContext.preferences.cares_air_quality,
+        cares_weather: nextContext.preferences.cares_weather,
+        cares_commute: nextContext.preferences.cares_commute,
+        allergy_sensitive: nextContext.preferences.allergy_sensitive,
+        quiet_hours_start: nextContext.preferences.quiet_hours_start,
+        quiet_hours_end: nextContext.preferences.quiet_hours_end,
+        max_notifications_per_day: nextContext.preferences.max_notifications_per_day,
+      });
+    }
+    if (nextContext.locations.length >= 2) {
+      const savedCommute =
+        nextContext.commuteProfiles.find((profile) => profile.is_active) ??
+        nextContext.commuteProfiles[0];
+      if (savedCommute) {
+        setCommuteForm({
+          id: savedCommute.id,
+          name: savedCommute.name,
+          origin_location_id: savedCommute.origin_location_id,
+          destination_location_id: savedCommute.destination_location_id,
+          preferred_mode: savedCommute.preferred_mode,
+          departure_time_local: savedCommute.departure_time_local,
+          weekdays: savedCommute.weekdays,
+          is_active: savedCommute.is_active,
+        });
+      } else {
+        setCommuteForm((current) => ({
+          ...current,
+          origin_location_id:
+            current.origin_location_id ||
+            (nextContext.locations.find((location) => location.is_default) ?? nextContext.locations[0]).id,
+          destination_location_id:
+            current.destination_location_id ||
+            (nextContext.locations.find((location) => !location.is_default) ?? nextContext.locations[1]).id,
+        }));
+      }
+    }
+    const telegram = channelForTelegram(nextContext.channels);
+    setTelegramId(telegram?.external_id ?? "");
+    setTelegramActive(telegram?.is_active ?? false);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    void refreshContext();
+    // The settings page owns the initial read; subsequent saves call refreshContext explicitly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async (
+    resource: "locations" | "preferences" | "commuteProfiles" | "channels",
+    payload: PersonalLocationInput | PersonalPreferenceInput | PersonalCommuteInput | {
+      channel_type: "TELEGRAM";
+      external_id: string | null;
+      is_active: boolean;
+    },
+    successText: string,
+  ) => {
+    setIsSaving(true);
+    setNotice(null);
+    const result = await savePersonalContext(resource, payload);
+    if (result.error) {
+      setNotice({ tone: "error", text: result.error });
+      setIsSaving(false);
+      return false;
+    }
+
+    await refreshContext();
+    setNotice({ tone: "success", text: successText });
+    setIsSaving(false);
+    return true;
+  };
+
+  const saveLocation = async () => {
+    const lat = Number(locationForm.lat);
+    const lon = Number(locationForm.lon);
+    if (!locationForm.label.trim() || !locationForm.city.trim() || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsLocationValidation") });
+      return;
+    }
+
+    const didSave = await save(
+      "locations",
+      {
+        ...locationForm,
+        label: locationForm.label.trim(),
+        city: locationForm.city.trim(),
+        district: locationForm.district.trim() || null,
+        country_code: locationForm.country_code.trim().toUpperCase() || "FI",
+        lat,
+        lon,
+      },
+      tKey("shell.personalSettingsSaved"),
+    );
+    if (didSave) {
+      setActiveSection("preferences");
+    }
+  };
+
+  const savePreferences = async () => {
+    const didSave = await save("preferences", preferenceForm, tKey("shell.personalSettingsSaved"));
+    if (didSave) {
+      setActiveSection("commute");
+    }
+  };
+
+  const saveCommute = async () => {
+    if (!commuteForm.origin_location_id || !commuteForm.destination_location_id) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsSelectLocations") });
+      return;
+    }
+    if (commuteForm.origin_location_id === commuteForm.destination_location_id) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsDifferentLocations") });
+      return;
+    }
+
+    const didSave = await save("commuteProfiles", commuteForm, tKey("shell.personalSettingsSaved"));
+    if (didSave) {
+      setActiveSection("telegram");
+    }
+  };
+
+  const saveTelegram = async () => {
+    const didSave = await save(
+      "channels",
+      {
+        channel_type: "TELEGRAM",
+        external_id: telegramId.trim() || null,
+        is_active: telegramActive,
+      },
+      tKey("shell.personalSettingsSaved"),
+    );
+    if (didSave) {
+      setActiveSection("location");
+    }
+  };
+
+  const startNewLocation = () => {
+    setLocationForm(locationFormFromDefault());
+    setNotice(null);
+    setActiveSection("location");
+  };
+
+  const editLocation = (location: PersonalContextRead["locations"][number]) => {
+    setLocationForm(locationFormFromSaved(location));
+    setNotice(null);
+    setActiveSection("location");
+  };
+
+  const editCommute = (profile: PersonalContextRead["commuteProfiles"][number]) => {
+    setCommuteForm({
+      id: profile.id,
+      name: profile.name,
+      origin_location_id: profile.origin_location_id,
+      destination_location_id: profile.destination_location_id,
+      preferred_mode: profile.preferred_mode,
+      departure_time_local: profile.departure_time_local,
+      weekdays: profile.weekdays,
+      is_active: profile.is_active,
+    });
+    setNotice(null);
+    setActiveSection("commute");
+  };
+
+  const locationOptions = useMemo(() => context?.locations ?? [], [context]);
+  const telegram = channelForTelegram(context?.channels ?? []);
+  const currentSection = SECTIONS.find((section) => section.key === activeSection) ?? SECTIONS[0];
+
+  const locationNameById = useMemo(
+    () => new Map(locationOptions.map((location) => [location.id, `${location.label} · ${location.city}`])),
+    [locationOptions],
+  );
+
+  if (isLoading && !context) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.shell}>
+          <div className={styles.loading}>{tKey("shell.personalSettingsSaving")}</div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <header className={styles.header}>
+          <div className={styles.brandRow}>
+            <span className={`material-symbols-outlined ${styles.brandMark}`} aria-hidden="true">
+              sparkles
+            </span>
+            <div>
+              <span className={styles.eyebrow}>ArkiWatch · {user.name ?? user.email ?? user.id}</span>
+              <h1 className={styles.title}>{tKey("shell.personalSettingsTitle")}</h1>
+              <p className={styles.subtitle}>{tKey("shell.personalSettingsSubtitle")}</p>
+            </div>
+          </div>
+          <div className={styles.headerActions}>
+            <button className={styles.quietButton} onClick={onLanguageChange.bind(null, language === "en" ? "zh" : "en")} type="button">
+              {tKey("shell.personalSettingsLanguage")}: {language === "en" ? "中文" : "EN"}
+            </button>
+            <button className={styles.quietButton} onClick={onThemeToggle} type="button">
+              {tKey("shell.personalSettingsTheme")}: {themeMode === "light" ? "☼" : "◐"}
+            </button>
+            <Link className={styles.quietButton} href="/">
+              {tKey("shell.personalSettingsBack")}
+            </Link>
+          </div>
+        </header>
+
+        <div className={styles.layout}>
+          <nav className={styles.nav} aria-label={tKey("shell.personalSettingsTitle")}>
+            {SECTIONS.map((section) => (
+              <button
+                className={`${styles.navItem}${activeSection === section.key ? ` ${styles.navItemActive}` : ""}${completion[section.key] ? ` ${styles.navItemComplete}` : ""}`}
+                key={section.key}
+                onClick={() => setActiveSection(section.key)}
+                type="button"
+              >
+                <span className={`material-symbols-outlined ${styles.navIcon}`} aria-hidden="true">
+                  {section.icon}
+                </span>
+                <span className={styles.navCopy}>
+                  <span className={styles.navTitle}>{tKey(`shell.${section.labelKey}`)}</span>
+                  <span className={styles.navStatus}>
+                    {completion[section.key]
+                      ? tKey("shell.personalSettingsComplete")
+                      : tKey("shell.personalSettingsIncomplete")}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </nav>
+
+          <section className={styles.content}>
+            <div className={styles.hero}>
+              <div>
+                <span className={styles.sectionKicker}>{tKey("shell.personalAssistantContext")}</span>
+                <h2>{tKey(`shell.${currentSection.labelKey}`)}</h2>
+                <p>{tKey("shell.personalSettingsSubtitle")}</p>
+              </div>
+              <div className={styles.progress}>
+                <span
+                  className={styles.progressRing}
+                  data-value={completionPercent}
+                  style={{ "--progress": `${completionPercent * 3.6}deg` } as CSSProperties}
+                />
+                <span className={styles.progressLabel}>
+                  {tKey("shell.personalSettingsProgress").replace("{percent}", String(completionPercent))}
+                </span>
+              </div>
+            </div>
+
+            {notice ? (
+              <div className={`${styles.notice}${notice.tone === "error" ? ` ${styles.noticeError}` : ""}`} role="status">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {notice.tone === "error" ? "error" : "check_circle"}
+                </span>
+                {notice.text}
+              </div>
+            ) : null}
+
+            {activeSection === "location" ? (
+              <LocationSection
+                context={context}
+                form={locationForm}
+                isSaving={isSaving}
+                onChange={setLocationForm}
+                onEdit={editLocation}
+                onNew={startNewLocation}
+                onSave={saveLocation}
+                tKey={tKey}
+              />
+            ) : null}
+            {activeSection === "preferences" ? (
+              <PreferencesSection
+                form={preferenceForm}
+                isSaving={isSaving}
+                onChange={setPreferenceForm}
+                onSave={savePreferences}
+                tKey={tKey}
+              />
+            ) : null}
+            {activeSection === "commute" ? (
+              <CommuteSection
+                context={context}
+                form={commuteForm}
+                isSaving={isSaving}
+                locationNameById={locationNameById}
+                onChange={setCommuteForm}
+                onEdit={editCommute}
+                onSave={saveCommute}
+                tKey={tKey}
+              />
+            ) : null}
+            {activeSection === "telegram" ? (
+              <TelegramSection
+                channel={telegram}
+                isSaving={isSaving}
+                onChange={setTelegramId}
+                active={telegramActive}
+                onActiveChange={setTelegramActive}
+                onSave={saveTelegram}
+                tKey={tKey}
+                value={telegramId}
+              />
+            ) : null}
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+type SettingsCopy = (key: string) => string;
+
+function LocationSection({
+  context,
+  form,
+  isSaving,
+  onChange,
+  onEdit,
+  onNew,
+  onSave,
+  tKey,
+}: {
+  context: PersonalContextRead | null;
+  form: LocationForm;
+  isSaving: boolean;
+  onChange: (form: LocationForm) => void;
+  onEdit: (location: PersonalContextRead["locations"][number]) => void;
+  onNew: () => void;
+  onSave: () => void;
+  tKey: SettingsCopy;
+}) {
+  return (
+    <section className={styles.card}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <span className={styles.sectionKicker}>{tKey("shell.personalStepLocation")}</span>
+          <h3>{tKey(form.id ? "shell.personalSettingsEditLocation" : "shell.personalSettingsAddLocation")}</h3>
+          <p className={styles.hint}>{tKey("shell.personalSettingsLocationHint")}</p>
+        </div>
+        {context?.locations.length ? (
+          <button className={styles.textButton} onClick={onNew} type="button">
+            {tKey("shell.personalSettingsAddAnotherLocation")}
+          </button>
+        ) : null}
+      </div>
+      <div className={styles.formGrid}>
+        <Field label={tKey("shell.personalSettingsLabel")}>
+          <input className={styles.input} value={form.label} onChange={(event) => onChange({ ...form, label: event.target.value })} />
+        </Field>
+        <Field label={tKey("shell.personalSettingsCity")}>
+          <input className={styles.input} value={form.city} onChange={(event) => onChange({ ...form, city: event.target.value })} />
+        </Field>
+        <Field label={tKey("shell.personalSettingsDistrict")}>
+          <input className={styles.input} value={form.district} onChange={(event) => onChange({ ...form, district: event.target.value })} />
+        </Field>
+        <Field label={tKey("shell.personalSettingsCountryCode")}>
+          <input className={styles.input} maxLength={2} value={form.country_code} onChange={(event) => onChange({ ...form, country_code: event.target.value })} />
+        </Field>
+        <Field label={tKey("shell.personalSettingsLatitude")}>
+          <input className={styles.input} inputMode="decimal" type="number" step="any" value={form.lat} onChange={(event) => onChange({ ...form, lat: event.target.value })} />
+        </Field>
+        <Field label={tKey("shell.personalSettingsLongitude")}>
+          <input className={styles.input} inputMode="decimal" type="number" step="any" value={form.lon} onChange={(event) => onChange({ ...form, lon: event.target.value })} />
+        </Field>
+        <label className={`${styles.toggleRow} ${styles.fieldWide}`}>
+          <input checked={form.is_default} type="checkbox" onChange={(event) => onChange({ ...form, is_default: event.target.checked })} />
+          <span>{tKey("shell.personalSettingsDefault")}</span>
+        </label>
+      </div>
+      <div className={styles.buttonRow}>
+        <button className={styles.primaryButton} disabled={isSaving} onClick={onSave} type="button">
+          {isSaving ? tKey("shell.personalSettingsSaving") : tKey("shell.personalSettingsSave")}
+        </button>
+      </div>
+      <div className={styles.savedList}>
+        <span className={styles.sectionKicker}>{tKey("shell.personalSettingsSavedLocations")}</span>
+        {context?.locations.length ? context.locations.map((location) => (
+          <div className={styles.savedRow} key={location.id}>
+            <span>
+              <strong>{location.label}{location.is_default ? ` · ${tKey("shell.personalSettingsDefaultMarker")}` : ""}</strong>
+              <span>{location.city}{location.district ? ` · ${location.district}` : ""}</span>
+            </span>
+            <span className={styles.savedActions}>
+              <span className={styles.savedMeta}>{location.lat.toFixed(4)}, {location.lon.toFixed(4)}</span>
+              <button className={styles.textButton} onClick={() => onEdit(location)} type="button">
+                {tKey("shell.personalSettingsEdit")}
+              </button>
+            </span>
+          </div>
+        )) : <div className={styles.empty}>{tKey("shell.personalSettingsNoLocations")}</div>}
+      </div>
+    </section>
+  );
+}
+
+function PreferencesSection({
+  form,
+  isSaving,
+  onChange,
+  onSave,
+  tKey,
+}: {
+  form: PersonalPreferenceInput;
+  isSaving: boolean;
+  onChange: (form: PersonalPreferenceInput) => void;
+  onSave: () => void;
+  tKey: SettingsCopy;
+}) {
+  const toggles: Array<[keyof PersonalPreferenceInput, string]> = [
+    ["cares_weather", tKey("shell.personalSettingsWeather")],
+    ["cares_air_quality", tKey("shell.personalSettingsAirQuality")],
+    ["cares_commute", tKey("shell.personalSettingsCommute")],
+    ["cares_energy", tKey("shell.personalSettingsEnergy")],
+    ["allergy_sensitive", tKey("shell.personalSettingsAllergy")],
+  ];
+
+  return (
+    <section className={styles.card}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <span className={styles.sectionKicker}>{tKey("shell.personalStepPreferences")}</span>
+          <h3>{tKey("shell.personalStepPreferences")}</h3>
+          <p className={styles.hint}>{tKey("shell.personalSettingsPreferencesHint")}</p>
+        </div>
+      </div>
+      <div className={styles.toggleGrid}>
+        {toggles.map(([key, label]) => (
+          <label className={styles.toggleRow} key={key}>
+            <input
+              checked={Boolean(form[key])}
+              type="checkbox"
+              onChange={(event) => onChange({ ...form, [key]: event.target.checked })}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+      </div>
+      <div className={styles.fieldRow}>
+        <Field label={tKey("shell.personalSettingsQuietHours")}>
+          <div className={styles.fieldRow}>
+            <input className={styles.input} aria-label={tKey("shell.personalSettingsFrom")} type="time" value={form.quiet_hours_start ?? ""} onChange={(event) => onChange({ ...form, quiet_hours_start: event.target.value || null })} />
+            <input className={styles.input} aria-label={tKey("shell.personalSettingsTo")} type="time" value={form.quiet_hours_end ?? ""} onChange={(event) => onChange({ ...form, quiet_hours_end: event.target.value || null })} />
+          </div>
+        </Field>
+        <Field label={tKey("shell.personalSettingsNotifications")}>
+          <input className={styles.input} min={1} max={20} type="number" value={form.max_notifications_per_day} onChange={(event) => onChange({ ...form, max_notifications_per_day: Number(event.target.value) })} />
+        </Field>
+      </div>
+      <div className={styles.buttonRow}>
+        <button className={styles.primaryButton} disabled={isSaving} onClick={onSave} type="button">
+          {isSaving ? tKey("shell.personalSettingsSaving") : tKey("shell.personalSettingsSave")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function CommuteSection({
+  context,
+  form,
+  isSaving,
+  locationNameById,
+  onChange,
+  onEdit,
+  onSave,
+  tKey,
+}: {
+  context: PersonalContextRead | null;
+  form: PersonalCommuteInput;
+  isSaving: boolean;
+  locationNameById: Map<string, string>;
+  onChange: (form: PersonalCommuteInput) => void;
+  onEdit: (profile: PersonalContextRead["commuteProfiles"][number]) => void;
+  onSave: () => void;
+  tKey: SettingsCopy;
+}) {
+  const locations = context?.locations ?? [];
+  return (
+    <section className={styles.card}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <span className={styles.sectionKicker}>{tKey("shell.personalStepCommute")}</span>
+          <h3>{tKey("shell.personalSettingsAddCommute")}</h3>
+          <p className={styles.hint}>{tKey("shell.personalSettingsCommuteHint")}</p>
+        </div>
+      </div>
+      {locations.length < 2 ? (
+        <div className={styles.empty}>{tKey("shell.personalSettingsSelectLocations")}</div>
+      ) : (
+        <>
+          <div className={styles.formGrid}>
+            <Field label={tKey("shell.personalSettingsProfileName")}>
+              <input className={styles.input} value={form.name} onChange={(event) => onChange({ ...form, name: event.target.value })} />
+            </Field>
+            <Field label={tKey("shell.personalSettingsMode")}>
+              <select className={styles.select} value={form.preferred_mode} onChange={(event) => onChange({ ...form, preferred_mode: event.target.value as PersonalCommuteInput["preferred_mode"] })}>
+                <option value="TRANSIT">{tKey("shell.personalSettingsTransit")}</option>
+                <option value="WALK">{tKey("shell.personalSettingsWalk")}</option>
+                <option value="BIKE">{tKey("shell.personalSettingsBike")}</option>
+                <option value="DRIVE">{tKey("shell.personalSettingsDrive")}</option>
+              </select>
+            </Field>
+            <Field label={tKey("shell.personalSettingsOrigin")}>
+              <select className={styles.select} value={form.origin_location_id} onChange={(event) => onChange({ ...form, origin_location_id: event.target.value })}>
+                {locations.map((location) => <option key={location.id} value={location.id}>{locationNameById.get(location.id)}</option>)}
+              </select>
+            </Field>
+            <Field label={tKey("shell.personalSettingsDestination")}>
+              <select className={styles.select} value={form.destination_location_id} onChange={(event) => onChange({ ...form, destination_location_id: event.target.value })}>
+                {locations.map((location) => <option key={location.id} value={location.id}>{locationNameById.get(location.id)}</option>)}
+              </select>
+            </Field>
+            <Field label={tKey("shell.personalSettingsDeparture")}>
+              <input className={styles.input} type="time" value={form.departure_time_local} onChange={(event) => onChange({ ...form, departure_time_local: event.target.value })} />
+            </Field>
+            <Field label={tKey("shell.personalSettingsWeekdays")}>
+              <div className={styles.days}>
+                {WEEKDAYS.map((day) => {
+                  const active = form.weekdays.includes(day.value);
+                  return <button aria-pressed={active} className={`${styles.dayButton}${active ? ` ${styles.dayButtonActive}` : ""}`} key={day.value} onClick={() => onChange({ ...form, weekdays: active ? form.weekdays.filter((value) => value !== day.value) : [...form.weekdays, day.value].sort() })} type="button">{tKey(`shell.${day.labelKey}`)}</button>;
+                })}
+              </div>
+            </Field>
+            <label className={`${styles.toggleRow} ${styles.fieldWide}`}>
+              <input
+                checked={Boolean(form.is_active)}
+                type="checkbox"
+                onChange={(event) => onChange({ ...form, is_active: event.target.checked })}
+              />
+              <span>{tKey("shell.personalSettingsCommuteActive")}</span>
+            </label>
+          </div>
+          <div className={styles.buttonRow}>
+            <button className={styles.primaryButton} disabled={isSaving} onClick={onSave} type="button">
+              {isSaving ? tKey("shell.personalSettingsSaving") : tKey("shell.personalSettingsSave")}
+            </button>
+          </div>
+        </>
+      )}
+      <div className={styles.savedList}>
+        <span className={styles.sectionKicker}>{tKey("shell.personalStepCommute")}</span>
+        {context?.commuteProfiles.length ? context.commuteProfiles.map((profile) => (
+          <div className={styles.savedRow} key={profile.id}>
+            <span>
+              <strong>{profile.name}</strong>
+              <span>{locationNameById.get(profile.origin_location_id) ?? "?"} → {locationNameById.get(profile.destination_location_id) ?? "?"} · {profile.departure_time_local}</span>
+            </span>
+            <span className={styles.savedActions}>
+              <span className={styles.savedMeta}>
+                {profile.preferred_mode} · {profile.is_active
+                  ? tKey("shell.personalSettingsActive")
+                  : tKey("shell.personalSettingsPaused")}
+              </span>
+              <button className={styles.textButton} onClick={() => onEdit(profile)} type="button">
+                {tKey("shell.personalSettingsEdit")}
+              </button>
+            </span>
+          </div>
+        )) : <div className={styles.empty}>{tKey("shell.personalSettingsNoCommutes")}</div>}
+      </div>
+    </section>
+  );
+}
+
+function TelegramSection({
+  active,
+  channel,
+  isSaving,
+  onChange,
+  onActiveChange,
+  onSave,
+  tKey,
+  value,
+}: {
+  active: boolean;
+  channel: PersonalChannel | null;
+  isSaving: boolean;
+  onChange: (value: string) => void;
+  onActiveChange: (value: boolean) => void;
+  onSave: () => void;
+  tKey: SettingsCopy;
+  value: string;
+}) {
+  return (
+    <section className={styles.card}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <span className={styles.sectionKicker}>{tKey("shell.personalStepTelegram")}</span>
+          <h3>{tKey("shell.personalStepTelegram")}</h3>
+          <p className={styles.hint}>{tKey("shell.personalSettingsTelegramHint")}</p>
+        </div>
+      </div>
+      <div className={styles.statusRow}>
+        <span className={styles.statusText}>{tKey("shell.personalSettingsTelegramStatus")}</span>
+        <strong>
+          {!channel
+            ? tKey("shell.personalSettingsNotConfigured")
+            : !channel.is_active
+              ? tKey("shell.personalSettingsDisabled")
+              : channel.is_verified
+                ? tKey("shell.personalSettingsConnected")
+                : tKey("shell.personalSettingsPending")}
+        </strong>
+      </div>
+      <Field label={tKey("shell.personalSettingsTelegramId")}>
+        <input className={styles.input} inputMode="numeric" value={value} onChange={(event) => onChange(event.target.value)} />
+      </Field>
+      <label className={styles.toggleRow}>
+        <input checked={active} type="checkbox" onChange={(event) => onActiveChange(event.target.checked)} />
+        <span>{tKey("shell.personalSettingsTelegramActive")}</span>
+      </label>
+      <div className={styles.buttonRow}>
+        <button className={styles.primaryButton} disabled={isSaving} onClick={onSave} type="button">
+          {isSaving ? tKey("shell.personalSettingsSaving") : tKey("shell.personalSettingsSaveChannel")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Field({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <label className={styles.field}>
+      <span className={styles.label}>{label}</span>
+      {children}
+    </label>
+  );
+}

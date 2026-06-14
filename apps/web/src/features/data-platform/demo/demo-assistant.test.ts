@@ -7,6 +7,7 @@ describe("demo assistant", () => {
     const reply = demoAssistantReply("Explain the current page's data", "en");
 
     expect(reply.text).toContain("16 °C");
+    expect(reply.text).toContain("9.60 c/kWh");
     expect(reply.text).toContain("7.80 c/kWh");
     expect(reply.answerMode).toBe("fallback");
     expect(reply.citations[0]?.source).toBe("Static demo fixture");
@@ -17,5 +18,13 @@ describe("demo assistant", () => {
 
     expect(reply.text).toContain("不会访问任何后端");
     expect(reply.text).toContain("FMI");
+  });
+
+  it("distinguishes the current price from the flexible-use window", () => {
+    const reply = demoAssistantReply("When is electricity cheaper?", "en");
+
+    expect(reply.text).toContain("current household electricity window of 9.60 c/kWh");
+    expect(reply.text).toContain("lower-cost flexible-use window");
+    expect(reply.text).toContain("7.80 c/kWh");
   });
 });

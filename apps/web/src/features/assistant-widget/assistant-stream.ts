@@ -19,6 +19,41 @@ export type AssistantStreamEvent = {
   data: AssistantStreamPayload;
 };
 
+export type AssistantErrorDetails = {
+  message: string;
+  retryAfterSeconds: number | null;
+};
+
+export function parseRetryAfter(value: string | null): number | null {
+  const normalized = value?.trim() ?? "";
+  if (!/^\d+$/.test(normalized)) {
+    return null;
+  }
+
+  const seconds = Number(normalized);
+  return Number.isSafeInteger(seconds) ? seconds : null;
+}
+
+export async function readAssistantError(
+  response: Response,
+): Promise<AssistantErrorDetails> {
+  const payload = (await response.json().catch(() => null)) as {
+    detail?: unknown;
+    message?: unknown;
+  } | null;
+  const detail =
+    typeof payload?.detail === "string"
+      ? payload.detail
+      : typeof payload?.message === "string"
+        ? payload.message
+        : `Assistant request failed with ${response.status}.`;
+
+  return {
+    message: detail,
+    retryAfterSeconds: parseRetryAfter(response.headers.get("retry-after")),
+  };
+}
+
 export function parseAssistantStream(
   buffer: string,
 ): { events: AssistantStreamEvent[]; remainder: string } {
@@ -53,14 +88,28 @@ export function parseAssistantStream(
 export function localizeAssistantError(
   errorMessage: string,
   tKey: (key: string) => string,
+  retryAfterSeconds: number | null = null,
 ): string {
-  if (errorMessage.includes("not configured") || errorMessage.includes("request failed")) {
+  const normalizedMessage = errorMessage.toLowerCase();
+  if (
+    normalizedMessage.includes("request limit") ||
+    normalizedMessage.includes("rate limit")
+  ) {
+    const key = retryAfterSeconds === null
+      ? "assistant.rateLimitedSoon"
+      : "assistant.rateLimited";
+    return tKey(key).replace("{seconds}", String(retryAfterSeconds ?? ""));
+  }
+  if (
+    normalizedMessage.includes("not configured") ||
+    normalizedMessage.includes("request failed")
+  ) {
     return tKey("assistant.providerUnavailable");
   }
-  if (errorMessage.includes("stream interrupted")) {
+  if (normalizedMessage.includes("stream interrupted")) {
     return tKey("assistant.streamInterrupted");
   }
-  if (errorMessage.includes("returned no answer")) {
+  if (normalizedMessage.includes("returned no answer")) {
     return tKey("assistant.emptyResponse");
   }
   return errorMessage;

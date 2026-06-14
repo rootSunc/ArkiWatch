@@ -18,6 +18,25 @@ type RefreshStatusResponse = {
   last_error?: string | null;
 };
 
+type ErrorPayload = {
+  detail?: unknown;
+  message?: unknown;
+};
+
+export async function readPlatformActionError(
+  response: Response,
+  fallback: string,
+): Promise<Error> {
+  const payload = (await response.json().catch(() => null)) as ErrorPayload | null;
+  const detail =
+    typeof payload?.detail === "string"
+      ? payload.detail
+      : typeof payload?.message === "string"
+        ? payload.message
+        : null;
+  return new Error(detail?.trim() || fallback);
+}
+
 const REFRESH_POLL_INTERVAL_MS = 2000;
 const REFRESH_POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -27,7 +46,7 @@ async function refreshPlatformSources(): Promise<RefreshEnqueueResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to refresh data sources");
+    throw await readPlatformActionError(response, "Failed to refresh data sources");
   }
 
   return (await response.json()) as RefreshEnqueueResponse;
@@ -40,7 +59,7 @@ async function fetchRefreshStatus(): Promise<RefreshStatusResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to load refresh status");
+    throw await readPlatformActionError(response, "Failed to load refresh status");
   }
 
   return (await response.json()) as RefreshStatusResponse;

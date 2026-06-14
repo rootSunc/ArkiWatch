@@ -6,6 +6,8 @@ import {
 } from "@/features/auth/config";
 import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
 
+import { assistantJsonResponse } from "../../response";
+
 export async function POST(request: NextRequest) {
   const crossSiteResponse = rejectCrossSiteRequest(request);
   if (crossSiteResponse) {
@@ -38,9 +40,10 @@ export async function POST(request: NextRequest) {
 
   if (!backendResponse.ok || !backendResponse.body) {
     const responseBody = await backendResponse.json().catch(() => null);
-    return NextResponse.json(
-      responseBody ?? { detail: "Assistant stream returned an empty response." },
-      { status: backendResponse.status },
+    return assistantJsonResponse(
+      backendResponse,
+      responseBody,
+      "Assistant stream returned an empty response.",
     );
   }
 

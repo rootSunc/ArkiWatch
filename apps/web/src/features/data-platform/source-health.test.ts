@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { healthySourceCount, isSourceHealthy, sourceHealthTone } from "./source-health";
+import {
+  healthySourceCount,
+  isSourceHealthy,
+  sourceHealthTone,
+  sourceIssueCount,
+} from "./source-health";
 
 describe("source health presentation", () => {
   it("normalizes API statuses to stable design-system tones", () => {
@@ -22,6 +27,7 @@ describe("source health presentation", () => {
     ];
 
     expect(healthySourceCount(sources)).toBe(2);
+    expect(sourceIssueCount(sources)).toBe(2);
     expect(isSourceHealthy(sources[0])).toBe(true);
     expect(isSourceHealthy(sources[2])).toBe(false);
   });

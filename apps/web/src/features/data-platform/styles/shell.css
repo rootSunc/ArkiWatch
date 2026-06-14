@@ -2379,6 +2379,13 @@
   color: var(--on-surface);
 }
 
+.assistant-glyph {
+  display: block;
+  width: 1.25em;
+  height: 1.25em;
+  flex: 0 0 auto;
+}
+
 .detail-content-shell {
   background: var(--weather-bg);
   padding: 16px;

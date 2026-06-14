@@ -68,6 +68,7 @@
 
 .assistant-launcher:focus-visible,
 .assistant-icon-button:focus-visible,
+.assistant-message-retry:focus-visible,
 .assistant-suggestions button:focus-visible,
 .assistant-form button:focus-visible {
   outline: 3px solid var(--focus-ring);
@@ -487,6 +488,39 @@
   flex: 0 0 auto;
   font-size: 15px;
   color: var(--status-warn, #b7791f);
+}
+
+.assistant-message-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  margin-top: 8px;
+  border: 1px solid var(--detail-panel-border-medium);
+  border-radius: 8px;
+  background: var(--surface-container-low);
+  color: var(--primary);
+  padding: 4px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.assistant-message-retry:hover,
+.assistant-message-retry:focus-visible {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  outline: none;
+}
+
+.assistant-message-retry:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.assistant-message-retry .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .assistant-suggestions {

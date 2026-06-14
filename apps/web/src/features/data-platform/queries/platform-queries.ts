@@ -33,7 +33,11 @@ import {
 
 export const HISTORY_DAY_COUNT = 7;
 export const HISTORY_AVAILABILITY_DAY_COUNT = 90;
-export { PLATFORM_QUERY_STALE_TIME_MS, platformDataNeedsForView };
+export {
+  PLATFORM_QUERY_REFETCH_INTERVAL_MS,
+  PLATFORM_QUERY_STALE_TIME_MS,
+  platformDataNeedsForView,
+} from "./platform-data-needs";
 
 export type PlatformQueryScope = {
   city?: string | null;
@@ -60,67 +64,60 @@ export type PlatformFetchResult = {
 
 export const platformKeys = {
   all: ["platform"] as const,
-  scope: (city: string, date: string | null, userId: string) =>
-    [...platformKeys.all, city, date, userId] as const,
+  // These reads are public platform data. Keep the query key independent of
+  // the signed-in viewer so anonymous and authenticated views share the same
+  // cache entry instead of duplicating identical requests by user id.
+  scope: (city: string, date: string | null) =>
+    [...platformKeys.all, city, date] as const,
   overview: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "overview"] as const,
   publicDashboard: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "public-dashboard"] as const,
   weather: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "weather"] as const,
   airQuality: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "air-quality"] as const,
   energy: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "energy"] as const,
   householdEnergy: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "household-energy"] as const,
   roadRail: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "road-rail"] as const,
   transit: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "transit"] as const,
   history: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "history"] as const,
   historyAvailability: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
-      scope.userId ?? appEnv.defaultUserId,
     ), "history-availability"] as const,
 };
 
@@ -194,7 +191,6 @@ export async function fetchPlatformOverview(scope: PlatformQueryScope) {
   const result = await platformClient(resolved).get<PlatformOverviewResponse>(
     "/platform/overview",
     withOptionalDate(resolved.date, {
-      user_id: resolved.userId,
       city: resolved.city,
     }),
   );

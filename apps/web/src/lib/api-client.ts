@@ -39,6 +39,55 @@ export const DEFAULT_API_TIMEOUT_MS = 8000;
 export const API_TIMEOUT_ERROR =
   "Platform request timed out. The data source is not responding.";
 
+const MAX_API_ERROR_DETAIL_LENGTH = 240;
+
+type ApiErrorPayload = {
+  detail?: unknown;
+  message?: unknown;
+};
+
+function errorDetail(payload: ApiErrorPayload | null): string | null {
+  const detail = payload?.detail ?? payload?.message;
+  if (typeof detail === "string" && detail.trim()) {
+    return detail.trim();
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === "string") {
+          return item.trim();
+        }
+
+        if (typeof item === "object" && item !== null) {
+          const record = item as { msg?: unknown; message?: unknown };
+          const message = record.msg ?? record.message;
+          return typeof message === "string" ? message.trim() : "";
+        }
+
+        return "";
+      })
+      .filter(Boolean);
+
+    return messages.length > 0 ? messages.join("; ") : null;
+  }
+
+  return null;
+}
+
+async function apiErrorMessage(response: Response): Promise<string> {
+  const fallback = `Platform request failed with ${response.status}.`;
+  const payload = (await response.json().catch(() => null)) as ApiErrorPayload | null;
+  const detail = errorDetail(payload);
+
+  if (!detail) {
+    return fallback;
+  }
+
+  const boundedDetail = detail.slice(0, MAX_API_ERROR_DETAIL_LENGTH);
+  return `${fallback} ${boundedDetail}`;
+}
+
 export function normalizeApiBaseUrl(rawValue: string | undefined): string {
   const normalizedValue = (rawValue ?? DEFAULT_API_BASE_URL).trim() || DEFAULT_API_BASE_URL;
 
@@ -86,7 +135,7 @@ export async function apiFetchJson<T>(
     if (!response.ok) {
       return {
         data: null,
-        error: `Platform request failed with ${response.status}.`,
+        error: await apiErrorMessage(response),
         status: response.status,
       };
     }

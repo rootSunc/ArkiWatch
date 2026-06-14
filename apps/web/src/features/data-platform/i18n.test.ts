@@ -13,6 +13,13 @@ describe("translateMessageKey", () => {
     expect(translateMessageKey("zh", "shell.navWeather")).toBe("天气");
   });
 
+  it("keeps the demo notice scoped without hard-coding a city", () => {
+    expect(translateMessageKey("en", "shell.demoModeNotice")).toContain("{city}");
+    expect(translateMessageKey("zh", "shell.demoModeNotice")).toContain("{city}");
+    expect(translateMessageKey("en", "shell.demoModeNotice")).not.toContain("Helsinki");
+    expect(translateMessageKey("zh", "shell.demoModeNotice")).not.toContain("赫尔辛基");
+  });
+
   it("falls back to English when zh key is missing", () => {
     expect(translateMessageKey("zh", "shell.fakeMissingKey")).toBe("shell.fakeMissingKey");
   });

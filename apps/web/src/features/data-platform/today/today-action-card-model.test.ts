@@ -157,6 +157,9 @@ describe("buildTodayActionCardView", () => {
         systemEnergy: null,
       },
       "zh",
+      "live",
+      "Europe/Helsinki",
+      Date.parse("2026-08-09T08:30:00Z"),
     );
 
     expect(view.title).toBe("需要留意");
@@ -205,5 +208,51 @@ describe("buildTodayActionCardView", () => {
     expect(view.body).toBe("Open a signal workspace to inspect the underlying data.");
     expect(view.tone).toBe("neutral");
     expect(view.sources).toBe("");
+  });
+
+  it("does not present an expired recommendation as current guidance", () => {
+    const view = buildTodayActionCardView(
+      {
+        key: "outdoor",
+        title: "Outdoor conditions",
+        description: "Weather signals.",
+        status_label: "Carry rain gear",
+        area_scope: "helsinki_uusimaa",
+        freshness_state: "fresh",
+        valid_from: "2026-08-09T07:00:00Z",
+        valid_to: "2026-08-09T08:00:00Z",
+        evidence: [],
+        source_codes: ["fmi"],
+        recommendation: {
+          id: "expired-outdoor",
+          scenario_key: "outdoor",
+          title: "Carry rain gear",
+          body: "Rain has already passed.",
+          severity: "HIGH",
+          area_scope: "helsinki_uusimaa",
+          freshness_state: "fresh",
+          valid_from: "2026-08-09T07:00:00Z",
+          valid_to: "2026-08-09T08:00:00Z",
+          evidence: [],
+        },
+      },
+      {
+        weather: null,
+        airQuality: null,
+        transit: null,
+        roadRail: null,
+        householdEnergy: null,
+        systemEnergy: null,
+      },
+      "en",
+      "live",
+      "Europe/Helsinki",
+      Date.parse("2026-08-09T09:00:00Z"),
+    );
+
+    expect(view.title).toBe("No current recommendation");
+    expect(view.body).toBe("Weather signals.");
+    expect(view.detail).toBeNull();
+    expect(view.tone).toBe("neutral");
   });
 });

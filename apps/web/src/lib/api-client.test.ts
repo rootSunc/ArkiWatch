@@ -60,6 +60,59 @@ describe("api-client", () => {
     expect(result.status).toBeNull();
   });
 
+  it("preserves bounded backend error details without losing the status", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          { detail: [{ msg: "city is required" }, { msg: "date is invalid" }] },
+          { status: 422 },
+        ),
+      ),
+    );
+
+    const result = await apiFetchJson(
+      "/platform/overview",
+      { baseUrl: "https://example.com/api" },
+    );
+
+    expect(result.status).toBe(422);
+    expect(result.error).toBe(
+      "Platform request failed with 422. city is required; date is invalid",
+    );
+  });
+
+  it("falls back cleanly when a failed response has no readable detail", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("upstream unavailable", { status: 503 })),
+    );
+
+    const result = await apiFetchJson(
+      "/platform/overview",
+      { baseUrl: "https://example.com/api" },
+    );
+
+    expect(result.error).toBe("Platform request failed with 503.");
+  });
+
+  it("bounds unexpectedly large backend details", async () => {
+    const detail = "x".repeat(500);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ detail }, { status: 500 })),
+    );
+
+    const result = await apiFetchJson(
+      "/platform/overview",
+      { baseUrl: "https://example.com/api" },
+    );
+
+    expect(result.error).toBe(
+      `Platform request failed with 500. ${detail.slice(0, 240)}`,
+    );
+  });
+
   it("does not let API errors become successful nullable query values", () => {
     expect(() =>
       unwrapApiResult({ data: null, error: "Platform is unavailable.", status: 503 }),

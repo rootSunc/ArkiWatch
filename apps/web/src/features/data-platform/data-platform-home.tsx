@@ -16,6 +16,7 @@ import {
   severityTone,
 } from "@/features/shared/format";
 import { appEnv } from "@/lib/env";
+import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import "./data-platform.css";
 
@@ -30,6 +31,7 @@ import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import {
   HistoricalWarningBanner,
   PRIMARY_NAV_ITEMS,
+  RefreshErrorBanner,
   saveCityValue,
   storedCityValue,
 } from "./data-platform-shell";
@@ -50,6 +52,7 @@ import {
 } from "./i18n";
 import { usePlatformHome } from "./hooks/use-platform-home";
 import { usePlatformNavPrefetch } from "./hooks/use-platform-prefetch";
+import { usePersonalDashboard } from "./hooks/use-personal-dashboard";
 import { PlatformSkeleton } from "./platform-skeleton";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
@@ -95,6 +98,8 @@ import {
 } from "./signal-attribution";
 import { buildSignalSystemTiles } from "./signals-console";
 import { SourceHealthStrip } from "./source-health-strip";
+import { sourceIssueCount } from "./source-health";
+import { platformErrorMessage } from "./platform-error";
 import { buildTodayBrief } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import { viewerStateLabel } from "./viewer-state";
@@ -160,6 +165,7 @@ export function DataPlatformHome({
     initialDate ?? null,
   );
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
+  const [assistantOpenQuestion, setAssistantOpenQuestion] = useState<string | null>(null);
   const assistantTopbarButtonRef = useRef<HTMLButtonElement>(null);
   const assistantNavButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationButtonRef = useRef<HTMLButtonElement>(null);
@@ -267,8 +273,26 @@ export function DataPlatformHome({
   const currentUserInitials = profileInitials(currentUserLabel);
 
   const isRefreshing = refreshMutation.isPending;
+  const refreshError = refreshMutation.error instanceof Error
+    ? refreshMutation.error.message
+    : refreshMutation.error
+      ? String(refreshMutation.error)
+      : null;
   const workspaceMode: WorkspaceMode =
     selectedNavKey === TODAY_NAV_KEY ? "today" : "data";
+  const {
+    dashboard: personalDashboard,
+    error: personalDashboardError,
+    retry: retryPersonalDashboard,
+  } = usePersonalDashboard({
+    enabled: isAuthenticated && workspaceMode === "today" && !appEnv.demoMode,
+    userId: defaultUserId ?? resolvedUserId,
+  });
+
+  function requestAssistant(question?: string): void {
+    setAssistantOpenQuestion(question?.trim() || null);
+    setAssistantOpenRequest((current) => current + 1);
+  }
 
   function triggerDataRefresh(): void {
     if (isRefreshing || !isAuthenticated || refreshMutation.isPending) {
@@ -555,6 +579,17 @@ export function DataPlatformHome({
       ),
     [eventReferenceAt, recentEventCandidates, selectedCity],
   );
+  const todayReferenceNow = useMemo(() => {
+    if (!appEnv.demoMode || !publicDashboard) {
+      return undefined;
+    }
+
+    const checkedAt = Date.parse(publicDashboard.checked_at);
+    return Number.isFinite(checkedAt) ? checkedAt : undefined;
+  }, [publicDashboard]);
+  const demoSnapshotCheckedAt = publicDashboard?.checked_at
+    ? formatTimestamp(publicDashboard.checked_at, "dateTime", languageMode, platformTimezone)
+    : null;
   const todayBrief = useMemo(
     () =>
       buildTodayBrief({
@@ -564,8 +599,21 @@ export function DataPlatformHome({
         summaryTiles: userSummaryTiles,
         timelineItems: crossDomainTimeline,
         language: languageMode,
+        now: todayReferenceNow,
       }),
-    [crossDomainTimeline, isHistorical, languageMode, publicDashboard, userSummaryTiles, visibleOverview],
+    [
+      crossDomainTimeline,
+      isHistorical,
+      languageMode,
+      publicDashboard,
+      todayReferenceNow,
+      userSummaryTiles,
+      visibleOverview,
+    ],
+  );
+  const todaySourceIssueCount = useMemo(
+    () => sourceIssueCount(visibleOverview?.sources ?? []),
+    [visibleOverview],
   );
   const signalSystemTiles = useMemo(
     () =>
@@ -675,6 +723,7 @@ export function DataPlatformHome({
   const showInlineDataError = Boolean(
     error && (visibleOverview || selectedNavKey === TODAY_NAV_KEY),
   );
+  const localizedPlatformError = platformErrorMessage(error, tKey);
 
   function selectNavItem(item: NavItem): void {
     selectNav(item.categoryKey ?? item.key);
@@ -1145,7 +1194,7 @@ export function DataPlatformHome({
               assistantButtonRef={assistantTopbarButtonRef}
               isDetailPage={isDetailPage}
               onSearchChange={setSearchValue}
-              onOpenAssistant={() => setAssistantOpenRequest((current) => current + 1)}
+              onOpenAssistant={requestAssistant}
               onSelectNav={selectNav}
               restoreSideNavButton={restoreSideNavButton}
               searchValue={searchValue}
@@ -1173,7 +1222,22 @@ export function DataPlatformHome({
                 <span className="material-symbols-outlined" aria-hidden="true">
                   database
                 </span>
-                <span>{tKey("shell.demoModeNotice")}</span>
+                <span className="demo-mode-banner-copy">
+                  <span>
+                    {tKey("shell.demoModeNotice").replace(
+                      "{city}",
+                      cityLabel(selectedCity),
+                    )}
+                  </span>
+                  {demoSnapshotCheckedAt ? (
+                    <time>
+                      {tKey("shell.demoSnapshotCheckedAt").replace(
+                        "{checkedAt}",
+                        demoSnapshotCheckedAt,
+                      )}
+                    </time>
+                  ) : null}
+                </span>
               </div>
             ) : null}
             {isScopePending ? (
@@ -1191,6 +1255,13 @@ export function DataPlatformHome({
                   </span>
                 </span>
               </div>
+            ) : null}
+            {refreshError ? (
+              <RefreshErrorBanner
+                error={refreshError}
+                language={languageMode}
+                onDismiss={() => refreshMutation.reset()}
+              />
             ) : null}
             <div
               aria-busy={isScopePending}
@@ -1210,7 +1281,7 @@ export function DataPlatformHome({
                       ? tKey("shell.partialDataWarning")
                       : tKey("shell.dataUnavailableWarning")}
                   </strong>
-                  <span>{error}</span>
+                  <span>{localizedPlatformError}</span>
                 </span>
                 <button
                   className="platform-inline-warning-action"
@@ -1241,12 +1312,19 @@ export function DataPlatformHome({
                 isScopePending={isScopePending}
                 language={languageMode}
                 liveSignals={scenarioLiveSignals}
+                now={todayReferenceNow}
                 planItems={todayBrief?.planItems ?? []}
+                personalDashboard={personalDashboard}
+                personalDashboardError={personalDashboardError}
+                sourceIssueCount={todaySourceIssueCount}
                 todayBrief={todayBrief}
+                onOpenAssistant={requestAssistant}
+                onOpenSettings={() => router.push("/settings")}
                 onOpenEvent={openRecentEvent}
                 onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
                 onOpenScenario={openScenario}
                 onOpenSummaryTile={openSummaryTile}
+                onRetryPersonalDashboard={retryPersonalDashboard}
               />
             ) : visibleOverview ? (
               isDetailPage ? (
@@ -1742,7 +1820,7 @@ export function DataPlatformHome({
               >
                 <span>{tKey("shell.platformUnavailable")}</span>
                 <h1>{tKey("shell.dataPlatformCouldNotLoad")}</h1>
-                <p>{error ?? tKey("shell.unknownPlatformError")}</p>
+                <p>{localizedPlatformError}</p>
                 <div className="platform-error-actions">
                   <button
                     className="platform-error-retry"
@@ -1810,14 +1888,12 @@ export function DataPlatformHome({
               </button>
               <button
                 className="mobile-bottom-nav-item mobile-bottom-nav-assistant"
-                onClick={() => setAssistantOpenRequest((current) => current + 1)}
+                onClick={() => requestAssistant()}
                 ref={assistantNavButtonRef}
                 title={tKey("assistant.openAssistant")}
                 type="button"
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  hub
-                </span>
+                <AssistantGlyph />
                 <span>{tKey("shell.assistant")}</span>
               </button>
             </nav>
@@ -1831,6 +1907,7 @@ export function DataPlatformHome({
             scopeKey={selectedNavKey}
             focusReturnRefs={assistantFocusReturnRefs}
             openRequest={assistantOpenRequest}
+            openQuestion={assistantOpenQuestion}
             onOpenView={openAssistantView}
             showLauncher={workspaceMode === "today" && !isDetailPage}
             userId={defaultUserId ?? resolvedUserId}

@@ -8,8 +8,11 @@ import { useI18n } from "../i18n";
 import type { ScenarioLiveSignals } from "../scenario-live-hints";
 import type { PlatformEvent } from "../types";
 import { DayPlanTimeline } from "./day-plan-timeline";
+import { PersonalContextStrip } from "./personal-context-strip";
+import { PersonalTodayCards } from "./personal-today-cards";
 import { TodayActionCard } from "./today-action-card";
 import type { TodayBrief } from "./today-brief";
+import type { PersonalDashboardRead } from "../personal-dashboard";
 
 export { SCENARIO_NAV_KEYS } from "../scenario-navigation";
 
@@ -17,24 +20,38 @@ type TodayOverviewProps = {
   todayBrief: TodayBrief | null;
   liveSignals: ScenarioLiveSignals;
   planItems: TodayBrief["planItems"];
+  personalDashboard: PersonalDashboardRead | null;
+  personalDashboardError?: string | null;
+  now?: number;
+  sourceIssueCount: number;
   isScopePending: boolean;
   language: LanguageMode;
   onOpenSignals: () => void;
   onOpenScenario: (scenarioKey: string) => void;
   onOpenSummaryTile: (tileKey: string) => void;
+  onOpenAssistant: () => void;
+  onOpenSettings?: () => void;
   onOpenEvent?: (event: PlatformEvent) => void;
+  onRetryPersonalDashboard?: () => void;
 };
 
 export function TodayOverview({
   todayBrief,
   liveSignals,
   planItems,
+  personalDashboard,
+  personalDashboardError,
+  now,
+  sourceIssueCount,
   isScopePending,
   language,
   onOpenSignals,
   onOpenScenario,
   onOpenSummaryTile,
+  onOpenAssistant,
+  onOpenSettings,
   onOpenEvent,
+  onRetryPersonalDashboard,
 }: TodayOverviewProps) {
   const { tKey } = useI18n();
 
@@ -165,6 +182,76 @@ export function TodayOverview({
         </div>
       ) : null}
 
+      {sourceIssueCount > 0 ? (
+        <div className="today-source-warning" role="status">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            warning
+          </span>
+          <span className="today-source-warning-copy">
+            <strong>
+              {tKey("shell.todaySourceHealthWarning").replace(
+                "{count}",
+                String(sourceIssueCount),
+              )}
+            </strong>
+            <span>{tKey("shell.todaySourceHealthWarningDetail")}</span>
+          </span>
+          <button
+            className="today-source-warning-action"
+            disabled={isScopePending}
+            onClick={onOpenSignals}
+            type="button"
+          >
+            {tKey("shell.openAllSignals")}
+            <span className="material-symbols-outlined" aria-hidden="true">
+              chevron_right
+            </span>
+          </button>
+        </div>
+      ) : null}
+
+      {personalDashboard ? (
+        <>
+          <PersonalContextStrip
+            dashboard={personalDashboard}
+            onOpenAssistant={onOpenAssistant}
+            onOpenSettings={onOpenSettings}
+          />
+          <PersonalTodayCards
+            dashboard={personalDashboard}
+            disabled={isScopePending}
+            language={language}
+            onOpenAssistant={onOpenAssistant}
+          />
+        </>
+      ) : null}
+
+      {personalDashboardError ? (
+        <div className="today-personal-warning" role="alert">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            person_alert
+          </span>
+          <span className="today-personal-warning-copy">
+            <strong>{tKey("shell.personalContextUnavailable")}</strong>
+            <span>{tKey("shell.personalContextUnavailableDetail")}</span>
+            <small>{personalDashboardError}</small>
+          </span>
+          {onRetryPersonalDashboard ? (
+            <button
+              className="today-source-warning-action"
+              disabled={isScopePending}
+              onClick={onRetryPersonalDashboard}
+              type="button"
+            >
+              {tKey("shell.personalContextRetry")}
+              <span className="material-symbols-outlined" aria-hidden="true">
+                refresh
+              </span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="today-content-grid">
         <DayPlanTimeline
           disabled={isScopePending}
@@ -206,6 +293,7 @@ export function TodayOverview({
                   key={section.key}
                   language={language}
                   liveSignals={liveSignals}
+                  now={now}
                   recommendationMode={todayBrief.recommendationMode}
                   section={section}
                   timezone={todayBrief.timezone}

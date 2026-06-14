@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
 import type { PublicDashboardRead } from "../types";
-import { buildPlanItems, buildTodayBrief, isPlaceholderRecommendation } from "./today-brief";
+import {
+  buildPlanItems,
+  buildTodayBrief,
+  isPlaceholderRecommendation,
+  isRecommendationExpired,
+} from "./today-brief";
 
 function timelineItem(
   id: string,
@@ -45,7 +50,7 @@ describe("buildPlanItems", () => {
       timelineItem("high-sooner", "HIGH", "2026-08-09T09:00:00Z"),
     ];
 
-    expect(buildPlanItems(items).map((item) => item.id)).toEqual([
+    expect(buildPlanItems(items, Date.parse("2026-08-09T08:30:00Z")).map((item) => item.id)).toEqual([
       "high-sooner",
       "high-later",
       "medium",
@@ -58,7 +63,9 @@ describe("buildPlanItems", () => {
       timelineItem("scenario-info", "INFO", "2026-08-09T09:00:00Z"),
     ];
 
-    expect(buildPlanItems(items).map((item) => item.id)).toEqual(["scenario-info"]);
+    expect(buildPlanItems(items, Date.parse("2026-08-09T08:30:00Z")).map((item) => item.id)).toEqual([
+      "scenario-info",
+    ]);
   });
 });
 
@@ -69,6 +76,16 @@ describe("isPlaceholderRecommendation", () => {
       isPlaceholderRecommendation("energy", "No active regional recommendation is available."),
     ).toBe(true);
     expect(isPlaceholderRecommendation("energy", "Run the dishwasher after 22:00.")).toBe(false);
+  });
+});
+
+describe("isRecommendationExpired", () => {
+  it("treats invalid and ended validity windows as unavailable", () => {
+    const now = Date.parse("2026-08-09T09:00:00Z");
+
+    expect(isRecommendationExpired({ valid_to: "not-a-timestamp" }, now)).toBe(true);
+    expect(isRecommendationExpired({ valid_to: "2026-08-09T08:59:00Z" }, now)).toBe(true);
+    expect(isRecommendationExpired({ valid_to: "2026-08-09T09:00:00Z" }, now)).toBe(false);
   });
 });
 
@@ -135,6 +152,7 @@ describe("buildTodayBrief", () => {
         timelineItem("local-event", "HIGH", "2026-08-09T09:00:00Z", "event"),
       ],
       language: "en",
+      now: Date.parse("2026-08-09T08:30:00Z"),
     });
 
     expect(brief?.recommendationMode).toBe("out_of_scope");
@@ -184,9 +202,40 @@ describe("buildTodayBrief", () => {
       summaryTiles: [],
       timelineItems: [],
       language: "zh",
+      now: Date.parse("2026-08-09T08:30:00Z"),
     });
 
     expect(brief?.headline).toBe("提前几分钟出发");
     expect(brief?.topActions[0]?.title).toBe("Leave a few minutes earlier");
+  });
+
+  it("does not turn an expired action into today's headline", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: {
+        ...dashboard,
+        top_actions: [
+          {
+            id: "expired-action",
+            scenario_key: "commute",
+            title: "Leave earlier",
+            body: "The morning alert has ended.",
+            severity: "HIGH",
+            area_scope: "Helsinki",
+            freshness_state: "fresh",
+            valid_from: "2026-08-09T07:00:00Z",
+            valid_to: "2026-08-09T08:00:00Z",
+            evidence: [],
+          },
+        ],
+      },
+      overviewCoverageArea: "Helsinki/Uusimaa",
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+      now: Date.parse("2026-08-09T09:00:00Z"),
+    });
+
+    expect(brief?.topActions).toEqual([]);
+    expect(brief?.headline).toBe("Core daily scenarios are currently clear.");
   });
 });

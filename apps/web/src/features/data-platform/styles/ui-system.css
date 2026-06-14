@@ -338,6 +338,67 @@
   font-size: 11px;
 }
 
+.refresh-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(100%, var(--ui-content-max));
+  margin: 0 auto 14px;
+  border: 1px solid color-mix(in srgb, var(--error) 34%, transparent);
+  border-radius: var(--ui-radius-sm);
+  background: color-mix(in srgb, var(--error) 8%, var(--surface-container-lowest));
+  padding: 10px 13px;
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.refresh-error-banner > .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: var(--error);
+  font-size: 18px;
+}
+
+.refresh-error-banner-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.refresh-error-banner-copy strong {
+  color: var(--on-surface);
+  font-size: 11px;
+}
+
+.refresh-error-banner-copy small {
+  overflow-wrap: anywhere;
+  color: var(--on-surface-variant);
+  font-size: 10px;
+}
+
+.refresh-error-banner-dismiss {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--on-surface-variant);
+}
+
+.refresh-error-banner-dismiss:hover,
+.refresh-error-banner-dismiss:focus-visible {
+  background: color-mix(in srgb, var(--error) 14%, transparent);
+  color: var(--error);
+}
+
+.refresh-error-banner-dismiss .material-symbols-outlined {
+  font-size: 17px;
+}
+
 .dashboard-scope-content {
   position: relative;
   min-width: 0;

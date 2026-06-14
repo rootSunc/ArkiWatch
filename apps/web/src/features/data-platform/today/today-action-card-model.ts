@@ -9,6 +9,7 @@ import { localizedContent } from "../content-localization";
 import type { PublicScenarioSectionRead } from "../types";
 import {
   isPlaceholderRecommendation,
+  isRecommendationExpired,
   type TodayRecommendationMode,
 } from "./today-brief";
 
@@ -202,12 +203,17 @@ export function buildTodayActionCardView(
   language: LanguageMode,
   recommendationMode: TodayRecommendationMode = "live",
   timeZone = DEFAULT_TIME_ZONE,
+  now = Date.now(),
 ): TodayActionCardView {
   const recommendation = section.recommendation;
   const isPlaceholder = isPlaceholderRecommendation(recommendation.id, recommendation.body);
+  const isExpired = recommendationMode === "live" && isRecommendationExpired(recommendation, now);
+  const recommendationUnavailable = isPlaceholder || isExpired;
   const liveHint = buildScenarioLiveHint(section.key, signals, language);
   const isScopeLimited = recommendationMode !== "live";
-  const isSignalFallback = isScopeLimited ? Boolean(liveHint) : isPlaceholder && Boolean(liveHint);
+  const isSignalFallback = isScopeLimited
+    ? Boolean(liveHint)
+    : recommendationUnavailable && Boolean(liveHint);
   const limitedTitle =
     recommendationMode === "historical"
       ? translateMessageKey(language, "shell.historicalSignalOnly")
@@ -222,22 +228,26 @@ export function buildTodayActionCardView(
       ? liveHint?.detail ?? localizedContent(language, section.description, section.description_zh)
       : isScopeLimited
         ? limitedBody
-        : localizedContent(
-            language,
-            recommendation.body || section.description,
-            recommendation.body
-              ? recommendation.body_zh
-              : section.description_zh,
-          ),
+        : recommendationUnavailable
+          ? localizedContent(language, section.description, section.description_zh)
+          : localizedContent(
+              language,
+              recommendation.body || section.description,
+              recommendation.body
+                ? recommendation.body_zh
+                : section.description_zh,
+            ),
     dataPoints: buildActionDataPoints(section.key, signals, language, timeZone),
     detail: isSignalFallback
       ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language, timeZone)
       : isScopeLimited
         ? null
-        : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(
-            language,
-            recommendation.area_scope,
-          )}`,
+        : recommendationUnavailable
+          ? null
+          : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(
+              language,
+              recommendation.area_scope,
+            )}`,
     icon: SCENARIO_ICONS[section.key] ?? "hub",
     signalLabel: isSignalFallback
       ? translateMessageKey(
@@ -254,9 +264,11 @@ export function buildTodayActionCardView(
       ? liveHint?.headline ?? localizedContent(language, section.status_label, section.status_label_zh)
       : isScopeLimited
         ? limitedTitle
-        : localizedContent(language, section.status_label, section.status_label_zh),
-    tone: isScopeLimited
+        : recommendationUnavailable
+          ? translateMessageKey(language, "shell.noCurrentRecommendation")
+          : localizedContent(language, section.status_label, section.status_label_zh),
+    tone: isScopeLimited || recommendationUnavailable
       ? "neutral"
-      : recommendationTone(recommendation.severity, isPlaceholder && !liveHint),
+      : recommendationTone(recommendation.severity, false),
   };
 }

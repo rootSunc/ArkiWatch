@@ -21,9 +21,9 @@ import {
   type PlatformQueryScope,
 } from "../queries/platform-queries";
 import {
-  PLATFORM_QUERY_STALE_TIME_MS,
   platformDataNeedsForDemo,
   platformDataNeedsForView,
+  platformQueryRefreshOptions,
 } from "../queries/platform-data-needs";
 import { appEnv } from "@/lib/env";
 import { normalizeCityValue } from "../city-scope";
@@ -34,11 +34,6 @@ import { normalizeSourceDateValue } from "../time-window";
  * would blank out and re-enter its loading state on every switch, so hold the
  * previous scope's data until the new one lands.
  */
-const SCOPE_QUERY_OPTIONS = {
-  staleTime: PLATFORM_QUERY_STALE_TIME_MS,
-  placeholderData: keepPreviousData,
-} as const;
-
 function emptyHistory(): PlatformFetchResult["history"] {
   return {
     weather: [],
@@ -59,7 +54,7 @@ export type UsePlatformHomeOptions = PlatformQueryScope & {
 export type PlatformHomeState = PlatformFetchResult & {
   /** True until the overview lands, i.e. before the shell has anything to render. */
   isPending: boolean;
-  /** True while any query needed by the active view is still in flight. */
+  /** True while any query needed by the active view has not produced data yet. */
   isLoadingView: boolean;
   /** True while the rendered data still belongs to the previously selected scope. */
   isPreviousScope: boolean;
@@ -86,66 +81,71 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
         isHistorical: options.isHistorical,
         needsHistoryAvailability: options.needsHistoryAvailability,
       });
+  const isHistoricalScope = Boolean(options.isHistorical ?? date);
+  const queryOptions = {
+    ...platformQueryRefreshOptions(isHistoricalScope),
+    placeholderData: keepPreviousData,
+  } as const;
 
   const results = useQueries({
     queries: [
       {
         queryKey: platformKeys.overview(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchPlatformOverview(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
       },
       {
         queryKey: platformKeys.publicDashboard(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchPublicDashboard(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchWeatherForecast(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.weather,
       },
       {
         queryKey: platformKeys.airQuality(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchAirQualityCurrent(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.air,
       },
       {
         queryKey: platformKeys.energy(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchEnergyCurrent(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.energy,
       },
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchHouseholdEnergyCurrent(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.householdEnergy,
       },
       {
         queryKey: platformKeys.roadRail(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchRoadRailCurrent(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.roadRail,
       },
       {
         queryKey: platformKeys.transit(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchTransitCurrent(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.transit,
       },
       {
         queryKey: platformKeys.history(normalizedScope),
         queryFn: async () => unwrapApiResult(await fetchPlatformHistory(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.history,
       },
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
         queryFn: async () =>
           unwrapApiResult(await fetchPlatformHistoryAvailability(normalizedScope)),
-        ...SCOPE_QUERY_OPTIONS,
+        ...queryOptions,
         enabled: needs.historyAvailability,
       },
     ],
@@ -187,7 +187,10 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
 
   return {
     isPending: overviewQuery.isPending && overviewQuery.data == null,
-    isLoadingView: activeResults.some((query) => query.isPending || query.isFetching),
+    // Background refreshes intentionally do not enter the blocking/loading
+    // state. This keeps retry actions and focus restoration usable while the
+    // five-minute live cadence updates data in place.
+    isLoadingView: activeResults.some((query) => query.isPending),
     isPreviousScope: activeResults.some((query) => query.isPlaceholderData),
     retry,
     apiBaseUrl: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL),

@@ -3,6 +3,8 @@
 import type { ChangeEvent, ReactNode, RefObject } from "react";
 import Image from "next/image";
 
+import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
+
 import {
   CityScopeSelector,
   DateScopeSelector,
@@ -368,9 +370,7 @@ export function DataPlatformWorkspaceTopbar({
             title={tKey("assistant.openAssistant")}
             type="button"
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              hub
-            </span>
+            <AssistantGlyph />
           </button>
         ) : null}
       </div>
