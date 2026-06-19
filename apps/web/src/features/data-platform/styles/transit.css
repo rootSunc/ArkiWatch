@@ -91,6 +91,13 @@
   animation: none;
 }
 
+.transit-live-status-failed span,
+.transit-provider-status-failed > div:first-child span {
+  background: var(--error);
+  box-shadow: 0 0 8px var(--error);
+  animation: none;
+}
+
 .transit-glass-panel,
 .transit-detail-empty {
   min-width: 0;

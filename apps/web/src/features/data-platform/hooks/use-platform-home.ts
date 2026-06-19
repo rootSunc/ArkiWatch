@@ -91,60 +91,69 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     queries: [
       {
         queryKey: platformKeys.overview(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchPlatformOverview(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchPlatformOverview(normalizedScope, signal)),
         ...queryOptions,
       },
       {
         queryKey: platformKeys.publicDashboard(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchPublicDashboard(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchPublicDashboard(normalizedScope, signal)),
         ...queryOptions,
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchWeatherForecast(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchWeatherForecast(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.weather,
       },
       {
         queryKey: platformKeys.airQuality(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchAirQualityCurrent(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchAirQualityCurrent(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.air,
       },
       {
         queryKey: platformKeys.energy(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchEnergyCurrent(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchEnergyCurrent(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.energy,
       },
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchHouseholdEnergyCurrent(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchHouseholdEnergyCurrent(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.householdEnergy,
       },
       {
         queryKey: platformKeys.roadRail(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchRoadRailCurrent(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchRoadRailCurrent(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.roadRail,
       },
       {
         queryKey: platformKeys.transit(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchTransitCurrent(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchTransitCurrent(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.transit,
       },
       {
         queryKey: platformKeys.history(normalizedScope),
-        queryFn: async () => unwrapApiResult(await fetchPlatformHistory(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchPlatformHistory(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.history,
       },
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
-        queryFn: async () =>
-          unwrapApiResult(await fetchPlatformHistoryAvailability(normalizedScope)),
+        queryFn: async ({ signal }) =>
+          unwrapApiResult(await fetchPlatformHistoryAvailability(normalizedScope, signal)),
         ...queryOptions,
         enabled: needs.historyAvailability,
       },

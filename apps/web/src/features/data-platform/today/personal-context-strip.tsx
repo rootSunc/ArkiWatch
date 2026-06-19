@@ -2,6 +2,8 @@
 
 import type { CSSProperties } from "react";
 
+import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
+
 import { useI18n } from "../i18n";
 import {
   nextPersonalWorkflowStep,
@@ -50,9 +52,7 @@ export function PersonalContextStrip({
       aria-label={tKey("shell.personalAssistantContext")}
       className={`today-personal-context today-personal-context-${tone}`}
     >
-      <span className="material-symbols-outlined today-personal-context-icon" aria-hidden="true">
-        smart_toy
-      </span>
+      <AssistantGlyph className="today-personal-context-icon" />
       <span className="today-personal-context-copy">
         <span className="today-section-kicker">{tKey("shell.personalAssistantContext")}</span>
         <strong>
@@ -80,9 +80,13 @@ export function PersonalContextStrip({
         type="button"
       >
         {actionLabel}
-        <span className="material-symbols-outlined" aria-hidden="true">
-          {nextStep && onOpenSettings ? "tune" : "smart_toy"}
-        </span>
+        {nextStep && onOpenSettings ? (
+          <span className="material-symbols-outlined" aria-hidden="true">
+            tune
+          </span>
+        ) : (
+          <AssistantGlyph />
+        )}
       </button>
     </section>
   );

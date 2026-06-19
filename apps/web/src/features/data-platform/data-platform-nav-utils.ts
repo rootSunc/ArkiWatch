@@ -2,6 +2,12 @@ import { categoryVisibleToCurrentUser } from "./category-access";
 import type { NavItem } from "./data-platform-shell";
 import { PRIMARY_NAV_ITEMS } from "./data-platform-shell";
 import { MOBILITY_NAV_KEY, isMobilityCategoryKey, mobilityAvailable } from "./data-platform-view-model";
+import type { MobilityTabKey } from "./mobility-workspace";
+import {
+  ENERGY_TAB_QUERY_KEY,
+  MOBILITY_TAB_QUERY_KEY,
+  type EnergyPanelKey,
+} from "./workspace-query-params";
 import type { PlatformCategory } from "./types";
 
 export const BRAND_LOGO_SRC = "/brand/logo-mark.png";
@@ -11,6 +17,54 @@ export const TODAY_NAV_KEY = "today";
 export const FALLBACK_NAV_KEY = "overview";
 export const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
 export const CROSS_TIMELINE_LIMIT = 10;
+
+export type NavigationQueryOptions = {
+  mobilityTab?: MobilityTabKey;
+  energyTab?: EnergyPanelKey;
+  eventId?: string;
+};
+
+export function buildNavigationQueryParams(
+  currentParams: URLSearchParams,
+  nextNavKey: string,
+  options: NavigationQueryOptions,
+  defaults: { mobilityTab: MobilityTabKey; energyTab: EnergyPanelKey },
+): URLSearchParams {
+  const nextParams = new URLSearchParams(currentParams.toString());
+
+  if (nextNavKey === TODAY_NAV_KEY) {
+    nextParams.delete(NAV_QUERY_KEY);
+    nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+    nextParams.delete(ENERGY_TAB_QUERY_KEY);
+  } else if (nextNavKey === FALLBACK_NAV_KEY) {
+    nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
+    nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+    nextParams.delete(ENERGY_TAB_QUERY_KEY);
+  } else if (nextNavKey === MOBILITY_NAV_KEY) {
+    nextParams.set(NAV_QUERY_KEY, MOBILITY_NAV_KEY);
+    nextParams.set(
+      MOBILITY_TAB_QUERY_KEY,
+      options.mobilityTab ?? defaults.mobilityTab,
+    );
+    nextParams.delete(ENERGY_TAB_QUERY_KEY);
+  } else if (nextNavKey === "energy") {
+    nextParams.set(NAV_QUERY_KEY, "energy");
+    nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+    nextParams.set(ENERGY_TAB_QUERY_KEY, options.energyTab ?? defaults.energyTab);
+  } else {
+    nextParams.set(NAV_QUERY_KEY, nextNavKey);
+    nextParams.delete(MOBILITY_TAB_QUERY_KEY);
+    nextParams.delete(ENERGY_TAB_QUERY_KEY);
+  }
+
+  if (options.eventId) {
+    nextParams.set(EVENT_QUERY_KEY, options.eventId);
+  } else {
+    nextParams.delete(EVENT_QUERY_KEY);
+  }
+
+  return nextParams;
+}
 
 // Keep this allowlist in the view-model layer so server evaluation never needs
 // to call methods on values exported by the client-only shell module.
@@ -72,7 +126,10 @@ export function loadReadRecentEventIds(): Set<string> {
   try {
     const value = window.localStorage.getItem(READ_RECENT_EVENTS_STORAGE_KEY);
     const parsed = value ? JSON.parse(value) : [];
-    return new Set(Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []);
+    const recentIds = Array.isArray(parsed)
+      ? parsed.filter((item) => typeof item === "string")
+      : [];
+    return new Set(recentIds.slice(-400));
   } catch {
     return new Set();
   }
@@ -140,7 +197,11 @@ export function resolveNavKey(
   }
 
   if (normalized === MOBILITY_NAV_KEY || isMobilityCategoryKey(normalized)) {
-    return mobilityAvailable(categories) ? MOBILITY_NAV_KEY : TODAY_NAV_KEY;
+    // An empty category list is the loading state, not proof that mobility is
+    // unavailable. Preserve deep links until the overview can validate them.
+    return categories.length === 0 || mobilityAvailable(categories)
+      ? MOBILITY_NAV_KEY
+      : TODAY_NAV_KEY;
   }
 
   if (!categoryVisibleToCurrentUser(normalized)) {

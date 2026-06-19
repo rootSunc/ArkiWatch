@@ -4,6 +4,7 @@ import {
   defaultEnergyTabForScenario,
   type EnergyPanelKey,
 } from "./workspace-query-params";
+import { isEmptyStatus } from "./platform-status";
 
 export const SCENARIO_NAV_KEYS: Record<string, string> = {
   outdoor: "weather",
@@ -39,8 +40,14 @@ export const TODAY_QUICK_LINKS: Array<{
 export function resolveMobilityTabForSignals(
   signals: ScenarioLiveSignals,
 ): MobilityTabKey {
-  const transitAlerts = signals.transit?.quality.active_alert_count ?? 0;
-  const roadEvents = signals.roadRail?.quality.active_event_count ?? 0;
+  const transit = signals.transit && !isEmptyStatus(signals.transit.status)
+    ? signals.transit
+    : null;
+  const roadRail = signals.roadRail && !isEmptyStatus(signals.roadRail.status)
+    ? signals.roadRail
+    : null;
+  const transitAlerts = transit?.quality.active_alert_count ?? 0;
+  const roadEvents = roadRail?.quality.active_event_count ?? 0;
   return roadEvents > transitAlerts ? "traffic" : "transit";
 }
 

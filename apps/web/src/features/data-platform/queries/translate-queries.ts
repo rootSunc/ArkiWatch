@@ -2,7 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { DEFAULT_API_TIMEOUT_MS } from "@/lib/api-client";
 import { appEnv } from "@/lib/env";
+import { requestSignalWithTimeout } from "@/lib/request-signal";
 
 import type { LanguageMode } from "../i18n";
 
@@ -31,7 +33,10 @@ export function descriptionQueryKey(
   ] as const;
 }
 
-async function translateTextRequest(input: TranslateTextInput): Promise<string> {
+async function translateTextRequest(
+  input: TranslateTextInput,
+  signal?: AbortSignal,
+): Promise<string> {
   const response = await fetch("/api/assistant/translate", {
     body: JSON.stringify({
       context: input.context,
@@ -43,6 +48,9 @@ async function translateTextRequest(input: TranslateTextInput): Promise<string> 
       "Content-Type": "application/json",
     },
     method: "POST",
+    signal: signal
+      ? requestSignalWithTimeout(signal, DEFAULT_API_TIMEOUT_MS)
+      : AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -70,14 +78,14 @@ export function useEventDescriptionTranslation(input: {
 }) {
   return useQuery({
     queryKey: descriptionQueryKey(input.eventId ?? "", input.language, input.text),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       translateTextRequest({
         eventId: input.eventId as string,
         text: input.text,
         sourceLanguage: input.sourceLanguage,
         targetLanguage: input.language,
         context: input.context,
-      }),
+      }, signal),
     enabled: Boolean(
       !appEnv.demoMode && input.eventId && input.shouldTranslate && input.text,
     ),

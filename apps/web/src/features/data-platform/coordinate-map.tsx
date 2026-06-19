@@ -1,8 +1,7 @@
 "use client";
 
-import type { LatLngBoundsExpression } from "leaflet";
-import { useEffect, useMemo, useState } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import L, { type LatLngBoundsExpression, type Map as LeafletMap } from "leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import "leaflet/dist/leaflet.css";
 
@@ -25,6 +24,8 @@ export type CoordinateMapProps = {
   emptyMessage: string;
   formatNumber: (value: number | null | undefined, maximumFractionDigits?: number) => string;
   mappedLabel: string;
+  latitudeLabel?: string;
+  longitudeLabel?: string;
   onPointClick?: (id: string) => void;
 };
 
@@ -56,111 +57,60 @@ function readThemeMarkerColors(): ThemeMarkerColors {
   };
 }
 
-function MapBounds({ bounds }: { bounds: LatLngBoundsExpression }) {
-  const map = useMap();
-
-  useEffect(() => {
-    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 12 });
-  }, [bounds, map]);
-
-  return null;
-}
-
-/** Enable scroll-wheel zoom only while the pointer is over the map. */
-function ScrollWheelZoomOnHover() {
-  const map = useMap();
-
-  useEffect(() => {
-    map.scrollWheelZoom.disable();
-    const container = map.getContainer();
-
-    const enableZoom = () => {
-      map.scrollWheelZoom.enable();
-    };
-    const disableZoom = () => {
-      map.scrollWheelZoom.disable();
-    };
-
-    container.addEventListener("mouseenter", enableZoom);
-    container.addEventListener("mouseleave", disableZoom);
-
-    return () => {
-      container.removeEventListener("mouseenter", enableZoom);
-      container.removeEventListener("mouseleave", disableZoom);
-      map.scrollWheelZoom.disable();
-    };
-  }, [map]);
-
-  return null;
-}
-
 function formatCoordinate(value: number, formatNumber: CoordinateMapProps["formatNumber"]): string {
   return `${formatNumber(value, 5)}°`;
 }
 
-type CoordinateMapMarkerProps = {
-  point: CoordinateMapPoint;
-  fillColor: string;
-  formatNumber: CoordinateMapProps["formatNumber"];
-  onPointClick?: CoordinateMapProps["onPointClick"];
-};
+function appendTextElement(parent: HTMLElement, tagName: keyof HTMLElementTagNameMap, className: string, text: string) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  element.textContent = text;
+  parent.append(element);
+  return element;
+}
 
-function CoordinateMapMarker({ point, fillColor, formatNumber, onPointClick }: CoordinateMapMarkerProps) {
-  const positionLabel = `${formatCoordinate(point.lat, formatNumber)}, ${formatCoordinate(point.lon, formatNumber)}`;
-  const radius = point.selected ? SELECTED_MARKER_RADIUS : MARKER_RADIUS;
-
-  return (
-    <CircleMarker
-      center={[point.lat, point.lon]}
-      eventHandlers={
-        onPointClick
-          ? {
-              click: () => {
-                onPointClick(point.id);
-              }
-            }
-          : undefined
-      }
-      pathOptions={{
-        color: fillColor,
-        fillColor,
-        fillOpacity: 0.9,
-        opacity: 0.95,
-        weight: point.selected ? 3 : 2
-      }}
-      radius={radius}
-    >
-      <Tooltip
-        className="air-map-station-tooltip"
-        direction="top"
-        offset={[0, -10]}
-        opacity={1}
-        permanent
-      >
-        <span className="air-map-station-tooltip-name">{point.title}</span>
-        <span className="air-map-station-tooltip-coords">{positionLabel}</span>
-      </Tooltip>
-      <Popup className="air-map-station-popup" minWidth={200}>
-        <div className="air-map-station-popup-body">
-          <strong>{point.title}</strong>
-          {point.popupId && point.popupId !== point.title ? (
-            <span className="air-map-station-popup-id">{point.popupId}</span>
-          ) : null}
-          {point.popupDetail ? <span className="air-map-station-popup-quality">{point.popupDetail}</span> : null}
-          <dl className="air-map-station-popup-coords">
-            <div>
-              <dt>lat</dt>
-              <dd>{formatCoordinate(point.lat, formatNumber)}</dd>
-            </div>
-            <div>
-              <dt>lon</dt>
-              <dd>{formatCoordinate(point.lon, formatNumber)}</dd>
-            </div>
-          </dl>
-        </div>
-      </Popup>
-    </CircleMarker>
+function createTooltipContent(point: CoordinateMapPoint, formatNumber: CoordinateMapProps["formatNumber"]): HTMLElement {
+  const content = document.createElement("div");
+  appendTextElement(content, "span", "air-map-station-tooltip-name", point.title);
+  appendTextElement(
+    content,
+    "span",
+    "air-map-station-tooltip-coords",
+    formatCoordinate(point.lat, formatNumber) + ", " + formatCoordinate(point.lon, formatNumber)
   );
+  return content;
+}
+
+function createPopupContent(
+  point: CoordinateMapPoint,
+  formatNumber: CoordinateMapProps["formatNumber"],
+  latitudeLabel: string,
+  longitudeLabel: string
+): HTMLElement {
+  const content = document.createElement("div");
+  content.className = "air-map-station-popup-body";
+  appendTextElement(content, "strong", "", point.title);
+
+  if (point.popupId && point.popupId !== point.title) {
+    appendTextElement(content, "span", "air-map-station-popup-id", point.popupId);
+  }
+  if (point.popupDetail) {
+    appendTextElement(content, "span", "air-map-station-popup-quality", point.popupDetail);
+  }
+
+  const coordinates = document.createElement("dl");
+  coordinates.className = "air-map-station-popup-coords";
+  for (const [label, value] of [
+    [latitudeLabel, formatCoordinate(point.lat, formatNumber)],
+    [longitudeLabel, formatCoordinate(point.lon, formatNumber)]
+  ]) {
+    const row = document.createElement("div");
+    appendTextElement(row, "dt", "", label);
+    appendTextElement(row, "dd", "", value);
+    coordinates.append(row);
+  }
+  content.append(coordinates);
+  return content;
 }
 
 export function CoordinateMap({
@@ -169,9 +119,14 @@ export function CoordinateMap({
   emptyMessage,
   formatNumber,
   mappedLabel,
+  latitudeLabel = "Latitude",
+  longitudeLabel = "Longitude",
   onPointClick
 }: CoordinateMapProps) {
   const [markerColors, setMarkerColors] = useState<ThemeMarkerColors>(DEFAULT_MARKER_COLORS);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
     setMarkerColors(readThemeMarkerColors());
@@ -190,10 +145,6 @@ export function CoordinateMap({
     ];
   }, [points]);
 
-  if (points.length === 0 || !bounds) {
-    return <p>{emptyMessage}</p>;
-  }
-
   const latitudes = points.map((point) => point.lat);
   const longitudes = points.map((point) => point.lon);
   const minLat = Math.min(...latitudes);
@@ -201,37 +152,95 @@ export function CoordinateMap({
   const minLon = Math.min(...longitudes);
   const maxLon = Math.max(...longitudes);
   const center: [number, number] = [(minLat + maxLat) / 2, (minLon + maxLon) / 2];
+  const hasMapPoints = bounds !== null;
+
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container || !hasMapPoints || mapRef.current) {
+      return;
+    }
+
+    const map = L.map(container, { scrollWheelZoom: false }).setView(center, 10);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const enableZoom = () => map.scrollWheelZoom.enable();
+    const disableZoom = () => map.scrollWheelZoom.disable();
+    container.addEventListener("mouseenter", enableZoom);
+    container.addEventListener("mouseleave", disableZoom);
+
+    mapRef.current = map;
+    layerGroupRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      container.removeEventListener("mouseenter", enableZoom);
+      container.removeEventListener("mouseleave", disableZoom);
+      layerGroupRef.current = null;
+      mapRef.current = null;
+      map.remove();
+    };
+    // The map instance is intentionally created once for each mounted container.
+    // Bounds and markers are updated by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMapPoints]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const layerGroup = layerGroupRef.current;
+    if (!map || !layerGroup || !bounds) {
+      return;
+    }
+
+    layerGroup.clearLayers();
+    points.forEach((point) => {
+      const fillColor = markerColors[point.tone];
+      const marker = L.circleMarker([point.lat, point.lon], {
+        color: fillColor,
+        fillColor,
+        fillOpacity: 0.9,
+        opacity: 0.95,
+        radius: point.selected ? SELECTED_MARKER_RADIUS : MARKER_RADIUS,
+        weight: point.selected ? 3 : 2
+      });
+      marker.bindTooltip(createTooltipContent(point, formatNumber), {
+        className: "air-map-station-tooltip",
+        direction: "top",
+        offset: [0, -10],
+        opacity: 1,
+        permanent: true
+      });
+      marker.bindPopup(createPopupContent(point, formatNumber, latitudeLabel, longitudeLabel), {
+        className: "air-map-station-popup",
+        minWidth: 200
+      });
+      if (onPointClick) {
+        marker.on("click", () => onPointClick(point.id));
+      }
+      marker.addTo(layerGroup);
+    });
+
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 12 });
+  }, [bounds, formatNumber, latitudeLabel, longitudeLabel, markerColors, onPointClick, points]);
+
+  if (points.length === 0 || !bounds) {
+    return <p>{emptyMessage}</p>;
+  }
 
   return (
     <>
       <div className="air-map-frame air-map-frame--leaflet">
-        <MapContainer center={center} className="air-map-leaflet" scrollWheelZoom zoom={10}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ScrollWheelZoomOnHover />
-          <MapBounds bounds={bounds} />
-          {points.map((point) => (
-            <CoordinateMapMarker
-              fillColor={markerColors[point.tone]}
-              formatNumber={formatNumber}
-              key={point.id}
-              onPointClick={onPointClick}
-              point={point}
-            />
-          ))}
-        </MapContainer>
+        <div className="air-map-leaflet" ref={mapContainerRef} />
       </div>
       <div className="air-map-meta">
         <span>
           {points.length}/{totalCount} {mappedLabel}
         </span>
         <span>
-          {formatNumber(minLat, 3)}-{formatNumber(maxLat, 3)} lat
+          {formatNumber(minLat, 3)}-{formatNumber(maxLat, 3)} {latitudeLabel}
         </span>
         <span>
-          {formatNumber(minLon, 3)}-{formatNumber(maxLon, 3)} lon
+          {formatNumber(minLon, 3)}-{formatNumber(maxLon, 3)} {longitudeLabel}
         </span>
       </div>
     </>

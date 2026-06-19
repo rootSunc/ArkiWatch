@@ -122,6 +122,8 @@ export function DayPlanTimeline({
             ? tKey("shell.noHistoricalDecisionMoments")
             : recommendationMode === "out_of_scope"
               ? tKey("shell.noScopedDecisionMoments")
+              : recommendationMode === "stale"
+                ? tKey("shell.noStaleDecisionMoments")
               : tKey("shell.noDecisionMoments")}
         </div>
       )}

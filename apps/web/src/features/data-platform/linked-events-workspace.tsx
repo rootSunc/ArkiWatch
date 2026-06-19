@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatRelativeAge, severityTone } from "@/features/shared/format";
+import { severityTone } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
@@ -16,6 +16,9 @@ import {
 } from "./types";
 import { eventAnchorId } from "./recent-events";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { isEmptyStatus } from "./platform-status";
+import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./data-time-scope";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 
 const LinkedEventsCoordinateMap = dynamic(
   () => import("./linked-events-coordinate-map").then((module) => module.LinkedEventsCoordinateMap),
@@ -31,7 +34,7 @@ const LinkedEventsCoordinateMap = dynamic(
 
 function formatCoordinateNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
@@ -292,7 +295,7 @@ function sourceUpdatedAt(category: PlatformCategory): string | null {
 }
 
 function selectedReferenceDate(timeScope: PlatformTimeScope | null | undefined, checkedAt: string | null | undefined): Date {
-  const rawValue = timeScope?.mode === "historical" && timeScope.window_start ? timeScope.window_start : checkedAt;
+  const rawValue = scopedReferenceTime(timeScope, checkedAt);
   const parsed = rawValue ? new Date(rawValue) : new Date();
   return Number.isFinite(parsed.getTime()) ? parsed : new Date();
 }
@@ -725,7 +728,7 @@ export function LinkedEventsWorkspace({
     setSelectedEventId(eventId);
   }, []);
 
-  if (!category) {
+  if (!category || isEmptyStatus(category.status)) {
     return (
       <section className="linked-events-empty" aria-label={tKey("linkedEvents.linkedEventsDataUnavailable")}>
         <span>{tKey("linkedEvents.linkedEvents")}</span>
@@ -736,7 +739,8 @@ export function LinkedEventsWorkspace({
   }
 
   const source = category.sources.find((item) => item.source_code === "linkedevents") ?? category.sources[0] ?? null;
-  const sourceRun = sourceUpdatedAt(category);
+  const isHistorical = isHistoricalTimeScope(timeScope);
+  const sourceRun = isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt(category);
   const selectedTone = selectedEvent ? (severityTone(selectedEvent.severity) as EventTone) : toneFromStatus(category.status);
   const eventStatus = attributeText(selectedEvent, "event_status");
   const provider = attributeText(selectedEvent, "provider") ?? tKey("linkedEvents.providerUnavailable");
@@ -837,10 +841,10 @@ export function LinkedEventsWorkspace({
           <h2>{category.title ? displayTitle(category, language) : tKey("linkedEvents.linkedEvents")}</h2>
           <div className="linked-events-live-status">
             <span aria-hidden="true" />
-            <strong>{translateEnumLabel(language, category.status)}</strong>
+            <strong>{isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{source?.source_code.toUpperCase() ?? "LINKEDEVENTS"} / {sourceRun ? formatRelativeAge(sourceRun, language) : tKey("linkedEvents.notCollected")}</div>
+        <div>{source?.source_code.toUpperCase() ?? "LINKEDEVENTS"} / {scopedDataAge(sourceRun, timeScope, language, tKey, "linkedEvents.notCollected", dataTimezone)}</div>
       </div>
 
       <section className="linked-events-command" aria-label={tKey("linkedEvents.linkedEventsOperatingCondition")}>

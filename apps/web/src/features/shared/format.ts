@@ -1,3 +1,14 @@
+export function parseValidDate(
+  value: string | number | Date | null | undefined,
+): Date | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsedDate = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  return Number.isFinite(parsedDate.getTime()) ? parsedDate : null;
+}
+
 export function formatTimestamp(
   value: string | null,
   mode: "dateTime" | "date" = "dateTime",
@@ -5,6 +16,11 @@ export function formatTimestamp(
   timeZone?: string,
 ): string {
   if (!value) {
+    return language === "zh" ? "暂无数据" : "Not available";
+  }
+
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
     return language === "zh" ? "暂无数据" : "Not available";
   }
 
@@ -22,14 +38,14 @@ export function formatTimestamp(
 
   try {
     return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", options).format(
-      new Date(value),
+      parsedDate,
     );
   } catch {
     // Keep a malformed deployment timezone from breaking a data surface.
     const safeOptions = { ...options };
     delete safeOptions.timeZone;
     return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", safeOptions).format(
-      new Date(value),
+      parsedDate,
     );
   }
 }
@@ -39,7 +55,13 @@ export function formatRelativeAge(value: string | null, language: "en" | "zh" = 
     return language === "zh" ? "从未" : "Never";
   }
 
-  const diffInMinutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return language === "zh" ? "暂无数据" : "Not available";
+  }
+
+  const timestamp = parsedDate.getTime();
+  const diffInMinutes = Math.round((Date.now() - timestamp) / 60000);
   if (diffInMinutes < 1) {
     return language === "zh" ? "刚刚" : "just now";
   }

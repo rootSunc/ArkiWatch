@@ -89,6 +89,12 @@
   box-shadow: none;
 }
 
+.weather-live-status-failed span,
+.weather-provider-status-failed > div:first-child span {
+  background: var(--error);
+  box-shadow: 0 0 8px var(--error);
+}
+
 .weather-bento-grid,
 .weather-lower-grid {
   display: grid;

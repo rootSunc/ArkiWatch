@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import { formatRelativeAge } from "@/features/shared/format";
 import { useI18n } from "./i18n";
-import { healthySourceCount, sourceHealthTone } from "./source-health";
+import { healthySourceCount, isCatalogOnlySource, isSourceTrackedForHealth, sourceHealthTone } from "./source-health";
 import { PlatformOverviewResponse } from "./types";
+import { scopedDataAge } from "./data-time-scope";
 
 type SourceHealthStripProps = {
   overview: PlatformOverviewResponse;
@@ -17,8 +17,10 @@ export function SourceHealthStrip({
   const { language, tKey, enumLabel } = useI18n();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const hasSources = overview.sources.length > 0;
+  const trackedSources = overview.sources.filter(isSourceTrackedForHealth);
+  const catalogSourceCount = overview.sources.filter(isCatalogOnlySource).length;
   const healthyCount = healthySourceCount(overview.sources);
-  const issueCount = overview.sources.length - healthyCount;
+  const issueCount = trackedSources.length - healthyCount;
 
   return (
     <section
@@ -40,10 +42,11 @@ export function SourceHealthStrip({
             hub
           </span>
           <span>
-            {overview.sources.length} {tKey("shell.dataSources")}
+            {trackedSources.length} {tKey("shell.dataSources")}
             {" · "}
             {healthyCount} {tKey("shell.healthyCount")}
             {issueCount > 0 ? ` · ${issueCount} ${tKey("shell.needAttentionShort")}` : ""}
+            {catalogSourceCount > 0 ? ` · ${catalogSourceCount} ${tKey("shell.catalogOnlySources")}` : ""}
           </span>
           <span className="material-symbols-outlined source-health-chevron" aria-hidden="true">
             expand_more
@@ -55,16 +58,24 @@ export function SourceHealthStrip({
         <div className="source-health-strip">
           {overview.sources.map((source) => (
             <article
-              aria-label={`${source.source_name} · ${enumLabel(source.operational_status)}`}
-              className={`source-chip source-chip-${sourceHealthTone(source.operational_status)}`}
+              aria-label={`${source.source_name} · ${isCatalogOnlySource(source) ? tKey("shell.catalogOnlySources") : enumLabel(source.operational_status)}`}
+              className={`source-chip source-chip-${isCatalogOnlySource(source) ? "unknown" : sourceHealthTone(source.operational_status)}`}
               key={source.id}
             >
               <span className="source-chip-code">{source.source_code}</span>
-              <strong>{enumLabel(source.operational_status)}</strong>
+              <strong>
+                {isCatalogOnlySource(source)
+                  ? tKey("shell.catalogOnlySources")
+                  : enumLabel(source.operational_status)}
+              </strong>
               <small className="source-chip-age">
-                {formatRelativeAge(
+                {scopedDataAge(
                   source.last_run_finished_at ?? source.last_run_started_at,
+                  overview.time_scope,
                   language,
+                  tKey,
+                  "shell.notCollected",
+                  overview.time_scope?.timezone ?? overview.timezone,
                 )}
               </small>
               {source.records_ingested !== null ? (
@@ -87,7 +98,7 @@ export function SourceHealthStrip({
                 </a>
               ) : null}
               {source.error_message ? (
-                <small className="source-chip-error">{source.error_message}</small>
+                <small className="source-chip-error">{tKey("shell.collectionError")}</small>
               ) : null}
             </article>
           ))}

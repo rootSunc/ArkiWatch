@@ -68,6 +68,23 @@ describe("buildActionDataPoints", () => {
     ]);
   });
 
+  it("does not create action-card points from empty signal payloads", () => {
+    const points = buildActionDataPoints(
+      "commute",
+      {
+        weather: null,
+        airQuality: null,
+        transit: { status: "empty", quality: { active_alert_count: 4 } } as never,
+        roadRail: { status: "empty", quality: { active_event_count: 7 } } as never,
+        householdEnergy: null,
+        systemEnergy: null,
+      },
+      "en",
+    );
+
+    expect(points).toEqual([]);
+  });
+
   it("localizes air metrics and skips malformed numeric readings", () => {
     const points = buildActionDataPoints(
       "home_air",
@@ -254,5 +271,60 @@ describe("buildTodayActionCardView", () => {
     expect(view.body).toBe("Weather signals.");
     expect(view.detail).toBeNull();
     expect(view.tone).toBe("neutral");
+  });
+
+  it("keeps historical signal timestamps absolute", () => {
+    const view = buildTodayActionCardView(
+      {
+        key: "commute",
+        title: "Commute",
+        description: "Transit signals.",
+        status_label: "No recommendation",
+        area_scope: "helsinki_uusimaa",
+        freshness_state: "degraded",
+        valid_from: "2026-05-31T08:00:00Z",
+        valid_to: "2026-05-31T09:00:00Z",
+        evidence: [],
+        source_codes: ["digitransit"],
+        recommendation: {
+          id: "placeholder-commute",
+          scenario_key: "commute",
+          title: "No active commute recommendation",
+          body: "No active regional recommendation yet.",
+          severity: "INFO",
+          area_scope: "helsinki_uusimaa",
+          freshness_state: "degraded",
+          valid_from: "2026-05-31T08:00:00Z",
+          valid_to: "2026-05-31T09:00:00Z",
+          evidence: [],
+        },
+      },
+      {
+        weather: null,
+        airQuality: null,
+        transit: {
+          observed_at: "2026-05-31T08:30:00Z",
+          time_scope: {
+            mode: "historical",
+            date: "2026-05-31",
+            timezone: "Europe/Helsinki",
+            reference_time: "2026-05-31T20:59:59Z",
+            window_start: "2026-05-30T21:00:00Z",
+            window_end: "2026-05-31T21:00:00Z",
+          },
+          quality: { active_alert_count: 2 },
+        } as never,
+        roadRail: null,
+        householdEnergy: null,
+        systemEnergy: null,
+      },
+      "en",
+      "historical",
+      "Europe/Helsinki",
+    );
+
+    expect(view.signalLabel).toBe("Historical signal");
+    expect(view.detail).toContain("31 May 2026");
+    expect(view.detail).not.toContain("ago");
   });
 });

@@ -7,6 +7,7 @@ import type {
   PlatformCategory,
   PlatformEvent,
   PlatformHistoryApiResponse,
+  PlatformHistoricalSnapshot,
   PlatformHistoryAvailabilityResponse,
   PlatformMetric,
   PlatformOverviewResponse,
@@ -21,10 +22,23 @@ import type {
 } from "../types";
 
 export const DEMO_SNAPSHOT_DATE = "2026-08-08";
+export const DEMO_CITY = "helsinki";
 export const DEMO_SNAPSHOT_LABEL = "Static Helsinki snapshot";
 
 const DEMO_CHECKED_AT = "2026-08-09T04:00:00.000Z";
 const DEMO_TIMEZONE = "Europe/Helsinki";
+const DEMO_SNAPSHOT_HOUR_UTC = 4;
+const ISO_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
+const DEMO_TIME_SCOPED_CATEGORY_KEYS = new Set([
+  "air",
+  "city_services",
+  "energy",
+  "events",
+  "traffic",
+  "transit",
+  "water",
+  "weather",
+]);
 
 export type DemoFixture = {
   airQuality: AirQualityCurrentResponse;
@@ -54,11 +68,82 @@ function timeScope(date: string | null): PlatformTimeScope {
 
   return {
     mode: date ? "historical" : "live",
+    is_demo: true,
     date,
     timezone: DEMO_TIMEZONE,
+    reference_time: date ? scopeEnd.toISOString() : DEMO_CHECKED_AT,
     window_start: scopeStart.toISOString(),
     window_end: scopeEnd.toISOString(),
   };
+}
+
+function demoSnapshotShift(date: string | null): number {
+  if (!date) {
+    return 0;
+  }
+
+  const sourceTimestamp = Date.parse(DEMO_CHECKED_AT);
+  const targetHour = String(DEMO_SNAPSHOT_HOUR_UTC).padStart(2, "0");
+  const targetTimestamp = Date.parse(`${date}T${targetHour}:00:00.000Z`);
+  return Number.isFinite(sourceTimestamp) && Number.isFinite(targetTimestamp)
+    ? targetTimestamp - sourceTimestamp
+    : 0;
+}
+
+function emptyDemoResponse<T extends { status: string }>(value: T, unavailable: boolean): T {
+  return unavailable ? { ...value, status: "empty" } : value;
+}
+
+function scopedDemoCategory(
+  category: PlatformCategory,
+  unavailable: boolean,
+): PlatformCategory {
+  if (!unavailable || !DEMO_TIME_SCOPED_CATEGORY_KEYS.has(category.key)) {
+    return category;
+  }
+
+  return {
+    ...category,
+    status: "empty",
+    events: [],
+    summary_metrics: [],
+  };
+}
+
+function shiftDemoTimestamps<T>(value: T, shiftMs: number): T {
+  if (shiftMs === 0) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    if (!ISO_TIMESTAMP_PATTERN.test(value)) {
+      return value;
+    }
+
+    return new Date(Date.parse(value) + shiftMs).toISOString() as T;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => shiftDemoTimestamps(item, shiftMs)) as T;
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, shiftDemoTimestamps(item, shiftMs)]),
+    ) as T;
+  }
+
+  return value;
+}
+
+function withHistoricalScope<T>(
+  snapshots: PlatformHistoricalSnapshot<T>[],
+  date: string | null,
+): PlatformHistoricalSnapshot<T>[] {
+  return snapshots.map((snapshot) => ({
+    ...snapshot,
+    data: snapshot.data ? withScope(snapshot.data, date) : snapshot.data,
+  }));
 }
 
 function makeSource(
@@ -131,10 +216,16 @@ const SOURCES: Record<string, DashboardSource> = {
     ["water"],
     "https://www.syke.fi/en-US/Open_information",
   ),
+  servicemap: makeSource(
+    "servicemap",
+    "Helsinki Service Map",
+    ["city_services"],
+    "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
+  ),
   linkedevents: makeSource(
     "linkedevents",
     "Helsinki Linked Events",
-    ["events", "city_services"],
+    ["events"],
     "https://github.com/City-of-Helsinki/linkedevents",
   ),
 };
@@ -197,15 +288,21 @@ function category(
   sourceCodes: string[],
   events: PlatformEvent[] = [],
   metrics: PlatformMetric[] = [],
+  stage: PlatformCategory["stage"] = "connected",
+  statusOverride: string | null = null,
 ): PlatformCategory {
   return {
     key,
     title,
     description,
-    status: events.some((item) => ["HIGH", "CRITICAL"].includes(item.severity))
-      ? "watch"
-      : "healthy",
-    stage: "connected",
+    status: statusOverride ?? (
+      stage === "connected"
+        ? events.some((item) => ["HIGH", "CRITICAL"].includes(item.severity))
+          ? "watch"
+          : "healthy"
+        : stage
+    ),
+    stage,
     priority: key === "weather" || key === "air" ? "P0" : "P1",
     source_codes: sourceCodes,
     summary_metrics: metrics,
@@ -806,6 +903,8 @@ function buildPublicDashboard(): PublicDashboardRead {
 
   return {
     checked_at: DEMO_CHECKED_AT,
+    snapshot_date: DEMO_SNAPSHOT_DATE,
+    snapshot_available: true,
     app_name: "ArkiWatch",
     timezone: DEMO_TIMEZONE,
     coverage_area: "Helsinki / Uusimaa",
@@ -849,21 +948,21 @@ function buildOverview(): PlatformOverviewResponse {
     category("water", "Water and snow", "Hydrology and seasonal conditions.", ["syke"], [], [
       metric("source_status", "Source status", "healthy", "good", ["syke"]),
       metric("coverage", "Coverage", "Helsinki region", "neutral", ["syke"]),
-    ]),
+    ], "connected", "empty"),
     category("events", "Linked Events", "Public events and activities.", ["linkedevents"], [], [
       metric("source_status", "Source status", "healthy", "good", ["linkedevents"]),
       metric("active_events", "Upcoming events", "12", "good", ["linkedevents"]),
-    ]),
-    category("city_services", "City services", "Public service locations and opening information.", ["linkedevents"], [], [
-      metric("source_status", "Source status", "healthy", "good", ["linkedevents"]),
-      metric("service_units", "Service units", "24", "good", ["linkedevents"]),
-    ]),
+    ], "connected", "empty"),
+    category("city_services", "City services", "Public service locations and opening information.", ["servicemap"], [], [
+      metric("source_status", "Source status", "healthy", "good", ["servicemap"]),
+      metric("service_units", "Service units", "24", "good", ["servicemap"]),
+    ], "connected", "empty"),
     category("geospatial", "Geospatial base", "Location context for public signals.", [], [], [
-      metric("catalog_stage", "Catalog stage", "connected", "good", []),
-    ]),
+      metric("catalog_stage", "Catalog stage", "background", "neutral", []),
+    ], "background"),
     category("regional_profile", "Regional profile", "Regional coverage and context.", [], [], [
-      metric("catalog_stage", "Catalog stage", "connected", "good", []),
-    ]),
+      metric("catalog_stage", "Catalog stage", "background", "neutral", []),
+    ], "background"),
   ];
   const recentEvents = [RAIN_EVENT, TRANSIT_EVENT, ROAD_EVENT, ENERGY_EVENT, AIR_EVENT];
 
@@ -941,37 +1040,78 @@ export function demoFixtureForScope(scope: {
   const coverageArea = cityCoverageArea(cityRef);
   const date = normalizeSourceDateValue(scope.date);
   const scopeSuffix = date ? ` · ${date}` : "";
+  const unavailableCityScope = cityRef !== DEMO_CITY;
+  const unavailableHistoricalDate = date !== null && date !== DEMO_SNAPSHOT_DATE;
+  const unavailableScopedData = unavailableCityScope || unavailableHistoricalDate;
+  const scopedBaseFixture = shiftDemoTimestamps(BASE_FIXTURE, demoSnapshotShift(date));
+  const scopedCategories = scopedBaseFixture.overview.categories.map((categoryItem) =>
+    scopedDemoCategory(categoryItem, unavailableScopedData),
+  );
 
   return {
-    ...BASE_FIXTURE,
+    ...scopedBaseFixture,
     overview: {
-      ...withScope(BASE_FIXTURE.overview, date),
+      ...withScope(scopedBaseFixture.overview, date),
       coverage_area: `${coverageArea}${scopeSuffix}`,
-      categories: BASE_FIXTURE.overview.categories,
-      sources: BASE_FIXTURE.overview.sources,
+      categories: scopedCategories,
+      recent_events: unavailableScopedData ? [] : scopedBaseFixture.overview.recent_events,
+      sources: scopedBaseFixture.overview.sources,
     },
     publicDashboard: {
-      ...BASE_FIXTURE.publicDashboard,
-      coverage_area: `${BASE_FIXTURE.publicDashboard.coverage_area}${scopeSuffix}`,
+      ...scopedBaseFixture.publicDashboard,
+      coverage_area: `${scopedBaseFixture.publicDashboard.coverage_area}${scopeSuffix}`,
+      snapshot_date: date ?? scopedBaseFixture.publicDashboard.snapshot_date,
+      snapshot_available:
+        date === null || date === DEMO_SNAPSHOT_DATE,
+      top_actions: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.top_actions,
+      scenario_sections: unavailableHistoricalDate
+        ? []
+        : scopedBaseFixture.publicDashboard.scenario_sections,
+      timeline: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.timeline,
+      broadcasts: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.broadcasts,
     },
     weather: {
-      ...withScope(BASE_FIXTURE.weather, date),
+      ...withScope(emptyDemoResponse(scopedBaseFixture.weather, unavailableScopedData), date),
       location: city,
     },
     airQuality: {
-      ...withScope(BASE_FIXTURE.airQuality, date),
+      ...withScope(emptyDemoResponse(scopedBaseFixture.airQuality, unavailableScopedData), date),
       location: city,
     },
-    energy: withScope(BASE_FIXTURE.energy, date),
-    householdEnergy: withScope(BASE_FIXTURE.householdEnergy, date),
-    roadRail: withScope(BASE_FIXTURE.roadRail, date),
+    energy: withScope(emptyDemoResponse(scopedBaseFixture.energy, unavailableScopedData), date),
+    householdEnergy: withScope(
+      emptyDemoResponse(scopedBaseFixture.householdEnergy, unavailableScopedData),
+      date,
+    ),
+    roadRail: withScope(emptyDemoResponse(scopedBaseFixture.roadRail, unavailableScopedData), date),
     transit: {
-      ...withScope(BASE_FIXTURE.transit, date),
+      ...withScope(emptyDemoResponse(scopedBaseFixture.transit, unavailableScopedData), date),
       location: city,
+    },
+    history: {
+      weather: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.weather, date),
+      air_quality: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.air_quality, date),
+      energy: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.energy, date),
+      household_energy: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.household_energy, date),
+      road_rail: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.road_rail, date),
+      transit: unavailableScopedData
+        ? []
+        : withHistoricalScope(scopedBaseFixture.history.transit, date),
     },
     historyAvailability: {
-      ...BASE_FIXTURE.historyAvailability,
+      ...scopedBaseFixture.historyAvailability,
       city: cityRef,
+      days: unavailableCityScope ? [] : scopedBaseFixture.historyAvailability.days,
     },
   };
 }

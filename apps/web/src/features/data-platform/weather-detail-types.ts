@@ -3,6 +3,7 @@ import type {
   PlatformHistoricalSnapshot,
   WeatherForecastResponse,
 } from "./types";
+import type { ScopedEventState } from "./event-time-state";
 
 export type WeatherDetailViewProps = {
   category: PlatformCategory | null;
@@ -29,6 +30,7 @@ export type TimelineItem = {
   body: string;
   tone: "good" | "warn" | "bad" | "neutral";
   active: boolean;
+  state?: ScopedEventState;
 };
 
 export type CurrentMetricCard = {

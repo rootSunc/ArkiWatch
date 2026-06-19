@@ -1,7 +1,8 @@
-import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
-
 import { localizedContent } from "./content-localization";
 import { localizedPlatformCopy } from "./platform-copy";
+export { liveStatusLabel, liveStatusTone } from "./platform-status";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { parseValidDate } from "@/features/shared/format";
 
 import type { LanguageMode } from "./i18n";
 import type { TrendChartPoint } from "./lazy-trend-chart";
@@ -17,6 +18,8 @@ import type {
 } from "./types";
 import type { CurrentMetricCard, TimelineItem } from "./weather-detail-types";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { isHistoricalTimeScope, scopedDataTimestamp } from "./data-time-scope";
+import { scopedEventState, type ScopedEventState } from "./event-time-state";
 
 const OUTDOOR_MAX_GUST_MS = 14;
 const OUTDOOR_MIN_VISIBILITY_M = 5000;
@@ -25,7 +28,7 @@ const HEAVY_RAIN_TOTAL_MM = 15;
 
 export function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return new Intl.NumberFormat("en-GB", {
@@ -47,7 +50,7 @@ export function displayRegion(value: string | null | undefined, tKey: (key: stri
 
 export function formatDegree(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return `${formatNumber(value, 1)}°`;
@@ -59,7 +62,12 @@ export function formatCompactTime(
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): string {
   if (!value) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
+  }
+
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
@@ -67,17 +75,7 @@ export function formatCompactTime(
     minute: "2-digit",
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
-  }).format(new Date(value));
-}
-
-export function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
-  if (status === "ready" || status === "summary_only") {
-    return "ready";
-  }
-  if (status === "stale") {
-    return "stale";
-  }
-  return "empty";
+  }).format(parsedDate);
 }
 
 export function exactDataTime(
@@ -85,12 +83,16 @@ export function exactDataTime(
   language: LanguageMode,
   tKey: (key: string) => string,
   timeZone = DEFAULT_DATA_TIME_ZONE,
+  timeScope?: WeatherForecastResponse["time_scope"],
 ): string {
-  if (!value) {
-    return tKey("weather.notObserved");
-  }
-
-  return `${formatTimestamp(value, "dateTime", language, resolveDataTimezone(timeZone))} (${formatRelativeAge(value, language)})`;
+  return scopedDataTimestamp(
+    value,
+    timeScope,
+    language,
+    tKey,
+    "weather.notObserved",
+    resolveDataTimezone(timeZone),
+  );
 }
 
 export function formatTimeZoneName(
@@ -129,6 +131,11 @@ export function formatTimelineTime(
     return "PENDING";
   }
 
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return UNAVAILABLE_DATA_VALUE;
+  }
+
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -137,7 +144,7 @@ export function formatTimelineTime(
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
 }
 
@@ -145,26 +152,38 @@ export function pointTime(point: WeatherForecastPoint): number {
   return new Date(point.timestamp).getTime();
 }
 
+function referenceTimestamp(value: string | number | null | undefined): number {
+  const timestamp = typeof value === "number" ? value : new Date(value ?? "").getTime();
+  return Number.isFinite(timestamp) ? timestamp : Date.now();
+}
+
 export function orderedPoints(points: WeatherForecastPoint[]): WeatherForecastPoint[] {
   return [...points].sort((left, right) => pointTime(left) - pointTime(right));
 }
 
-export function forecastWindow(points: WeatherForecastPoint[], limit = 50): WeatherForecastPoint[] {
+export function forecastWindow(
+  points: WeatherForecastPoint[],
+  limit = 50,
+  referenceAt?: string | number | null,
+): WeatherForecastPoint[] {
   const ordered = orderedPoints(points);
-  const now = Date.now();
-  const upcoming = ordered.filter((point) => pointTime(point) >= now);
+  const reference = referenceTimestamp(referenceAt);
+  const upcoming = ordered.filter((point) => pointTime(point) >= reference);
   return (upcoming.length > 0 ? upcoming : ordered).slice(0, limit);
 }
 
-export function latestPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
+export function latestPoint(
+  points: WeatherForecastPoint[],
+  referenceAt?: string | number | null,
+): WeatherForecastPoint | null {
   if (points.length === 0) {
     return null;
   }
 
-  const now = Date.now();
+  const reference = referenceTimestamp(referenceAt);
   const ordered = orderedPoints(points);
   return (
-    ordered.find((point) => pointTime(point) >= now) ??
+    ordered.find((point) => pointTime(point) >= reference) ??
     ordered.reduce((latest, point) => (pointTime(point) > pointTime(latest) ? point : latest))
   );
 }
@@ -218,25 +237,29 @@ export function conditionForPoint(point: WeatherForecastPoint | null, tKey: (key
     return { icon: "cloud_sync", label: tKey("weather.awaitingForecast") };
   }
 
-  const precipitation = point.precipitation_mm ?? 0;
-  const temperature = point.temperature_c ?? 5;
-  const cloud = point.cloud_cover_pct ?? 100;
-  const gust = point.wind_gust_ms ?? point.wind_speed_ms ?? 0;
+  const precipitation = point.precipitation_mm;
+  const temperature = point.temperature_c;
+  const cloud = point.cloud_cover_pct;
+  const gust = point.wind_gust_ms ?? point.wind_speed_ms;
 
-  if (precipitation >= 0.3 && temperature <= 1) {
+  if (hasNumber(precipitation) && precipitation >= 0.3 && hasNumber(temperature) && temperature <= 1) {
     return { icon: "cloudy_snowing", label: tKey("weather.lightSnowOvercast") };
   }
-  if (precipitation >= 0.3) {
+  if (hasNumber(precipitation) && precipitation >= 0.3) {
     return { icon: "rainy", label: tKey("weather.rainLowCloud") };
   }
-  if (gust >= OUTDOOR_MAX_GUST_MS) {
+  if (hasNumber(gust) && gust >= OUTDOOR_MAX_GUST_MS) {
     return { icon: "air", label: tKey("weather.windAdvisoryConditions") };
   }
-  if (cloud >= 75) {
+  if (hasNumber(cloud) && cloud >= 75) {
     return { icon: "cloud", label: tKey("weather.overcast") };
   }
-  if (cloud <= 30) {
+  if (hasNumber(cloud) && cloud <= 30) {
     return { icon: "clear_day", label: tKey("weather.clearSpell") };
+  }
+
+  if (!hasNumber(precipitation) && !hasNumber(gust) && !hasNumber(cloud)) {
+    return { icon: "cloud_sync", label: tKey("weather.awaitingForecast") };
   }
 
   return { icon: "partly_cloudy_day", label: tKey("weather.partlyCloudy") };
@@ -248,7 +271,7 @@ export function hasNumber(value: number | null | undefined): value is number {
 
 export function compassDirection(degrees: number | null | undefined): string {
   if (degrees === null || degrees === undefined || Number.isNaN(degrees)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   const directions = [
@@ -337,21 +360,40 @@ export function buildTimelineItems(
   tKey: (key: string) => string,
   highlightedEventId?: string | null,
   timeZone = DEFAULT_DATA_TIME_ZONE,
+  referenceAt?: string | number | null,
 ): TimelineItem[] {
-  const now = Date.now();
+  const reference = referenceTimestamp(referenceAt);
+  const isHistorical = isHistoricalTimeScope(weather?.time_scope);
+  const stateLabel = (state: ScopedEventState): string => {
+    if (state === "active") {
+      return tKey(isHistorical ? "weather.activeAtSnapshot" : "weather.activeNow");
+    }
+    if (state === "upcoming") {
+      return tKey(isHistorical ? "weather.upcomingAtSnapshot" : "weather.upcoming");
+    }
+    return tKey(isHistorical ? "weather.endedBeforeSnapshot" : "weather.ended");
+  };
+  const eventTimeLabel = (state: ScopedEventState, startsAt: string): string => {
+    const status = stateLabel(state);
+    return state === "active"
+      ? status
+      : `${status} · ${formatTimelineTime(startsAt, language, timeZone)}`;
+  };
   const isActiveWindow = (startsAt: string, endsAt: string): boolean => {
     const startTime = new Date(startsAt).getTime();
     const endTime = new Date(endsAt).getTime();
-    return Number.isFinite(startTime) && Number.isFinite(endTime) && startTime <= now && endTime >= now;
+    return Number.isFinite(startTime) && Number.isFinite(endTime) && startTime <= reference && endTime >= reference;
   };
   const warningItems =
     weather?.warnings.map((warning, index) => ({
       id: `warning-${index}-${warning.title}`,
-      time: warning.published_at ? formatTimelineTime(warning.published_at, language, timeZone) : tKey("weather.activeNow"),
+      time: isHistorical
+        ? tKey("weather.warningCapturedAtSnapshot")
+        : tKey("weather.activeNow"),
       title: warning.title,
       body: warning.description ?? tKey("weather.weatherWarningFromTheProviderFeed"),
       tone: warningTone(warning),
-      active: true
+      active: !isHistorical,
     })) ?? [];
 
   const eventItems =
@@ -360,13 +402,19 @@ export function buildTimelineItems(
       .map((event) => {
         const startsAt = new Date(event.starts_at).getTime();
         const endsAt = new Date(event.ends_at).getTime();
+        const state = scopedEventState(
+          Number.isFinite(startsAt) && Number.isFinite(endsAt) && startsAt <= reference && endsAt >= reference,
+          event.starts_at,
+          reference,
+        );
         return {
           id: event.id,
-          time: startsAt <= now && endsAt >= now ? tKey("weather.activeNow") : formatTimelineTime(event.starts_at, language, timeZone),
+          time: eventTimeLabel(state, event.starts_at),
           title: localizedContent(language, event.title, event.title_zh),
           body: localizedContent(language, event.body, event.body_zh),
           tone: eventTone(event),
-          active: startsAt <= now && endsAt >= now
+          active: state === "active",
+          state,
         };
       }) ?? [];
 
@@ -379,24 +427,28 @@ export function buildTimelineItems(
 
   if (gustPoint && peakGust !== null && peakGust >= OUTDOOR_MAX_GUST_MS) {
     const gustEndsAt = new Date(new Date(gustPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
+    const state = scopedEventState(isActiveWindow(gustPoint.timestamp, gustEndsAt), gustPoint.timestamp, reference);
     syntheticItems.push({
       id: "gust-advisory",
-      time: formatTimelineTime(gustPoint.timestamp, language, timeZone),
+      time: eventTimeLabel(state, gustPoint.timestamp),
       title: tKey("weather.highWindAdvisory"),
       body: `${tKey("weather.gustsNear")} ${formatNumber(peakGust)} m/s ${tKey("weather.acrossTheForecastWindow")}`,
       tone: "warn",
-      active: isActiveWindow(gustPoint.timestamp, gustEndsAt)
+      active: state === "active",
+      state,
     });
   }
   if (visibilityPoint && minVisibility !== null && minVisibility < OUTDOOR_MIN_VISIBILITY_M) {
     const visibilityEndsAt = new Date(new Date(visibilityPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
+    const state = scopedEventState(isActiveWindow(visibilityPoint.timestamp, visibilityEndsAt), visibilityPoint.timestamp, reference);
     syntheticItems.push({
       id: "visibility-advisory",
-      time: formatTimelineTime(visibilityPoint.timestamp, language, timeZone),
+      time: eventTimeLabel(state, visibilityPoint.timestamp),
       title: tKey("weather.reducedVisibility"),
       body: `${tKey("weather.visibilityIs")} ${formatNumber(minVisibility / 1000)} km. ${tKey("weather.slowMovementWindowsMayNeedExtraMargin")}`,
       tone: "bad",
-      active: isActiveWindow(visibilityPoint.timestamp, visibilityEndsAt)
+      active: state === "active",
+      state,
     });
   }
   if (
@@ -404,13 +456,15 @@ export function buildTimelineItems(
     (rainWindow.peak_precip_mm >= HEAVY_RAIN_PEAK_MM ||
       rainWindow.total_precip_mm >= HEAVY_RAIN_TOTAL_MM)
   ) {
+    const state = scopedEventState(isActiveWindow(rainWindow.starts_at, rainWindow.ends_at), rainWindow.starts_at, reference);
     syntheticItems.push({
       id: "rain-advisory",
-      time: formatTimelineTime(rainWindow.starts_at, language, timeZone),
+      time: eventTimeLabel(state, rainWindow.starts_at),
       title: tKey("weather.heavyRainAdvisory"),
       body: `${tKey("weather.peakRain")} ${formatNumber(rainWindow.peak_precip_mm)} mm/h · ${tKey("weather.rainTotal")} ${formatNumber(rainWindow.total_precip_mm)} mm.`,
       tone: "warn",
-      active: isActiveWindow(rainWindow.starts_at, rainWindow.ends_at)
+      active: state === "active",
+      state,
     });
   }
 
@@ -440,7 +494,7 @@ export function buildTimelineItems(
 export function metricValue(weather: WeatherForecastResponse | null, key: string): string {
   const metric = weather?.metrics.find((item) => item.key === key);
   if (!metric) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
@@ -590,7 +644,7 @@ export function currentMetricCards(
           label: tKey("weather.cloudCover"),
           value: formatNumber(current.cloud_cover_pct, 0),
           unit: "%",
-          detail: `FMI ${tKey("weather.symbol")} ${current.weather_symbol ?? "n/a"} / smart ${current.smart_symbol ?? "n/a"}`,
+          detail: `FMI ${tKey("weather.symbol")} ${current.weather_symbol ?? UNAVAILABLE_DATA_VALUE} / smart ${current.smart_symbol ?? UNAVAILABLE_DATA_VALUE}`,
           progress: Math.min(100, current.cloud_cover_pct),
           tone: "cloud"
         }

@@ -23,7 +23,7 @@ export function usePersonalDashboard({
 }) {
   const query = useQuery({
     queryKey: personalDashboardKeys.current(userId),
-    queryFn: async () => unwrapApiResult(await fetchPersonalDashboard()),
+    queryFn: async ({ signal }) => unwrapApiResult(await fetchPersonalDashboard(signal)),
     enabled: enabled && Boolean(userId),
     staleTime: PERSONAL_DASHBOARD_STALE_TIME_MS,
     // Personal setup can be edited on a separate route. Always revalidate on

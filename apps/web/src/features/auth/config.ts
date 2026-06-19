@@ -1,4 +1,8 @@
 export const SESSION_COOKIE_NAME = "arkiwatch_session";
+/** Keep server-side personal proxy calls from holding a request indefinitely. */
+export const SERVER_API_TIMEOUT_MS = 8000;
+/** AI streams need more time than ordinary reads, but must not hang forever. */
+export const SERVER_ASSISTANT_TIMEOUT_MS = 45_000;
 
 export type SessionUser = {
   id: string;

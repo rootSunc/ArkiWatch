@@ -46,7 +46,6 @@ import {
   pollIntervalLabel,
   priceAreaPath,
   priceLinePath,
-  relativeTime,
   severityPoints,
   sourceByCode,
   sourceProgress,
@@ -60,6 +59,10 @@ import {
 import type { EnergyPoint } from "./types";
 import type { PanelMetric } from "./energy-workspace-types";
 import { resolveDataTimezone } from "./data-timezone";
+import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./data-time-scope";
+import { isEmptyStatus } from "./platform-status";
+import { hasObservedSourceRecords } from "./catalog-workspace-state";
+import { handleTabListKeyDown } from "./tab-navigation";
 
 export function EnergyWorkspace({
   activePanel: controlledPanel,
@@ -108,9 +111,24 @@ export function EnergyWorkspace({
   const isPricePanel = activePanel === "porssisahko";
   const activeProfile = ENERGY_PANEL_PROFILES[activePanel];
   const activeEnergy = isPricePanel ? householdEnergy : energy;
+  const energyTabIdPrefix = "energy-workspace-tab";
+  const energyPanelId = "energy-workspace-panel";
+
+  if (!activeEnergy || isEmptyStatus(activeEnergy.status)) {
+    return (
+      <section className="energy-detail-empty" aria-label={tKey("energy.energyDataUnavailable")}>
+        <span>{tKey("energy.energy")}</span>
+        <h2>{tKey("energy.energySignalsAreNotAvailableYet")}</h2>
+        <p>{tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}</p>
+      </section>
+    );
+  }
+
   const dataTimezone = resolveDataTimezone(activeEnergy?.time_scope?.timezone);
+  const isHistorical = isHistoricalTimeScope(activeEnergy?.time_scope);
   const activeHistory = isPricePanel ? householdHistory : history;
   const activeSource = sourceByCode(category, activePanel);
+  const hasObservedRecords = hasObservedSourceRecords(activeSource ? [activeSource] : []);
   const priceProviderName = householdEnergy?.provider_name ?? DEFAULT_HOUSEHOLD_PRICE_PROVIDER;
   const activeStatus = activeSource?.operational_status ?? activeEnergy?.status ?? category.status;
   const lowWindowMetric = isPricePanel ? null : metricByKey(category, "low_energy_window");
@@ -212,13 +230,19 @@ export function EnergyWorkspace({
   })() : [];
 
   const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel, dataTimezone);
-  const activeSourceLabel = sourceStatusLabel(activeSource, activeStatus, language);
+  const activeSourceLabel = isHistorical
+    ? tKey("shell.historicalEvidence")
+    : sourceStatusLabel(activeSource, activeStatus, language);
+  const activeObservedAt = isHistorical
+    ? activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at ?? scopedReferenceTime(activeEnergy?.time_scope)
+    : activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at ?? null;
   const activeTitle = isPricePanel ? `${priceProviderName} ${tKey("energy.householdEnergyPrice")}` : tKey("energy.fingridEnergySignals");
   const activeDataFeedName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
   const activeSourceName = isPricePanel ? priceProviderName : activeDataFeedName;
   const sourceDisclosureName = isPricePanel ? activeDataFeedName : activeSourceName;
   const activeUnitLabel = isPricePanel ? "EUR" : activeEnergy?.unit ?? tKey(`energy.${activeProfile.noUnitLabelKey}`);
   const datasetCount = activeSource?.datasets?.length ?? 0;
+  const datasetCountLabel = datasetCount > 0 ? String(datasetCount) : tKey("energy.notObserved");
   const baseSummaryMetrics: PanelMetric[] = activeEnergy?.metrics.length
     ? orderedEnergyMetrics(activeEnergy.metrics, isPricePanel).slice(0, 5)
     : [lowWindowMetric, recordsMetric, sourceStateMetric, householdUsageMetric].filter((metric): metric is PanelMetric => metric !== null);
@@ -231,6 +255,10 @@ export function EnergyWorkspace({
     tone: toneFromStatus(activeStatus),
     detail: activeStatus
   }];
+  const formatDisplayedMetric = (metric: PanelMetric | null): string =>
+    metric?.key === "records_ingested" && !hasObservedRecords
+      ? tKey("energy.notObserved")
+      : formatMetricValue(metric, tKey);
 
   return (
     <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={tKey("energy.energyDetail")}>
@@ -243,10 +271,22 @@ export function EnergyWorkspace({
             <button
               aria-label={tabLabel}
               aria-selected={activePanel === tab.key}
+              aria-controls={energyPanelId}
               className={activePanel === tab.key ? "energy-tab energy-tab-active" : "energy-tab"}
+              id={`${energyTabIdPrefix}-${tab.key}`}
               key={tab.key}
               onClick={() => setActivePanel(tab.key)}
+              onKeyDown={(event) =>
+                handleTabListKeyDown(
+                  event,
+                  ENERGY_PANEL_TABS,
+                  activePanel,
+                  setActivePanel,
+                  energyTabIdPrefix,
+                )
+              }
               role="tab"
+              tabIndex={activePanel === tab.key ? 0 : -1}
               type="button"
             >
               <span className="material-symbols-outlined" aria-hidden="true">
@@ -258,6 +298,13 @@ export function EnergyWorkspace({
         })}
       </nav>
 
+      <div
+        aria-labelledby={`${energyTabIdPrefix}-${activePanel}`}
+        className="energy-workspace-panel"
+        id={energyPanelId}
+        role="tabpanel"
+        tabIndex={0}
+      >
       <div className="energy-detail-header">
         <div>
           <h2>{activeTitle}</h2>
@@ -266,7 +313,7 @@ export function EnergyWorkspace({
             <strong>{activeSourceLabel}</strong>
           </div>
         </div>
-        <div>{activeSourceName} / {relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at, language, tKey)}</div>
+        <div>{activeSourceName} / {scopedDataAge(activeObservedAt, activeEnergy?.time_scope, language, tKey, "energy.notObserved", dataTimezone)}</div>
       </div>
 
       <section
@@ -285,7 +332,7 @@ export function EnergyWorkspace({
           <div>
             <div className="energy-card-kicker">
               <span>{isPricePanel ? tKey("energy.flexibleUseStartWindow") : tKey("energy.lowValueSystemWindow")}</span>
-              <time>{relativeTime(activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at, language, tKey)}</time>
+              <time>{scopedDataAge(activeObservedAt, activeEnergy?.time_scope, language, tKey, "energy.notObserved", dataTimezone)}</time>
             </div>
             <strong>{heroValue}</strong>
             <p>{heroDetail}</p>
@@ -330,7 +377,7 @@ export function EnergyWorkspace({
             >
               {resolveMetricLabel(metric, tKey, language)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey)}</strong>
+            <strong>{formatDisplayedMetric(metric)}</strong>
           </article>
         ))}
       </section>
@@ -640,7 +687,7 @@ export function EnergyWorkspace({
               <article className={`energy-signal energy-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{resolveMetricLabel(metric, tKey, language)}</strong>
-                  <span>{formatMetricValue(metric, tKey)}</span>
+                  <span>{formatDisplayedMetric(metric)}</span>
                 </div>
                 <p>{metric.detail ?? tKey("energy.thisSignalHasNotProducedAPlatformMetricYet")}</p>
                 <span className="energy-signal-meter" aria-hidden="true">
@@ -659,7 +706,7 @@ export function EnergyWorkspace({
             </header>
             <div className="energy-source-facts">
               <article className="energy-stat-chip">
-                <strong>{datasetCount || activeEnergy?.source_requests.length || 0}</strong>
+                <strong>{datasetCountLabel}</strong>
                 <span>{tKey("energy.datasets")}</span>
               </article>
               <article className="energy-stat-chip">
@@ -667,12 +714,12 @@ export function EnergyWorkspace({
                 <span>{tKey("energy.poll")}</span>
               </article>
               <article className="energy-stat-chip">
-                <strong>{activeEnergy?.quality.point_count ?? formatMetricValue(recordsMetric, tKey)}</strong>
+                <strong>{activeEnergy?.quality.point_count ?? formatDisplayedMetric(recordsMetric)}</strong>
                 <span>{tKey("energy.points")}</span>
               </article>
             </div>
             <p>{activeSourceName} · {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
-            {activeSource?.error_message ? <p>{activeSource.error_message}</p> : null}
+            {activeSource?.error_message ? <p>{tKey("shell.collectionError")}</p> : null}
             {activeSource?.documentation_url ? (
               <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">
                 {tKey("energy.openDataDocumentation")}
@@ -700,7 +747,7 @@ export function EnergyWorkspace({
                     <strong>{localizedPlatformCopy(point.label, language) ?? point.label}</strong>
                     <span>{point.detail ? localizedPlatformCopy(point.detail, language) ?? translateEnumLabel(language, point.detail) : tKey("energy.records2")}</span>
                   </div>
-                  <em>{point.value}</em>
+                  <em>{activeSourcePoints.length === 0 && !hasObservedRecords ? tKey("energy.notObserved") : point.value}</em>
                   <span className="energy-volume-meter" aria-hidden="true">
                     <span style={{ width: `${sourceProgress(point)}%` }} />
                   </span>
@@ -838,7 +885,7 @@ export function EnergyWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("energy.lastSync")}: {relativeTime(activeEnergy?.observed_at ?? activeSource?.last_run_finished_at ?? lowWindowMetric?.updated_at, language, tKey)}
+            {tKey("energy.lastSync")}: {scopedDataAge(activeObservedAt, activeEnergy?.time_scope, language, tKey, "energy.notObserved", dataTimezone)}
           </span>
           <i aria-hidden="true" />
           <span className="energy-provider-window">{hasActiveWindow ? tKey("energy.windowDetected") : tKey("energy.windowPending")}</span>
@@ -848,6 +895,7 @@ export function EnergyWorkspace({
       <p className="energy-detail-freshness">
         {localizedPlatformCopy(category.description, language) ?? tKey("energy.energyDetail")}
       </p>
+      </div>
     </section>
   );
 }

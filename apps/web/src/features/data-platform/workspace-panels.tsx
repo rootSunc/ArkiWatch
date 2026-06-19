@@ -3,10 +3,14 @@
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 
+import { useI18n } from "./i18n";
+
 function WorkspacePanelLoading() {
+  const { tKey } = useI18n();
+
   return (
-    <div className="workspace-panel-loading" aria-busy="true">
-      <span className="workspace-panel-loading-label">…</span>
+    <div className="workspace-panel-loading" aria-busy="true" role="status">
+      <span className="workspace-panel-loading-label">{tKey("shell.loadingPanel")}</span>
     </div>
   );
 }

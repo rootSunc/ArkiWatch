@@ -1,6 +1,7 @@
 {
   "weather": {
     "activeNow": "ACTIVE NOW",
+    "activeAtSnapshot": "ACTIVE AT SNAPSHOT",
     "allTrackedFieldsPresent": "All tracked fields present",
     "awaitingForecast": "Awaiting Forecast",
     "clearSpell": "Clear Spell",
@@ -37,6 +38,11 @@
     "missing": "Missing",
     "moistureTemperatureCurve": "Moisture temperature curve",
     "nextWindow": "NEXT WINDOW",
+    "upcoming": "UPCOMING",
+    "upcomingAtSnapshot": "UPCOMING AT SNAPSHOT",
+    "ended": "ENDED",
+    "endedBeforeSnapshot": "ENDED BEFORE SNAPSHOT",
+    "warningCapturedAtSnapshot": "WARNING CAPTURED IN SNAPSHOT",
     "next3h": "Next 3H",
     "noActiveWarningOrDisruptionEventIsPresentInTheCurrentWeatherFeed": "No active warning or disruption event is present in the current weather feed.",
     "noDailyWeatherHistoryIsAvailable": "No daily weather history is available.",

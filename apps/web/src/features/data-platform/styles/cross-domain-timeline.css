@@ -194,6 +194,15 @@
   font-size: 0.9rem;
 }
 
+.cross-domain-timeline-state {
+  color: var(--on-surface-variant, currentColor);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .cross-domain-timeline-detail {
   font-size: 0.82rem;
   opacity: 0.86;

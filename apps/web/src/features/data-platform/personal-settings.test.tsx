@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SessionUser } from "@/features/auth/config";
@@ -43,6 +44,129 @@ describe("PersonalSettingsPage", () => {
     const telegramInput = screen.getByLabelText("Telegram chat ID");
     fireEvent.change(telegramInput, { target: { value: "123456" } });
     expect(telegramInput).toHaveValue("123456");
+  });
+
+  it("does not expose backend details when personal context loading fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          { detail: "database password=legacy-secret" },
+          { status: 500 },
+        ),
+      ),
+    );
+
+    render(<PersonalSettingsPage user={user} />);
+
+    const notice = await screen.findByRole("status");
+    expect(notice).toHaveTextContent(
+      "Personal settings could not be loaded or updated. Check the fields and try again.",
+    );
+    expect(notice).not.toHaveTextContent("legacy-secret");
+  });
+
+  it("does not expose backend details when saving personal context fails", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        return Response.json(
+          { detail: "database password=legacy-secret" },
+          { status: 500 },
+        );
+      }
+
+      return Response.json(
+        { locations: [], preferences: null, commuteProfiles: [], channels: [] },
+        { status: 200 },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<PersonalSettingsPage user={user} />);
+
+    await screen.findByLabelText("City");
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const notice = await screen.findByRole("status");
+    expect(notice).toHaveTextContent(
+      "Personal settings could not be loaded or updated. Check the fields and try again.",
+    );
+    expect(notice).not.toHaveTextContent("legacy-secret");
+  });
+
+  it("keeps the latest context response when StrictMode replays the initial request", async () => {
+    const firstContext = {
+      locations: [
+        {
+          id: "location-old",
+          user_id: "user-1",
+          label: "Home",
+          country_code: "FI",
+          city: "Helsinki",
+          district: null,
+          lat: 60.1699,
+          lon: 24.9384,
+          is_default: true,
+          created_at: "2026-04-12T08:00:00Z",
+        },
+      ],
+      preferences: null,
+      commuteProfiles: [],
+      channels: [],
+    };
+    const secondContext = {
+      ...firstContext,
+      locations: [{ ...firstContext.locations[0], id: "location-new", city: "Espoo" }],
+    };
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    const firstRequest = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondRequest = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    let callCount = 0;
+    const fetchMock = vi.fn(() => {
+      callCount += 1;
+      return callCount === 1 ? firstRequest : secondRequest;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <StrictMode>
+        <PersonalSettingsPage user={user} />
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    resolveSecond(Response.json(secondContext, { status: 200 }));
+    await waitFor(() => expect(screen.getByLabelText("City")).toHaveValue("Espoo"));
+
+    resolveFirst(Response.json(firstContext, { status: 200 }));
+    await waitFor(() => expect(screen.getByLabelText("City")).toHaveValue("Espoo"));
+  });
+
+  it("cancels the context request when the settings page unmounts", async () => {
+    let requestSignal: AbortSignal | undefined;
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      requestSignal = init?.signal ?? undefined;
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          "abort",
+          () => reject(new DOMException("Request closed", "AbortError")),
+          { once: true },
+        );
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { unmount } = render(<PersonalSettingsPage user={user} />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    unmount();
+
+    expect(requestSignal?.aborted).toBe(true);
   });
 
   it("saves an existing location by id instead of creating a duplicate", async () => {

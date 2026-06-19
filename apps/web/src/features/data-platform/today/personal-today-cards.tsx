@@ -1,6 +1,7 @@
 "use client";
 
 import { formatTimestamp } from "@/features/shared/format";
+import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
@@ -120,9 +121,7 @@ export function PersonalTodayCards({
         type="button"
       >
         {tKey("shell.personalAskAboutRecommendations")}
-        <span className="material-symbols-outlined" aria-hidden="true">
-          smart_toy
-        </span>
+        <AssistantGlyph />
       </button>
     </section>
   );

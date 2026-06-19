@@ -9,11 +9,15 @@ import type {
 } from "../types";
 import type { UserSummaryTile } from "../user-summary-stats";
 
-export type TodayRecommendationMode = "live" | "out_of_scope" | "historical";
+export type TodayRecommendationMode = "live" | "out_of_scope" | "historical" | "stale";
+
+const MAX_LIVE_SNAPSHOT_AGE_MS = 6 * 60 * 60 * 1000;
+const ALLOWED_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export type TodayBrief = {
   checkedAt: string | null;
   coverageArea: string;
+  historicalSnapshotAvailable: boolean;
   timezone: string;
   recommendationCoverageArea: string | null;
   headline: string;
@@ -23,6 +27,25 @@ export type TodayBrief = {
   summaryTiles: UserSummaryTile[];
   topActions: PublicActionRead[];
 };
+
+/**
+ * Keep the reproducible demo snapshot useful after the calendar moves on.
+ * Live production data is evaluated against the browser clock, while demo
+ * data is evaluated against its own checked-at instant and remains explicitly
+ * labelled as static by the surrounding shell.
+ */
+export function todayBriefEvaluationTime(
+  demoMode: boolean,
+  referenceAt: string | null | undefined,
+  now = Date.now(),
+): number {
+  if (!demoMode || !referenceAt) {
+    return now;
+  }
+
+  const referenceTime = Date.parse(referenceAt);
+  return Number.isFinite(referenceTime) ? referenceTime : now;
+}
 
 export function isPlaceholderRecommendation(id: string, body: string): boolean {
   if (id.startsWith("placeholder-")) {
@@ -83,10 +106,12 @@ export function recommendationModeForToday({
   isHistorical = false,
   overviewCoverageArea,
   recommendationCoverageArea,
+  snapshotFresh = true,
 }: {
   isHistorical?: boolean;
   overviewCoverageArea?: string | null;
   recommendationCoverageArea?: string | null;
+  snapshotFresh?: boolean;
 }): TodayRecommendationMode {
   if (isHistorical) {
     return "historical";
@@ -100,7 +125,25 @@ export function recommendationModeForToday({
     return "out_of_scope";
   }
 
+  if (!snapshotFresh) {
+    return "stale";
+  }
+
   return "live";
+}
+
+function isLiveSnapshotFresh(publicDashboard: PublicDashboardRead, now: number): boolean {
+  if (!publicDashboard.snapshot_date) {
+    return true;
+  }
+
+  const checkedAt = Date.parse(publicDashboard.checked_at);
+  if (!Number.isFinite(checkedAt)) {
+    return false;
+  }
+
+  const age = now - checkedAt;
+  return age <= MAX_LIVE_SNAPSHOT_AGE_MS && age >= -ALLOWED_CLOCK_SKEW_MS;
 }
 
 export function buildPlanItems(
@@ -159,11 +202,15 @@ export function buildTodayBrief({
     isHistorical,
     overviewCoverageArea,
     recommendationCoverageArea,
+    snapshotFresh: isHistorical || isLiveSnapshotFresh(publicDashboard, now),
   });
+  const historicalSnapshotAvailable =
+    !isHistorical || publicDashboard.snapshot_available !== false;
 
   return {
-    checkedAt: publicDashboard.checked_at,
+    checkedAt: historicalSnapshotAvailable ? publicDashboard.checked_at : null,
     coverageArea: overviewCoverageArea ?? publicDashboard.coverage_area,
+    historicalSnapshotAvailable,
     timezone: publicDashboard.timezone,
     recommendationCoverageArea,
     headline:
@@ -171,12 +218,11 @@ export function buildTodayBrief({
         ? translateMessageKey(language, "shell.historicalRecommendationsReadOnly")
         : recommendationMode === "out_of_scope"
           ? translateMessageKey(language, "shell.recommendationsUnavailableForScope")
+          : recommendationMode === "stale"
+            ? translateMessageKey(language, "shell.staleRecommendations")
           : buildHeadline(topActions, summaryTiles, language),
     recommendationMode,
-    planItems: buildPlanItems(
-      recommendationMode === "live" ? timelineItems : [],
-      now,
-    ),
+    planItems: buildPlanItems(recommendationMode === "live" ? timelineItems : [], now),
     scenarioSections: publicDashboard.scenario_sections,
     summaryTiles,
     topActions: recommendationMode === "live" ? topActions : [],

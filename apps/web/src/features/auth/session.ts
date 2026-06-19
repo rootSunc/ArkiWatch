@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
   resolveServerApiBaseUrl,
   SESSION_COOKIE_NAME,
+  SERVER_API_TIMEOUT_MS,
 } from "./config";
 import type { AuthSession, SessionUser } from "./config";
 
@@ -22,6 +23,7 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      signal: AbortSignal.timeout(SERVER_API_TIMEOUT_MS),
     });
 
     if (!response.ok) {

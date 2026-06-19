@@ -27,9 +27,13 @@ describe("assistant stream protocol", () => {
       "assistant.rateLimitedSoon": "请稍后重试",
       "assistant.streamInterrupted": "回答中断",
       "assistant.emptyResponse": "没有回答",
+      "assistant.timedOut": "响应超时",
+      "assistant.failure": "助手失败",
     })[key] ?? key;
 
     expect(localizeAssistantError("AI provider request failed; grounded fallback answer used.", tKey))
+      .toBe("服务不可用");
+    expect(localizeAssistantError("AI provider unavailable; grounded fallback answer used.", tKey))
       .toBe("服务不可用");
     expect(localizeAssistantError("AI provider stream interrupted; the answer may be incomplete.", tKey))
       .toBe("回答中断");
@@ -37,7 +41,12 @@ describe("assistant stream protocol", () => {
       .toBe("请在 17 秒后重试");
     expect(localizeAssistantError("Assistant request limit reached.", tKey))
       .toBe("请稍后重试");
-    expect(localizeAssistantError("an unknown issue", tKey)).toBe("an unknown issue");
+    expect(localizeAssistantError("Assistant request timed out.", tKey))
+      .toBe("响应超时");
+    expect(localizeAssistantError("Assistant backend unavailable.", tKey))
+      .toBe("服务不可用");
+    expect(localizeAssistantError("database password=legacy-secret", tKey))
+      .toBe("助手失败");
   });
 
   it("parses only non-negative numeric retry guidance", () => {

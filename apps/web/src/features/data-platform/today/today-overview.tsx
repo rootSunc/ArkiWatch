@@ -5,6 +5,7 @@ import { formatTimestamp, severityTone } from "@/features/shared/format";
 import { localizedContent } from "../content-localization";
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
+import { platformErrorMessage } from "../platform-error";
 import type { ScenarioLiveSignals } from "../scenario-live-hints";
 import type { PlatformEvent } from "../types";
 import { DayPlanTimeline } from "./day-plan-timeline";
@@ -22,6 +23,7 @@ type TodayOverviewProps = {
   planItems: TodayBrief["planItems"];
   personalDashboard: PersonalDashboardRead | null;
   personalDashboardError?: string | null;
+  isHistorical: boolean;
   now?: number;
   sourceIssueCount: number;
   isScopePending: boolean;
@@ -41,6 +43,7 @@ export function TodayOverview({
   planItems,
   personalDashboard,
   personalDashboardError,
+  isHistorical,
   now,
   sourceIssueCount,
   isScopePending,
@@ -54,6 +57,9 @@ export function TodayOverview({
   onRetryPersonalDashboard,
 }: TodayOverviewProps) {
   const { tKey } = useI18n();
+  const localizedPersonalDashboardError = personalDashboardError
+    ? platformErrorMessage(personalDashboardError, tKey)
+    : null;
 
   if (!todayBrief) {
     return (
@@ -72,17 +78,24 @@ export function TodayOverview({
 
   const focusAction = todayBrief.topActions[0] ?? null;
   const isRecommendationLimited = todayBrief.recommendationMode !== "live";
+  const showRecommendationLimitNotice =
+    todayBrief.recommendationMode === "historical" ||
+    todayBrief.recommendationMode === "out_of_scope";
   const focusTone = focusAction && !isRecommendationLimited
     ? severityTone(focusAction.severity)
     : "neutral";
   const limitedModeLabel =
     todayBrief.recommendationMode === "historical"
       ? tKey("shell.historicalRecommendationsReadOnly")
-      : tKey("shell.recommendationsUnavailableForScope");
+      : todayBrief.recommendationMode === "stale"
+        ? tKey("shell.staleRecommendations")
+        : tKey("shell.recommendationsUnavailableForScope");
   const limitedModeDetail =
     todayBrief.recommendationMode === "historical"
       ? tKey("shell.historicalRecommendationsReadOnlyDetail")
-      : tKey("shell.recommendationsUnavailableForScopeDetail");
+      : todayBrief.recommendationMode === "stale"
+        ? tKey("shell.staleRecommendationsDetail")
+        : tKey("shell.recommendationsUnavailableForScopeDetail");
 
   return (
     <section
@@ -118,8 +131,12 @@ export function TodayOverview({
               </span>
               {tKey(
                 todayBrief.recommendationMode === "historical"
-                  ? "shell.historicalSnapshotGenerated"
-                  : "shell.dataChecked",
+                  ? todayBrief.historicalSnapshotAvailable
+                    ? "shell.historicalSnapshotGenerated"
+                    : "shell.historicalSnapshotUnavailable"
+                  : todayBrief.recommendationMode === "stale"
+                    ? "shell.staleSnapshot"
+                    : "shell.dataChecked",
               )}
               {todayBrief.checkedAt ? (
                 <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}</>
@@ -170,7 +187,7 @@ export function TodayOverview({
         </div>
       </section>
 
-      {isRecommendationLimited ? (
+      {showRecommendationLimitNotice ? (
         <div className="today-recommendation-limit" role="status">
           <span className="material-symbols-outlined" aria-hidden="true">
             info
@@ -210,7 +227,7 @@ export function TodayOverview({
         </div>
       ) : null}
 
-      {personalDashboard ? (
+      {!isHistorical && personalDashboard ? (
         <>
           <PersonalContextStrip
             dashboard={personalDashboard}
@@ -226,7 +243,7 @@ export function TodayOverview({
         </>
       ) : null}
 
-      {personalDashboardError ? (
+      {!isHistorical && personalDashboardError ? (
         <div className="today-personal-warning" role="alert">
           <span className="material-symbols-outlined" aria-hidden="true">
             person_alert
@@ -234,7 +251,9 @@ export function TodayOverview({
           <span className="today-personal-warning-copy">
             <strong>{tKey("shell.personalContextUnavailable")}</strong>
             <span>{tKey("shell.personalContextUnavailableDetail")}</span>
-            <small>{personalDashboardError}</small>
+            {localizedPersonalDashboardError ? (
+              <small>{localizedPersonalDashboardError}</small>
+            ) : null}
           </span>
           {onRetryPersonalDashboard ? (
             <button

@@ -1,5 +1,10 @@
 import type { components } from "@/lib/api-contract";
-import type { ApiJsonResult } from "@/lib/api-client";
+import {
+  DEFAULT_API_TIMEOUT_MS,
+  apiTransportErrorMessage,
+  type ApiJsonResult,
+} from "@/lib/api-client";
+import { requestSignalWithTimeout } from "@/lib/request-signal";
 
 export type PersonalDashboardRead = components["schemas"]["DashboardRead"];
 export type PersonalWorkflowStep = components["schemas"]["DashboardWorkflowStepRead"];
@@ -24,11 +29,16 @@ export function personalContextTone(
   return "neutral";
 }
 
-export async function fetchPersonalDashboard(): Promise<ApiJsonResult<PersonalDashboardRead>> {
+export async function fetchPersonalDashboard(
+  signal?: AbortSignal,
+): Promise<ApiJsonResult<PersonalDashboardRead>> {
   try {
     const response = await fetch("/api/personal/dashboard", {
       cache: "no-store",
       headers: { Accept: "application/json" },
+      signal: signal
+        ? requestSignalWithTimeout(signal, DEFAULT_API_TIMEOUT_MS)
+        : AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS),
     });
     const responseBody = (await response.json().catch(() => null)) as
       | PersonalDashboardRead
@@ -48,9 +58,13 @@ export async function fetchPersonalDashboard(): Promise<ApiJsonResult<PersonalDa
 
     return { data: responseBody as PersonalDashboardRead, error: null, status: response.status };
   } catch (error) {
+    if (signal?.aborted) {
+      throw error;
+    }
+
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Personal dashboard request failed.",
+      error: apiTransportErrorMessage(error, "Personal dashboard request failed."),
       status: null,
     };
   }

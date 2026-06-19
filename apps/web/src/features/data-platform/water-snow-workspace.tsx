@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 
-import { formatRelativeAge, severityTone } from "@/features/shared/format";
+import { parseValidDate, severityTone } from "@/features/shared/format";
 
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
@@ -20,10 +20,16 @@ import {
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { isEmptyStatus } from "./platform-status";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { hasObservedSourceRecords, isConnectedWorkspaceSource } from "./catalog-workspace-state";
+import type { PlatformTimeScope } from "./types";
+import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./data-time-scope";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
   timezone?: string;
+  timeScope?: PlatformTimeScope | null;
 };
 
 type WaterTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -179,10 +185,6 @@ function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
-  return value ? formatRelativeAge(value, language) : tKey("waterSnow.notObserved");
-}
-
 function formatCompactTime(
   value: string | null | undefined,
   language: LanguageMode,
@@ -190,6 +192,11 @@ function formatCompactTime(
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): string {
   if (!value) {
+    return tKey("waterSnow.notScheduled");
+  }
+
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
     return tKey("waterSnow.notScheduled");
   }
 
@@ -201,11 +208,16 @@ function formatCompactTime(
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
 }
 
 function formatTimelineBoundary(value: number, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return UNAVAILABLE_DATA_VALUE;
+  }
+
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -215,7 +227,7 @@ function formatTimelineBoundary(value: number, language: LanguageMode, timeZone 
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
 }
 
@@ -366,7 +378,14 @@ function sourceStatusLabel(category: PlatformCategory, language: LanguageMode): 
 
 function sourceStageLabel(category: PlatformCategory, language: LanguageMode): string {
   const source = category.sources[0];
-  return translateEnumLabel(language, source?.stage ?? category.stage ?? category.status);
+  if (!source) {
+    return translateEnumLabel(language, category.stage ?? category.status);
+  }
+
+  return translateEnumLabel(
+    language,
+    isConnectedWorkspaceSource(source) ? source.stage : source.operational_status,
+  );
 }
 
 function visibleSummaryMetrics(category: PlatformCategory): PanelMetric[] {
@@ -386,10 +405,11 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
   return translateEnumLabel(language, category.stage ?? "catalog");
 }
 
-export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE }: WaterSnowWorkspaceProps) {
+export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DATA_TIME_ZONE }: WaterSnowWorkspaceProps) {
   const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
+  const isHistorical = isHistoricalTimeScope(timeScope);
 
-  if (!category) {
+  if (!category || isEmptyStatus(category.status)) {
     return (
       <section className="water-detail-empty" aria-label={tKey("waterSnow.dataUnavailable")}>
         <span>{tKey("waterSnow.title")}</span>
@@ -400,6 +420,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
   }
 
   const source = category.sources[0] ?? null;
+  const hasObservedRecords = hasObservedSourceRecords(category.sources);
   const sourceStatusMetric = metricByKey(category, "source_status");
   const recordsMetric = metricByKey(category, "records_ingested");
   const activeEventsMetric = metricByKey(category, "active_events");
@@ -411,6 +432,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
   const events = category.events;
   const latest = latestEvent(category);
   const timeline = timelineItems(category);
+  const sourceConnected = source ? isConnectedWorkspaceSource(source) : false;
   const sourcePoints = sourceVolumePoints(category);
   const severityRows = severityPoints(category);
   const coverageRows = catalogCoveragePoints(category);
@@ -431,18 +453,18 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
       ? "bad"
       : events.some((event) => event.severity === "MEDIUM")
         ? "warn"
-        : statusTone(source?.stage ?? category.stage ?? category.status);
-  const fieldState = fieldStateLabel(category, language);
+        : statusTone(source?.operational_status ?? category.status);
+  const fieldState = isHistorical ? tKey("shell.historicalEvidence") : fieldStateLabel(category, language);
   const providerName = source?.source_name ?? "Finnish Environment Institute";
   const datasetCount = source?.datasets?.length ?? datasets.length;
   const sourceUpdatedAt =
     source?.last_run_finished_at ??
     source?.last_run_started_at ??
     sourceStatusMetric?.updated_at ??
-    catalogStageMetric?.updated_at;
+    null;
   const heroTitle =
     latest?.title ??
-    (category.stage === "connected" ? tKey("waterSnow.feedActive") : tKey("waterSnow.sourceMapped"));
+    (sourceConnected ? tKey("waterSnow.feedActive") : tKey("waterSnow.sourceMapped"));
   const heroDetail =
     latest?.body ??
     localizedPlatformCopy(category.description, language) ??
@@ -453,6 +475,13 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
     recordsMetric,
     catalogStageMetric
   ].filter(isPlatformMetric);
+  const displayedCoverageRows: PlatformVisualizationPoint[] = coverageRows.length > 0
+    ? coverageRows
+    : [
+        { label: "Sources", value: category.source_codes.length, tone: "neutral" },
+        { label: "Datasets", value: datasetCount, tone: "neutral" },
+        { label: "Key fields", value: keyDataItems.length, tone: "neutral" },
+      ];
 
   return (
     <section className="water-detail-page" aria-label={tKey("waterSnow.detailAria")}>
@@ -461,10 +490,10 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
           <h2>{tKey("waterSnow.hydrologyTitle")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
-            <strong>{sourceStatusLabel(category, language)}</strong>
+            <strong>{isHistorical ? tKey("shell.historicalEvidence") : sourceStatusLabel(category, language)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
+        <div>{category.source_codes.join(", ").toUpperCase()} / {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt, timeScope, language, tKey, "waterSnow.notObserved", timezone)}</div>
       </div>
 
       <section className={`water-glass-panel water-command-panel water-command-panel-${activeTone}`} aria-label={tKey("waterSnow.operatingCondition")}>
@@ -475,7 +504,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
           <div>
             <div className="water-card-kicker">
               <span>{tKey("waterSnow.signalState")}</span>
-              <time>{sourceStageLabel(category, language)}</time>
+              <time>{isHistorical ? tKey("shell.historicalEvidence") : sourceStageLabel(category, language)}</time>
             </div>
             <strong>{heroTitle}</strong>
             <p>{heroDetail}</p>
@@ -497,7 +526,9 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
           </div>
           <div>
             <span>{tKey("waterSnow.recordsIngested")}</span>
-            <strong>{formatMetricValue(recordsMetric, tKey, dataLabel)}</strong>
+            <strong>
+              {hasObservedRecords ? formatMetricValue(recordsMetric, tKey, dataLabel) : tKey("waterSnow.notObserved")}
+            </strong>
           </div>
         </div>
       </section>
@@ -515,7 +546,11 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
+            <strong>
+              {metric.key === "records_ingested" && !hasObservedRecords
+                ? tKey("waterSnow.notObserved")
+                : formatMetricValue(metric, tKey, dataLabel)}
+            </strong>
           </article>
         ))}
       </section>
@@ -532,23 +567,17 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
             >
               {tKey("waterSnow.catalogCoverage")}
             </DataLabelWithHelp>
-            <strong>{coverageRows.length || 3}</strong>
+            <strong>{displayedCoverageRows.length}</strong>
           </header>
           <div className="water-coverage-list">
-            {(coverageRows.length > 0
-              ? coverageRows
-              : [
-                  { label: "Sources", value: category.source_codes.length, tone: "neutral" },
-                  { label: "Datasets", value: datasetCount, tone: "neutral" },
-                  { label: "Key fields", value: keyDataItems.length, tone: "neutral" }
-                ]).map((point) => (
+            {displayedCoverageRows.map((point) => (
               <article className={`water-coverage-row water-coverage-row-${point.tone ?? "neutral"}`} key={point.label}>
                 <div>
                   <strong>{dataLabel(point.label)}</strong>
                   <span>{point.value} {tKey("waterSnow.items")}</span>
                 </div>
                 <i aria-hidden="true">
-                  <span style={{ width: `${pointWidth(point, coverageRows.length > 0 ? coverageRows : [point])}%` }} />
+                  <span style={{ width: `${pointWidth(point, displayedCoverageRows)}%` }} />
                 </i>
               </article>
             ))}
@@ -677,7 +706,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
               <article className="water-schema-card">
                   <div>
                   <strong>{tKey("waterSnow.hydrologySchema")}</strong>
-                  <span>{translateEnumLabel(language, category.stage ?? "planned")}</span>
+                  <span>{isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.stage ?? "planned")}</span>
                 </div>
                 <p>{tKey("waterSnow.catalogFieldsMapped")}</p>
                 <div className="water-schema-fields">
@@ -694,7 +723,13 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metricLabel(metric)}</strong>
-                  <span>{metric ? `${dataLabel(metric.value)}${metric.unit ? ` ${metric.unit}` : ""}` : formatMetricValue(metric, tKey)}</span>
+                  <span>
+                    {metric?.key === "records_ingested" && !hasObservedRecords
+                      ? tKey("waterSnow.notObserved")
+                      : metric
+                        ? `${dataLabel(metric.value)}${metric.unit ? ` ${metric.unit}` : ""}`
+                        : formatMetricValue(metric, tKey)}
+                  </span>
                 </div>
                 <p>{localizedPlatformCopy(metric.detail, language) ?? tKey("waterSnow.metricNotProduced")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
@@ -709,7 +744,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
           <article className="water-glass-panel water-source-panel">
             <header>
               <span>{tKey("waterSnow.sykeSource")}</span>
-              <strong>{sourceStageLabel(category, language)}</strong>
+              <strong>{isHistorical ? tKey("shell.historicalEvidence") : sourceStageLabel(category, language)}</strong>
             </header>
             <div className="water-source-facts">
               <span>{datasetCount} {tKey("waterSnow.datasetsLower")}</span>
@@ -744,7 +779,7 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
                     <strong>{point.label}</strong>
                     <span>{point.detail ? translateEnumLabel(language, point.detail) : tKey("waterSnow.records")}</span>
                   </div>
-                  <em>{point.value}</em>
+                  <em>{sourcePoints.length === 0 && !hasObservedRecords ? tKey("waterSnow.notObserved") : point.value}</em>
                   <span className="water-volume-meter" aria-hidden="true">
                     <span style={{ width: `${pointWidth(point, sourceRows)}%` }} />
                   </span>
@@ -877,10 +912,10 @@ export function WaterSnowWorkspace({ category, timezone = DEFAULT_DATA_TIME_ZONE
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("shell.lastSync")}: {relativeTime(sourceUpdatedAt, language, tKey)}
+            {tKey("shell.lastSync")}: {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt, timeScope, language, tKey, "waterSnow.notObserved", timezone)}
           </span>
           <i aria-hidden="true" />
-          <span className="water-provider-stage">{sourceStageLabel(category, language)}</span>
+          <span className="water-provider-stage">{isHistorical ? tKey("shell.historicalEvidence") : sourceStageLabel(category, language)}</span>
         </div>
       </section>
 

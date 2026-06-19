@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
+import { demoFixtureForScope } from "../demo/demo-data";
 import type { PublicDashboardRead } from "../types";
 import {
   buildPlanItems,
   buildTodayBrief,
   isPlaceholderRecommendation,
   isRecommendationExpired,
+  todayBriefEvaluationTime,
 } from "./today-brief";
 
 function timelineItem(
@@ -24,12 +26,14 @@ function timelineItem(
     startsAt,
     endsAt: "2026-08-09T12:00:00Z",
     categoryKey: "weather",
+    state: "upcoming",
     scenarioKey: kind === "scenario" ? "outdoor" : undefined,
   };
 }
 
 const dashboard: PublicDashboardRead = {
   checked_at: "2026-08-09T08:00:00Z",
+  snapshot_available: true,
   app_name: "ArkiWatch",
   timezone: "Europe/Helsinki",
   coverage_area: "Helsinki/Uusimaa",
@@ -90,6 +94,31 @@ describe("isRecommendationExpired", () => {
 });
 
 describe("buildTodayBrief", () => {
+  it("keeps the static demo snapshot actionable without presenting it as live data", () => {
+    const fixture = demoFixtureForScope();
+    const brief = buildTodayBrief({
+      publicDashboard: fixture.publicDashboard,
+      overviewCoverageArea: fixture.overview.coverage_area,
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+      now: todayBriefEvaluationTime(true, fixture.overview.checked_at),
+    });
+
+    expect(brief?.recommendationMode).toBe("live");
+    expect(brief?.topActions.length).toBeGreaterThan(0);
+  });
+
+  it("uses the fixture clock only in demo mode", () => {
+    const referenceAt = "2026-08-09T04:00:00.000Z";
+
+    expect(todayBriefEvaluationTime(true, referenceAt, 0)).toBe(
+      Date.parse(referenceAt),
+    );
+    expect(todayBriefEvaluationTime(false, referenceAt, 123)).toBe(123);
+    expect(todayBriefEvaluationTime(true, "invalid", 456)).toBe(456);
+  });
+
   it("surfaces a regional scope warning when the selected area differs", () => {
     const brief = buildTodayBrief({
       publicDashboard: dashboard,
@@ -175,6 +204,56 @@ describe("buildTodayBrief", () => {
     expect(brief?.topActions).toEqual([]);
     expect(brief?.planItems).toEqual([]);
     expect(brief?.headline).toBe("Historical view · recommendations are read-only");
+  });
+
+  it("hides live recommendations when the dated snapshot is stale", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: {
+        ...dashboard,
+        snapshot_date: "2026-08-08",
+        top_actions: [
+          {
+            id: "stale-action",
+            scenario_key: "commute",
+            title: "Leave earlier",
+            body: "A regional transit alert is active.",
+            severity: "HIGH",
+            area_scope: "Helsinki",
+            freshness_state: "fresh",
+            valid_from: "2026-08-08T08:00:00Z",
+            valid_to: "2026-08-08T09:00:00Z",
+            evidence: ["DIGITRANSIT"],
+          },
+        ],
+      },
+      overviewCoverageArea: "Helsinki/Uusimaa",
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+      now: Date.parse("2026-08-11T08:00:00Z"),
+    });
+
+    expect(brief?.recommendationMode).toBe("stale");
+    expect(brief?.topActions).toEqual([]);
+    expect(brief?.planItems).toEqual([]);
+    expect(brief?.headline).toBe("Public snapshot is stale");
+  });
+
+  it("does not present generation time when the historical public snapshot is missing", () => {
+    const brief = buildTodayBrief({
+      publicDashboard: {
+        ...dashboard,
+        snapshot_available: false,
+      },
+      overviewCoverageArea: "Helsinki/Uusimaa",
+      isHistorical: true,
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+    });
+
+    expect(brief?.historicalSnapshotAvailable).toBe(false);
+    expect(brief?.checkedAt).toBeNull();
   });
 
   it("localizes the urgent headline without mutating the API copy", () => {

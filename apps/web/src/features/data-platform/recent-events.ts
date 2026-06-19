@@ -7,6 +7,9 @@ import type {
   WeatherForecastResponse,
   WeatherWarning,
 } from "./types";
+import { CITY_COORDINATES } from "./city-scope";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { scopedReferenceTime } from "./data-time-scope";
 
 export const RECENT_EVENT_LIMIT = 6;
 
@@ -103,13 +106,13 @@ const CITY_RELEVANCE_TERMS: Record<string, string[]> = {
   vantaa: ["vantaa", "helsinki", "espoo", "kauniainen", "kerava", "tuusula"],
 };
 
-const CITY_CENTERS: Record<string, { latitude: number; longitude: number; radiusKm: number }> = {
-  espoo: { latitude: 60.2055, longitude: 24.6559, radiusKm: 32 },
-  helsinki: { latitude: 60.1699, longitude: 24.9384, radiusKm: 32 },
-  oulu: { latitude: 65.0121, longitude: 25.4651, radiusKm: 30 },
-  tampere: { latitude: 61.4978, longitude: 23.761, radiusKm: 30 },
-  turku: { latitude: 60.4518, longitude: 22.2666, radiusKm: 30 },
-  vantaa: { latitude: 60.2934, longitude: 25.0378, radiusKm: 32 },
+const CITY_RADIUS_KM: Record<string, number> = {
+  espoo: 32,
+  helsinki: 32,
+  oulu: 30,
+  tampere: 30,
+  turku: 30,
+  vantaa: 32,
 };
 
 const NOISE_PATTERN =
@@ -303,7 +306,10 @@ export function buildWeatherRecentEvents(
     return [];
   }
 
-  const checkedAt = isoFromTimestamp(weather.checked_at, new Date().toISOString());
+  const checkedAt = isoFromTimestamp(
+    scopedReferenceTime(weather.time_scope, weather.checked_at),
+    new Date().toISOString(),
+  );
   const fallbackEnd = weather.valid_to ?? isoPlusHours(checkedAt, 48);
   const warningEvents = weather.warnings
     .map((warning, index) => ({ warning, index }))
@@ -424,7 +430,7 @@ export function buildWeatherRecentEvents(
 }
 
 function airQualityLabel(score: number, fallback: string | null | undefined): string {
-  const labels = ["n/a", "Good", "Fair", "Moderate", "Poor", "Very poor"];
+  const labels = [UNAVAILABLE_DATA_VALUE, "Good", "Fair", "Moderate", "Poor", "Very poor"];
   return labels[Math.min(Math.max(Math.round(score), 0), 5)] ?? fallback ?? "Poor";
 }
 
@@ -438,7 +444,10 @@ export function buildAirQualityRecentEvents(
 
   const observedAt = isoFromTimestamp(
     airQuality?.observed_at,
-    isoFromTimestamp(airQuality?.checked_at, new Date().toISOString()),
+    isoFromTimestamp(
+      scopedReferenceTime(airQuality?.time_scope, airQuality?.checked_at),
+      new Date().toISOString(),
+    ),
   );
   const validTo = isoFromTimestamp(airQuality?.valid_to, isoPlusHours(observedAt, 3));
   const label = airQualityLabel(score, airQuality?.worst_label);
@@ -520,10 +529,11 @@ function isCityRelevantEvent(
     return true;
   }
 
-  const cityCenter = CITY_CENTERS[city];
+  const cityCenter = CITY_COORDINATES[city];
+  const cityRadiusKm = CITY_RADIUS_KM[city];
   const eventCenter = eventGeometryCenter(event);
-  if (cityCenter && eventCenter) {
-    return distanceKm(cityCenter, eventCenter) <= cityCenter.radiusKm;
+  if (cityCenter && cityRadiusKm !== undefined && eventCenter) {
+    return distanceKm(cityCenter, eventCenter) <= cityRadiusKm;
   }
 
   const terms = CITY_RELEVANCE_TERMS[city] ?? [city];

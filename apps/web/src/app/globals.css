@@ -150,6 +150,32 @@ button {
   cursor: pointer;
 }
 
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  transform: translateY(-180%);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface-container-lowest);
+  box-shadow: var(--elevated-shadow);
+  color: var(--on-surface);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 10px 14px;
+  transition: transform 120ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 a {
   color: inherit;
   text-decoration: none;

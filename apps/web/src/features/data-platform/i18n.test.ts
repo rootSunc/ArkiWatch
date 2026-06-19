@@ -6,11 +6,14 @@ import {
   translateKeyDataItemLabel,
   translateMessageKey,
   translateMetricLabel,
+  applyLanguageMode,
 } from "./i18n";
 
 describe("translateMessageKey", () => {
   it("resolves structured shell keys in zh", () => {
     expect(translateMessageKey("zh", "shell.navWeather")).toBe("天气");
+    expect(translateMessageKey("zh", "shell.backToToday")).toBe("返回今日");
+    expect(translateMessageKey("zh", "shell.stationNetwork")).toBe("监测站网络");
   });
 
   it("keeps the demo notice scoped without hard-coding a city", () => {
@@ -20,8 +23,34 @@ describe("translateMessageKey", () => {
     expect(translateMessageKey("zh", "shell.demoModeNotice")).not.toContain("赫尔辛基");
   });
 
+  it("keeps keyboard navigation copy localized", () => {
+    expect(translateMessageKey("en", "shell.skipToMainContent")).toBe("Skip to main content");
+    expect(translateMessageKey("zh", "shell.skipToMainContent")).toBe("跳转到主要内容");
+  });
+
   it("falls back to English when zh key is missing", () => {
     expect(translateMessageKey("zh", "shell.fakeMissingKey")).toBe("shell.fakeMissingKey");
+  });
+
+  it("keeps the road and rail workspace labels available in both languages", () => {
+    expect(translateMessageKey("en", "roadRail.railEvents")).toBe("Rail events");
+    expect(translateMessageKey("zh", "roadRail.railEvents")).toBe("铁路状况事件");
+  });
+
+  it("keeps demo-only assistant copy fully localized", () => {
+    expect(translateMessageKey("zh", "assistant.demoMode")).toBe("演示模式 · 基于静态示例");
+  });
+});
+
+describe("applyLanguageMode", () => {
+  it("keeps the document language metadata aligned with the selected copy", () => {
+    applyLanguageMode("zh");
+    expect(document.documentElement.lang).toBe("zh-CN");
+    expect(document.documentElement.dataset.language).toBe("zh");
+
+    applyLanguageMode("en");
+    expect(document.documentElement.lang).toBe("en");
+    expect(document.documentElement.dataset.language).toBe("en");
   });
 });
 
@@ -94,7 +123,13 @@ describe("translateMetricLabel", () => {
         key: "pm2_5",
         label: "PM2.5",
       }),
-    ).toBe("pm2 5");
+    ).toBe("PM2.5");
+  });
+
+  it("keeps common public-data fields localized in the Chinese workspace", () => {
+    expect(translateDataLabel("zh", "hydrology_station_catalog")).toBe("水文站点目录");
+    expect(translateDataLabel("zh", "road_weather_sensor_history")).toBe("道路天气传感器历史");
+    expect(translateDataLabel("zh", "transit_service_alerts")).toBe("公共交通服务提醒");
   });
 
   it("falls back to dataLabel when no structured label exists", () => {

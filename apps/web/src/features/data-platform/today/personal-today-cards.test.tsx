@@ -40,6 +40,7 @@ describe("PersonalTodayCards", () => {
     expect(screen.getByRole("region", { name: "For you today" })).toBeInTheDocument();
     expect(screen.getByText("Leave a little earlier")).toBeInTheDocument();
     expect(screen.getByText(/Valid until/)).toBeInTheDocument();
+    expect(document.querySelector(".today-personal-recommendations-action .assistant-glyph")).toBeInTheDocument();
 
     screen.getByRole("button", { name: "Ask about these recommendations" }).click();
     expect(onOpenAssistant).toHaveBeenCalledWith(

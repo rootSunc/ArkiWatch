@@ -62,6 +62,7 @@ import {
   FALLBACK_NAV_KEY,
   NAV_QUERY_KEY,
   TODAY_NAV_KEY,
+  buildNavigationQueryParams,
   categoryByKey,
   currentSearchParams,
   isCatalogCategoryKey,
@@ -97,10 +98,12 @@ import {
   formatSignalAttributionLine,
 } from "./signal-attribution";
 import { buildSignalSystemTiles } from "./signals-console";
+import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
-import { sourceIssueCount } from "./source-health";
+import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
-import { buildTodayBrief } from "./today/today-brief";
+import { scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
+import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import { viewerStateLabel } from "./viewer-state";
 import {
@@ -113,11 +116,11 @@ import {
 import {
   MOBILITY_NAV_KEY,
   recentEventLabel,
-  attributeLabel,
   buildMobilityCategory,
   displayTitle,
   eventAttributeRows,
   eventCategoryLabel,
+  eventTypeLabel,
   eventTimeLabel,
   eventMatchesSearch,
   isMobilityCategoryKey,
@@ -161,6 +164,7 @@ export function DataPlatformHome({
   const [selectedCity, setSelectedCity] = useState(() =>
     normalizeCityValue(initialCity),
   );
+  const demoCitySupported = normalizeCityValue(selectedCity) === DEMO_CITY;
   const [selectedDate, setSelectedDate] = useState<string | null>(
     initialDate ?? null,
   );
@@ -173,6 +177,8 @@ export function DataPlatformHome({
   const mobileMenuWasOpenRef = useRef(false);
   const restoreDateFocusRef = useRef(false);
   const scopeContentRef = useRef<HTMLDivElement>(null);
+  const eventDetailCloseRef = useRef<HTMLButtonElement>(null);
+  const eventDetailTriggerRef = useRef<HTMLButtonElement | null>(null);
   const assistantFocusReturnRefs = useMemo(
     () => [assistantTopbarButtonRef, assistantNavButtonRef],
     [],
@@ -180,6 +186,8 @@ export function DataPlatformHome({
   const [selectedNavKey, setSelectedNavKey] = useState(() =>
     resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), []),
   );
+  const mainContentRef = useRef<HTMLElement>(null);
+  const previousNavKeyRef = useRef(selectedNavKey);
   const [needsHistoryAvailability, setNeedsHistoryAvailability] = useState(
     () => Boolean(initialDate),
   );
@@ -240,7 +248,6 @@ export function DataPlatformHome({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const hasMountedRef = useRef(false);
   const [isCityRefreshPending, startCityRefresh] = useTransition();
   const [isDateRefreshPending, startDateRefresh] = useTransition();
   const isScopePending =
@@ -285,11 +292,19 @@ export function DataPlatformHome({
     error: personalDashboardError,
     retry: retryPersonalDashboard,
   } = usePersonalDashboard({
-    enabled: isAuthenticated && workspaceMode === "today" && !appEnv.demoMode,
+    enabled:
+      isAuthenticated &&
+      workspaceMode === "today" &&
+      !appEnv.demoMode &&
+      !isHistorical,
     userId: defaultUserId ?? resolvedUserId,
   });
 
   function requestAssistant(question?: string): void {
+    if (isScopePending) {
+      return;
+    }
+
     setAssistantOpenQuestion(question?.trim() || null);
     setAssistantOpenRequest((current) => current + 1);
   }
@@ -360,10 +375,7 @@ export function DataPlatformHome({
     () => mergeMobilityCategories(categories, mobilityCategory),
     [categories, mobilityCategory],
   );
-  const eventReferenceAt =
-    activeTimeScope?.mode === "historical"
-      ? activeTimeScope.window_start ?? overview?.checked_at ?? null
-      : overview?.checked_at ?? activeTimeScope?.window_start ?? null;
+  const eventReferenceAt = scopedReferenceTime(activeTimeScope, overview?.checked_at ?? null);
   const recentEventCandidates = useMemo(
     () =>
       [
@@ -408,34 +420,18 @@ export function DataPlatformHome({
   const updateNavQuery = useCallback(
     (
       nextNavKey: string,
-      options: { mobilityTab?: MobilityTabKey; energyTab?: EnergyPanelKey } = {},
+      options: {
+        mobilityTab?: MobilityTabKey;
+        energyTab?: EnergyPanelKey;
+        eventId?: string;
+      } = {},
     ): void => {
-      const nextParams = new URLSearchParams(searchParams.toString());
-      if (nextNavKey === TODAY_NAV_KEY) {
-        nextParams.delete(NAV_QUERY_KEY);
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-        nextParams.delete(ENERGY_TAB_QUERY_KEY);
-      } else if (nextNavKey === FALLBACK_NAV_KEY) {
-        nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-        nextParams.delete(ENERGY_TAB_QUERY_KEY);
-      } else if (nextNavKey === MOBILITY_NAV_KEY) {
-        nextParams.set(NAV_QUERY_KEY, MOBILITY_NAV_KEY);
-        nextParams.set(
-          MOBILITY_TAB_QUERY_KEY,
-          options.mobilityTab ?? selectedMobilityTab,
-        );
-        nextParams.delete(ENERGY_TAB_QUERY_KEY);
-      } else if (nextNavKey === "energy") {
-        nextParams.set(NAV_QUERY_KEY, "energy");
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-        nextParams.set(ENERGY_TAB_QUERY_KEY, options.energyTab ?? selectedEnergyTab);
-      } else {
-        nextParams.set(NAV_QUERY_KEY, nextNavKey);
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-        nextParams.delete(ENERGY_TAB_QUERY_KEY);
-      }
-      nextParams.delete(EVENT_QUERY_KEY);
+      const nextParams = buildNavigationQueryParams(
+        new URLSearchParams(searchParams.toString()),
+        nextNavKey,
+        options,
+        { mobilityTab: selectedMobilityTab, energyTab: selectedEnergyTab },
+      );
 
       const nextPath = nextParams.toString();
       router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
@@ -564,6 +560,7 @@ export function DataPlatformHome({
         }),
         publicDashboard,
         CROSS_TIMELINE_LIMIT,
+        eventReferenceAt,
       ),
     [eventReferenceAt, publicDashboard, recentEventCandidates, selectedCity],
   );
@@ -576,20 +573,14 @@ export function DataPlatformHome({
         }),
         null,
         CROSS_TIMELINE_LIMIT,
+        eventReferenceAt,
       ),
     [eventReferenceAt, recentEventCandidates, selectedCity],
   );
-  const todayReferenceNow = useMemo(() => {
-    if (!appEnv.demoMode || !publicDashboard) {
-      return undefined;
-    }
-
-    const checkedAt = Date.parse(publicDashboard.checked_at);
-    return Number.isFinite(checkedAt) ? checkedAt : undefined;
-  }, [publicDashboard]);
   const demoSnapshotCheckedAt = publicDashboard?.checked_at
     ? formatTimestamp(publicDashboard.checked_at, "dateTime", languageMode, platformTimezone)
     : null;
+  const todayEvaluationTime = todayBriefEvaluationTime(appEnv.demoMode, eventReferenceAt);
   const todayBrief = useMemo(
     () =>
       buildTodayBrief({
@@ -599,21 +590,21 @@ export function DataPlatformHome({
         summaryTiles: userSummaryTiles,
         timelineItems: crossDomainTimeline,
         language: languageMode,
-        now: todayReferenceNow,
+        now: todayEvaluationTime,
       }),
     [
       crossDomainTimeline,
       isHistorical,
       languageMode,
       publicDashboard,
-      todayReferenceNow,
+      todayEvaluationTime,
       userSummaryTiles,
       visibleOverview,
     ],
   );
   const todaySourceIssueCount = useMemo(
-    () => sourceIssueCount(visibleOverview?.sources ?? []),
-    [visibleOverview],
+    () => sourceIssueCountForScope(visibleOverview?.sources ?? [], isHistorical),
+    [isHistorical, visibleOverview],
   );
   const signalSystemTiles = useMemo(
     () =>
@@ -669,7 +660,9 @@ export function DataPlatformHome({
   const selectedEvent = selectedEventId
     ? (eventById.get(selectedEventId) ?? null)
     : null;
-  const selectedEventRows = selectedEvent ? eventAttributeRows(selectedEvent) : [];
+  const selectedEventRows = selectedEvent
+    ? eventAttributeRows(selectedEvent, languageMode)
+    : [];
   const priorityVisibleEvent = pickPriorityEvent(visibleNotificationEvents);
   const overallScopeLabel = selectedCategory
     ? displayTitle(selectedCategory, languageMode)
@@ -744,27 +737,32 @@ export function DataPlatformHome({
     }
   }
 
+  function closeEventDetail(): void {
+    setSelectedEventId(null);
+    window.requestAnimationFrame(() => eventDetailTriggerRef.current?.focus());
+  }
+
   function openRecentEvent(event: PlatformEvent): void {
     const target = eventTarget(event);
-    const nextParams = new URLSearchParams(searchParams.toString());
+    const resolvedNavKey = resolveNavKey(target.navKey, categories);
     markRecentEventRead(event.id);
     setSearchValue("");
     setIsEventsExpanded(false);
 
-    if (target.navKey === FALLBACK_NAV_KEY) {
-      nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
-      nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-    } else {
-      nextParams.set(NAV_QUERY_KEY, target.navKey);
-      if (target.mobilityTab) {
-        nextParams.set(MOBILITY_TAB_QUERY_KEY, target.mobilityTab);
-        setSelectedMobilityTab(target.mobilityTab);
-      } else {
-        nextParams.delete(MOBILITY_TAB_QUERY_KEY);
-      }
+    if (resolvedNavKey === MOBILITY_NAV_KEY) {
+      setSelectedMobilityTab(target.mobilityTab ?? selectedMobilityTab);
     }
-    nextParams.set(EVENT_QUERY_KEY, eventNavigationId(event));
-    setSelectedNavKey(target.navKey);
+    setSelectedNavKey(resolvedNavKey);
+    const nextParams = buildNavigationQueryParams(
+      new URLSearchParams(searchParams.toString()),
+      resolvedNavKey,
+      {
+        mobilityTab: target.mobilityTab,
+        energyTab: selectedEnergyTab,
+        eventId: eventNavigationId(event),
+      },
+      { mobilityTab: selectedMobilityTab, energyTab: selectedEnergyTab },
+    );
 
     const nextPath = nextParams.toString();
     router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
@@ -821,11 +819,6 @@ export function DataPlatformHome({
   }, [isScopePending]);
 
   useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-
     const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
     const nextMobilityTab = resolveMobilityTabParam(
       searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
@@ -842,6 +835,16 @@ export function DataPlatformHome({
       currentNavKey === nextNavKey ? currentNavKey : nextNavKey,
     );
   }, [categories, searchParams]);
+
+  useEffect(() => {
+    if (previousNavKeyRef.current === selectedNavKey) {
+      return;
+    }
+
+    previousNavKeyRef.current = selectedNavKey;
+    const frame = window.requestAnimationFrame(() => mainContentRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedNavKey]);
 
   useEffect(() => {
     const desktopNavQuery = window.matchMedia("(min-width: 1024px)");
@@ -945,6 +948,15 @@ export function DataPlatformHome({
 
     return () => window.cancelAnimationFrame(frame);
   }, [isLoadingView, isPending, isScopePending, selectedDate]);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => eventDetailCloseRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedEventId]);
 
   useEffect(() => {
     if (searchParams.has("date") && selectedDate === null) {
@@ -1140,11 +1152,21 @@ export function DataPlatformHome({
   // overview the nav and workspaces would render as empty states rather than as
   // "still loading". Placed after every hook so hook order stays stable.
   if (isPending) {
-    return <PlatformSkeleton />;
+    return (
+      <I18nProvider language={languageMode}>
+        <a className="skip-link" href="#main-content">
+          {tKey("shell.skipToMainContent")}
+        </a>
+        <PlatformSkeleton loadingLabel={tKey("shell.loadingDashboard")} />
+      </I18nProvider>
+    );
   }
 
   return (
     <I18nProvider language={languageMode}>
+      <a className="skip-link" href="#main-content">
+        {tKey("shell.skipToMainContent")}
+      </a>
       <div className={dashboardShellClassName}>
         <DataPlatformSideNav
           categories={categories}
@@ -1203,6 +1225,9 @@ export function DataPlatformHome({
           ) : null}
 
           <main
+            id="main-content"
+            ref={mainContentRef}
+            tabIndex={-1}
             className={
               isDetailPage
                 ? "dashboard-content detail-content-shell"
@@ -1224,7 +1249,7 @@ export function DataPlatformHome({
                 </span>
                 <span className="demo-mode-banner-copy">
                   <span>
-                    {tKey("shell.demoModeNotice").replace(
+                    {tKey(demoCitySupported ? "shell.demoModeNotice" : "shell.demoModeCityLimited").replace(
                       "{city}",
                       cityLabel(selectedCity),
                     )}
@@ -1309,10 +1334,11 @@ export function DataPlatformHome({
 
             {selectedNavKey === TODAY_NAV_KEY ? (
               <TodayOverview
+                isHistorical={isHistorical}
                 isScopePending={isScopePending}
                 language={languageMode}
                 liveSignals={scenarioLiveSignals}
-                now={todayReferenceNow}
+                now={todayEvaluationTime}
                 planItems={todayBrief?.planItems ?? []}
                 personalDashboard={personalDashboard}
                 personalDashboardError={personalDashboardError}
@@ -1409,6 +1435,7 @@ export function DataPlatformHome({
 
                   <CrossDomainTimelinePanel
                     collapsible
+                    historical={isHistorical}
                     items={signalEventTimeline}
                     language={languageMode}
                     timezone={platformTimezone}
@@ -1439,7 +1466,7 @@ export function DataPlatformHome({
                               </span>
                               {tKey("shell.coreSignals")}
                             </h3>
-                            <p>{tKey("shell.coreSignalsLead")}</p>
+                            <p>{isHistorical ? tKey("shell.historicalCoreSignalsLead") : tKey("shell.coreSignalsLead")}</p>
                           </div>
                         </header>
 
@@ -1571,10 +1598,12 @@ export function DataPlatformHome({
                             <div className="overall-notification-meta">
                               <span>
                                 {tKey("shell.updated")}{" "}
-                                {formatTimestamp(
+                                {scopedDataTimestamp(
                                   visibleOverview.checked_at,
-                                  "dateTime",
+                                  visibleOverview.time_scope,
                                   languageMode,
+                                  tKey,
+                                  "shell.notCollected",
                                   platformTimezone,
                                 )}
                               </span>
@@ -1603,7 +1632,7 @@ export function DataPlatformHome({
                                       selectedEvent,
                                       languageMode,
                                     )}{" "}
-                                    · {attributeLabel(selectedEvent.event_type)}
+                                    · {eventTypeLabel(selectedEvent.event_type, languageMode)}
                                   </span>
                                   <strong>
                                     {localizedContent(
@@ -1616,7 +1645,8 @@ export function DataPlatformHome({
                                 <button
                                   aria-label={tKey("shell.closeEventDetail")}
                                   className="event-detail-close"
-                                  onClick={() => setSelectedEventId(null)}
+                                  ref={eventDetailCloseRef}
+                                  onClick={closeEventDetail}
                                   title={tKey("shell.closeEventDetail")}
                                   type="button"
                                 >
@@ -1738,11 +1768,14 @@ export function DataPlatformHome({
                                       event.title_zh,
                                     )}`}
                                     className="timeline-item-content"
-                                    onClick={() => {
+                                    onClick={(clickEvent) => {
                                       markRecentEventRead(event.id);
-                                      setSelectedEventId(
-                                        isSelected ? null : event.id,
-                                      );
+                                      if (isSelected) {
+                                        closeEventDetail();
+                                        return;
+                                      }
+                                      eventDetailTriggerRef.current = clickEvent.currentTarget;
+                                      setSelectedEventId(event.id);
                                     }}
                                     type="button"
                                   >
@@ -1791,7 +1824,7 @@ export function DataPlatformHome({
                                       </div>
                                     ) : null}
                                     <div className="event-tags">
-                                      <span>{attributeLabel(event.event_type)}</span>
+                                      <span>{eventTypeLabel(event.event_type, languageMode)}</span>
                                       {event.evidence[0] ? (
                                         <span>{event.evidence[0]}</span>
                                       ) : null}
@@ -1809,7 +1842,7 @@ export function DataPlatformHome({
                       </aside>
                     ) : null}
 
-                    <SourceHealthStrip overview={visibleOverview} />
+                    {!isHistorical ? <SourceHealthStrip overview={visibleOverview} /> : null}
                   </div>
                 </>
               )
@@ -1887,10 +1920,16 @@ export function DataPlatformHome({
                 <span>{tKey("shell.more")}</span>
               </button>
               <button
+                aria-disabled={isScopePending || undefined}
                 className="mobile-bottom-nav-item mobile-bottom-nav-assistant"
+                disabled={isScopePending}
                 onClick={() => requestAssistant()}
                 ref={assistantNavButtonRef}
-                title={tKey("assistant.openAssistant")}
+                title={
+                  isScopePending
+                    ? tKey("shell.scopeUpdating")
+                    : tKey("assistant.openAssistant")
+                }
                 type="button"
               >
                 <AssistantGlyph />
@@ -1908,6 +1947,7 @@ export function DataPlatformHome({
             focusReturnRefs={assistantFocusReturnRefs}
             openRequest={assistantOpenRequest}
             openQuestion={assistantOpenQuestion}
+            scopePending={isScopePending}
             onOpenView={openAssistantView}
             showLauncher={workspaceMode === "today" && !isDetailPage}
             userId={defaultUserId ?? resolvedUserId}

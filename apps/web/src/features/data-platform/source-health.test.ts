@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   healthySourceCount,
+  isCatalogOnlySource,
   isSourceHealthy,
+  isSourceTrackedForHealth,
   sourceHealthTone,
   sourceIssueCount,
+  sourceIssueCountForScope,
 } from "./source-health";
 
 describe("source health presentation", () => {
@@ -30,5 +33,24 @@ describe("source health presentation", () => {
     expect(sourceIssueCount(sources)).toBe(2);
     expect(isSourceHealthy(sources[0])).toBe(true);
     expect(isSourceHealthy(sources[2])).toBe(false);
+  });
+
+  it("does not turn historical catalog status into a live incident", () => {
+    expect(sourceIssueCountForScope([{ operational_status: "pending" }], true)).toBe(0);
+    expect(sourceIssueCountForScope([{ operational_status: "pending" }], false)).toBe(1);
+  });
+
+  it("keeps catalog-only placeholders out of live health totals", () => {
+    const catalogSource = {
+      id: "catalog-syke",
+      stage: "connected",
+      records_ingested: null,
+      operational_status: "pending",
+    };
+
+    expect(isCatalogOnlySource(catalogSource)).toBe(true);
+    expect(isSourceTrackedForHealth(catalogSource)).toBe(false);
+    expect(healthySourceCount([catalogSource, { operational_status: "healthy" }])).toBe(1);
+    expect(sourceIssueCount([catalogSource, { operational_status: "healthy" }])).toBe(0);
   });
 });

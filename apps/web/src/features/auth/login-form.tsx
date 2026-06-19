@@ -57,15 +57,14 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
       });
 
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        setError(formatLoginError(body?.detail, tKey));
+        setError(tKey("auth.loginFailed"));
         return;
       }
 
       router.replace("/");
       router.refresh();
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : tKey("auth.loginFailed"));
+    } catch {
+      setError(tKey("auth.loginFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -128,24 +127,4 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
       </section>
     </main>
   );
-}
-
-function formatLoginError(
-  detail: unknown,
-  tKey: (key: string) => string,
-): string {
-  if (typeof detail === "string" && detail.trim()) {
-    return detail;
-  }
-
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => (typeof item?.msg === "string" ? item.msg : null))
-      .filter(Boolean);
-    if (messages.length > 0) {
-      return messages.join(" ");
-    }
-  }
-
-  return tKey("auth.loginFailed");
 }

@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 
-import { formatRelativeAge, formatTimestamp, severityTone } from "@/features/shared/format";
+import { parseValidDate, severityTone } from "@/features/shared/format";
 
 import { categoryKeyDataItemKeys } from "./category-metadata";
 import { localizedContent } from "./content-localization";
@@ -15,12 +15,17 @@ import {
   PlatformMetric,
   PlatformTone
 } from "./types";
+import type { PlatformTimeScope } from "./types";
 import { eventAnchorId } from "./recent-events";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { isEmptyStatus } from "./platform-status";
+import { hasObservedSourceRecords } from "./catalog-workspace-state";
+import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
 
 type CityServicesWorkspaceProps = {
   category: PlatformCategory | null;
   timezone?: string;
+  timeScope?: PlatformTimeScope | null;
 };
 
 type CityTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -96,6 +101,11 @@ function formatCompactTime(
     return tKey("cityServices.notScheduled");
   }
 
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return tKey("cityServices.notScheduled");
+  }
+
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -104,12 +114,8 @@ function formatCompactTime(
     hour12: false,
     timeZone
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
-}
-
-function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
-  return value ? formatRelativeAge(value, language) : tKey("cityServices.notCollected");
 }
 
 function toneFromStatus(status: string | null | undefined): CityTone {
@@ -209,11 +215,12 @@ function eventTypeLabel(value: string, language: LanguageMode): string {
   return translateEnumLabel(language, value);
 }
 
-export function CityServicesWorkspace({ category, timezone: requestedTimezone }: CityServicesWorkspaceProps) {
+export function CityServicesWorkspace({ category, timeScope, timezone: requestedTimezone }: CityServicesWorkspaceProps) {
   const { language, tKey, enumLabel, metricLabel, dataLabel } = useI18n();
   const timezone = resolveDataTimezone(requestedTimezone);
+  const isHistorical = isHistoricalTimeScope(timeScope);
 
-  if (!category) {
+  if (!category || isEmptyStatus(category.status)) {
     return (
       <section className="city-detail-empty" aria-label={tKey("cityServices.dataUnavailable")}>
         <span>{tKey("cityServices.title")}</span>
@@ -230,6 +237,7 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
   const sourceStatusMetric = metricByKey(category, "source_status");
   const datasetCount = totalDatasets(category);
   const recordCount = totalRecords(category);
+  const hasObservedRecords = hasObservedSourceRecords(category.sources);
   const fieldCount = category.key_data_items?.length ?? 0;
   const cityTone = latest ? (severityTone(latest.severity) as CityTone) : toneFromStatus(category.status);
   const latestRun = latestSourceRun(category);
@@ -244,7 +252,9 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
 
   const missingMetricLabel = tKey("cityServices.missing");
   const recordsDisplay =
-    formatMetricValue(recordsMetric, tKey, dataLabel) !== missingMetricLabel
+    !hasObservedRecords
+      ? tKey("cityServices.notCollected")
+      : formatMetricValue(recordsMetric, tKey, dataLabel) !== missingMetricLabel
       ? formatMetricValue(recordsMetric, tKey, dataLabel)
       : formatNumber(recordCount);
 
@@ -255,17 +265,17 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
           <h2>{tKey("cityServices.dashboardTitle")}</h2>
           <div className="city-live-status">
             <span aria-hidden="true" />
-            <strong>{translateEnumLabel(language, category.status)}</strong>
+            <strong>{isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {relativeTime(latestRun ?? latest?.starts_at, language, tKey)}</div>
+        <div>{category.source_codes.join(", ").toUpperCase()} / {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at, timeScope, language, tKey, "cityServices.notCollected", timezone)}</div>
       </div>
 
       <section className="city-bento-grid" aria-label={tKey("cityServices.operatingCondition")}>
         <article className={`city-glass-panel city-hero city-hero-${cityTone}`}>
           <div className="city-card-kicker">
             <span>{tKey("cityServices.serviceCoverage")}</span>
-            <time>{formatTimestamp(latestRun ?? latest?.starts_at ?? null, "dateTime", language, timezone)}</time>
+            <time>{scopedDataTimestamp(isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at ?? null, timeScope, language, tKey, "cityServices.notCollected", timezone)}</time>
           </div>
           <div className="city-current-cluster">
             <span className="material-symbols-outlined city-condition-icon" aria-hidden="true">
@@ -358,7 +368,11 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
+            <strong>
+              {metric.key === "records_ingested" && !hasObservedRecords
+                ? tKey("cityServices.notCollected")
+                : formatMetricValue(metric, tKey, dataLabel)}
+            </strong>
           </article>
         ))}
       </section>
@@ -416,7 +430,11 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
                   </div>
                   <div className="city-service-meta">
                     <span>{Math.round(source.poll_interval_seconds / 60)} min {tKey("cityServices.poll")}</span>
-                    <span>{source.records_ingested ?? 0} {tKey("cityServices.records")}</span>
+                    <span>
+                      {source.records_ingested !== null
+                        ? `${formatNumber(source.records_ingested)} ${tKey("cityServices.records")}`
+                        : tKey("cityServices.notCollected")}
+                    </span>
                   </div>
                 </article>
               ))
@@ -580,7 +598,7 @@ export function CityServicesWorkspace({ category, timezone: requestedTimezone }:
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("shell.lastSync")}: {relativeTime(latestRun, language, tKey)}
+            {tKey("shell.lastSync")}: {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : latestRun, timeScope, language, tKey, "cityServices.notCollected", timezone)}
           </span>
           <i aria-hidden="true" />
           <span className="city-provider-coverage">

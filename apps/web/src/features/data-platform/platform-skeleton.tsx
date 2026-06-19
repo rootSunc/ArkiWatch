@@ -6,14 +6,18 @@ const CARD_COUNT = 4;
 
 /**
  * Static shell placeholder rendered while platform data is in flight.
- * Server-only, so it cannot read the client language preference; the live
- * region text stays in the default locale.
+ * The label is passed by the shell so the server/client loading region uses
+ * the same locale as the rest of the interactive dashboard.
  */
-export function PlatformSkeleton() {
+export function PlatformSkeleton({
+  loadingLabel = "Loading the data platform",
+}: {
+  loadingLabel?: string;
+}) {
   return (
     <div className="dashboard-shell" aria-busy="true">
       <span className="platform-skeleton-sr-only" role="status">
-        Loading dashboard
+        {loadingLabel}
       </span>
 
       <aside
@@ -40,7 +44,12 @@ export function PlatformSkeleton() {
           <span className="platform-skeleton-block platform-skeleton-topbar-control" />
         </div>
 
-        <main className="dashboard-content" aria-hidden="true">
+        <main
+          className="dashboard-content"
+          id="main-content"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
           <div className="platform-skeleton-tiles">
             {Array.from({ length: SUMMARY_TILE_COUNT }, (_, index) => (
               <span

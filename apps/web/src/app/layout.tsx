@@ -55,6 +55,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   }
                   document.documentElement.className = theme;
                   document.documentElement.setAttribute('data-theme', theme);
+
+                  var storedLanguage = localStorage.getItem('arkiwatch-language');
+                  var browserLanguage = (navigator.language || '').toLowerCase();
+                  var language = storedLanguage === 'zh' ||
+                    (storedLanguage !== 'en' && browserLanguage.indexOf('zh') === 0)
+                    ? 'zh'
+                    : 'en';
+                  document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
+                  document.documentElement.setAttribute('data-language', language);
                 } catch (e) {}
               })();
             `

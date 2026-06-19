@@ -2270,6 +2270,17 @@
   outline: none;
 }
 
+.mobile-bottom-nav-item:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.mobile-bottom-nav-item:disabled:hover,
+.mobile-bottom-nav-item:disabled:focus-visible {
+  background: transparent;
+  color: var(--on-surface-variant);
+}
+
 .mobile-bottom-nav-item-active,
 .mobile-bottom-nav-item-active:hover,
 .mobile-bottom-nav-item-active:focus-visible {
@@ -2377,6 +2388,18 @@
   border-color: var(--ui-border-strong);
   background: var(--surface-container-high);
   color: var(--on-surface);
+}
+
+.workspace-topbar-assistant:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.workspace-topbar-assistant:disabled:hover,
+.workspace-topbar-assistant:disabled:focus-visible {
+  border-color: var(--ui-border-subtle);
+  background: var(--ui-muted-surface);
+  color: var(--on-surface-variant);
 }
 
 .assistant-glyph {

@@ -3,6 +3,8 @@
 import { RoadRailWorkspace } from "./road-rail-workspace";
 import { TransitWorkspace } from "./transit-workspace";
 import { useI18n } from "./i18n";
+import { isEmptyStatus } from "./platform-status";
+import { handleTabListKeyDown } from "./tab-navigation";
 import type {
   PlatformCategory,
   PlatformHistoricalSnapshot,
@@ -39,9 +41,13 @@ function mobilityTabCount(
   roadRail: RoadRailCurrentResponse | null,
 ): number | null {
   if (tab === "transit") {
-    return transit ? (transit.quality.active_alert_count ?? 0) : null;
+    return transit && !isEmptyStatus(transit.status)
+      ? (transit.quality.active_alert_count ?? 0)
+      : null;
   }
-  return roadRail ? (roadRail.quality.active_event_count ?? 0) : null;
+  return roadRail && !isEmptyStatus(roadRail.status)
+    ? (roadRail.quality.active_event_count ?? 0)
+    : null;
 }
 
 export function MobilityWorkspace({
@@ -56,6 +62,8 @@ export function MobilityWorkspace({
   transitHistory,
 }: MobilityWorkspaceProps) {
   const { tKey } = useI18n();
+  const mobilityTabIdPrefix = "mobility-workspace-tab";
+  const mobilityPanelId = "mobility-workspace-panel";
 
   return (
     <section className="mobility-detail-page" aria-label={tKey("mobility.mobilityDetail")}>
@@ -70,10 +78,22 @@ export function MobilityWorkspace({
             <button
               aria-label={`${tabLabel}${countLabel}`}
               aria-selected={activeTab === tab.key}
+              aria-controls={mobilityPanelId}
               className={activeTab === tab.key ? "mobility-tab mobility-tab-active" : "mobility-tab"}
+              id={`${mobilityTabIdPrefix}-${tab.key}`}
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
+              onKeyDown={(event) =>
+                handleTabListKeyDown(
+                  event,
+                  MOBILITY_TABS,
+                  activeTab,
+                  onTabChange,
+                  mobilityTabIdPrefix,
+                )
+              }
               role="tab"
+              tabIndex={activeTab === tab.key ? 0 : -1}
               type="button"
             >
               <span className="material-symbols-outlined" aria-hidden="true">
@@ -90,21 +110,29 @@ export function MobilityWorkspace({
         })}
       </nav>
 
-      {activeTab === "transit" ? (
-        <TransitWorkspace
-          category={transitCategory}
-          highlightedEventId={highlightedEventId}
-          history={transitHistory}
-          transit={transit}
-        />
-      ) : (
-        <RoadRailWorkspace
-          category={roadRailCategory}
-          highlightedEventId={highlightedEventId}
-          history={roadRailHistory}
-          roadRail={roadRail}
-        />
-      )}
+      <div
+        aria-labelledby={`${mobilityTabIdPrefix}-${activeTab}`}
+        className="mobility-workspace-panel"
+        id={mobilityPanelId}
+        role="tabpanel"
+        tabIndex={0}
+      >
+        {activeTab === "transit" ? (
+          <TransitWorkspace
+            category={transitCategory}
+            highlightedEventId={highlightedEventId}
+            history={transitHistory}
+            transit={transit}
+          />
+        ) : (
+          <RoadRailWorkspace
+            category={roadRailCategory}
+            highlightedEventId={highlightedEventId}
+            history={roadRailHistory}
+            roadRail={roadRail}
+          />
+        )}
+      </div>
     </section>
   );
 }

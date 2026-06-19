@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 
-import { formatRelativeAge } from "@/features/shared/format";
-
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
+import { cityCoordinates } from "./city-scope";
 import { useI18n } from "./i18n";
 import { TrendChart } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { isEmptyStatus } from "./platform-status";
 import { resolveDataTimezone } from "./data-timezone";
+import { isHistoricalTimeScope, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
 import type { WeatherSourceLayer } from "./types";
 import {
   CHART_MODES,
@@ -49,6 +50,12 @@ import {
   stageProgress,
   weatherHistoryPoints,
 } from "./weather-detail-utils";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+
+function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
+  const formatted = formatNumber(value, 0);
+  return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
+}
 
 export function WeatherDetailView({
   category,
@@ -59,8 +66,17 @@ export function WeatherDetailView({
   const { language, tKey, enumLabel } = useI18n();
   const [chartMode, setChartMode] = useState<ChartMode>("temperature");
   const dataTimezone = resolveDataTimezone(weather?.time_scope?.timezone);
-  const points = useMemo(() => forecastWindow(weather?.points ?? []), [weather]);
-  const current = latestPoint(points.length > 0 ? points : weather?.points ?? []);
+  const coordinates = cityCoordinates(weather?.location);
+  const isHistorical = isHistoricalTimeScope(weather?.time_scope);
+  const referenceAt = scopedReferenceTime(weather?.time_scope, weather?.checked_at);
+  const points = useMemo(
+    () => forecastWindow(weather?.points ?? [], 50, referenceAt),
+    [referenceAt, weather],
+  );
+  const current = latestPoint(
+    points.length > 0 ? points : weather?.points ?? [],
+    referenceAt,
+  );
   const previous = pointThreeHoursEarlier(weather?.points ?? [], current);
   const nextTrendPoint = previous ? null : pointThreeHoursLater(weather?.points ?? [], current);
   const condition = conditionForPoint(current, tKey);
@@ -83,6 +99,7 @@ export function WeatherDetailView({
     tKey,
     highlightedEventId,
     dataTimezone,
+    referenceAt,
   );
   const activeChartConfig = chartConfig(chartMode);
   const chartData = chartPoints(points, chartMode, language, dataTimezone);
@@ -93,11 +110,14 @@ export function WeatherDetailView({
   const axis = chartAxis(chartScaleValue, activeChartConfig);
   const chartLabels = chartXAxisLabels(chartData);
   const sourceRequest = weather?.source_requests[0];
-  const syncTime = weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
+  const historicalReference = scopedReferenceTime(weather?.time_scope);
+  const syncTime = isHistorical
+    ? weather?.generated_at ?? sourceRequest?.fetched_at ?? historicalReference
+    : weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
   const metricCards = currentMetricCards(current, language, tKey, dataTimezone);
   const historyPoints = weatherHistoryPoints(history, tKey, dataTimezone);
 
-  if (!weather) {
+  if (!weather || isEmptyStatus(weather.status)) {
     return (
       <section className="weather-detail-empty">
         <span>{tKey("weather.weatherDetail")}</span>
@@ -108,7 +128,7 @@ export function WeatherDetailView({
   }
 
   const liveTone = liveStatusTone(weather.status);
-  const dataTime = current?.timestamp ?? weather.generated_at ?? weather.checked_at;
+  const dataTime = current?.timestamp ?? weather.generated_at ?? (isHistorical ? historicalReference : weather.checked_at);
 
   return (
     <div className="weather-detail-page">
@@ -117,10 +137,18 @@ export function WeatherDetailView({
           <h2>{displayRegion(weather.location, tKey)}</h2>
           <div className={`weather-live-status weather-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{weather.status === "stale" ? tKey("weather.syncDelayed") : tKey("weather.liveSyncActive")}</strong>
+            <strong>{scopedStatusLabel(
+              weather.status,
+              weather.time_scope,
+              tKey,
+              "weather.liveSyncActive",
+              "weather.syncDelayed",
+            )}</strong>
           </div>
         </div>
-        <div>{tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone)} / LAT 60.1699 N / LON 24.9384 E</div>
+        <div>
+          {tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone, weather.time_scope)} / LAT {formatNumber(coordinates.latitude, 4)} N / LON {formatNumber(coordinates.longitude, 4)} E
+        </div>
       </div>
 
       <section className="weather-bento-grid" aria-label={tKey("weather.weatherConditions")}>
@@ -128,8 +156,8 @@ export function WeatherDetailView({
           <div className="weather-card-kicker">
             <span>{tKey("weather.currentCondition")}</span>
             <time>
-              {formatCompactTime(current?.timestamp ?? weather.checked_at, language, dataTimezone)}{" "}
-              {formatTimeZoneName(current?.timestamp ?? weather.checked_at, language, dataTimezone)}
+              {formatCompactTime(current?.timestamp ?? dataTime, language, dataTimezone)}{" "}
+              {formatTimeZoneName(current?.timestamp ?? dataTime, language, dataTimezone)}
             </time>
           </div>
           <div className="weather-current-cluster">
@@ -299,7 +327,7 @@ export function WeatherDetailView({
                 key={item.id}
               >
                 <span className="weather-event-dot" aria-hidden="true" />
-                <time>{item.active ? tKey("weather.activeNow") : item.time}</time>
+                <time>{item.time}</time>
                 <div>
                   <strong>{item.title}</strong>
                   <p>{item.body}</p>
@@ -359,7 +387,7 @@ export function WeatherDetailView({
             >
               {tKey("weather.dataQuality")}
             </DataLabelWithHelp>
-            <strong>{formatNumber(weather.quality.field_coverage_pct, 0)}%</strong>
+            <strong>{formatPercent(weather.quality.field_coverage_pct, tKey)}</strong>
           </header>
           <span className="weather-quality-meter" aria-hidden="true">
             <span style={{ width: `${weather.quality.field_coverage_pct}%` }} />
@@ -463,17 +491,19 @@ export function WeatherDetailView({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("weather.lastSync")}: {exactDataTime(syncTime, language, tKey)}
+            {tKey("weather.lastSync")}: {exactDataTime(syncTime, language, tKey, dataTimezone, weather.time_scope)}
           </span>
           <i aria-hidden="true" />
           <span className="weather-provider-latency">
-            {tKey("weather.coverage")}: {metricValue(weather, "forecast_hours") !== "n/a" ? metricValue(weather, "forecast_hours") : `${weather.quality.field_coverage_pct}%`}
+            {tKey("weather.coverage")}: {metricByKey(weather, "forecast_hours")
+              ? metricValue(weather, "forecast_hours")
+              : `${weather.quality.field_coverage_pct}%`}
           </span>
         </div>
       </section>
 
       <p className="weather-detail-freshness">
-        {tKey("weather.forecastFeedChecked")} {formatRelativeAge(weather.checked_at, language)}. {localizedPlatformCopy(weather.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? ""}
+        {isHistorical ? tKey("shell.historicalEvidenceAt") : tKey("weather.forecastFeedChecked")} {exactDataTime(syncTime, language, tKey, dataTimezone, weather.time_scope)}. {localizedPlatformCopy(weather.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? ""}
       </p>
     </div>
   );

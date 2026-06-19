@@ -66,6 +66,22 @@
   cursor: grabbing;
 }
 
+.assistant-launcher:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.assistant-launcher:disabled:hover .assistant-mascot-wrapper {
+  animation-play-state: paused;
+  transform: none;
+}
+
+.assistant-launcher:disabled:hover .assistant-bubble {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(12px);
+}
+
 .assistant-launcher:focus-visible,
 .assistant-icon-button:focus-visible,
 .assistant-message-retry:focus-visible,

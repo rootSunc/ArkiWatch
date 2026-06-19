@@ -1,5 +1,3 @@
-import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
-
 import type { LanguageMode } from "./i18n";
 import { translateDataLabel, translateMessageKey } from "./i18n";
 import {
@@ -12,11 +10,17 @@ import type {
   RoadRailCurrentResponse,
   TransitCurrentResponse,
   WeatherForecastResponse,
+  PlatformTimeScope,
 } from "./types";
+import { formatTimestamp } from "@/features/shared/format";
+
+import { isHistoricalTimeScope, isStaticDemoTimeScope, scopedDataAge } from "./data-time-scope";
+import { isEmptyStatus } from "./platform-status";
 
 export type ScenarioLiveHint = {
   headline: string;
   detail: string;
+  timeScope: PlatformTimeScope | null | undefined;
   updatedAt: string | null;
   sources: string;
 };
@@ -66,19 +70,20 @@ export function buildScenarioLiveHint(
   switch (scenarioKey) {
     case "outdoor": {
       const { weather } = signals;
-      if (!weather) {
+      if (!weather || isEmptyStatus(weather.status)) {
         return null;
       }
       return {
         headline: weatherSnapshotHeadline(weather, language),
         detail: weatherSnapshotDetail(weather, language),
+        timeScope: weather.time_scope,
         updatedAt: weather.generated_at ?? weather.checked_at,
         sources: "FMI",
       };
     }
     case "home_air": {
       const { airQuality } = signals;
-      if (!airQuality) {
+      if (!airQuality || isEmptyStatus(airQuality.status)) {
         return null;
       }
       const score = airQuality.worst_score;
@@ -94,45 +99,55 @@ export function buildScenarioLiveHint(
           airQuality.worst_station && airQuality.worst_label
             ? `${airQuality.worst_station} · ${airQuality.worst_label}`
             : `${reporting}/${total} ${translateMessageKey(language, "shell.stations")}`,
+        timeScope: airQuality.time_scope,
         updatedAt: airQuality.observed_at ?? airQuality.checked_at,
         sources: "HSY",
       };
     }
     case "commute": {
       const { transit, roadRail } = signals;
-      if (!transit && !roadRail) {
+      const usableTransit = transit && !isEmptyStatus(transit.status) ? transit : null;
+      const usableRoadRail = roadRail && !isEmptyStatus(roadRail.status) ? roadRail : null;
+      if (!usableTransit && !usableRoadRail) {
         return null;
       }
-      const transitAlerts = transit?.quality.active_alert_count ?? 0;
-      const roadEvents = roadRail?.quality.active_event_count ?? 0;
+      const transitAlerts = usableTransit?.quality.active_alert_count ?? 0;
+      const roadEvents = usableRoadRail?.quality.active_event_count ?? 0;
       const total = transitAlerts + roadEvents;
       const headline =
         total > 0
           ? `${total} ${translateMessageKey(language, "shell.activeDisruptions")}`
           : translateMessageKey(language, "shell.noActiveCommuteDisruptions");
       const parts: string[] = [];
-      if (transit) {
+      if (usableTransit) {
         parts.push(`${translateMessageKey(language, "shell.navTransit")}: ${transitAlerts}`);
       }
-      if (roadRail) {
+      if (usableRoadRail) {
         parts.push(`${translateMessageKey(language, "shell.navRoadRail")}: ${roadEvents}`);
       }
       return {
         headline,
         detail: parts.join(" · "),
+        timeScope: usableTransit?.time_scope ?? usableRoadRail?.time_scope,
         updatedAt:
-          transit?.observed_at ??
-          roadRail?.observed_at ??
-          transit?.checked_at ??
-          roadRail?.checked_at ??
+          usableTransit?.observed_at ??
+          usableRoadRail?.observed_at ??
+          usableTransit?.checked_at ??
+          usableRoadRail?.checked_at ??
           null,
         sources: "DIGITRANSIT · DIGITRAFFIC",
       };
     }
     case "energy": {
       const { householdEnergy, systemEnergy } = signals;
-      const priceWindow = householdEnergy?.current_window;
-      const systemWindow = systemEnergy?.current_window;
+      const usableHouseholdEnergy = householdEnergy && !isEmptyStatus(householdEnergy.status)
+        ? householdEnergy
+        : null;
+      const usableSystemEnergy = systemEnergy && !isEmptyStatus(systemEnergy.status)
+        ? systemEnergy
+        : null;
+      const priceWindow = usableHouseholdEnergy?.current_window;
+      const systemWindow = usableSystemEnergy?.current_window;
       if (!priceWindow && !systemWindow) {
         return null;
       }
@@ -146,19 +161,20 @@ export function buildScenarioLiveHint(
       const details: string[] = [];
       if (priceLabel && systemLabel) {
         details.push(`${translateMessageKey(language, "shell.system")} ${systemLabel}`);
-      } else if (householdEnergy?.summary) {
-        details.push(householdEnergy.summary);
-      } else if (systemEnergy?.summary) {
-        details.push(systemEnergy.summary);
+      } else if (usableHouseholdEnergy?.summary) {
+        details.push(usableHouseholdEnergy.summary);
+      } else if (usableSystemEnergy?.summary) {
+        details.push(usableSystemEnergy.summary);
       }
       return {
         headline,
         detail: details.join(" · ") || translateMessageKey(language, "shell.compareHouseholdPricesWithGridLoad"),
+        timeScope: usableHouseholdEnergy?.time_scope ?? usableSystemEnergy?.time_scope,
         updatedAt:
-          householdEnergy?.observed_at ??
-          systemEnergy?.observed_at ??
-          householdEnergy?.checked_at ??
-          systemEnergy?.checked_at ??
+          usableHouseholdEnergy?.observed_at ??
+          usableSystemEnergy?.observed_at ??
+          usableHouseholdEnergy?.checked_at ??
+          usableSystemEnergy?.checked_at ??
           null,
         sources: "PORSSISAHKO · FINGRID",
       };
@@ -172,9 +188,22 @@ export function formatScenarioHintAge(
   updatedAt: string | null,
   language: LanguageMode,
   timeZone?: string,
+  timeScope?: PlatformTimeScope | null,
 ): string | null {
   if (!updatedAt) {
     return null;
   }
-  return `${translateMessageKey(language, "shell.updated")} ${formatRelativeAge(updatedAt, language)} · ${formatTimestamp(updatedAt, "dateTime", language, timeZone)}`;
+  const age = scopedDataAge(
+    updatedAt,
+    timeScope,
+    language,
+    (key) => translateMessageKey(language, key),
+    "shell.notCollected",
+    timeZone,
+  );
+  if (isHistoricalTimeScope(timeScope) || isStaticDemoTimeScope(timeScope)) {
+    return `${translateMessageKey(language, "shell.updated")} ${age}`;
+  }
+
+  return `${translateMessageKey(language, "shell.updated")} ${age} · ${formatTimestamp(updatedAt, "dateTime", language, timeZone)}`;
 }

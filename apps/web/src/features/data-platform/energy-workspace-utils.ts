@@ -1,4 +1,4 @@
-import { formatRelativeAge } from "@/features/shared/format";
+import { formatRelativeAge, parseValidDate } from "@/features/shared/format";
 
 import { translateEnumLabel, translateMetricLabel, type LanguageMode } from "./i18n";
 import {
@@ -88,6 +88,11 @@ export function formatCompactTime(
     return tKey("energy.notScheduled");
   }
 
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return tKey("energy.notScheduled");
+  }
+
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -96,7 +101,7 @@ export function formatCompactTime(
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
 }
 
@@ -235,11 +240,16 @@ export function sourceStatusMetric(source: DashboardSource | null, fallbackStatu
   };
 }
 
-export function sourceRecordsMetric(source: DashboardSource | null): PanelMetric {
+type SourceRecordState = Pick<
+  DashboardSource,
+  "records_ingested" | "operational_status" | "last_run_status" | "last_run_finished_at" | "last_run_started_at"
+>;
+
+export function sourceRecordsMetric(source: SourceRecordState | null): PanelMetric {
   return {
     key: "records_ingested",
     label: "Records",
-    value: `${source?.records_ingested ?? 0}`,
+    value: source?.records_ingested === null || source === null ? "n/a" : `${source.records_ingested}`,
     unit: null,
     tone: toneFromStatus(source?.operational_status ?? "unknown"),
     detail: source?.last_run_status ?? null,

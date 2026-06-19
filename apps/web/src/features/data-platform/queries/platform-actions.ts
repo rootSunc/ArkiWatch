@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 import { platformKeys } from "./platform-queries";
 
@@ -40,9 +41,25 @@ export async function readPlatformActionError(
 const REFRESH_POLL_INTERVAL_MS = 2000;
 const REFRESH_POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
-async function refreshPlatformSources(): Promise<RefreshEnqueueResponse> {
+function abortError(signal: AbortSignal): Error {
+  const reason = signal.reason;
+  if (reason instanceof Error) {
+    return reason;
+  }
+
+  return new DOMException("The refresh request was cancelled.", "AbortError");
+}
+
+function throwIfAborted(signal: AbortSignal): void {
+  if (signal.aborted) {
+    throw abortError(signal);
+  }
+}
+
+async function refreshPlatformSources(signal: AbortSignal): Promise<RefreshEnqueueResponse> {
   const response = await fetch("/api/sources/refresh", {
     method: "POST",
+    signal,
   });
 
   if (!response.ok) {
@@ -52,10 +69,11 @@ async function refreshPlatformSources(): Promise<RefreshEnqueueResponse> {
   return (await response.json()) as RefreshEnqueueResponse;
 }
 
-async function fetchRefreshStatus(): Promise<RefreshStatusResponse> {
+async function fetchRefreshStatus(signal: AbortSignal): Promise<RefreshStatusResponse> {
   const response = await fetch("/api/sources/refresh/status", {
     method: "GET",
     cache: "no-store",
+    signal,
   });
 
   if (!response.ok) {
@@ -65,17 +83,32 @@ async function fetchRefreshStatus(): Promise<RefreshStatusResponse> {
   return (await response.json()) as RefreshStatusResponse;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  throwIfAborted(signal);
+
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      window.clearTimeout(timeout);
+      signal.removeEventListener("abort", onAbort);
+      reject(abortError(signal));
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
-async function waitForRefreshSettlement(): Promise<RefreshStatusResponse> {
+export async function waitForRefreshSettlement(
+  signal: AbortSignal,
+): Promise<RefreshStatusResponse> {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < REFRESH_POLL_TIMEOUT_MS) {
-    const status = await fetchRefreshStatus();
+    throwIfAborted(signal);
+    const status = await fetchRefreshStatus(signal);
     if (status.status === "missing") {
       throw new Error("Platform refresh job is not configured on the scheduler");
     }
@@ -85,7 +118,7 @@ async function waitForRefreshSettlement(): Promise<RefreshStatusResponse> {
       }
       return status;
     }
-    await sleep(REFRESH_POLL_INTERVAL_MS);
+    await sleep(REFRESH_POLL_INTERVAL_MS, signal);
   }
 
   throw new Error("Platform refresh timed out");
@@ -100,18 +133,36 @@ async function signOutRequest(): Promise<void> {
 export function useRefreshPlatformData() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const refreshControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      refreshControllerRef.current?.abort();
+      refreshControllerRef.current = null;
+    };
+  }, []);
 
   return useMutation({
     mutationFn: async () => {
-      const enqueueResult = await refreshPlatformSources();
-      if (
-        enqueueResult.status !== "accepted" &&
-        enqueueResult.status !== "already_running"
-      ) {
-        throw new Error(enqueueResult.message || "Failed to queue platform refresh");
+      refreshControllerRef.current?.abort();
+      const controller = new AbortController();
+      refreshControllerRef.current = controller;
+
+      try {
+        const enqueueResult = await refreshPlatformSources(controller.signal);
+        if (
+          enqueueResult.status !== "accepted" &&
+          enqueueResult.status !== "already_running"
+        ) {
+          throw new Error(enqueueResult.message || "Failed to queue platform refresh");
+        }
+        await waitForRefreshSettlement(controller.signal);
+        return enqueueResult;
+      } finally {
+        if (refreshControllerRef.current === controller) {
+          refreshControllerRef.current = null;
+        }
       }
-      await waitForRefreshSettlement();
-      return enqueueResult;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: platformKeys.all });

@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   resolveServerApiBaseUrl,
+  SERVER_ASSISTANT_TIMEOUT_MS,
   SESSION_COOKIE_NAME,
 } from "@/features/auth/config";
 import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
+import { requestSignalWithTimeout } from "@/features/auth/request-signal";
 
 import { assistantJsonResponse } from "../response";
 
@@ -28,6 +30,7 @@ export async function POST(request: NextRequest) {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    signal: requestSignalWithTimeout(request.signal, SERVER_ASSISTANT_TIMEOUT_MS),
     body: JSON.stringify(payload),
   }).catch(() => null);
 
@@ -43,6 +46,6 @@ export async function POST(request: NextRequest) {
   return assistantJsonResponse(
     backendResponse,
     responseBody,
-    "Assistant service returned an empty response.",
+    "Assistant service is temporarily unavailable.",
   );
 }

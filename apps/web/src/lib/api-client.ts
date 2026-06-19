@@ -1,3 +1,5 @@
+import { requestSignalWithTimeout } from "./request-signal";
+
 export type ApiJsonResult<T> = {
   data: T | null;
   error: string | null;
@@ -28,6 +30,8 @@ export type ApiClientConfig = {
   baseUrl?: string;
   authToken?: string;
   cache?: RequestCache;
+  /** Optional caller-owned signal, e.g. the signal supplied by TanStack Query. */
+  signal?: AbortSignal;
   timeoutMs?: number;
 };
 
@@ -38,6 +42,17 @@ export const DEFAULT_API_TIMEOUT_MS = 8000;
 
 export const API_TIMEOUT_ERROR =
   "Platform request timed out. The data source is not responding.";
+
+export function apiTransportErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null && "name" in error) {
+    const { name } = error as { name?: unknown };
+    if (name === "TimeoutError" || name === "AbortError") {
+      return API_TIMEOUT_ERROR;
+    }
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
 
 const MAX_API_ERROR_DETAIL_LENGTH = 240;
 
@@ -120,6 +135,9 @@ export async function apiFetchJson<T>(
 ): Promise<ApiJsonResult<T>> {
   const baseUrl = normalizeApiBaseUrl(config.baseUrl ?? process.env.NEXT_PUBLIC_API_BASE_URL);
   const url = buildApiUrl(path, params, baseUrl);
+  const signal = config.signal
+    ? requestSignalWithTimeout(config.signal, config.timeoutMs ?? DEFAULT_API_TIMEOUT_MS)
+    : AbortSignal.timeout(config.timeoutMs ?? DEFAULT_API_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
@@ -129,7 +147,7 @@ export async function apiFetchJson<T>(
             Authorization: `Bearer ${config.authToken}`,
           }
         : undefined,
-      signal: AbortSignal.timeout(config.timeoutMs ?? DEFAULT_API_TIMEOUT_MS),
+      signal,
     });
 
     if (!response.ok) {
@@ -142,17 +160,15 @@ export async function apiFetchJson<T>(
 
     return { data: (await response.json()) as T, error: null, status: response.status };
   } catch (error) {
-    // DOMException is not an Error subclass everywhere, so match on name.
-    if (typeof error === "object" && error !== null && "name" in error) {
-      const { name } = error as { name?: unknown };
-      if (name === "TimeoutError" || name === "AbortError") {
-        return { data: null, error: API_TIMEOUT_ERROR, status: null };
-      }
+    // Let query cancellation reach TanStack Query instead of turning an
+    // intentionally aborted request into a visible data-source error.
+    if (config.signal?.aborted) {
+      throw error;
     }
 
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Unknown fetch failure.",
+      error: apiTransportErrorMessage(error, "Unknown fetch failure."),
       status: null,
     };
   }

@@ -57,8 +57,12 @@ export type DashboardSource = {
 
 export type PlatformTimeScope = {
   mode: "live" | "historical" | string;
+  /** Client-side fixture marker; live API responses omit this field. */
+  is_demo?: boolean;
   date: string | null;
   timezone: string;
+  /** Exact instant used by the API when evaluating this scope. */
+  reference_time: string;
   window_start: string | null;
   window_end: string | null;
 };
@@ -666,6 +670,8 @@ export type ScenarioChannelRead = {
 
 export type PublicDashboardRead = {
   checked_at: string;
+  snapshot_date?: string | null;
+  snapshot_available?: boolean | null;
   app_name: string;
   timezone: string;
   coverage_area: string;

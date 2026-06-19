@@ -12,6 +12,7 @@ import {
   isRecommendationExpired,
   type TodayRecommendationMode,
 } from "./today-brief";
+import { isEmptyStatus } from "../platform-status";
 
 export type TodayActionTone = "good" | "warn" | "bad" | "neutral";
 
@@ -143,24 +144,36 @@ export function buildActionDataPoints(
   const t = (key: string) => translateMessageKey(language, key);
   const points: TodayActionDataPoint[] = [];
 
-  if (scenarioKey === "outdoor" && signals.weather) {
-    addPoint(points, t("shell.wind"), formatMetric(findMetric(signals.weather.metrics, "peak_wind"), language));
+  const weather = signals.weather && !isEmptyStatus(signals.weather.status) ? signals.weather : null;
+  const airQuality = signals.airQuality && !isEmptyStatus(signals.airQuality.status)
+    ? signals.airQuality
+    : null;
+  const transit = signals.transit && !isEmptyStatus(signals.transit.status) ? signals.transit : null;
+  const roadRail = signals.roadRail && !isEmptyStatus(signals.roadRail.status)
+    ? signals.roadRail
+    : null;
+  const householdEnergy = signals.householdEnergy && !isEmptyStatus(signals.householdEnergy.status)
+    ? signals.householdEnergy
+    : null;
+  const systemEnergy = signals.systemEnergy && !isEmptyStatus(signals.systemEnergy.status)
+    ? signals.systemEnergy
+    : null;
+
+  if (scenarioKey === "outdoor" && weather) {
+    addPoint(points, t("shell.wind"), formatMetric(findMetric(weather.metrics, "peak_wind"), language));
     addPoint(
       points,
-      signals.weather.warnings.length > 0 ? t("shell.warnings") : t("shell.rainWindows"),
+      weather.warnings.length > 0 ? t("shell.warnings") : t("shell.rainWindows"),
       String(
-        signals.weather.warnings.length > 0
-          ? signals.weather.warnings.length
-          : signals.weather.quality.rain_window_count,
+        weather.warnings.length > 0 ? weather.warnings.length : weather.quality.rain_window_count,
       ),
     );
   }
 
-  if (scenarioKey === "home_air" && signals.airQuality) {
+  if (scenarioKey === "home_air" && airQuality) {
     const station =
-      signals.airQuality.stations.find(
-        (item) => item.station === signals.airQuality?.worst_station,
-      ) ?? signals.airQuality.stations[0];
+      airQuality.stations.find((item) => item.station === airQuality.worst_station) ??
+      airQuality.stations[0];
     const pm25 = formatNumber(station?.pm2_5);
     const no2 = formatNumber(station?.no2);
     addPoint(
@@ -175,13 +188,13 @@ export function buildActionDataPoints(
     );
   }
 
-  if (scenarioKey === "commute" && (signals.transit || signals.roadRail)) {
-    addPoint(points, t("shell.navTransit"), String(signals.transit?.quality.active_alert_count ?? 0));
-    addPoint(points, t("shell.navRoadRail"), String(signals.roadRail?.quality.active_event_count ?? 0));
+  if (scenarioKey === "commute" && (transit || roadRail)) {
+    addPoint(points, t("shell.navTransit"), String(transit?.quality.active_alert_count ?? 0));
+    addPoint(points, t("shell.navRoadRail"), String(roadRail?.quality.active_event_count ?? 0));
   }
 
   if (scenarioKey === "energy") {
-    const energy = signals.householdEnergy ?? signals.systemEnergy;
+    const energy = householdEnergy ?? systemEnergy;
     const window = energy?.current_window;
     const startsAt = formatTime(window?.starts_at ?? null, language, timeZone);
     const endsAt = formatTime(window?.ends_at ?? null, language, timeZone);
@@ -217,10 +230,14 @@ export function buildTodayActionCardView(
   const limitedTitle =
     recommendationMode === "historical"
       ? translateMessageKey(language, "shell.historicalSignalOnly")
+      : recommendationMode === "stale"
+        ? translateMessageKey(language, "shell.staleSignalOnly")
       : translateMessageKey(language, "shell.noScopedRecommendation");
   const limitedBody =
     recommendationMode === "historical"
       ? translateMessageKey(language, "shell.historicalDataDisclaimer")
+      : recommendationMode === "stale"
+        ? translateMessageKey(language, "shell.staleRecommendationsDetail")
       : translateMessageKey(language, "shell.openSignalWorkspaceForGuidance");
 
   return {
@@ -239,7 +256,7 @@ export function buildTodayActionCardView(
             ),
     dataPoints: buildActionDataPoints(section.key, signals, language, timeZone),
     detail: isSignalFallback
-      ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language, timeZone)
+      ? formatScenarioHintAge(liveHint?.updatedAt ?? null, language, timeZone, liveHint?.timeScope)
       : isScopeLimited
         ? null
         : recommendationUnavailable
@@ -252,7 +269,11 @@ export function buildTodayActionCardView(
     signalLabel: isSignalFallback
       ? translateMessageKey(
           language,
-          recommendationMode === "historical" ? "shell.historicalSignal" : "shell.liveSignal",
+          recommendationMode === "historical"
+            ? "shell.historicalSignal"
+            : recommendationMode === "stale"
+              ? "shell.staleSignal"
+              : "shell.liveSignal",
         )
       : null,
     sources: isSignalFallback

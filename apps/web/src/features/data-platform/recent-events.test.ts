@@ -38,4 +38,29 @@ describe("curatedRecentEvents", () => {
 
     expect(curatedRecentEvents([item])).toEqual([item]);
   });
+
+  it("uses the selected city's shared coordinates for traffic geometry filtering", () => {
+    const tampereRoadEvent: PlatformEvent = {
+      ...event("2026-08-09T05:00:00Z", "2026-08-09T08:00:00Z"),
+      id: "tampere-road-weather",
+      category_key: "traffic",
+      event_type: "road_weather_risk",
+      attributes: {
+        geometry_bbox: [23.70, 61.45, 23.80, 61.55],
+      },
+    };
+
+    expect(
+      curatedRecentEvents([tampereRoadEvent], 6, {
+        city: "Tampere",
+        referenceAt: "2026-08-09T06:00:00Z",
+      }),
+    ).toEqual([tampereRoadEvent]);
+    expect(
+      curatedRecentEvents([tampereRoadEvent], 6, {
+        city: "Oulu",
+        referenceAt: "2026-08-09T06:00:00Z",
+      }),
+    ).toEqual([]);
+  });
 });

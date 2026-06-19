@@ -1,6 +1,7 @@
 {
   "weather": {
     "activeNow": "当前活跃",
+    "activeAtSnapshot": "快照时活跃",
     "allTrackedFieldsPresent": "所有跟踪字段均已存在",
     "awaitingForecast": "等待天气预报数据",
     "clearSpell": "晴朗",
@@ -37,6 +38,11 @@
     "missing": "缺失",
     "moistureTemperatureCurve": "湿度与温度曲线",
     "nextWindow": "下一时段",
+    "upcoming": "即将开始",
+    "upcomingAtSnapshot": "快照时尚未开始",
+    "ended": "已结束",
+    "endedBeforeSnapshot": "快照前已结束",
+    "warningCapturedAtSnapshot": "快照中记录的预警",
     "next3h": "未来 3 小时",
     "noActiveWarningOrDisruptionEventIsPresentInTheCurrentWeatherFeed": "当前天气数据中没有活跃的预警或异常事件。",
     "noDailyWeatherHistoryIsAvailable": "无每日天气历史数据。",

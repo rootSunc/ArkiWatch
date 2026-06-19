@@ -15,26 +15,38 @@ describe("assistant proxy response", () => {
     const response = assistantJsonResponse(
       backendResponse,
       { detail: "Too many requests." },
-      "Assistant service returned an empty response.",
+      "Assistant service is temporarily unavailable.",
     );
 
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("17");
-    await expect(response.json()).resolves.toEqual({ detail: "Too many requests." });
+    await expect(response.json()).resolves.toEqual({
+      detail: "Assistant request limit reached. Please try again shortly.",
+    });
   });
 
-  it("does not expose unrelated backend headers", () => {
-    const backendResponse = new Response(null, {
-      headers: {
-        "set-cookie": "secret=should-not-forward",
-        "x-internal-debug": "hidden",
+  it("does not expose backend failure details or unrelated headers", async () => {
+    const backendResponse = new Response(
+      JSON.stringify({ detail: "database password=legacy-secret" }),
+      {
+        headers: {
+          "set-cookie": "secret=should-not-forward",
+          "x-internal-debug": "hidden",
+        },
+        status: 500,
       },
-      status: 500,
-    });
+    );
 
-    const response = assistantJsonResponse(backendResponse, null, "Assistant failed.");
+    const response = assistantJsonResponse(
+      backendResponse,
+      { detail: "database password=legacy-secret" },
+      "Assistant service is temporarily unavailable.",
+    );
 
     expect(response.headers.get("set-cookie")).toBeNull();
     expect(response.headers.get("x-internal-debug")).toBeNull();
+    await expect(response.json()).resolves.toEqual({
+      detail: "Assistant service is temporarily unavailable.",
+    });
   });
 });

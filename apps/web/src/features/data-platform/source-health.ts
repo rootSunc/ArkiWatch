@@ -1,5 +1,8 @@
 import type { DashboardSource } from "./types";
 
+type SourceHealthSource = Pick<DashboardSource, "operational_status"> &
+  Partial<Pick<DashboardSource, "id" | "stage" | "records_ingested">>;
+
 export type SourceHealthTone = "healthy" | "watch" | "failing" | "unknown";
 
 /**
@@ -29,18 +32,38 @@ export function sourceHealthTone(status: string | null | undefined): SourceHealt
   }
 }
 
-export function isSourceHealthy(source: Pick<DashboardSource, "operational_status">): boolean {
+export function isCatalogOnlySource(source: SourceHealthSource): boolean {
+  return source.id?.startsWith("catalog-") === true && source.records_ingested === null;
+}
+
+export function isSourceTrackedForHealth(source: SourceHealthSource): boolean {
+  return !isCatalogOnlySource(source);
+}
+
+export function isSourceHealthy(source: SourceHealthSource): boolean {
   return sourceHealthTone(source.operational_status) === "healthy";
 }
 
 export function healthySourceCount(
-  sources: Array<Pick<DashboardSource, "operational_status">>,
+  sources: SourceHealthSource[],
 ): number {
-  return sources.filter(isSourceHealthy).length;
+  return sources.filter(isSourceTrackedForHealth).filter(isSourceHealthy).length;
 }
 
 export function sourceIssueCount(
-  sources: Array<Pick<DashboardSource, "operational_status">>,
+  sources: SourceHealthSource[],
 ): number {
-  return sources.filter((source) => !isSourceHealthy(source)).length;
+  return sources.filter(isSourceTrackedForHealth).filter((source) => !isSourceHealthy(source)).length;
+}
+
+/**
+ * Operational health belongs to the live pipeline. Historical views describe
+ * evidence from a selected day, so pending catalog entries must not surface as
+ * a present-day incident in the Today workspace.
+ */
+export function sourceIssueCountForScope(
+  sources: SourceHealthSource[],
+  isHistorical: boolean,
+): number {
+  return isHistorical ? 0 : sourceIssueCount(sources);
 }

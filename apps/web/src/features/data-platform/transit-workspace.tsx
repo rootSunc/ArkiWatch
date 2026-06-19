@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
+import { parseValidDate } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
@@ -23,7 +23,11 @@ import {
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { isEmptyStatus, liveStatusTone } from "./platform-status";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
+import { scopedEventState } from "./event-time-state";
 
 type TransitWorkspaceProps = {
   category: PlatformCategory | null;
@@ -82,10 +86,15 @@ const ALERT_FILTERS: Array<{ icon: string; key: TransitAlertFilter; labelKey: st
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "missing";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
+}
+
+function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
+  const formatted = formatNumber(value);
+  return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
 }
 
 function formatCompactTime(
@@ -98,6 +107,11 @@ function formatCompactTime(
     return tKey("transit.notObserved");
   }
 
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return tKey("transit.notObserved");
+  }
+
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
     day: "2-digit",
     month: "short",
@@ -106,7 +120,7 @@ function formatCompactTime(
     hour12: false,
     timeZone: resolveDataTimezone(timeZone)
   })
-    .format(new Date(value))
+    .format(parsedDate)
     .toUpperCase();
 }
 
@@ -127,27 +141,21 @@ function statusTone(status: string): TransitTone {
   return "neutral";
 }
 
-function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
-  if (status === "ready") {
-    return "ready";
-  }
-  if (status === "stale") {
-    return "stale";
-  }
-  return "empty";
-}
-
 function exactObservedLabel(
   value: string | null,
   language: LanguageMode,
   tKey: (key: string) => string,
   timeZone = DEFAULT_DATA_TIME_ZONE,
+  timeScope?: TransitCurrentResponse["time_scope"],
 ): string {
-  if (!value) {
-    return tKey("transit.notObserved");
-  }
-
-  return `${formatTimestamp(value, "dateTime", language, timeZone)} (${formatRelativeAge(value, language)})`;
+  return scopedDataTimestamp(
+    value,
+    timeScope,
+    language,
+    tKey,
+    "transit.notObserved",
+    timeZone,
+  );
 }
 
 function severityTone(severity: string): TransitTone {
@@ -196,7 +204,34 @@ function metricValue(transit: TransitCurrentResponse, key: string): string {
   return metric ? `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}` : "0";
 }
 
+function localizedTransitSummary(
+  transit: TransitCurrentResponse,
+  historical: boolean,
+  tKey: (key: string) => string,
+): string {
+  if (transit.quality.raw_alert_count === 0 && transit.quality.normalized_event_count === 0) {
+    return tKey(
+      historical
+        ? "transit.noActiveServiceAlertsInSelectedSnapshot"
+        : "transit.noActiveServiceAlertsInTheLatestHslFeed",
+    );
+  }
+
+  return tKey(
+    historical ? "transit.summaryDecodedAtSnapshot" : "transit.summaryDecoded",
+  )
+    .replace("{raw}", String(transit.quality.raw_alert_count))
+    .replace("{active}", String(transit.quality.active_alert_count))
+    .replace("{routes}", String(transit.quality.route_alert_count))
+    .replace("{stops}", String(transit.quality.stop_alert_count));
+}
+
 function transitReferenceTimestamp(transit: TransitCurrentResponse): number {
+  const scopedReference = new Date(transit.time_scope?.reference_time ?? "").getTime();
+  if (Number.isFinite(scopedReference)) {
+    return scopedReference;
+  }
+
   const checkedAt = new Date(transit.checked_at).getTime();
   if (Number.isFinite(checkedAt)) {
     return checkedAt;
@@ -330,7 +365,11 @@ function isScopedAlert(alert: TransitAlert): boolean {
   return alert.route_ids.length > 0 || alert.stop_ids.length > 0 || alert.trip_ids.length > 0;
 }
 
-function filterAlerts(alerts: TransitAlert[], filter: TransitAlertFilter): TransitAlert[] {
+function filterAlerts(
+  alerts: TransitAlert[],
+  filter: TransitAlertFilter,
+  referenceTimestamp = Date.now(),
+): TransitAlert[] {
   if (filter === "priority") {
     return alerts.filter((alert) => alert.active || isHighSeverity(alert));
   }
@@ -338,7 +377,9 @@ function filterAlerts(alerts: TransitAlert[], filter: TransitAlertFilter): Trans
     return alerts.filter((alert) => alert.active);
   }
   if (filter === "upcoming") {
-    return alerts.filter((alert) => !alert.active);
+    return alerts.filter(
+      (alert) => scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming",
+    );
   }
   if (filter === "high") {
     return alerts.filter(isHighSeverity);
@@ -350,12 +391,24 @@ function filterAlerts(alerts: TransitAlert[], filter: TransitAlertFilter): Trans
   return alerts;
 }
 
-function filterEmptyMessage(filter: TransitAlertFilter, tKey: (key: string) => string): string {
+function filterEmptyMessage(
+  filter: TransitAlertFilter,
+  tKey: (key: string) => string,
+  historical = false,
+): string {
   if (filter === "priority") {
-    return tKey("transit.noPriorityTransitAlertsAreActiveOrUpcoming");
+    return tKey(
+      historical
+        ? "transit.noPriorityTransitAlertsInSnapshotWindow"
+        : "transit.noPriorityTransitAlertsAreActiveOrUpcoming",
+    );
   }
   if (filter === "active") {
-    return tKey("transit.noTransitAlertsAreActiveRightNow");
+    return tKey(
+      historical
+        ? "transit.noTransitAlertsAtSnapshot"
+        : "transit.noTransitAlertsAreActiveRightNow",
+    );
   }
   if (filter === "upcoming") {
     return tKey("transit.noUpcomingTransitAlertsWereNormalizedFromTheLatestFeed");
@@ -401,23 +454,41 @@ function nextActiveEndLabel(
   return `${tKey("transit.until")} ${formatCompactTime(nextEndingAlert.ends_at, language, tKey, timeZone)}`;
 }
 
-function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[], tKey: (key: string) => string) {
+function transitRiskState(
+  activeAlerts: TransitAlert[],
+  allAlerts: TransitAlert[],
+  tKey: (key: string) => string,
+  historical = false,
+  referenceTimestamp = Date.now(),
+) {
   const highActive = activeAlerts.filter(isHighSeverity).length;
-  const highUpcoming = allAlerts.filter((alert) => !alert.active && isHighSeverity(alert)).length;
+  const highUpcoming = allAlerts.filter(
+    (alert) =>
+      scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming" &&
+      isHighSeverity(alert),
+  ).length;
 
   if (highActive > 0) {
     return {
-      detail: tKey("transit.highSeverityAlertsActiveDetail").replace("{count}", String(highActive)),
+      detail: tKey(
+        historical
+          ? "transit.highSeverityAlertsAtSnapshotDetail"
+          : "transit.highSeverityAlertsActiveDetail",
+      ).replace("{count}", String(highActive)),
       icon: "warning",
-      title: tKey("transit.highImpactActive")
+      title: tKey(historical ? "transit.highImpactAtSnapshot" : "transit.highImpactActive")
     };
   }
 
   if (activeAlerts.length > 0) {
     return {
-      detail: tKey("transit.activeAlertsMayAffectTimingDetail").replace("{count}", String(activeAlerts.length)),
+      detail: tKey(
+        historical
+          ? "transit.activeAlertsAtSnapshotMayAffectTimingDetail"
+          : "transit.activeAlertsMayAffectTimingDetail",
+      ).replace("{count}", String(activeAlerts.length)),
       icon: "directions_bus",
-      title: tKey("transit.serviceAlertsActive")
+      title: tKey(historical ? "transit.serviceAlertsAtSnapshot" : "transit.serviceAlertsActive")
     };
   }
 
@@ -430,7 +501,17 @@ function transitRiskState(activeAlerts: TransitAlert[], allAlerts: TransitAlert[
   }
 
   return {
-    detail: allAlerts.length > 0 ? tKey("transit.noActiveAlertsRightNowMonitorUpcomingFeedItems") : tKey("transit.noActiveServiceAlertsInTheLatestHslFeed"),
+    detail: allAlerts.length > 0
+      ? tKey(
+          historical
+            ? "transit.noAlertsAtSnapshotMonitorUpcomingFeedItems"
+            : "transit.noActiveAlertsRightNowMonitorUpcomingFeedItems",
+        )
+      : tKey(
+          historical
+            ? "transit.noActiveServiceAlertsInSelectedSnapshot"
+            : "transit.noActiveServiceAlertsInTheLatestHslFeed",
+        ),
     icon: "check_circle",
     title: tKey("transit.networkClear")
   };
@@ -570,7 +651,7 @@ function transitHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date, timeZone),
         value: data.quality.normalized_event_count,
-        detail: tKey("transit.historyPointDetail")
+        detail: tKey("transit.historyPointDetailAtSnapshot")
           .replace("{active}", String(data.quality.active_alert_count))
           .replace("{routes}", String(data.quality.route_alert_count))
       }
@@ -580,53 +661,77 @@ function transitHistoryPoints(
 
 function TransitAlertStatusBadge({
   alert,
+  historical,
+  referenceTimestamp,
   language,
   timeZone,
   tKey,
 }: {
   alert: TransitAlert;
+  historical: boolean;
+  referenceTimestamp: number;
   language: LanguageMode;
   timeZone?: string;
   tKey: (key: string) => string;
 }) {
+  const state = scopedEventState(alert.active, alert.starts_at, referenceTimestamp);
   return (
-    <span className={alert.active ? "transit-alert-status transit-alert-status-active" : "transit-alert-status"}>
+    <span className={state === "active" ? "transit-alert-status transit-alert-status-active" : "transit-alert-status"}>
       <span className="material-symbols-outlined" aria-hidden="true">
-        {alert.active ? "radio_button_checked" : "schedule"}
+        {state === "active" ? "radio_button_checked" : state === "upcoming" ? "schedule" : "history"}
       </span>
-      <span>{alert.active ? tKey("transit.activeNow") : formatCompactTime(alert.starts_at, language, tKey, timeZone)}</span>
+      <span>
+        {state === "active"
+          ? tKey(historical ? "transit.activeAtSnapshot" : "transit.activeNow")
+          : state === "ended"
+            ? tKey(historical ? "transit.endedAtSnapshot" : "transit.ended")
+            : formatCompactTime(alert.starts_at, language, tKey, timeZone)}
+      </span>
     </span>
   );
 }
 
 function TransitAlertLiveLayer({
   alert,
+  historical,
+  referenceTimestamp,
   language,
   nowTimestamp,
   timeZone,
   tKey,
 }: {
   alert: TransitAlert;
+  historical: boolean;
+  referenceTimestamp: number;
   language: LanguageMode;
   nowTimestamp: number;
   timeZone?: string;
   tKey: (key: string) => string;
 }) {
   const progress = alertWindowProgress(alert, nowTimestamp);
+  const state = scopedEventState(alert.active, alert.starts_at, referenceTimestamp);
 
   return (
     <section
-      className={alert.active ? "transit-alert-live-layer transit-alert-live-layer-active" : "transit-alert-live-layer"}
+      className={state === "active" ? "transit-alert-live-layer transit-alert-live-layer-active" : "transit-alert-live-layer"}
       aria-label={tKey("transit.alertStatus")}
     >
       <div className="transit-alert-live-copy">
-        <TransitAlertStatusBadge alert={alert} language={language} timeZone={timeZone} tKey={tKey} />
+        <TransitAlertStatusBadge alert={alert} historical={historical} referenceTimestamp={referenceTimestamp} language={language} timeZone={timeZone} tKey={tKey} />
         <div>
-          <strong>{alert.active ? tKey("transit.inEffect") : tKey("transit.scheduled")}</strong>
+          <strong>
+            {state === "active"
+              ? tKey(historical ? "transit.inEffectAtSnapshot" : "transit.inEffect")
+              : state === "ended"
+                ? tKey(historical ? "transit.endedAtSnapshot" : "transit.ended")
+                : tKey("transit.scheduled")}
+          </strong>
           <span>
-            {alert.active
+            {state === "active"
               ? `${tKey("transit.until")} ${formatCompactTime(alert.ends_at, language, tKey, timeZone)}`
-              : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey, timeZone)}`}
+              : state === "ended"
+                ? `${tKey("transit.endedAt")} ${formatCompactTime(alert.ends_at, language, tKey, timeZone)}`
+                : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey, timeZone)}`}
           </span>
         </div>
       </div>
@@ -657,10 +762,12 @@ export function TransitWorkspace({
   const [alertFilter, setAlertFilter] = useState<TransitAlertFilter>("priority");
   const [alertPage, setAlertPage] = useState(0);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const isHistorical = isHistoricalTimeScope(transit?.time_scope);
+  const referenceTimestamp = transit ? transitReferenceTimestamp(transit) : 0;
   const activeAlerts = useMemo(() => transit?.alerts.filter((alert) => alert.active) ?? [], [transit]);
   const filteredAlerts = useMemo(
-    () => filterAlerts(transit?.alerts ?? [], alertFilter),
-    [alertFilter, transit]
+    () => filterAlerts(transit?.alerts ?? [], alertFilter, referenceTimestamp),
+    [alertFilter, referenceTimestamp, transit]
   );
 
   useEffect(() => {
@@ -687,7 +794,7 @@ export function TransitWorkspace({
     setSelectedAlertId(highlightedEventId);
   }, [alertFilter, highlightedEventId, transit]);
 
-  if (!transit) {
+  if (!transit || isEmptyStatus(transit.status)) {
     return (
       <section className="transit-detail-empty" aria-label={tKey("transit.transitDataUnavailable")}>
         <span>{tKey("transit.transit")}</span>
@@ -699,9 +806,9 @@ export function TransitWorkspace({
 
   const dataTimezone = resolveDataTimezone(transit.time_scope?.timezone);
 
-  const nowTimestamp = transitReferenceTimestamp(transit);
+  const nowTimestamp = referenceTimestamp;
   const activeTone = activeAlertTone(activeAlerts, transit.alerts);
-  const riskState = transitRiskState(activeAlerts, transit.alerts, tKey);
+  const riskState = transitRiskState(activeAlerts, transit.alerts, tKey, isHistorical, referenceTimestamp);
   const {
     currentPage: currentAlertPage,
     pageCount: alertPageCount,
@@ -719,7 +826,7 @@ export function TransitWorkspace({
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
   const historyPoints = transitHistoryPoints(history, tKey, dataTimezone);
   const transitSummaryMetrics = [
-    ["active_alerts", "activeNowSummary"],
+    ["active_alerts", isHistorical ? "activeAtSnapshotSummary" : "activeNowSummary"],
     ["high_severity", "highSeverity"],
     ["disruptions", "disruptions"],
     ["delays", "delays"],
@@ -735,10 +842,16 @@ export function TransitWorkspace({
           <h2>{tKey("transit.helsinkiTransitServiceAlerts")}</h2>
           <div className={`transit-live-status transit-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{transit.status === "ready" ? tKey("transit.hslFeedActive") : tKey("transit.feedDelayed")}</strong>
+            <strong>{scopedStatusLabel(
+              transit.status,
+              transit.time_scope,
+              tKey,
+              "transit.hslFeedActive",
+              "transit.feedDelayed",
+            )}</strong>
           </div>
         </div>
-        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}</div>
+        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone, transit.time_scope)}</div>
       </div>
 
       <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={tKey("transit.transitAlertCondition")}>
@@ -748,8 +861,8 @@ export function TransitWorkspace({
           </span>
           <div>
             <div className="transit-card-kicker">
-              <span>{tKey("transit.currentTransitRisk")}</span>
-              <time>{exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}</time>
+              <span>{tKey(isHistorical ? "transit.transitRiskAtSnapshot" : "transit.currentTransitRisk")}</span>
+              <time>{exactObservedLabel(transit.observed_at, language, tKey, dataTimezone, transit.time_scope)}</time>
             </div>
             <strong>{transit.quality.active_alert_count}</strong>
             <p>
@@ -774,7 +887,7 @@ export function TransitWorkspace({
           </div>
           <div>
             <span>{tKey("transit.coverage")}</span>
-            <strong>{formatNumber(transit.quality.field_coverage_pct)}%</strong>
+            <strong>{formatPercent(transit.quality.field_coverage_pct, tKey)}</strong>
           </div>
         </div>
       </section>
@@ -801,7 +914,7 @@ export function TransitWorkspace({
           <header>
             <div>
               <span>{tKey("transit.incidentTimeline")}</span>
-              <h3>{tKey("transit.activeAndUpcomingServiceAlerts")}</h3>
+              <h3>{tKey(isHistorical ? "transit.alertsInSnapshotWindow" : "transit.activeAndUpcomingServiceAlerts")}</h3>
             </div>
             <strong>{filteredAlerts.length} {tKey("transit.alerts")}</strong>
           </header>
@@ -818,7 +931,7 @@ export function TransitWorkspace({
                   <span className="material-symbols-outlined" aria-hidden="true">
                     {filter.icon}
                   </span>
-                  <span>{tKey(`transit.${filter.labelKey}`)}</span>
+                  <span>{tKey(filter.key === "active" && isHistorical ? "transit.atSnapshot" : `transit.${filter.labelKey}`)}</span>
                 </button>
               ))}
             </div>
@@ -840,7 +953,7 @@ export function TransitWorkspace({
                       const width = Math.max(4, right - left);
                       return (
                         <article className={`transit-timeband-row transit-timeband-row-${severityTone(alert.severity)}`} key={alert.id}>
-                          <TransitAlertStatusBadge alert={alert} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <TransitAlertStatusBadge alert={alert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <i aria-hidden="true">
                             <span
                               style={
@@ -873,7 +986,7 @@ export function TransitWorkspace({
                       <div className="transit-alert-main">
                         <div>
                           <div className="transit-alert-time-row">
-                            <TransitAlertStatusBadge alert={alert} language={language} timeZone={dataTimezone} tKey={tKey} />
+                            <TransitAlertStatusBadge alert={alert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
                             <span>{enumLabel(alert.severity)}</span>
                           </div>
                           <strong>{localizedPlatformCopy(alert.title, language) ?? alert.title}</strong>
@@ -894,7 +1007,7 @@ export function TransitWorkspace({
                     </button>
                   ))
                 ) : (
-                  <p>{filterEmptyMessage(alertFilter, tKey)}</p>
+                  <p>{filterEmptyMessage(alertFilter, tKey, isHistorical)}</p>
                 )}
               </div>
               <IncidentTimelinePager
@@ -911,13 +1024,13 @@ export function TransitWorkspace({
                 <section className={`transit-alert-detail transit-alert-detail-${severityTone(selectedAlert.severity)}`}>
                   <header>
                     <div>
-                      <TransitAlertStatusBadge alert={selectedAlert} language={language} timeZone={dataTimezone} tKey={tKey} />
+                      <TransitAlertStatusBadge alert={selectedAlert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
                       <strong>{localizedPlatformCopy(selectedAlert.title, language) ?? selectedAlert.title}</strong>
                     </div>
                     <em>{enumLabel(selectedAlert.severity)}</em>
                   </header>
                   <p>{localizedPlatformCopy(selectedAlert.description, language) ?? selectedAlert.description}</p>
-                  <TransitAlertLiveLayer alert={selectedAlert} language={language} nowTimestamp={nowTimestamp} timeZone={dataTimezone} tKey={tKey} />
+                  <TransitAlertLiveLayer alert={selectedAlert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} nowTimestamp={nowTimestamp} timeZone={dataTimezone} tKey={tKey} />
                   <div className="transit-alert-detail-meta">
                     <div>
                       <span>{tKey("transit.type")}</span>
@@ -981,7 +1094,7 @@ export function TransitWorkspace({
                       <strong>{tKey("transit.noSelectedEvent")}</strong>
                     </div>
                   </header>
-                  <p>{filterEmptyMessage(alertFilter, tKey)}</p>
+                  <p>{filterEmptyMessage(alertFilter, tKey, isHistorical)}</p>
                 </section>
               )}
             </aside>
@@ -1127,15 +1240,15 @@ export function TransitWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("transit.lastSync")}: {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone)}
+            {tKey("transit.lastSync")}: {exactObservedLabel(transit.observed_at ?? scopedReferenceTime(transit.time_scope), language, tKey, dataTimezone, transit.time_scope)}
           </span>
           <i aria-hidden="true" />
-          <span className="transit-provider-coverage">{tKey("transit.coverage")}: {formatNumber(transit.quality.field_coverage_pct)}%</span>
+          <span className="transit-provider-coverage">{tKey("transit.coverage")}: {formatPercent(transit.quality.field_coverage_pct, tKey)}</span>
         </div>
       </section>
 
       <p className="transit-detail-freshness">
-        {localizedPlatformCopy(transit.summary, language) ?? localizedPlatformCopy(category?.description, language) ?? tKey("transit.latestNormalizedHslTransitServiceAlertSignals")}
+        {localizedTransitSummary(transit, isHistorical, tKey) ?? localizedPlatformCopy(category?.description, language) ?? tKey("transit.latestNormalizedHslTransitServiceAlertSignals")}
       </p>
 
       <details className="transit-glass-panel transit-diagnostics-panel">
@@ -1187,7 +1300,7 @@ export function TransitWorkspace({
                   </div>
                   <p>
                     {sourceRequestHost(request.endpoint, tKey)}
-                    {request.fetched_at ? ` · ${tKey("transit.fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
+                    {request.fetched_at ? ` · ${tKey("transit.fetched")} ${scopedDataAge(request.fetched_at, transit.time_scope, language, tKey, "transit.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>{request.content_type ?? tKey("transit.contentTypeUnavailable")}</small>
                 </article>

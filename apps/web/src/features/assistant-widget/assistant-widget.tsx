@@ -21,6 +21,7 @@ import { AssistantMessageBody } from "@/features/assistant-widget/assistant-mess
 import { formatAssistantScopeDate } from "@/features/assistant-widget/assistant-scope";
 import {
   AssistantApiCitation,
+  ASSISTANT_REQUEST_TIMEOUT_MS,
   localizeAssistantError,
   parseAssistantStream,
   readAssistantError,
@@ -45,6 +46,7 @@ type AssistantWidgetProps = {
   openQuestion?: string | null;
   focusReturnRef?: RefObject<HTMLElement>;
   focusReturnRefs?: Array<RefObject<HTMLElement>>;
+  scopePending?: boolean;
   showLauncher?: boolean;
   onOpenView?: (view: string) => void;
 };
@@ -74,6 +76,7 @@ export function AssistantWidget({
   openQuestion,
   focusReturnRef,
   focusReturnRefs,
+  scopePending = false,
   showLauncher = true,
   onOpenView,
 }: AssistantWidgetProps) {
@@ -87,19 +90,24 @@ export function AssistantWidget({
     (category: string) => tKey("assistant.analyzeCategory").replace("{category}", category),
     [tKey],
   );
-  const assistantScopeLabel = mode === "today"
-    ? tKey("assistant.scopeToday")
-    : tKey("assistant.scopeData");
+  const isHistoricalScope = date !== null;
+  const assistantScopeLabel = isHistoricalScope
+    ? tKey(mode === "today" ? "assistant.scopeHistoricalToday" : "assistant.scopeHistoricalData")
+    : mode === "today"
+      ? tKey("assistant.scopeToday")
+      : tKey("assistant.scopeData");
   const assistantScopeDate = date
     ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
     : tKey("assistant.scopeLive");
+  const assistantCoverageArea = overview?.coverage_area?.trim() || cityLabel(city);
+  // A background data refresh changes checked_at but not the user's scope.
+  // Keep the conversation intact until city, date, workspace, or identity changes.
   const assistantScopeKey = [
     mode,
     scopeKey,
     city,
     date ?? "live",
     userId,
-    overview?.checked_at ?? "",
   ].join(":");
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -119,8 +127,23 @@ export function AssistantWidget({
     }
 
     lastOpenRequest.current = openRequest;
+    if (scopePending) {
+      return;
+    }
     setIsOpen(true);
-  }, [openQuestion, openRequest]);
+  }, [openQuestion, openRequest, scopePending]);
+
+  useEffect(() => {
+    if (!scopePending) {
+      return;
+    }
+
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = null;
+    setIsOpen(false);
+    setIsLoading(false);
+    setInputValue("");
+  }, [scopePending]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -315,6 +338,15 @@ export function AssistantWidget({
   );
 
   const suggestedQuestions = useMemo(() => {
+    if (isHistoricalScope) {
+      return [
+        tKey("assistant.historicalExplainSnapshot"),
+        tKey("assistant.historicalMostRelevant"),
+        tKey("assistant.historicalBestWindow"),
+        tKey("assistant.historicalChangedSignals"),
+      ];
+    }
+
     if (mode === "today") {
       return [
         tKey("assistant.whatShouldIDoToday"),
@@ -338,11 +370,11 @@ export function AssistantWidget({
       tKey("assistant.whichSourceAbnormal"),
       tKey("assistant.whichExpansionPlanned")
     ];
-  }, [analyzeCategory, language, mode, overview, tKey]);
+  }, [analyzeCategory, isHistoricalScope, language, mode, overview, tKey]);
 
   const submitQuestion = async (question: string) => {
     const normalizedQuestion = question.trim();
-    if (!normalizedQuestion || isLoading) {
+    if (!normalizedQuestion || isLoading || scopePending) {
       return;
     }
 
@@ -360,6 +392,12 @@ export function AssistantWidget({
     const requestController = new AbortController();
     activeRequestRef.current?.abort();
     activeRequestRef.current = requestController;
+    let didTimeout = false;
+    const timeoutId = window.setTimeout(() => {
+      didTimeout = true;
+      requestController.abort();
+    }, ASSISTANT_REQUEST_TIMEOUT_MS);
+    let assistantText = "";
 
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -376,7 +414,7 @@ export function AssistantWidget({
 
     try {
       if (appEnv.demoMode) {
-        const reply = demoAssistantReply(normalizedQuestion, language);
+        const reply = demoAssistantReply(normalizedQuestion, language, { city, date });
         if (activeRequestRef.current !== requestController) {
           return;
         }
@@ -427,7 +465,6 @@ export function AssistantWidget({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let assistantText = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -506,7 +543,10 @@ export function AssistantWidget({
         );
       }
     } catch (error) {
-      if (requestController.signal.aborted || activeRequestRef.current !== requestController) {
+      if (
+        (requestController.signal.aborted && !didTimeout) ||
+        activeRequestRef.current !== requestController
+      ) {
         return;
       }
       const isAssistantHttpError =
@@ -516,10 +556,12 @@ export function AssistantWidget({
           message.id === assistantMessageId
             ? {
                 ...message,
-                text: tKey("assistant.failure"),
-                errorMessage: isAssistantHttpError && error instanceof Error
-                  ? error.message
-                  : null,
+                text: assistantText.trim() ? assistantText : tKey("assistant.failure"),
+                errorMessage: didTimeout
+                  ? "Assistant request timed out."
+                  : isAssistantHttpError && error instanceof Error
+                    ? error.message
+                    : null,
                 retryAfterSeconds:
                   isAssistantHttpError && error instanceof Error
                     ? (error as Error & { retryAfterSeconds?: number | null })
@@ -532,6 +574,7 @@ export function AssistantWidget({
         )
       );
     } finally {
+      window.clearTimeout(timeoutId);
       if (activeRequestRef.current === requestController) {
         activeRequestRef.current = null;
         setIsLoading(false);
@@ -570,10 +613,22 @@ export function AssistantWidget({
             </div>
             <div>
               <span className="label-text">
-                {tKey(mode === "today" ? "assistant.todayTitle" : "assistant.title")}
+                {tKey(
+                  isHistoricalScope
+                    ? "assistant.historicalTitle"
+                    : mode === "today"
+                      ? "assistant.todayTitle"
+                      : "assistant.title",
+                )}
               </span>
               <h2 id="assistant-dialog-title">
-                {tKey(mode === "today" ? "assistant.todaySubtitle" : "assistant.subtitle")}
+                {tKey(
+                  isHistoricalScope
+                    ? "assistant.historicalSubtitle"
+                    : mode === "today"
+                      ? "assistant.todaySubtitle"
+                      : "assistant.subtitle",
+                )}
               </h2>
               {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
               <div
@@ -582,7 +637,7 @@ export function AssistantWidget({
                 id="assistant-scope-label"
               >
                 <span>{assistantScopeLabel}</span>
-                <span>{cityLabel(city)}</span>
+                <span>{assistantCoverageArea}</span>
                 <span>{assistantScopeDate}</span>
               </div>
             </div>
@@ -724,7 +779,9 @@ export function AssistantWidget({
       ) : showLauncher ? (
         <button
           aria-label={tKey("assistant.openAssistant")}
+          aria-disabled={scopePending || undefined}
           className="assistant-launcher"
+          disabled={scopePending}
           ref={launcherRef}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}

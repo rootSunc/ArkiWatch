@@ -134,10 +134,11 @@ export function TrendChart({
   unit = null,
   tone = "primary",
   maximumFractionDigits = 1,
-  emptyMessage = "No historical chart data is available.",
+  emptyMessage,
   statLabels,
 }: TrendChartProps) {
   const { tKey } = useI18n();
+  const resolvedEmptyMessage = emptyMessage ?? tKey("shell.noHistoricalChartData");
   const resolvedStatLabels = {
     latest: statLabels?.latest ?? tKey("shell.latest"),
     low: statLabels?.low ?? tKey("shell.low"),
@@ -211,7 +212,7 @@ export function TrendChart({
           </div>
         </div>
       ) : (
-        <div className="trend-chart-empty">{emptyMessage}</div>
+        <div className="trend-chart-empty">{resolvedEmptyMessage}</div>
       )}
 
       <div className="trend-chart-stats">

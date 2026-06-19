@@ -1,7 +1,5 @@
 "use client";
 
-import { formatRelativeAge } from "@/features/shared/format";
-
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataHelpIcon, DataLabelWithHelp, dataHelpText } from "./data-help";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -12,9 +10,19 @@ import {
   PlatformTone,
   PlatformVisualizationPoint
 } from "./types";
+import type { PlatformTimeScope } from "./types";
+import { isEmptyStatus } from "./platform-status";
+import { pollIntervalLabel } from "./energy-workspace-utils";
+import { hasObservedSourceRecords, isCatalogOnlyWorkspace } from "./catalog-workspace-state";
+import {
+  isHistoricalEvidenceScope,
+  scopedDataAge,
+  scopedReferenceTime,
+} from "./data-time-scope";
 
 type RegionalProfileWorkspaceProps = {
   category: PlatformCategory | null;
+  timeScope?: PlatformTimeScope | null;
 };
 
 type ProfileTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -102,10 +110,6 @@ function progressFromTone(tone: ProfileTone): number {
   return 50;
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
-  return value ? formatRelativeAge(value, language) : tKey("regionalProfile.notObserved");
-}
-
 function fieldStateLabel(category: PlatformCategory, language: LanguageMode): string {
   if (category.stage === "connected") {
     return translateEnumLabel(language, "live");
@@ -116,10 +120,9 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
   return translateEnumLabel(language, category.stage ?? "catalog");
 }
 
-export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceProps) {
-  const { language, tKey, dataLabel, dataItemLabel, enumLabel, metricLabel } = useI18n();
-
-  if (!category) {
+export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfileWorkspaceProps) {
+  const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
+  if (!category || isEmptyStatus(category.status)) {
     return (
       <section className="water-detail-empty" aria-label={tKey("regionalProfile.dataUnavailable")}>
         <span>{tKey("regionalProfile.regionalContext")}</span>
@@ -136,21 +139,41 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
   const keyDataItems = categoryKeyDataItems(category);
   const datasets = category.sources.flatMap((s) => s.data_structures ?? []);
   const readySources = category.sources.filter((s) => statusTone(s.operational_status) === "good").length;
+  const catalogOnly = isCatalogOnlyWorkspace(category);
 
   const activeTone = statusTone(category.status);
-  const fieldState = fieldStateLabel(category, language);
-
+  const historicalEvidence = isHistoricalEvidenceScope(category, timeScope);
+  const fieldState = historicalEvidence ? tKey("shell.historicalEvidence") : fieldStateLabel(category, language);
   const totalDatasetsCount = category.sources.reduce((total, s) => total + (s.datasets?.length ?? 0), 0);
   const totalRecordsCount = category.sources.reduce((total, s) => total + (s.records_ingested ?? 0), 0);
+  const hasObservedRecords = hasObservedSourceRecords(category.sources);
+  const datasetCount = totalDatasetsCount || datasets.length;
+  const datasetCountLabel = datasetCount > 0 ? String(datasetCount) : tKey("regionalProfile.notObserved");
 
   const sourceUpdatedAt =
     category.sources[0]?.last_run_finished_at ??
     category.sources[0]?.last_run_started_at ??
     sourceStatusMetric?.updated_at ??
-    catalogStageMetric?.updated_at;
+    null;
+  const sourceCadence = catalogOnly
+    ? tKey("regionalProfile.syncNotConfigured")
+    : pollIntervalLabel(
+        Math.min(...category.sources.map((source) => source.poll_interval_seconds)),
+        tKey,
+      );
+  const sourceLicense =
+    [...new Set(category.sources.map((source) => source.license_label).filter(Boolean))].join(" · ") ||
+    tKey("regionalProfile.licenseNotReported");
+  const sourceRegisterLabel =
+    category.sources.map((source) => source.source_name).join(" · ") ||
+    tKey("regionalProfile.catalogOnlyDetail");
 
-  const heroTitle = tKey("regionalProfile.heroTitle");
-  const heroDetail = localizedPlatformCopy(category.description, language) ?? tKey("regionalProfile.registersMapped");
+  const heroTitle = catalogOnly
+    ? tKey("regionalProfile.catalogOnlyTitle")
+    : tKey("regionalProfile.heroTitle");
+  const heroDetail = catalogOnly
+    ? tKey("regionalProfile.catalogOnlyDetail")
+    : localizedPlatformCopy(category.description, language) ?? tKey("regionalProfile.registersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -187,17 +210,19 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           <h2>{tKey("regionalProfile.dashboardTitle")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
-            <strong>{translateEnumLabel(language, category.status)}</strong>
+            <strong>{historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
+        <div>
+          {category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("regionalProfile.catalog")} / {scopedDataAge(historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt, historicalEvidence ? timeScope : null, language, tKey, "regionalProfile.notObserved")}
+        </div>
       </div>
 
       <section className="water-bento-grid" aria-label={tKey("regionalProfile.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>
           <div className="water-card-kicker">
             <span>{tKey("regionalProfile.contextState")}</span>
-            <time>{translateEnumLabel(language, category.stage ?? "background")}</time>
+            <time>{historicalEvidence ? tKey("shell.historicalEvidence") : catalogOnly ? tKey("regionalProfile.catalog") : translateEnumLabel(language, category.stage ?? "background")}</time>
           </div>
           <div className="water-current-cluster">
             <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
@@ -211,11 +236,11 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           <div className="water-hero-footer">
             <div>
               <span>{tKey("regionalProfile.datasets")}</span>
-              <strong>{totalDatasetsCount || datasets.length || 5}</strong>
+                <strong>{datasetCountLabel}</strong>
             </div>
             <div>
               <span>{tKey("regionalProfile.ingestionSync")}</span>
-              <strong>{tKey("regionalProfile.dailySync")}</strong>
+              <strong>{sourceCadence}</strong>
             </div>
           </div>
         </article>
@@ -272,8 +297,9 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           <div className="regional-source-status-box">
             <span>{tKey("regionalProfile.sourceState")}</span>
             <div className="regional-source-status-row">
-              <span>StatFi: {enumLabel("live")}</span>
-              <span>Sotkanet: {enumLabel("live")}</span>
+              {category.sources.length > 0 ? category.sources.map((source) => (
+                <span key={source.id}>{source.source_name}: {translateEnumLabel(language, source.operational_status)}</span>
+              )) : <span>{tKey("regionalProfile.noConnectedSources")}</span>}
             </div>
           </div>
         </article>
@@ -292,7 +318,11 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
+            <strong>
+              {metric.key === "records_ingested" && !hasObservedRecords
+                ? tKey("regionalProfile.notObserved")
+                : formatMetricValue(metric, tKey, dataLabel)}
+            </strong>
           </article>
         ))}
       </section>
@@ -369,7 +399,11 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metricLabel(metric)}</strong>
-                  <span>{formatMetricValue(metric, tKey, dataLabel)}</span>
+                  <span>
+                    {metric.key === "records_ingested" && !hasObservedRecords
+                      ? tKey("regionalProfile.notObserved")
+                      : formatMetricValue(metric, tKey, dataLabel)}
+                  </span>
                 </div>
                 <p>{metric.detail ?? tKey("regionalProfile.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
@@ -384,17 +418,19 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
           <article className="water-glass-panel water-source-panel">
             <header>
               <span>{tKey("regionalProfile.title")}</span>
-              <strong>{readySources}/{category.sources.length} {tKey("regionalProfile.ready")}</strong>
+              <strong>{catalogOnly ? tKey("regionalProfile.notConfigured") : `${readySources}/${category.sources.length} ${tKey("regionalProfile.ready")}`}</strong>
             </header>
             <div className="water-source-facts">
-              <span>{totalDatasetsCount || 5} {tKey("regionalProfile.datasetsLower")}</span>
-              <span>{tKey("regionalProfile.dailySync")}</span>
-              <span>CC BY 4.0</span>
+              <span>{datasetCountLabel} {tKey("regionalProfile.datasetsLower")}</span>
+              <span>{sourceCadence}</span>
+              <span>{sourceLicense}</span>
             </div>
-            <p>{tKey("regionalProfile.publicDataRegisters")}</p>
-            <a href="https://stat.fi/en" rel="noreferrer" target="_blank">
-              {tKey("regionalProfile.statFiDocumentation")}
-            </a>
+            <p>{catalogOnly ? tKey("regionalProfile.catalogOnlyDetail") : sourceRegisterLabel}</p>
+            {!catalogOnly ? category.sources.filter((source) => source.documentation_url).map((source) => (
+              <a href={source.documentation_url ?? undefined} key={source.id} rel="noreferrer" target="_blank">
+                {source.source_name}
+              </a>
+            )) : null}
           </article>
 
           <article className="water-glass-panel water-volume-panel">
@@ -408,43 +444,24 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
               >
                 {tKey("regionalProfile.indicatorsTableVolume")}
               </DataLabelWithHelp>
-              <strong>{category.sources.length}</strong>
+              <strong>{catalogOnly ? tKey("regionalProfile.notConfigured") : category.sources.length}</strong>
             </header>
             <div>
-              {category.sources.map((src) => (
+              {category.sources.length > 0 ? category.sources.map((src) => (
                 <article className={`water-volume-row water-volume-row-${statusTone(src.operational_status)}`} key={src.id}>
                   <div>
                     <strong>{src.source_code.toUpperCase()}</strong>
                     <span>{translateEnumLabel(language, src.operational_status)}</span>
                   </div>
-                  <em>{src.records_ingested !== null ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(src.records_ingested) : "Mapped"}</em>
+                  <em>{src.records_ingested !== null ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(src.records_ingested) : translateEnumLabel(language, "mapped")}</em>
                   <span className="water-volume-meter" aria-hidden="true">
-                    <span style={{ width: `${src.records_ingested ? Math.min(100, Math.max(12, (src.records_ingested / 200000) * 100)) : 40}%` }} />
+                    <span style={{ width: `${src.records_ingested ? Math.min(100, Math.max(12, (src.records_ingested / 200000) * 100)) : 0}%` }} />
                   </span>
                 </article>
-              ))}
+              )) : <span>{tKey("regionalProfile.noConnectedSources")}</span>}
             </div>
           </article>
 
-          {/* Public health index card */}
-          <article className="water-glass-panel water-event-panel">
-            <header>
-              <span>{tKey("regionalProfile.regionalMorbidityIndex")}</span>
-              <strong style={{ fontSize: "0.8rem", color: "var(--accent-green, #10b981)" }}>{tKey("regionalProfile.lowerIsHealthier")}</strong>
-            </header>
-            <div className="regional-morbidity-box">
-              <div className="regional-morbidity-header">
-                <span>88.5</span>
-                <span>{tKey("regionalProfile.vsBaseline").replace("{value}", "-11.5")}</span>
-              </div>
-              <p className="regional-morbidity-desc">
-                {tKey("regionalProfile.morbidityDescription")}
-              </p>
-              <div className="regional-morbidity-track">
-                <span className="regional-morbidity-bar" style={{ width: "88.5%" }} />
-              </div>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -458,18 +475,18 @@ export function RegionalProfileWorkspace({ category }: RegionalProfileWorkspaceP
             <span className="material-symbols-outlined" aria-hidden="true">
               hub
             </span>
-            {category.source_codes.join(" + ")}
+            {category.source_codes.length > 0 ? category.source_codes.join(" + ") : tKey("regionalProfile.catalog")}
           </span>
           <i aria-hidden="true" />
           <span>
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("regionalProfile.ingestionSync")}: {tKey("regionalProfile.daily")}
+            {tKey("regionalProfile.ingestionSync")}: {sourceCadence}
           </span>
           <i aria-hidden="true" />
           <span className="water-provider-coverage">
-            {tKey("regionalProfile.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : tKey("regionalProfile.planned")}
+            {tKey("regionalProfile.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : catalogOnly ? tKey("regionalProfile.notObserved") : tKey("regionalProfile.planned")}
           </span>
         </div>
       </section>

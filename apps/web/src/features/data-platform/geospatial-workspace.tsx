@@ -1,7 +1,5 @@
 "use client";
 
-import { formatRelativeAge } from "@/features/shared/format";
-
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -13,9 +11,19 @@ import {
   PlatformVisualizationPoint,
   SourceDatasetStructure
 } from "./types";
+import type { PlatformTimeScope } from "./types";
+import { isEmptyStatus } from "./platform-status";
+import { pollIntervalLabel } from "./energy-workspace-utils";
+import { hasObservedSourceRecords, isCatalogOnlyWorkspace } from "./catalog-workspace-state";
+import {
+  isHistoricalEvidenceScope,
+  scopedDataAge,
+  scopedReferenceTime,
+} from "./data-time-scope";
 
 type GeospatialWorkspaceProps = {
   category: PlatformCategory | null;
+  timeScope?: PlatformTimeScope | null;
 };
 
 type GeoTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
@@ -137,10 +145,6 @@ function metricProgress(metric: PanelMetric | null): number {
   return Math.max(12, Math.min(100, value));
 }
 
-function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
-  return value ? formatRelativeAge(value, language) : tKey("geospatial.notObserved");
-}
-
 function schemaShapeTone(shape: string): GeoTone {
   if (shape === "geospatial_layer" || shape === "feature_collection") {
     return "good";
@@ -209,10 +213,9 @@ function fieldStateLabel(category: PlatformCategory, language: LanguageMode): st
   return translateEnumLabel(language, category.stage ?? "catalog");
 }
 
-export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
+export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspaceProps) {
   const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
-
-  if (!category) {
+  if (!category || isEmptyStatus(category.status)) {
     return (
       <section className="water-detail-empty" aria-label={tKey("geospatial.dataUnavailable")}>
         <span>{tKey("geospatial.regionalContext")}</span>
@@ -230,22 +233,42 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
   const keyDataItems = categoryKeyDataItems(category);
   const datasets = category.sources.flatMap((s) => s.data_structures ?? []);
   const readySources = category.sources.filter((s) => statusTone(s.operational_status) === "good").length;
+  const catalogOnly = isCatalogOnlyWorkspace(category);
   
   const shapeRows = schemaShapeRows(datasets, language);
   const activeTone = statusTone(category.status);
-  const fieldState = fieldStateLabel(category, language);
+  const historicalEvidence = isHistoricalEvidenceScope(category, timeScope);
+  const fieldState = historicalEvidence ? tKey("shell.historicalEvidence") : fieldStateLabel(category, language);
 
   const totalDatasetsCount = category.sources.reduce((total, s) => total + (s.datasets?.length ?? 0), 0);
   const totalRecordsCount = category.sources.reduce((total, s) => total + (s.records_ingested ?? 0), 0);
+  const hasObservedRecords = hasObservedSourceRecords(category.sources);
+  const datasetCount = totalDatasetsCount || datasets.length;
+  const datasetCountLabel = datasetCount > 0 ? String(datasetCount) : tKey("geospatial.notObserved");
 
   const sourceUpdatedAt =
     category.sources[0]?.last_run_finished_at ??
     category.sources[0]?.last_run_started_at ??
     sourceStatusMetric?.updated_at ??
-    catalogStageMetric?.updated_at;
+    null;
+  const sourceCadence = catalogOnly
+    ? tKey("geospatial.syncNotConfigured")
+    : pollIntervalLabel(
+        Math.min(...category.sources.map((source) => source.poll_interval_seconds)),
+        tKey,
+      );
+  const sourceLicense =
+    [...new Set(category.sources.map((source) => source.license_label).filter(Boolean))].join(" · ") ||
+    tKey("geospatial.licenseNotReported");
+  const sourceRegisterLabel =
+    category.sources.map((source) => source.source_name).join(" · ") ||
+    tKey("geospatial.catalogOnlyDetail");
+  const sourceDocumentation = category.sources.filter((source) => source.documentation_url);
 
-  const heroTitle = tKey("geospatial.heroTitle");
-  const heroDetail = localizedPlatformCopy(category.description, language) ?? tKey("geospatial.layersMapped");
+  const heroTitle = catalogOnly ? tKey("geospatial.catalogOnlyTitle") : tKey("geospatial.heroTitle");
+  const heroDetail = catalogOnly
+    ? tKey("geospatial.catalogOnlyDetail")
+    : localizedPlatformCopy(category.description, language) ?? tKey("geospatial.layersMapped");
 
   const signalMetrics = [
     activeEventsMetric,
@@ -273,17 +296,19 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           <h2>{tKey("geospatial.title")}</h2>
           <div className="water-live-status">
             <span aria-hidden="true" />
-            <strong>{translateEnumLabel(language, category.status)}</strong>
+            <strong>{historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
           </div>
         </div>
-        <div>{category.source_codes.join(" + ").toUpperCase()} / {relativeTime(sourceUpdatedAt, language, tKey)}</div>
+        <div>
+          {category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("geospatial.catalog")} / {scopedDataAge(historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt, historicalEvidence ? timeScope : null, language, tKey, "geospatial.notObserved")}
+        </div>
       </div>
 
       <section className="water-bento-grid" aria-label={tKey("geospatial.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>
           <div className="water-card-kicker">
             <span>{tKey("geospatial.contextState")}</span>
-            <time>{translateEnumLabel(language, category.stage ?? "background")}</time>
+            <time>{historicalEvidence ? tKey("shell.historicalEvidence") : catalogOnly ? tKey("geospatial.catalog") : translateEnumLabel(language, category.stage ?? "background")}</time>
           </div>
           <div className="water-current-cluster">
             <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
@@ -297,11 +322,11 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           <div className="water-hero-footer">
             <div>
               <span>{tKey("geospatial.datasets")}</span>
-              <strong>{totalDatasetsCount || datasets.length || 9}</strong>
+              <strong>{datasetCountLabel}</strong>
             </div>
             <div>
               <span>{tKey("geospatial.ingestionSync")}</span>
-              <strong>{tKey("geospatial.daily")}</strong>
+              <strong>{sourceCadence}</strong>
             </div>
           </div>
         </article>
@@ -309,7 +334,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
         <article className="water-glass-panel water-coverage-panel">
           <header>
             <span>{tKey("geospatial.sourceReadiness")}</span>
-            <strong>{readySources}/{category.sources.length}</strong>
+            <strong>{catalogOnly ? tKey("geospatial.notConfigured") : `${readySources}/${category.sources.length}`}</strong>
           </header>
           <div className="water-coverage-list">
             {category.sources.map((source) => {
@@ -388,7 +413,11 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             >
               {metricLabel(metric)}
             </DataLabelWithHelp>
-            <strong>{formatMetricValue(metric, tKey, dataLabel)}</strong>
+            <strong>
+              {metric.key === "records_ingested" && !hasObservedRecords
+                ? tKey("geospatial.notObserved")
+                : formatMetricValue(metric, tKey, dataLabel)}
+            </strong>
           </article>
         ))}
       </section>
@@ -398,7 +427,7 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           <header>
             <div>
               <span>{tKey("geospatial.layerComposition")}</span>
-              <h3>{tKey("geospatial.layerCompositionLead")}</h3>
+              <h3>{catalogOnly ? tKey("geospatial.catalogOnlyDetail") : tKey("geospatial.layerCompositionLead")}</h3>
             </div>
             <strong>{signalMetrics.length} {tKey("geospatial.metrics")}</strong>
           </header>
@@ -479,7 +508,11 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
               <article className={`water-signal water-signal-${metricTone(metric)}`} key={metric.key}>
                 <div>
                   <strong>{metricLabel(metric)}</strong>
-                  <span>{formatMetricValue(metric, tKey, dataLabel)}</span>
+                  <span>
+                    {metric.key === "records_ingested" && !hasObservedRecords
+                      ? tKey("geospatial.notObserved")
+                      : formatMetricValue(metric, tKey, dataLabel)}
+                  </span>
                 </div>
                 <p>{metric.detail ?? tKey("geospatial.signalMappedBackground")}</p>
                 <span className="water-signal-meter" aria-hidden="true">
@@ -494,17 +527,19 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
           <article className="water-glass-panel water-source-panel">
             <header>
               <span>{tKey("geospatial.sourcePanelTitle")}</span>
-              <strong>{translateEnumLabel(language, category.stage ?? "background")}</strong>
+                  <strong>{historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.stage ?? "background")}</strong>
             </header>
             <div className="water-source-facts">
-              <span>{totalDatasetsCount || 9} {tKey("geospatial.datasetsLower")}</span>
-              <span>{tKey("geospatial.dailySync")}</span>
-              <span>CC BY 4.0</span>
-            </div>
-            <p>{tKey("geospatial.publicDataRegisters")}</p>
-            <a href="https://www.maanmittauslaitos.fi/en" rel="noreferrer" target="_blank">
-              {tKey("geospatial.nlsDocumentation")}
-            </a>
+              <span>{datasetCountLabel} {tKey("geospatial.datasetsLower")}</span>
+                  <span>{sourceCadence}</span>
+                  <span>{sourceLicense}</span>
+                </div>
+            <p>{catalogOnly ? tKey("geospatial.catalogOnlyDetail") : sourceRegisterLabel}</p>
+            {sourceDocumentation.map((source) => (
+              <a href={source.documentation_url ?? undefined} key={source.id} rel="noreferrer" target="_blank">
+                {source.source_name}
+              </a>
+            ))}
           </article>
 
           <article className="water-glass-panel water-volume-panel">
@@ -518,21 +553,21 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
               >
                 {tKey("geospatial.ingestedLayersVolume")}
               </DataLabelWithHelp>
-              <strong>{category.sources.length}</strong>
+              <strong>{catalogOnly ? tKey("geospatial.notConfigured") : category.sources.length}</strong>
             </header>
             <div>
-              {category.sources.map((src) => (
+              {category.sources.length > 0 ? category.sources.map((src) => (
                 <article className={`water-volume-row water-volume-row-${statusTone(src.operational_status)}`} key={src.id}>
                   <div>
                     <strong>{src.source_code.toUpperCase()}</strong>
                     <span>{translateEnumLabel(language, src.operational_status)}</span>
                   </div>
-                  <em>{src.records_ingested !== null ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(src.records_ingested) : "Planned"}</em>
+                  <em>{src.records_ingested !== null ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(src.records_ingested) : translateEnumLabel(language, "planned")}</em>
                   <span className="water-volume-meter" aria-hidden="true">
-                    <span style={{ width: `${src.records_ingested ? Math.min(100, Math.max(12, (src.records_ingested / 500000) * 100)) : 24}%` }} />
+                    <span style={{ width: `${src.records_ingested ? Math.min(100, Math.max(12, (src.records_ingested / 500000) * 100)) : 0}%` }} />
                   </span>
                 </article>
-              ))}
+              )) : <span>{tKey("geospatial.noConnectedSources")}</span>}
             </div>
           </article>
 
@@ -573,18 +608,18 @@ export function GeospatialWorkspace({ category }: GeospatialWorkspaceProps) {
             <span className="material-symbols-outlined" aria-hidden="true">
               hub
             </span>
-            {category.source_codes.join(" + ")}
+            {category.source_codes.length > 0 ? category.source_codes.join(" + ") : tKey("geospatial.catalog")}
           </span>
           <i aria-hidden="true" />
           <span>
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("geospatial.ingestionSync")}: {tKey("geospatial.daily")}
+            {tKey("geospatial.ingestionSync")}: {sourceCadence}
           </span>
           <i aria-hidden="true" />
           <span className="water-provider-coverage">
-            {tKey("geospatial.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : tKey("geospatial.planned")}
+            {tKey("geospatial.records")}: {totalRecordsCount ? new Intl.NumberFormat(language === "zh" ? "zh-CN" : "en-GB").format(totalRecordsCount) : catalogOnly ? tKey("geospatial.notObserved") : tKey("geospatial.planned")}
           </span>
         </div>
       </section>

@@ -85,4 +85,57 @@ describe("buildCrossDomainTimeline", () => {
       ]),
     );
   });
+
+  it("sorts active, upcoming, and ended items at the supplied snapshot boundary", () => {
+    const referenceAt = "2099-08-09T12:00:00Z";
+    const items = buildCrossDomainTimeline(
+      [
+        {
+          id: "ended",
+          category_key: "weather",
+          event_type: "rain_risk",
+          title: "Morning rain",
+          body: "Rain has passed.",
+          severity: "MEDIUM",
+          starts_at: "2099-08-09T08:00:00Z",
+          ends_at: "2099-08-09T09:00:00Z",
+          source_codes: ["fmi"],
+          evidence: [],
+        },
+        {
+          id: "upcoming",
+          category_key: "transit",
+          event_type: "transit_delay",
+          title: "Evening delay",
+          body: "A delay is expected.",
+          severity: "HIGH",
+          starts_at: "2099-08-09T18:00:00Z",
+          ends_at: "2099-08-09T19:00:00Z",
+          source_codes: ["digitransit"],
+          evidence: [],
+        },
+        {
+          id: "active",
+          category_key: "air",
+          event_type: "air_quality_poor",
+          title: "Poor air",
+          body: "Air quality is poor.",
+          severity: "HIGH",
+          starts_at: "2099-08-09T11:00:00Z",
+          ends_at: "2099-08-09T13:00:00Z",
+          source_codes: ["hsy"],
+          evidence: [],
+        },
+      ],
+      null,
+      10,
+      referenceAt,
+    );
+
+    expect(items.map((item) => [item.id, item.state])).toEqual([
+      ["event-active", "active"],
+      ["event-upcoming", "upcoming"],
+      ["event-ended", "ended"],
+    ]);
+  });
 });

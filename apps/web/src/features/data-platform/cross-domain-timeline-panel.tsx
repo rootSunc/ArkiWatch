@@ -6,6 +6,7 @@ import { formatTimestamp, severityTone } from "@/features/shared/format";
 
 import type { CrossDomainTimelineItem } from "./cross-domain-timeline";
 import { localizedContent } from "./content-localization";
+import type { ScopedEventState } from "./event-time-state";
 import { LanguageMode, useI18n } from "./i18n";
 import type { PlatformEvent } from "./types";
 
@@ -22,6 +23,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 type CrossDomainTimelinePanelProps = {
   collapsible?: boolean;
   defaultOpen?: boolean;
+  historical?: boolean;
   items: CrossDomainTimelineItem[];
   language: LanguageMode;
   timezone?: string;
@@ -47,6 +49,7 @@ function timelineDotClass(severity: string): string {
 export function CrossDomainTimelinePanel({
   collapsible = false,
   defaultOpen = false,
+  historical = false,
   items,
   language,
   timezone,
@@ -73,6 +76,7 @@ export function CrossDomainTimelinePanel({
         const tone = severityTone(item.severity);
         const icon = CATEGORY_ICONS[item.categoryKey] ?? "notifications";
         const categoryLabel = enumLabel(item.categoryKey);
+        const stateLabel = timelineStateLabel(item.state, historical, tKey);
 
         return (
           <li className={`cross-domain-timeline-item cross-domain-timeline-item-${tone}`} key={item.id}>
@@ -96,6 +100,7 @@ export function CrossDomainTimelinePanel({
                 </span>
                 <strong>{localizedContent(language, item.title, item.title_zh)}</strong>
                 <span className={`status-badge status-badge-${tone}`}>{categoryLabel}</span>
+                <span className="cross-domain-timeline-state">{stateLabel}</span>
               </span>
               <span className="cross-domain-timeline-detail">
                 {localizedContent(language, item.detail, item.detail_zh)}
@@ -157,4 +162,18 @@ export function CrossDomainTimelinePanel({
       {timelineItems}
     </section>
   );
+}
+
+function timelineStateLabel(
+  state: ScopedEventState,
+  historical: boolean,
+  tKey: (key: string) => string,
+): string {
+  if (state === "active") {
+    return tKey(historical ? "shell.timelineActiveAtSnapshot" : "shell.timelineActiveNow");
+  }
+  if (state === "upcoming") {
+    return tKey(historical ? "shell.timelineUpcomingAtSnapshot" : "shell.timelineUpcoming");
+  }
+  return tKey(historical ? "shell.timelineEndedBeforeSnapshot" : "shell.timelineEnded");
 }

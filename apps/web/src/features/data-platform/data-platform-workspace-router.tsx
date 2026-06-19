@@ -133,11 +133,11 @@ export function DataPlatformWorkspaceRouter({
   }
 
   if (isWaterDetail) {
-    return <WaterSnowWorkspace category={selectedCategory} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
+    return <WaterSnowWorkspace category={selectedCategory} timeScope={overview.time_scope} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
   if (isCityServicesDetail) {
-    return <CityServicesWorkspace category={selectedCategory} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
+    return <CityServicesWorkspace category={selectedCategory} timeScope={overview.time_scope} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
   if (isLinkedEventsDetail) {
@@ -152,11 +152,11 @@ export function DataPlatformWorkspaceRouter({
   }
 
   if (isGeospatialDetail) {
-    return <GeospatialWorkspace category={selectedCategory} />;
+    return <GeospatialWorkspace category={selectedCategory} timeScope={overview.time_scope} />;
   }
 
   if (isRegionalProfileDetail) {
-    return <RegionalProfileWorkspace category={selectedCategory} />;
+    return <RegionalProfileWorkspace category={selectedCategory} timeScope={overview.time_scope} />;
   }
 
   return null;

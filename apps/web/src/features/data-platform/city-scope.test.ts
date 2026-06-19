@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   categorySupportsCityScope,
   cityLabel,
+  cityCoordinates,
   DEFAULT_CITY,
   normalizeCityValue
 } from "./city-scope";
@@ -19,5 +20,10 @@ describe("city scope helpers", () => {
     expect(cityLabel("unknown")).toBe("Helsinki");
     expect(categorySupportsCityScope("weather")).toBe(true);
     expect(categorySupportsCityScope("energy")).toBe(false);
+  });
+
+  it("returns representative coordinates for each supported city", () => {
+    expect(cityCoordinates("tampere")).toEqual({ latitude: 61.4978, longitude: 23.761 });
+    expect(cityCoordinates("unknown")).toEqual({ latitude: 60.1699, longitude: 24.9384 });
   });
 });

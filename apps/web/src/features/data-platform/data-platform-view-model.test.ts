@@ -4,8 +4,11 @@ import { toKeyDataItem } from "./category-metadata";
 import {
   buildMobilityCategory,
   displayTitle,
+  eventAttributeRows,
   eventMatchesSearch,
   eventTimeLabel,
+  eventTypeLabel,
+  formatAttributeValue,
   matchesSearch,
   mergeMobilityCategories,
   recentEventLabel,
@@ -114,6 +117,45 @@ describe("data platform view model", () => {
     expect("progress" in readout).toBe(false);
   });
 
+  it("localizes an unavailable source record count on catalog cards", () => {
+    const catalogCategory: PlatformCategory = {
+      ...category("geospatial"),
+      status: "background",
+      stage: "background",
+      summary_metrics: [
+        {
+          key: "records_ingested",
+          label: "Latest ingest",
+          label_key: "recordsIngested",
+          value: "n/a",
+          tone: "neutral",
+          unit: "records",
+          detail: "Records from the latest collector run(s).",
+          updated_at: null,
+          source_codes: ["geospatial"],
+        },
+      ],
+    };
+
+    const readout = signalReadout(catalogCategory, null, null, null, null, null, "en");
+
+    expect(readout.value).toBe("not collected");
+  });
+
+  it("keeps the merged mobility category empty when both sources are empty", () => {
+    const transit = { ...category("transit"), status: "empty" };
+    const traffic = { ...category("traffic"), status: "empty" };
+    const mobility = buildMobilityCategory(
+      [transit, traffic],
+      { status: "empty", quality: { active_alert_count: 4 } } as never,
+      { status: "empty", quality: { active_event_count: 3 } } as never,
+    );
+
+    expect(mobility?.status).toBe("empty");
+    expect(mobility?.summary_metrics).toEqual([]);
+    expect(mobility?.events).toEqual([]);
+  });
+
   it("evaluates event status and time labels against the snapshot context", () => {
     const event: PlatformEvent = {
       id: "snapshot-event",
@@ -142,5 +184,36 @@ describe("data platform view model", () => {
   it("labels the event panel count as recent rather than active", () => {
     expect(recentEventLabel(2, "en")).toBe("2 recent events");
     expect(recentEventLabel(1, "zh")).toBe("1 最近事件");
+  });
+
+  it("localizes event attribute values and event types", () => {
+    expect(formatAttributeValue(true, "zh")).toBe("是");
+    expect(formatAttributeValue(false, "zh")).toBe("否");
+    expect(formatAttributeValue([{ value: "ok" }], "zh")).toContain("1 条记录");
+    expect(eventTypeLabel("rain_risk", "zh")).toBe("降雨风险");
+    expect(eventTypeLabel(null, "zh")).toBe("缺失");
+    expect(formatAttributeValue({ route_ids: ["4", "10"] }, "zh")).toBe("线路 ID: 4, 10");
+
+    const rows = eventAttributeRows(
+      {
+        id: "event",
+        category_key: "weather",
+        event_type: "rain_risk",
+        title: "Rain risk",
+        body: "A short shower is expected.",
+        severity: "LOW",
+        starts_at: "2026-08-09T05:00:00Z",
+        ends_at: "2026-08-09T08:00:00Z",
+        source_codes: ["fmi"],
+        evidence: [],
+        attributes: { event_location: "Helsinki", confirmed: true },
+      },
+      "zh",
+    );
+
+    expect(rows).toEqual([
+      { label: "活动地点", value: "Helsinki" },
+      { label: "已确认", value: "是" },
+    ]);
   });
 });

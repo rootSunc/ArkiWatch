@@ -271,12 +271,11 @@
 }
 
 .today-glance-item strong {
-  overflow: hidden;
+  overflow-wrap: break-word;
   color: var(--on-surface);
   font-size: 0.88rem;
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .today-recommendation-limit {

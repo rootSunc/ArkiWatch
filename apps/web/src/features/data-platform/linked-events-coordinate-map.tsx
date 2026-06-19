@@ -71,6 +71,8 @@ export function LinkedEventsCoordinateMap({
     <CoordinateMap
       emptyMessage={tKey("linkedEvents.noEventCoordinatesWereReturnedInTheLatestLinkedEventsPayload")}
       formatNumber={formatNumber}
+      latitudeLabel={tKey("shell.latitude")}
+      longitudeLabel={tKey("shell.longitude")}
       onPointClick={onEventSelect}
       points={points}
       mappedLabel={tKey("shell.mapped")}

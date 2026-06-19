@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { resolveServerApiBaseUrl, SESSION_COOKIE_NAME } from "@/features/auth/config";
+import {
+  resolveServerApiBaseUrl,
+  SERVER_API_TIMEOUT_MS,
+  SESSION_COOKIE_NAME,
+} from "@/features/auth/config";
 import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
+import { requestSignalWithTimeout } from "@/features/auth/request-signal";
 
 type BackendLoginResponse = {
   access_token: string;
   expires_at: string;
   user: unknown;
 };
+
+function isBackendLoginResponse(value: unknown): value is BackendLoginResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const response = value as Partial<BackendLoginResponse>;
+  return (
+    typeof response.access_token === "string" &&
+    response.access_token.trim().length > 0 &&
+    typeof response.expires_at === "string" &&
+    !Number.isNaN(Date.parse(response.expires_at)) &&
+    "user" in response
+  );
+}
 
 export async function POST(request: NextRequest) {
   const crossSiteResponse = rejectCrossSiteRequest(request);
@@ -27,18 +47,30 @@ export async function POST(request: NextRequest) {
     headers: {
       "Content-Type": "application/json",
     },
+    signal: requestSignalWithTimeout(request.signal, SERVER_API_TIMEOUT_MS),
     body: JSON.stringify(credentials),
-  });
-  const responseBody = await backendResponse.json().catch(() => null);
-
-  if (!backendResponse.ok) {
+  }).catch(() => null);
+  if (!backendResponse) {
     return NextResponse.json(
-      { detail: formatLoginError(responseBody?.detail) },
-      { status: backendResponse.status },
+      { detail: "Login backend is unavailable." },
+      { status: 502 },
     );
   }
 
-  const loginResponse = responseBody as BackendLoginResponse;
+  const responseBody = await backendResponse.json().catch(() => null);
+
+  if (!backendResponse.ok) {
+    return NextResponse.json({ detail: "Login failed." }, { status: backendResponse.status });
+  }
+
+  if (!isBackendLoginResponse(responseBody)) {
+    return NextResponse.json(
+      { detail: "Login backend returned an invalid response." },
+      { status: 502 },
+    );
+  }
+
+  const loginResponse = responseBody;
   const response = NextResponse.json({
     expires_at: loginResponse.expires_at,
     user: loginResponse.user,
@@ -52,21 +84,4 @@ export async function POST(request: NextRequest) {
   });
 
   return response;
-}
-
-function formatLoginError(detail: unknown): string {
-  if (typeof detail === "string" && detail.trim()) {
-    return detail;
-  }
-
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => (typeof item?.msg === "string" ? item.msg : null))
-      .filter(Boolean);
-    if (messages.length > 0) {
-      return messages.join(" ");
-    }
-  }
-
-  return "Login failed.";
 }

@@ -92,6 +92,12 @@
   box-shadow: none;
 }
 
+.air-live-status-failed span,
+.air-provider-status-failed > div:first-child span {
+  background: var(--error);
+  box-shadow: 0 0 8px var(--error);
+}
+
 .air-glass-panel,
 .air-detail-empty {
   min-width: 0;

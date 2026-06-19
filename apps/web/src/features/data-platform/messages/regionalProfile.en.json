@@ -6,6 +6,12 @@
     "regionalContext": "Regional Context",
     "signalsUnavailable": "Regional profile signals are not available yet",
     "metadataMissing": "Statistics Finland and THL Sotkanet source metadata has not arrived for the current platform view.",
+    "catalogOnlyTitle": "Catalog-only mapping",
+    "catalogOnlyDetail": "This workspace describes the planned data model; no provider feed is connected yet.",
+    "notConfigured": "not configured",
+    "syncNotConfigured": "sync not configured",
+    "licenseNotReported": "license not reported",
+    "noConnectedSources": "No connected sources",
     "heroTitle": "Municipal Demographic Profiles & Health Indicators",
     "registersMapped": "Statistics Finland & THL data registers are mapped for city-scope analysis.",
     "sourceData": "source data",
@@ -39,14 +45,11 @@
     "publicDataRegisters": "Statistics Finland & THL public data registers.",
     "statFiDocumentation": "StatFi documentation",
     "indicatorsTableVolume": "Indicators Table Volume",
-    "regionalMorbidityIndex": "Regional Morbidity Index (THL)",
-    "morbidityDescription": "Morbidity score for the Helsinki-Uusimaa region is 88.5 points, placing it significantly healthier than the national average (baseline 100).",
     "providerStatusAria": "Regional profile provider status",
     "providerStatus": "Provider Status",
     "daily": "daily",
     "records": "Records",
     "planned": "planned",
-    "categoryDescription": "Regional coverage and context.",
-    "vsBaseline": "{value}% vs baseline"
+    "categoryDescription": "Regional coverage and context."
   }
 }

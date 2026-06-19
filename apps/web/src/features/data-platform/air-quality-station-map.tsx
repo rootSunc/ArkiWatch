@@ -73,6 +73,8 @@ export function AirQualityStationMap({
     <CoordinateMap
       emptyMessage={tKey("airQuality.noStationCoordinatesWereReturnedInTheLatestHsyPayload")}
       formatNumber={formatNumber}
+      latitudeLabel={tKey("shell.latitude")}
+      longitudeLabel={tKey("shell.longitude")}
       points={points}
       mappedLabel={tKey("shell.mapped")}
       totalCount={stations.length}

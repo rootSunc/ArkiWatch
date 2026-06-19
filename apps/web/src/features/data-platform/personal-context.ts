@@ -1,5 +1,10 @@
 import type { components } from "@/lib/api-contract";
-import type { ApiJsonResult } from "@/lib/api-client";
+import {
+  DEFAULT_API_TIMEOUT_MS,
+  apiTransportErrorMessage,
+  type ApiJsonResult,
+} from "@/lib/api-client";
+import { requestSignalWithTimeout } from "@/lib/request-signal";
 
 export type PersonalLocation = components["schemas"]["UserLocationRead"];
 export type PersonalPreference = components["schemas"]["UserPreferenceRead"];
@@ -51,12 +56,17 @@ function errorMessage(body: ErrorBody, fallback: string): string {
   return fallback;
 }
 
-export async function fetchPersonalContext(): Promise<ApiJsonResult<PersonalContextRead>> {
+export async function fetchPersonalContext(
+  signal?: AbortSignal,
+): Promise<ApiJsonResult<PersonalContextRead>> {
   try {
     const response = await fetch("/api/personal/context", {
       cache: "no-store",
       credentials: "same-origin",
       headers: { Accept: "application/json" },
+      signal: signal
+        ? requestSignalWithTimeout(signal, DEFAULT_API_TIMEOUT_MS)
+        : AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS),
     });
     const body = (await response.json().catch(() => null)) as
       | PersonalContextRead
@@ -74,7 +84,7 @@ export async function fetchPersonalContext(): Promise<ApiJsonResult<PersonalCont
   } catch (error) {
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Personal context request failed.",
+      error: apiTransportErrorMessage(error, "Personal context request failed."),
       status: null,
     };
   }
@@ -87,6 +97,7 @@ export async function savePersonalContext(
     | PersonalPreferenceInput
     | PersonalCommuteInput
     | PersonalChannelInput,
+  signal?: AbortSignal,
 ): Promise<ApiJsonResult<unknown>> {
   try {
     const response = await fetch("/api/personal/context", {
@@ -95,6 +106,9 @@ export async function savePersonalContext(
       credentials: "same-origin",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ resource, payload }),
+      signal: signal
+        ? requestSignalWithTimeout(signal, DEFAULT_API_TIMEOUT_MS)
+        : AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS),
     });
     const body = (await response.json().catch(() => null)) as ErrorBody | unknown;
 
@@ -110,7 +124,7 @@ export async function savePersonalContext(
   } catch (error) {
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Personal context update failed.",
+      error: apiTransportErrorMessage(error, "Personal context update failed."),
       status: null,
     };
   }

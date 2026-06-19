@@ -95,6 +95,13 @@
   animation: none;
 }
 
+.road-rail-live-status-failed span,
+.road-rail-provider-status-failed > div:first-child span {
+  background: var(--error);
+  box-shadow: 0 0 8px var(--error);
+  animation: none;
+}
+
 .road-rail-glass-panel,
 .road-rail-detail-empty {
   min-width: 0;

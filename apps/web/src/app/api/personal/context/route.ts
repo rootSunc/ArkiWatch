@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   resolveServerApiBaseUrl,
   SESSION_COOKIE_NAME,
+  SERVER_API_TIMEOUT_MS,
   type SessionUser,
 } from "@/features/auth/config";
 import { rejectCrossSiteRequest } from "@/features/auth/request-guard";
+import { requestSignalWithTimeout } from "@/features/auth/request-signal";
 
 const RESOURCE_PATHS = {
   locations: "/user/locations",
@@ -42,6 +44,7 @@ async function resolveAuthContext(request: NextRequest): Promise<AuthResult> {
     response = await fetch(`${resolveServerApiBaseUrl()}/auth/me`, {
       cache: "no-store",
       headers: { Authorization: `Bearer ${token}` },
+      signal: requestSignalWithTimeout(request.signal, SERVER_API_TIMEOUT_MS),
     });
   } catch {
     return NextResponse.json(
@@ -78,12 +81,17 @@ async function readBackendBody(response: Response): Promise<unknown> {
 
 function responseFromBackend(response: Response, body: unknown, fallback: string) {
   return NextResponse.json(
-    body ?? { detail: fallback },
+    response.ok ? body ?? { detail: fallback } : { detail: fallback },
     { status: response.status },
   );
 }
 
 export async function GET(request: NextRequest) {
+  const crossSiteResponse = rejectCrossSiteRequest(request);
+  if (crossSiteResponse) {
+    return crossSiteResponse;
+  }
+
   const auth = await resolveAuthContext(request);
   if (isNextResponse(auth)) {
     return auth;
@@ -100,6 +108,7 @@ export async function GET(request: NextRequest) {
         const response = await fetch(url, {
           cache: "no-store",
           headers: { Authorization: `Bearer ${auth.token}` },
+          signal: requestSignalWithTimeout(request.signal, SERVER_API_TIMEOUT_MS),
         });
         return [key, response];
       }),
@@ -183,6 +192,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ ...payloadWithoutId, user_id: auth.user.id }),
+      signal: requestSignalWithTimeout(request.signal, SERVER_API_TIMEOUT_MS),
     },
   ).catch(() => null);
 

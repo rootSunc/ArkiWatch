@@ -364,10 +364,16 @@ export function DataPlatformWorkspaceTopbar({
         {workspaceMode === "data" && onOpenAssistant ? (
           <button
             aria-label={tKey("assistant.openAssistant")}
+            aria-disabled={isCityPending || isDatePending || undefined}
             className="icon-button workspace-topbar-assistant"
-            onClick={onOpenAssistant}
+            disabled={isCityPending || isDatePending}
+            onClick={() => onOpenAssistant()}
             ref={assistantButtonRef}
-            title={tKey("assistant.openAssistant")}
+            title={
+              isCityPending || isDatePending
+                ? tKey("shell.scopeUpdating")
+                : tKey("assistant.openAssistant")
+            }
             type="button"
           >
             <AssistantGlyph />

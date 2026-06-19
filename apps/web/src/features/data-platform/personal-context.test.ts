@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchPersonalContext, savePersonalContext } from "./personal-context";
+import { API_TIMEOUT_ERROR } from "@/lib/api-client";
 
 describe("personal-context client", () => {
   afterEach(() => {
@@ -49,5 +50,38 @@ describe("personal-context client", () => {
     expect(result.data).toBeNull();
     expect(result.error).toBe("Latitude is invalid.");
     expect(result.status).toBe(422);
+  });
+
+  it("turns a stalled context request into a bounded timeout error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new DOMException("The request timed out.", "TimeoutError");
+      }),
+    );
+
+    const result = await fetchPersonalContext();
+
+    expect(result.data).toBeNull();
+    expect(result.error).toBe(API_TIMEOUT_ERROR);
+    expect(result.status).toBeNull();
+  });
+
+  it("propagates caller cancellation while retaining a bounded signal", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn(async () =>
+      Response.json(
+        { locations: [], preferences: null, commuteProfiles: [], channels: [] },
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchPersonalContext(controller.signal);
+
+    const forwardedSignal = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]
+      .signal as AbortSignal;
+    controller.abort();
+    expect(forwardedSignal.aborted).toBe(true);
   });
 });

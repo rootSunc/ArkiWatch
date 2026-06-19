@@ -24,6 +24,10 @@ export type AssistantErrorDetails = {
   retryAfterSeconds: number | null;
 };
 
+// AI generation can legitimately take longer than ordinary platform reads,
+// but a stalled stream must still return control to the user.
+export const ASSISTANT_REQUEST_TIMEOUT_MS = 45_000;
+
 export function parseRetryAfter(value: string | null): number | null {
   const normalized = value?.trim() ?? "";
   if (!/^\d+$/.test(normalized)) {
@@ -102,15 +106,21 @@ export function localizeAssistantError(
   }
   if (
     normalizedMessage.includes("not configured") ||
-    normalizedMessage.includes("request failed")
+    normalizedMessage.includes("request failed") ||
+    normalizedMessage.includes("provider unavailable") ||
+    normalizedMessage.includes("backend unavailable") ||
+    normalizedMessage.includes("service unavailable")
   ) {
     return tKey("assistant.providerUnavailable");
   }
   if (normalizedMessage.includes("stream interrupted")) {
     return tKey("assistant.streamInterrupted");
   }
+  if (normalizedMessage.includes("timed out") || normalizedMessage.includes("timeout")) {
+    return tKey("assistant.timedOut");
+  }
   if (normalizedMessage.includes("returned no answer")) {
     return tKey("assistant.emptyResponse");
   }
-  return errorMessage;
+  return tKey("assistant.failure");
 }

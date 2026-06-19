@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 import type { SessionUser } from "@/features/auth/config";
 
@@ -168,18 +176,36 @@ function PersonalSettingsContent({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const tKeyRef = useRef(tKey);
+  tKeyRef.current = tKey;
+  const isMountedRef = useRef(false);
+  const contextRequestRef = useRef(0);
+  const saveRequestRef = useRef(0);
+  const contextControllerRef = useRef<AbortController | null>(null);
+  const saveControllerRef = useRef<AbortController | null>(null);
 
   const completion = completionState(context);
   const completedCount = Object.values(completion).filter(Boolean).length;
   const completionPercent = Math.round((completedCount / SECTIONS.length) * 100);
 
-  const refreshContext = async () => {
+  const refreshContext = useCallback(async () => {
+    const requestId = ++contextRequestRef.current;
+    contextControllerRef.current?.abort();
+    const controller = new AbortController();
+    contextControllerRef.current = controller;
     setIsLoading(true);
-    const result = await fetchPersonalContext();
+    const result = await fetchPersonalContext(controller.signal);
+    if (contextControllerRef.current === controller) {
+      contextControllerRef.current = null;
+    }
+    if (!isMountedRef.current || requestId !== contextRequestRef.current) {
+      return false;
+    }
+
     if (result.error || !result.data) {
-      setNotice({ tone: "error", text: result.error ?? "Personal context could not be loaded." });
+      setNotice({ tone: "error", text: tKeyRef.current("shell.personalSettingsRequestFailed") });
       setIsLoading(false);
-      return;
+      return false;
     }
 
     const nextContext = result.data;
@@ -232,13 +258,22 @@ function PersonalSettingsContent({
     setTelegramId(telegram?.external_id ?? "");
     setTelegramActive(telegram?.is_active ?? false);
     setIsLoading(false);
-  };
+    return true;
+  }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     void refreshContext();
-    // The settings page owns the initial read; subsequent saves call refreshContext explicitly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      isMountedRef.current = false;
+      contextRequestRef.current += 1;
+      saveRequestRef.current += 1;
+      contextControllerRef.current?.abort();
+      saveControllerRef.current?.abort();
+      contextControllerRef.current = null;
+      saveControllerRef.current = null;
+    };
+  }, [refreshContext]);
 
   const save = async (
     resource: "locations" | "preferences" | "commuteProfiles" | "channels",
@@ -249,16 +284,34 @@ function PersonalSettingsContent({
     },
     successText: string,
   ) => {
+    const requestId = ++saveRequestRef.current;
+    saveControllerRef.current?.abort();
+    const controller = new AbortController();
+    saveControllerRef.current = controller;
     setIsSaving(true);
     setNotice(null);
-    const result = await savePersonalContext(resource, payload);
+    const result = await savePersonalContext(resource, payload, controller.signal);
+    if (saveControllerRef.current === controller) {
+      saveControllerRef.current = null;
+    }
+    if (!isMountedRef.current || requestId !== saveRequestRef.current) {
+      return false;
+    }
+
     if (result.error) {
-      setNotice({ tone: "error", text: result.error });
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsRequestFailed") });
       setIsSaving(false);
       return false;
     }
 
-    await refreshContext();
+    const refreshed = await refreshContext();
+    if (!isMountedRef.current || requestId !== saveRequestRef.current || !refreshed) {
+      if (isMountedRef.current && requestId === saveRequestRef.current && !refreshed) {
+        setIsSaving(false);
+      }
+      return false;
+    }
+
     setNotice({ tone: "success", text: successText });
     setIsSaving(false);
     return true;

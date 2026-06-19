@@ -205,6 +205,13 @@ export function RefreshErrorBanner({
   language: LanguageMode;
   onDismiss: () => void;
 }) {
+  const normalizedError = error.trim().toLowerCase();
+  const detailKey = normalizedError.includes("not configured") || normalizedError.includes("scheduler")
+    ? "shell.refreshSchedulerUnavailable"
+    : normalizedError.includes("timed out") || normalizedError.includes("timeout")
+      ? "shell.refreshTimedOut"
+      : "shell.refreshFailedDetail";
+
   return (
     <div className="refresh-error-banner" role="alert">
       <span className="material-symbols-outlined" aria-hidden="true">
@@ -213,9 +220,8 @@ export function RefreshErrorBanner({
       <span className="refresh-error-banner-copy">
         <strong>{translateMessageKey(language, "shell.refreshFailed")}</strong>
         <span>
-          {translateMessageKey(language, "shell.refreshFailedDetail")}
+          {translateMessageKey(language, detailKey)}
         </span>
-        <small>{error}</small>
       </span>
       <button
         aria-label={translateMessageKey(language, "shell.dismissRefreshError")}
@@ -361,7 +367,18 @@ function formatDateScopeValue(
   }).format(parsedDate);
 }
 
-const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const WEEKDAY_SAMPLE_START = Date.UTC(2024, 0, 1);
+
+export function buildWeekdayLabels(language: LanguageMode): string[] {
+  const formatter = new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    timeZone: "UTC",
+    weekday: "narrow",
+  });
+
+  return Array.from({ length: 7 }, (_, index) =>
+    formatter.format(new Date(WEEKDAY_SAMPLE_START + index * 24 * 60 * 60 * 1000)),
+  );
+}
 
 type CalendarCell = {
   dateValue: string;
@@ -462,6 +479,7 @@ export function DateScopeSelector({
     () => new Map(availability.map((day) => [day.date, day])),
     [availability],
   );
+  const weekdayLabels = useMemo(() => buildWeekdayLabels(language), [language]);
   const calendarCells = useMemo(() => buildCalendarCells(visibleMonth), [visibleMonth]);
   const earliestAvailabilityMonth = availability[0]?.date
     ? monthKeyFromDateValue(availability[0].date)
@@ -561,13 +579,11 @@ export function DateScopeSelector({
         ref={dateTriggerRef}
         onClick={() => {
           setVisibleMonth(monthKeyFromDateValue(displayValue));
-          setIsCalendarOpen((currentValue) => {
-            const nextOpen = !currentValue;
-            if (nextOpen) {
-              onCalendarOpen?.();
-            }
-            return nextOpen;
-          });
+          const nextOpen = !isCalendarOpen;
+          setIsCalendarOpen(nextOpen);
+          if (nextOpen) {
+            onCalendarOpen?.();
+          }
         }}
         title={inputLabel}
       />
@@ -614,7 +630,7 @@ export function DateScopeSelector({
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_arrow_up
+                  keyboard_arrow_left
                 </span>
               </button>
               <button
@@ -625,13 +641,13 @@ export function DateScopeSelector({
                 type="button"
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_arrow_down
+                  keyboard_arrow_right
                 </span>
               </button>
             </div>
           </div>
           <div className="date-calendar-weekdays" aria-hidden="true">
-            {WEEKDAY_LABELS.map((weekday, index) => (
+            {weekdayLabels.map((weekday, index) => (
               <span key={`${weekday}-${index}`}>{weekday}</span>
             ))}
           </div>
@@ -659,6 +675,7 @@ export function DateScopeSelector({
                     .filter(Boolean)
                     .join(" ")}
                   aria-label={cellLabel}
+                  aria-current={isSelected ? "date" : undefined}
                   disabled={isFuture || isPending}
                   onClick={() => selectCalendarDate(cell.dateValue)}
                   title={

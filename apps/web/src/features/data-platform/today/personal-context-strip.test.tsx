@@ -28,6 +28,7 @@ describe("PersonalContextStrip", () => {
     expect(screen.getByText("已准备 60%")).toBeInTheDocument();
     expect(screen.getByText("下一步：设置默认位置")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "询问助手" })).toBeInTheDocument();
+    expect(document.querySelector(".today-personal-context .assistant-glyph")).toBeInTheDocument();
   });
 
   it("offers the dedicated setup flow when the host provides it", async () => {

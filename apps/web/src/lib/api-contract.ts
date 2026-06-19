@@ -1509,6 +1509,10 @@ export interface components {
             scenario_channels: components["schemas"]["ScenarioChannelRead"][];
             /** Scenario Sections */
             scenario_sections: components["schemas"]["PublicScenarioSectionRead"][];
+            /** Snapshot Available */
+            snapshot_available?: boolean | null;
+            /** Snapshot Date */
+            snapshot_date?: string | null;
             /** Sources */
             sources: components["schemas"]["DashboardSourceRead"][];
             /** Timeline */
@@ -1914,6 +1918,8 @@ export interface components {
             date?: string | null;
             /** Mode */
             mode: string;
+            /** Reference Time */
+            reference_time: string;
             /** Timezone */
             timezone: string;
             /** Window End */

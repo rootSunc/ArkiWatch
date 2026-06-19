@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   API_TIMEOUT_ERROR,
   apiFetchJson,
+  apiTransportErrorMessage,
   normalizeApiBaseUrl,
   unwrapApiResult,
 } from "@/lib/api-client";
@@ -10,6 +11,7 @@ import {
 describe("api-client", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("normalizes API base URLs", () => {
@@ -58,6 +60,55 @@ describe("api-client", () => {
     expect(result.data).toBeNull();
     expect(result.error).toBe(API_TIMEOUT_ERROR);
     expect(result.status).toBeNull();
+  });
+
+  it("rethrows caller cancellation so query observers can stop cleanly", async () => {
+    const controller = new AbortController();
+    controller.abort(new DOMException("The request was cancelled.", "AbortError"));
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(controller.signal.reason));
+
+    await expect(
+      apiFetchJson("/platform/overview", {
+        baseUrl: "https://example.com/api",
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("keeps the timeout budget when a caller signal is supplied", async () => {
+    const timeoutController = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeoutController.signal);
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const requestSignal = init?.signal;
+      return new Promise<Response>((_resolve, reject) => {
+        requestSignal?.addEventListener("abort", () => reject(requestSignal.reason), {
+          once: true,
+        });
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const pending = apiFetchJson("/platform/overview", {
+      baseUrl: "https://example.com/api",
+      signal: new AbortController().signal,
+      timeoutMs: 10,
+    });
+    timeoutController.abort(new DOMException("The operation timed out.", "TimeoutError"));
+
+    await expect(pending).resolves.toMatchObject({
+      data: null,
+      error: API_TIMEOUT_ERROR,
+      status: null,
+    });
+  });
+
+  it("normalizes abort errors for optional personal requests too", () => {
+    expect(
+      apiTransportErrorMessage(
+        new DOMException("The request was aborted.", "AbortError"),
+        "fallback",
+      ),
+    ).toBe(API_TIMEOUT_ERROR);
   });
 
   it("preserves bounded backend error details without losing the status", async () => {

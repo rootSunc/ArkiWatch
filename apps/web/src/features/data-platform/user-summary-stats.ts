@@ -11,6 +11,7 @@ import {
   weatherSnapshotDetail,
   weatherSnapshotHeadline,
 } from "./weather-snapshot-display";
+import { isEmptyStatus } from "./platform-status";
 
 export type UserSummaryTile = {
   key: string;
@@ -50,39 +51,54 @@ export function buildUserSummaryTiles(
   },
   language: LanguageMode,
 ): UserSummaryTile[] {
+  const weather = signals.weather && !isEmptyStatus(signals.weather.status) ? signals.weather : null;
+  const airQuality = signals.airQuality && !isEmptyStatus(signals.airQuality.status)
+    ? signals.airQuality
+    : null;
+  const transit = signals.transit && !isEmptyStatus(signals.transit.status) ? signals.transit : null;
+  const roadRail = signals.roadRail && !isEmptyStatus(signals.roadRail.status)
+    ? signals.roadRail
+    : null;
+  const householdEnergy = signals.householdEnergy && !isEmptyStatus(signals.householdEnergy.status)
+    ? signals.householdEnergy
+    : null;
+  const systemEnergy = signals.systemEnergy && !isEmptyStatus(signals.systemEnergy.status)
+    ? signals.systemEnergy
+    : null;
 
-  const weatherWarnings = signals.weather?.warnings.length ?? 0;
-  const weatherValue = signals.weather
-    ? weatherSnapshotHeadline(signals.weather, language)
+  const weatherWarnings = weather?.warnings.length ?? 0;
+  const weatherValue = weather
+    ? weatherSnapshotHeadline(weather, language)
     : translateMessageKey(language, "shell.na");
-  const weatherDetail = signals.weather
-    ? weatherSnapshotDetail(signals.weather, language)
+  const weatherDetail = weather
+    ? weatherSnapshotDetail(weather, language)
     : translateMessageKey(language, "shell.noWeatherFeed");
   const weatherTone: UserSummaryTile["tone"] =
-    weatherWarnings > 0 ? "warn" : signals.weather ? "good" : "neutral";
+    weatherWarnings > 0 ? "warn" : weather ? "good" : "neutral";
 
-  const airScore = signals.airQuality?.worst_score;
+  const airScore = airQuality?.worst_score;
   const airValue =
     airScore !== null && airScore !== undefined
-      ? `${scoreLabel(airScore, signals.airQuality?.worst_label, language)}`
+      ? `${scoreLabel(airScore, airQuality?.worst_label, language)}`
       : translateMessageKey(language, "shell.na");
   const airTone: UserSummaryTile["tone"] =
     airScore !== null && airScore !== undefined && airScore >= 4
       ? "bad"
       : airScore !== null && airScore !== undefined && airScore >= 3
         ? "warn"
-        : signals.airQuality
+        : airQuality
           ? "good"
           : "neutral";
 
-  const transitAlerts = signals.transit?.quality.active_alert_count ?? 0;
-  const roadEvents = signals.roadRail?.quality.active_event_count ?? 0;
+  const transitAlerts = transit?.quality.active_alert_count ?? 0;
+  const roadEvents = roadRail?.quality.active_event_count ?? 0;
+  const commuteAvailable = Boolean(transit || roadRail);
   const commuteTotal = transitAlerts + roadEvents;
   const commuteTone: UserSummaryTile["tone"] =
-    commuteTotal > 0 ? "warn" : signals.transit || signals.roadRail ? "good" : "neutral";
+    commuteTotal > 0 ? "warn" : commuteAvailable ? "good" : "neutral";
 
-  const priceWindow = signals.householdEnergy?.current_window;
-  const systemWindow = signals.systemEnergy?.current_window;
+  const priceWindow = householdEnergy?.current_window;
+  const systemWindow = systemEnergy?.current_window;
   const energyWindow = priceWindow ?? systemWindow;
   const energyValue = priceWindow
     ? `${priceWindow.average_value.toFixed(2)}${priceWindow.unit ? ` ${priceWindow.unit}` : ""}`
@@ -114,10 +130,14 @@ export function buildUserSummaryTiles(
       key: "commute",
       label: translateMessageKey(language, "shell.commute"),
       value:
-        commuteTotal > 0
+        !commuteAvailable
+          ? translateMessageKey(language, "shell.na")
+          : commuteTotal > 0
           ? `${commuteTotal} ${translateMessageKey(language, "shell.active")}`
           : translateMessageKey(language, "shell.allClear"),
-      detail: `${translateMessageKey(language, "shell.navTransit")} ${transitAlerts} · ${translateMessageKey(language, "shell.navRoadRail")} ${roadEvents}`,
+      detail: commuteAvailable
+        ? `${translateMessageKey(language, "shell.navTransit")} ${transitAlerts} · ${translateMessageKey(language, "shell.navRoadRail")} ${roadEvents}`
+        : translateMessageKey(language, "shell.na"),
       tone: commuteTone,
       icon: "commute",
       valueStyle: "emphasis",

@@ -4,8 +4,6 @@ import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 
-import { formatRelativeAge, formatTimestamp } from "@/features/shared/format";
-
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, useI18n } from "./i18n";
 import {
@@ -19,7 +17,10 @@ import {
 import { TrendChart, TrendChartPoint } from "./lazy-trend-chart";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
+import { isEmptyStatus, liveStatusTone } from "./platform-status";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
 
 const AirQualityStationMap = dynamic(
   () => import("./air-quality-station-map").then((module) => module.AirQualityStationMap),
@@ -72,10 +73,19 @@ const POLLUTANT_FIELD_KEYS: PollutantKey[] = POLLUTANT_PROFILES.map((profile) =>
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
+}
+
+function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
+  const formatted = formatNumber(value);
+  return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
+}
+
+function formatScore(value: number | null | undefined, tKey: (key: string) => string): string {
+  return hasNumber(value) ? `${formatNumber(value, 0)}/5` : tKey("airQuality.na");
 }
 
 function scoreLabel(
@@ -235,22 +245,16 @@ function observedExactLabel(
   language: LanguageMode,
   tKey: (key: string) => string,
   timeZone = DEFAULT_DATA_TIME_ZONE,
+  timeScope?: AirQualityCurrentResponse["time_scope"],
 ): string {
-  if (!value) {
-    return tKey("airQuality.notObserved");
-  }
-
-  return `${formatTimestamp(value, "dateTime", language, timeZone)} (${formatRelativeAge(value, language)})`;
-}
-
-function liveStatusTone(status: string | null | undefined): "ready" | "stale" | "empty" {
-  if (status === "ready") {
-    return "ready";
-  }
-  if (status === "stale") {
-    return "stale";
-  }
-  return "empty";
+  return scopedDataTimestamp(
+    value,
+    timeScope,
+    language,
+    tKey,
+    "airQuality.notObserved",
+    timeZone,
+  );
 }
 
 function scorePercent(score: number | null | undefined): number {
@@ -271,7 +275,7 @@ function pollutantValue(station: AirQualityStation, key: PollutantKey): number |
 
 function formatPollutantValue(value: number | null, profile: PollutantProfile): string {
   if (!hasNumber(value)) {
-    return "n/a";
+    return UNAVAILABLE_DATA_VALUE;
   }
 
   const formattedValue = formatNumber(value, profile.unit ? 1 : 0);
@@ -307,7 +311,7 @@ function averagePollutantValue(stations: AirQualityStation[], key: PollutantKey)
 }
 
 function stationDisplayName(station: AirQualityStation): string {
-  return station.station || station.label || "Unknown station";
+  return station.station || station.label || UNAVAILABLE_DATA_VALUE;
 }
 
 function sourceRequestCount(airQuality: AirQualityCurrentResponse): string {
@@ -366,7 +370,7 @@ function airHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date, timeZone),
         value: worstScore,
-        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatNumber(data.quality.field_coverage_pct, 0)}% ${tKey("airQuality.coverage")}`
+        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatPercent(data.quality.field_coverage_pct, tKey)} ${tKey("airQuality.coverage")}`
       }
     ];
   });
@@ -459,7 +463,7 @@ export function AirQualityWorkspace({
   const { language, tKey, enumLabel, dataLabel } = useI18n();
   const [activePollutantKey, setActivePollutantKey] = useState<PollutantKey>("pm2_5");
 
-  if (!airQuality) {
+  if (!airQuality || isEmptyStatus(airQuality.status)) {
     return (
       <section className="air-detail-empty" aria-label={tKey("airQuality.airQualityDataUnavailable")}>
         <span>{tKey("airQuality.airQuality")}</span>
@@ -499,10 +503,16 @@ export function AirQualityWorkspace({
           <h2>{airQuality.location ? `${airQuality.location} ${tKey("airQuality.airQualityNetwork")}` : tKey("airQuality.airQualityNetwork")}</h2>
           <div className={`air-live-status air-live-status-${liveTone}`}>
             <span aria-hidden="true" />
-            <strong>{airQuality.status === "ready" ? tKey("airQuality.hsySyncActive") : tKey("airQuality.syncDelayed")}</strong>
+            <strong>{scopedStatusLabel(
+              airQuality.status,
+              airQuality.time_scope,
+              tKey,
+              "airQuality.hsySyncActive",
+              "airQuality.syncDelayed",
+            )}</strong>
           </div>
         </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}</div>
+        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone, airQuality.time_scope)}</div>
       </div>
 
       <section className="air-bento-grid" aria-label={tKey("airQuality.airQualityCurrentCondition")}>
@@ -512,7 +522,7 @@ export function AirQualityWorkspace({
         >
           <div className="air-card-kicker">
             <span>{tKey("airQuality.currentNetworkCondition")}</span>
-            <time>{observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}</time>
+            <time>{observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone, airQuality.time_scope)}</time>
           </div>
           <div className="air-current-score">
             <div
@@ -520,7 +530,7 @@ export function AirQualityWorkspace({
               style={{ "--score": `${scorePercent(currentScore)}%` } as CSSProperties}
               aria-hidden="true"
             >
-              <strong>{formatNumber(currentScore, 0)}</strong>
+              <strong>{hasNumber(currentScore) ? formatNumber(currentScore, 0) : tKey("airQuality.na")}</strong>
               <span>/5</span>
             </div>
             <div>
@@ -606,7 +616,7 @@ export function AirQualityWorkspace({
           >
             {tKey("airQuality.worstScore")}
           </DataLabelWithHelp>
-          <strong>{formatNumber(currentScore, 0)}/5</strong>
+          <strong>{formatScore(currentScore, tKey)}</strong>
         </article>
         <article className="air-glass-panel">
           <DataLabelWithHelp
@@ -630,7 +640,7 @@ export function AirQualityWorkspace({
           >
             {tKey("airQuality.fieldCoverage")}
           </DataLabelWithHelp>
-          <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
+          <strong>{formatPercent(airQuality.quality.field_coverage_pct, tKey)}</strong>
         </article>
         <article className="air-glass-panel">
           <DataLabelWithHelp
@@ -772,7 +782,7 @@ export function AirQualityWorkspace({
               >
                 {tKey("airQuality.dataQuality")}
               </DataLabelWithHelp>
-              <strong>{formatNumber(airQuality.quality.field_coverage_pct, 0)}%</strong>
+              <strong>{formatPercent(airQuality.quality.field_coverage_pct, tKey)}</strong>
             </header>
             <span className="air-quality-meter" aria-hidden="true">
               <span style={{ width: `${airQuality.quality.field_coverage_pct}%` }} />
@@ -846,7 +856,7 @@ export function AirQualityWorkspace({
                   </div>
                   <p>
                     {endpointLabel(request, tKey)}
-                    {request.fetched_at ? ` · ${tKey("airQuality.fetched")} ${formatRelativeAge(request.fetched_at, language)}` : ""}
+                    {request.fetched_at ? ` · ${tKey("airQuality.fetched")} ${scopedDataAge(request.fetched_at, airQuality.time_scope, language, tKey, "airQuality.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>{request.content_type ?? tKey("airQuality.contentTypeUnavailable")}</small>
                 </article>
@@ -873,10 +883,10 @@ export function AirQualityWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               sync
             </span>
-            {tKey("airQuality.lastSync")}: {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone)}
+            {tKey("airQuality.lastSync")}: {observedExactLabel(airQuality.observed_at ?? scopedReferenceTime(airQuality.time_scope), language, tKey, dataTimezone, airQuality.time_scope)}
           </span>
           <i aria-hidden="true" />
-          <span className="air-provider-coverage">{tKey("airQuality.coverage2")}: {formatNumber(airQuality.quality.field_coverage_pct, 0)}%</span>
+          <span className="air-provider-coverage">{tKey("airQuality.coverage2")}: {formatPercent(airQuality.quality.field_coverage_pct, tKey)}</span>
         </div>
       </section>
 
