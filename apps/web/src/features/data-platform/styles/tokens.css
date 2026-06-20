@@ -1,0 +1,46 @@
+/* Product tokens shared by the shell and every data workspace. */
+:root {
+  --ui-refresh-canvas: #f6f8f9;
+  --ui-refresh-surface: #ffffff;
+  --ui-refresh-surface-soft: #f0f4f6;
+  --ui-refresh-ink: #17242b;
+  --ui-refresh-muted: #64737c;
+  --ui-refresh-line: #dbe4e8;
+  --ui-refresh-blue: #126c88;
+  --ui-refresh-blue-soft: #e7f3f7;
+  --ui-refresh-today: #c17a1d;
+  --ui-refresh-today-soft: #fff4df;
+  --ui-refresh-shadow: 0 10px 30px rgba(26, 49, 61, 0.06);
+  --ui-refresh-radius-sm: 10px;
+  --ui-refresh-radius-md: 16px;
+  --ui-refresh-radius-lg: 20px;
+}
+
+:root[data-theme="dark"] {
+  --ui-refresh-canvas: #11181d;
+  --ui-refresh-surface: #182126;
+  --ui-refresh-surface-soft: #202b31;
+  --ui-refresh-ink: #e9f0f3;
+  --ui-refresh-muted: #9eafb8;
+  --ui-refresh-line: #314049;
+  --ui-refresh-blue: #7bc9e5;
+  --ui-refresh-blue-soft: #173641;
+  --ui-refresh-today: #f1b45b;
+  --ui-refresh-today-soft: #3b2d1d;
+  --ui-refresh-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+}
+
+/* Backwards-compatible aliases for the first design-refresh pass. New
+ * workspace styles should use the `--ui-refresh-*` names above directly. */
+:root {
+  --refresh-canvas: var(--ui-refresh-canvas);
+  --refresh-surface: var(--ui-refresh-surface);
+  --refresh-surface-soft: var(--ui-refresh-surface-soft);
+  --refresh-ink: var(--ui-refresh-ink);
+  --refresh-muted: var(--ui-refresh-muted);
+  --refresh-line: var(--ui-refresh-line);
+  --refresh-shadow: var(--ui-refresh-shadow);
+  --refresh-radius-sm: var(--ui-refresh-radius-sm);
+  --refresh-radius-md: var(--ui-refresh-radius-md);
+  --refresh-today: var(--ui-refresh-today);
+}

@@ -63,6 +63,7 @@ import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./dat
 import { isEmptyStatus } from "./platform-status";
 import { hasObservedSourceRecords } from "./catalog-workspace-state";
 import { handleTabListKeyDown } from "./tab-navigation";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 export function EnergyWorkspace({
   activePanel: controlledPanel,
@@ -100,11 +101,12 @@ export function EnergyWorkspace({
 
   if (!category) {
     return (
-      <section className="energy-detail-empty" aria-label={tKey("energy.energyDataUnavailable")}>
-        <span>{tKey("energy.energy")}</span>
-        <h2>{tKey("energy.energySignalsAreNotAvailableYet")}</h2>
-        <p>{tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="energy-detail-empty"
+        description={tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}
+        eyebrow={tKey("energy.energy")}
+        title={tKey("energy.energySignalsAreNotAvailableYet")}
+      />
     );
   }
 
@@ -116,11 +118,12 @@ export function EnergyWorkspace({
 
   if (!activeEnergy || isEmptyStatus(activeEnergy.status)) {
     return (
-      <section className="energy-detail-empty" aria-label={tKey("energy.energyDataUnavailable")}>
-        <span>{tKey("energy.energy")}</span>
-        <h2>{tKey("energy.energySignalsAreNotAvailableYet")}</h2>
-        <p>{tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="energy-detail-empty"
+        description={tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}
+        eyebrow={tKey("energy.energy")}
+        title={tKey("energy.energySignalsAreNotAvailableYet")}
+      />
     );
   }
 
@@ -305,16 +308,19 @@ export function EnergyWorkspace({
         role="tabpanel"
         tabIndex={0}
       >
-      <div className="energy-detail-header">
-        <div>
-          <h2>{activeTitle}</h2>
-          <div className="energy-live-status">
-            <span aria-hidden="true" />
-            <strong>{activeSourceLabel}</strong>
-          </div>
-        </div>
-        <div>{activeSourceName} / {scopedDataAge(activeObservedAt, activeEnergy?.time_scope, language, tKey, "energy.notObserved", dataTimezone)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="energy-detail-header"
+        fallbackKey="energy.notObserved"
+        language={language}
+        observedAt={activeObservedAt}
+        sourceLabel={activeSourceName}
+        status={activeSourceLabel}
+        statusTone={activeTone}
+        tKey={tKey}
+        timeScope={activeEnergy?.time_scope}
+        title={activeTitle}
+        timezone={dataTimezone}
+      />
 
       <section
         className={`energy-glass-panel energy-command-panel energy-command-panel-${activeTone}`}

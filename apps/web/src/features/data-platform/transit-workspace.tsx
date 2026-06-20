@@ -28,6 +28,7 @@ import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
 import { scopedEventState } from "./event-time-state";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type TransitWorkspaceProps = {
   category: PlatformCategory | null;
@@ -796,11 +797,12 @@ export function TransitWorkspace({
 
   if (!transit || isEmptyStatus(transit.status)) {
     return (
-      <section className="transit-detail-empty" aria-label={tKey("transit.transitDataUnavailable")}>
-        <span>{tKey("transit.transit")}</span>
-        <h2>{tKey("transit.transitServiceAlertsAreNotAvailableYet")}</h2>
-        <p>{tKey("transit.digitransitHslServiceAlertDataHasNotArrivedForTheCurrentPlatformWindow")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="transit-detail-empty"
+        description={tKey("transit.digitransitHslServiceAlertDataHasNotArrivedForTheCurrentPlatformWindow")}
+        eyebrow={tKey("transit.transit")}
+        title={tKey("transit.transitServiceAlertsAreNotAvailableYet")}
+      />
     );
   }
 
@@ -837,22 +839,25 @@ export function TransitWorkspace({
 
   return (
     <section className="transit-detail-page" aria-label={tKey("transit.transitDetail")}>
-      <div className="transit-detail-header">
-        <div>
-          <h2>{tKey("transit.helsinkiTransitServiceAlerts")}</h2>
-          <div className={`transit-live-status transit-live-status-${liveTone}`}>
-            <span aria-hidden="true" />
-            <strong>{scopedStatusLabel(
-              transit.status,
-              transit.time_scope,
-              tKey,
-              "transit.hslFeedActive",
-              "transit.feedDelayed",
-            )}</strong>
-          </div>
-        </div>
-        <div>{transit.source_code.toUpperCase()} / {exactObservedLabel(transit.observed_at, language, tKey, dataTimezone, transit.time_scope)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="transit-detail-header"
+        fallbackKey="transit.notObserved"
+        language={language}
+        observedAt={transit.observed_at}
+        sourceLabel={transit.source_code.toUpperCase()}
+        status={scopedStatusLabel(
+          transit.status,
+          transit.time_scope,
+          tKey,
+          "transit.hslFeedActive",
+          "transit.feedDelayed",
+        )}
+        statusTone={liveTone}
+        tKey={tKey}
+        timeScope={transit.time_scope}
+        title={tKey("transit.helsinkiTransitServiceAlerts")}
+        timezone={dataTimezone}
+      />
 
       <section className={`transit-glass-panel transit-command-panel transit-command-panel-${activeTone}`} aria-label={tKey("transit.transitAlertCondition")}>
         <div className="transit-command-status">

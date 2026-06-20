@@ -16,9 +16,9 @@ import { pollIntervalLabel } from "./energy-workspace-utils";
 import { hasObservedSourceRecords, isCatalogOnlyWorkspace } from "./catalog-workspace-state";
 import {
   isHistoricalEvidenceScope,
-  scopedDataAge,
   scopedReferenceTime,
 } from "./data-time-scope";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type RegionalProfileWorkspaceProps = {
   category: PlatformCategory | null;
@@ -124,11 +124,12 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
   const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
   if (!category || isEmptyStatus(category.status)) {
     return (
-      <section className="water-detail-empty" aria-label={tKey("regionalProfile.dataUnavailable")}>
-        <span>{tKey("regionalProfile.regionalContext")}</span>
-        <h2>{tKey("regionalProfile.signalsUnavailable")}</h2>
-        <p>{tKey("regionalProfile.metadataMissing")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="water-detail-empty"
+        description={tKey("regionalProfile.metadataMissing")}
+        eyebrow={tKey("regionalProfile.regionalContext")}
+        title={tKey("regionalProfile.signalsUnavailable")}
+      />
     );
   }
 
@@ -205,18 +206,18 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
 
   return (
     <section className="water-detail-page" aria-label={tKey("regionalProfile.detailAria")}>
-      <div className="water-detail-header">
-        <div>
-          <h2>{tKey("regionalProfile.dashboardTitle")}</h2>
-          <div className="water-live-status">
-            <span aria-hidden="true" />
-            <strong>{historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
-          </div>
-        </div>
-        <div>
-          {category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("regionalProfile.catalog")} / {scopedDataAge(historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt, historicalEvidence ? timeScope : null, language, tKey, "regionalProfile.notObserved")}
-        </div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="water-detail-header"
+        fallbackKey="regionalProfile.notObserved"
+        language={language}
+        observedAt={historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt}
+        sourceLabel={category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("regionalProfile.catalog")}
+        status={historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        statusTone={activeTone}
+        tKey={tKey}
+        timeScope={historicalEvidence ? timeScope : null}
+        title={tKey("regionalProfile.dashboardTitle")}
+      />
 
       <section className="water-bento-grid" aria-label={tKey("regionalProfile.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>

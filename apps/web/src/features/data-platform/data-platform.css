@@ -18,6 +18,9 @@
 @import "./styles/skeleton.css";
 @import "./styles/responsive.css";
 @import "./styles/ui-system.css";
+@import "./styles/tokens.css";
+@import "./styles/design-refresh.css";
+@import "./styles/workspace-ui.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {
@@ -32,10 +35,14 @@
 }
 
 .data-help-icon .material-symbols-outlined {
+  display: block;
   font-size: 15px;
   font-style: normal;
   font-weight: 400;
   line-height: 16px;
+  max-width: 16px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .workspace-panel-loading {

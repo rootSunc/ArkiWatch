@@ -21,6 +21,7 @@ import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isEmptyStatus } from "./platform-status";
 import { hasObservedSourceRecords } from "./catalog-workspace-state";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type CityServicesWorkspaceProps = {
   category: PlatformCategory | null;
@@ -222,11 +223,12 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
 
   if (!category || isEmptyStatus(category.status)) {
     return (
-      <section className="city-detail-empty" aria-label={tKey("cityServices.dataUnavailable")}>
-        <span>{tKey("cityServices.title")}</span>
-        <h2>{tKey("cityServices.signalsUnavailable")}</h2>
-        <p>{tKey("cityServices.metadataMissing")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="city-detail-empty"
+        description={tKey("cityServices.metadataMissing")}
+        eyebrow={tKey("cityServices.title")}
+        title={tKey("cityServices.signalsUnavailable")}
+      />
     );
   }
 
@@ -260,16 +262,19 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
 
   return (
     <section className="city-detail-page" aria-label={tKey("cityServices.detailAria")}>
-      <div className="city-detail-header">
-        <div>
-          <h2>{tKey("cityServices.dashboardTitle")}</h2>
-          <div className="city-live-status">
-            <span aria-hidden="true" />
-            <strong>{isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
-          </div>
-        </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at, timeScope, language, tKey, "cityServices.notCollected", timezone)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="city-detail-header"
+        fallbackKey="cityServices.notCollected"
+        language={language}
+        observedAt={isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at}
+        sourceLabel={category.source_codes.join(", ").toUpperCase()}
+        status={isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        statusTone={cityTone}
+        tKey={tKey}
+        timeScope={timeScope}
+        title={tKey("cityServices.dashboardTitle")}
+        timezone={timezone}
+      />
 
       <section className="city-bento-grid" aria-label={tKey("cityServices.operatingCondition")}>
         <article className={`city-glass-panel city-hero city-hero-${cityTone}`}>

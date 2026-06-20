@@ -25,6 +25,7 @@ import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { hasObservedSourceRecords, isConnectedWorkspaceSource } from "./catalog-workspace-state";
 import type { PlatformTimeScope } from "./types";
 import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./data-time-scope";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
@@ -411,11 +412,12 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
 
   if (!category || isEmptyStatus(category.status)) {
     return (
-      <section className="water-detail-empty" aria-label={tKey("waterSnow.dataUnavailable")}>
-        <span>{tKey("waterSnow.title")}</span>
-        <h2>{tKey("waterSnow.signalsUnavailable")}</h2>
-        <p>{tKey("waterSnow.sykeMetadataMissing")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="water-detail-empty"
+        description={tKey("waterSnow.sykeMetadataMissing")}
+        eyebrow={tKey("waterSnow.title")}
+        title={tKey("waterSnow.signalsUnavailable")}
+      />
     );
   }
 
@@ -485,16 +487,19 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
 
   return (
     <section className="water-detail-page" aria-label={tKey("waterSnow.detailAria")}>
-      <div className="water-detail-header">
-        <div>
-          <h2>{tKey("waterSnow.hydrologyTitle")}</h2>
-          <div className="water-live-status">
-            <span aria-hidden="true" />
-            <strong>{isHistorical ? tKey("shell.historicalEvidence") : sourceStatusLabel(category, language)}</strong>
-          </div>
-        </div>
-        <div>{category.source_codes.join(", ").toUpperCase()} / {scopedDataAge(isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt, timeScope, language, tKey, "waterSnow.notObserved", timezone)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="water-detail-header"
+        fallbackKey="waterSnow.notObserved"
+        language={language}
+        observedAt={isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt}
+        sourceLabel={category.source_codes.join(", ").toUpperCase()}
+        status={isHistorical ? tKey("shell.historicalEvidence") : sourceStatusLabel(category, language)}
+        statusTone={activeTone}
+        tKey={tKey}
+        timeScope={timeScope}
+        title={tKey("waterSnow.hydrologyTitle")}
+        timezone={timezone}
+      />
 
       <section className={`water-glass-panel water-command-panel water-command-panel-${activeTone}`} aria-label={tKey("waterSnow.operatingCondition")}>
         <div className="water-command-status">

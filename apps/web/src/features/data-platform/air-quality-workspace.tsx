@@ -21,6 +21,7 @@ import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 const AirQualityStationMap = dynamic(
   () => import("./air-quality-station-map").then((module) => module.AirQualityStationMap),
@@ -465,11 +466,12 @@ export function AirQualityWorkspace({
 
   if (!airQuality || isEmptyStatus(airQuality.status)) {
     return (
-      <section className="air-detail-empty" aria-label={tKey("airQuality.airQualityDataUnavailable")}>
-        <span>{tKey("airQuality.airQuality")}</span>
-        <h2>{tKey("airQuality.stationDataIsNotAvailableYet")}</h2>
-        <p>{tKey("airQuality.hsyAirQualityStationSnapshotsHaveNotArrivedForTheCurrentPlatformWindow")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="air-detail-empty"
+        description={tKey("airQuality.hsyAirQualityStationSnapshotsHaveNotArrivedForTheCurrentPlatformWindow")}
+        eyebrow={tKey("airQuality.airQuality")}
+        title={tKey("airQuality.stationDataIsNotAvailableYet")}
+      />
     );
   }
 
@@ -498,22 +500,29 @@ export function AirQualityWorkspace({
 
   return (
     <section className="air-detail-page" aria-label={tKey("airQuality.airQualityDetail")}>
-      <div className="air-detail-header">
-        <div>
-          <h2>{airQuality.location ? `${airQuality.location} ${tKey("airQuality.airQualityNetwork")}` : tKey("airQuality.airQualityNetwork")}</h2>
-          <div className={`air-live-status air-live-status-${liveTone}`}>
-            <span aria-hidden="true" />
-            <strong>{scopedStatusLabel(
-              airQuality.status,
-              airQuality.time_scope,
-              tKey,
-              "airQuality.hsySyncActive",
-              "airQuality.syncDelayed",
-            )}</strong>
-          </div>
-        </div>
-        <div>{airQuality.source_code.toUpperCase()} / {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone, airQuality.time_scope)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="air-detail-header"
+        fallbackKey="airQuality.notObserved"
+        language={language}
+        observedAt={airQuality.observed_at}
+        sourceLabel={airQuality.source_code.toUpperCase()}
+        status={scopedStatusLabel(
+          airQuality.status,
+          airQuality.time_scope,
+          tKey,
+          "airQuality.hsySyncActive",
+          "airQuality.syncDelayed",
+        )}
+        statusTone={liveTone}
+        tKey={tKey}
+        timeScope={airQuality.time_scope}
+        title={airQuality.location ? `${airQuality.location} ${tKey("airQuality.airQualityNetwork")}` : tKey("airQuality.airQualityNetwork")}
+        timezone={dataTimezone}
+      >
+        <span className="workspace-evidence-observation">
+          {observedExactLabel(airQuality.observed_at, language, tKey, dataTimezone, airQuality.time_scope)}
+        </span>
+      </WorkspaceEvidenceHeader>
 
       <section className="air-bento-grid" aria-label={tKey("airQuality.airQualityCurrentCondition")}>
         <article

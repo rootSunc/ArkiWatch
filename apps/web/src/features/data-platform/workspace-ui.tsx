@@ -1,0 +1,110 @@
+import type { ReactNode } from "react";
+
+import { scopedDataTimestamp } from "./data-time-scope";
+import type { LanguageMode } from "./i18n";
+import type { PlatformTimeScope } from "./types";
+
+type TranslateMessage = (key: string) => string;
+
+export type WorkspaceTone =
+  | "good"
+  | "warn"
+  | "bad"
+  | "neutral"
+  | "ready"
+  | "stale"
+  | "failed"
+  | "empty";
+
+type WorkspaceEvidenceHeaderProps = {
+  className?: string;
+  title: ReactNode;
+  status?: ReactNode;
+  statusTone?: WorkspaceTone;
+  sourceLabel?: string | null;
+  observedAt?: string | null;
+  timeScope?: PlatformTimeScope | null;
+  language: LanguageMode;
+  tKey: TranslateMessage;
+  fallbackKey: string;
+  timezone?: string;
+  children?: ReactNode;
+};
+
+/**
+ * Shared detail-page header. Every workspace answers the same trust questions
+ * in the same place: what is this, what is its current state, and where/when
+ * was the displayed evidence collected.
+ */
+export function WorkspaceEvidenceHeader({
+  className = "",
+  title,
+  status,
+  statusTone = "neutral",
+  sourceLabel,
+  observedAt,
+  timeScope,
+  language,
+  tKey,
+  fallbackKey,
+  timezone,
+  children,
+}: WorkspaceEvidenceHeaderProps) {
+  const timestamp = scopedDataTimestamp(
+    observedAt,
+    timeScope,
+    language,
+    tKey,
+    fallbackKey,
+    timezone,
+  );
+
+  return (
+    <header className={`workspace-evidence-header ${className}`.trim()}>
+      <div className="workspace-evidence-heading">
+        <h2>{title}</h2>
+        {status ? (
+          <div className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}>
+            <span aria-hidden="true" />
+            <strong>{status}</strong>
+          </div>
+        ) : null}
+      </div>
+      <div className="workspace-evidence-meta">
+        {sourceLabel ? <span className="workspace-evidence-source">{sourceLabel}</span> : null}
+        <span className="workspace-evidence-separator" aria-hidden="true">·</span>
+        <time dateTime={observedAt ?? undefined}>{timestamp}</time>
+        {children}
+      </div>
+    </header>
+  );
+}
+
+type WorkspaceEmptyStateProps = {
+  className?: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description: ReactNode;
+  action?: ReactNode;
+};
+
+/** Consistent, calm empty/error state for a missing source window. */
+export function WorkspaceEmptyState({
+  className = "",
+  eyebrow,
+  title,
+  description,
+  action,
+}: WorkspaceEmptyStateProps) {
+  return (
+    <section className={`workspace-empty-state ${className}`.trim()}>
+      {eyebrow ? <span className="workspace-empty-state-eyebrow">{eyebrow}</span> : null}
+      <span className="material-symbols-outlined workspace-empty-state-icon" aria-hidden="true">
+        cloud_off
+      </span>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {action ? <div className="workspace-empty-state-action">{action}</div> : null}
+    </section>
+  );
+}

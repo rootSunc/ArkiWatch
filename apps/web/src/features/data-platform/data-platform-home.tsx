@@ -1099,9 +1099,13 @@ export function DataPlatformHome({
     );
   }
 
-  const dashboardShellClassName = isSideNavHidden
-    ? "dashboard-shell dashboard-shell-nav-hidden"
-    : "dashboard-shell";
+  const dashboardShellClassName = [
+    "dashboard-shell",
+    `dashboard-shell-mode-${workspaceMode}`,
+    isSideNavHidden ? "dashboard-shell-nav-hidden" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const sideNavClassName = [
     isDetailPage
       ? "dashboard-side-nav detail-side-nav"
@@ -1167,7 +1171,10 @@ export function DataPlatformHome({
       <a className="skip-link" href="#main-content">
         {tKey("shell.skipToMainContent")}
       </a>
-      <div className={dashboardShellClassName}>
+      <div
+        className={dashboardShellClassName}
+        data-workspace-mode={workspaceMode}
+      >
         <DataPlatformSideNav
           categories={categories}
           className={sideNavClassName}

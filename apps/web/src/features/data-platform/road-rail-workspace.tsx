@@ -29,6 +29,7 @@ import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
 import { scopedEventState } from "./event-time-state";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type RoadRailWorkspaceProps = {
   category: PlatformCategory | null;
@@ -829,11 +830,12 @@ export function RoadRailWorkspace({
 
   if (!roadRail || isEmptyStatus(roadRail.status)) {
     return (
-      <section className="road-rail-detail-empty" aria-label={tKey("roadRail.roadAndRailDataUnavailable")}>
-        <span>{tKey("roadRail.roadAndRail")}</span>
-        <h2>{tKey("roadRail.digitrafficRoadAndRailSignalsAreNotAvailableYet")}</h2>
-        <p>{tKey("roadRail.trafficMessageDataHasNotArrivedForTheCurrentPlatformWindow")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="road-rail-detail-empty"
+        description={tKey("roadRail.trafficMessageDataHasNotArrivedForTheCurrentPlatformWindow")}
+        eyebrow={tKey("roadRail.roadAndRail")}
+        title={tKey("roadRail.digitrafficRoadAndRailSignalsAreNotAvailableYet")}
+      />
     );
   }
 
@@ -874,25 +876,25 @@ export function RoadRailWorkspace({
 
   return (
     <section className="road-rail-detail-page" aria-label={tKey("roadRail.roadAndRailDetail")}>
-      <div className="road-rail-detail-header">
-        <div>
-          <h2>{tKey("roadRail.roadAndRailOperations")}</h2>
-          <div className={`road-rail-live-status road-rail-live-status-${liveTone}`}>
-            <span aria-hidden="true" />
-            <strong>{scopedStatusLabel(
-              roadRail.status,
-              roadRail.time_scope,
-              tKey,
-              "roadRail.digitrafficActive",
-              "roadRail.feedDelayed",
-            )}</strong>
-          </div>
-        </div>
-        <div>
-          {roadRail.source_code.toUpperCase()} /{" "}
-          {exactObservedLabel(roadRail.observed_at, language, tKey, dataTimezone, roadRail.time_scope)}
-        </div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="road-rail-detail-header"
+        fallbackKey="roadRail.notObserved"
+        language={language}
+        observedAt={roadRail.observed_at}
+        sourceLabel={roadRail.source_code.toUpperCase()}
+        status={scopedStatusLabel(
+          roadRail.status,
+          roadRail.time_scope,
+          tKey,
+          "roadRail.digitrafficActive",
+          "roadRail.feedDelayed",
+        )}
+        statusTone={liveTone}
+        tKey={tKey}
+        timeScope={roadRail.time_scope}
+        title={tKey("roadRail.roadAndRailOperations")}
+        timezone={dataTimezone}
+      />
 
       <section className={`road-rail-glass-panel road-rail-command-panel road-rail-command-panel-${activeTone}`} aria-label={tKey("roadRail.roadAndRailCondition")}>
         <div className="road-rail-command-status">

@@ -17,8 +17,9 @@ import {
 import { eventAnchorId } from "./recent-events";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isEmptyStatus } from "./platform-status";
-import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "./data-time-scope";
+import { isHistoricalTimeScope, scopedReferenceTime } from "./data-time-scope";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 const LinkedEventsCoordinateMap = dynamic(
   () => import("./linked-events-coordinate-map").then((module) => module.LinkedEventsCoordinateMap),
@@ -730,11 +731,12 @@ export function LinkedEventsWorkspace({
 
   if (!category || isEmptyStatus(category.status)) {
     return (
-      <section className="linked-events-empty" aria-label={tKey("linkedEvents.linkedEventsDataUnavailable")}>
-        <span>{tKey("linkedEvents.linkedEvents")}</span>
-        <h2>{tKey("linkedEvents.linkedEventsFeedIsNotAvailableYet")}</h2>
-        <p>{tKey("linkedEvents.eventPlaceAndKeywordRecordsAreMissingFromThisPlatformView")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="linked-events-empty"
+        description={tKey("linkedEvents.eventPlaceAndKeywordRecordsAreMissingFromThisPlatformView")}
+        eyebrow={tKey("linkedEvents.linkedEvents")}
+        title={tKey("linkedEvents.linkedEventsFeedIsNotAvailableYet")}
+      />
     );
   }
 
@@ -836,16 +838,19 @@ export function LinkedEventsWorkspace({
 
   return (
     <section className="linked-events-page" aria-label={tKey("linkedEvents.linkedEventsDetail")}>
-      <div className="linked-events-header">
-        <div>
-          <h2>{category.title ? displayTitle(category, language) : tKey("linkedEvents.linkedEvents")}</h2>
-          <div className="linked-events-live-status">
-            <span aria-hidden="true" />
-            <strong>{isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}</strong>
-          </div>
-        </div>
-        <div>{source?.source_code.toUpperCase() ?? "LINKEDEVENTS"} / {scopedDataAge(sourceRun, timeScope, language, tKey, "linkedEvents.notCollected", dataTimezone)}</div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="linked-events-header"
+        fallbackKey="linkedEvents.notCollected"
+        language={language}
+        observedAt={sourceRun}
+        sourceLabel={source?.source_code.toUpperCase() ?? "LINKEDEVENTS"}
+        status={isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        statusTone={selectedTone}
+        tKey={tKey}
+        timeScope={timeScope}
+        title={category.title ? displayTitle(category, language) : tKey("linkedEvents.linkedEvents")}
+        timezone={dataTimezone}
+      />
 
       <section className="linked-events-command" aria-label={tKey("linkedEvents.linkedEventsOperatingCondition")}>
         <article className={`linked-events-panel linked-events-hero linked-events-hero-${selectedTone}`}>

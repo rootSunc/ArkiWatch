@@ -51,6 +51,7 @@ import {
   weatherHistoryPoints,
 } from "./weather-detail-utils";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
   const formatted = formatNumber(value, 0);
@@ -119,11 +120,12 @@ export function WeatherDetailView({
 
   if (!weather || isEmptyStatus(weather.status)) {
     return (
-      <section className="weather-detail-empty">
-        <span>{tKey("weather.weatherDetail")}</span>
-        <h2>{tKey("weather.weatherDataIsNotAvailableYet")}</h2>
-        <p>{tKey("weather.theFmiForecastEndpointDidNotReturnCurrentWeatherDataForThisPlatformWindow")}</p>
-      </section>
+      <WorkspaceEmptyState
+        className="weather-detail-empty"
+        description={tKey("weather.theFmiForecastEndpointDidNotReturnCurrentWeatherDataForThisPlatformWindow")}
+        eyebrow={tKey("weather.weatherDetail")}
+        title={tKey("weather.weatherDataIsNotAvailableYet")}
+      />
     );
   }
 
@@ -132,24 +134,29 @@ export function WeatherDetailView({
 
   return (
     <div className="weather-detail-page">
-      <div className="weather-detail-header">
-        <div>
-          <h2>{displayRegion(weather.location, tKey)}</h2>
-          <div className={`weather-live-status weather-live-status-${liveTone}`}>
-            <span aria-hidden="true" />
-            <strong>{scopedStatusLabel(
-              weather.status,
-              weather.time_scope,
-              tKey,
-              "weather.liveSyncActive",
-              "weather.syncDelayed",
-            )}</strong>
-          </div>
-        </div>
-        <div>
-          {tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone, weather.time_scope)} / LAT {formatNumber(coordinates.latitude, 4)} N / LON {formatNumber(coordinates.longitude, 4)} E
-        </div>
-      </div>
+      <WorkspaceEvidenceHeader
+        className="weather-detail-header"
+        fallbackKey="weather.notObserved"
+        language={language}
+        observedAt={dataTime}
+        sourceLabel={tKey("weather.fmiForecast")}
+        status={scopedStatusLabel(
+          weather.status,
+          weather.time_scope,
+          tKey,
+          "weather.liveSyncActive",
+          "weather.syncDelayed",
+        )}
+        statusTone={liveTone}
+        tKey={tKey}
+        timeScope={weather.time_scope}
+        title={displayRegion(weather.location, tKey)}
+        timezone={dataTimezone}
+      >
+        <span className="workspace-evidence-coordinates">
+          {tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone, weather.time_scope)} · LAT {formatNumber(coordinates.latitude, 4)} · LON {formatNumber(coordinates.longitude, 4)}
+        </span>
+      </WorkspaceEvidenceHeader>
 
       <section className="weather-bento-grid" aria-label={tKey("weather.weatherConditions")}>
         <article className="weather-hero-card weather-glass-panel">
