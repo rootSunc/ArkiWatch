@@ -4,6 +4,8 @@ import type { ReactNode, RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { PROJECT_GITHUB_ISSUES_URL } from "@/features/shared/project-links";
+
 import { appEnv } from "@/lib/env";
 
 import {
@@ -244,6 +246,19 @@ export function DataPlatformSideNav({
             </span>
             <span>{tKey("shell.aboutArkiWatch")}</span>
           </Link>
+          <a
+            aria-label={tKey("shell.reportDataIssue")}
+            className="nav-row side-nav-utility-row"
+            href={PROJECT_GITHUB_ISSUES_URL}
+            rel="noreferrer"
+            target="_blank"
+            title={tKey("shell.reportDataIssue")}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              info
+            </span>
+            <span>{tKey("shell.reportDataIssue")}</span>
+          </a>
           {renderAuthActionButton("nav-row side-nav-utility-row", true)}
         </div>
       </nav>

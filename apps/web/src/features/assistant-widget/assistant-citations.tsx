@@ -19,6 +19,7 @@ type AssistantCitationListProps = {
   language: LanguageMode;
   messageId: string;
   onOpenView?: (view: string) => void;
+  sourceDocumentation?: Record<string, string>;
   tKey: (key: string) => string;
 };
 
@@ -54,6 +55,20 @@ export function assistantCitationSourceLabel(
 export function assistantCitationView(source: string): string | null {
   return sourceDefinition(source)?.view ??
     (source.trim().toLowerCase() === "static demo fixture" ? "overview" : null);
+}
+
+export function assistantCitationDocumentationUrl(
+  source: string,
+  sourceDocumentation: Record<string, string> = {},
+): string | null {
+  const normalizedSource = source.trim().toLowerCase();
+  const directUrl = sourceDocumentation[normalizedSource];
+  if (directUrl) {
+    return directUrl;
+  }
+
+  const view = assistantCitationView(source);
+  return view ? sourceDocumentation[view] ?? null : null;
 }
 
 export function assistantCitationFollowUp(
@@ -127,6 +142,7 @@ export function AssistantCitationList({
   language,
   messageId,
   onOpenView,
+  sourceDocumentation,
   tKey,
 }: AssistantCitationListProps): ReactNode {
   return (
@@ -134,6 +150,10 @@ export function AssistantCitationList({
       {citations.slice(0, MAX_VISIBLE_ASSISTANT_CITATIONS).map((citation, index) => {
         const sourceLabel = assistantCitationSourceLabel(citation.source, language);
         const sourceView = assistantCitationView(citation.source);
+        const documentationUrl = assistantCitationDocumentationUrl(
+          citation.source,
+          sourceDocumentation,
+        );
 
         return (
           <li key={`${messageId}-${index}-${citation.source}-${citation.checked_at ?? ""}`}>
@@ -153,6 +173,19 @@ export function AssistantCitationList({
               ) : (
                 <strong>{sourceLabel}</strong>
               )}
+              {documentationUrl ? (
+                <a
+                  aria-label={`${sourceLabel} · ${tKey("assistant.openProviderDocs")}`}
+                  className="assistant-citation-doc-link"
+                  href={documentationUrl}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    open_in_new
+                  </span>
+                </a>
+              ) : null}
               {citation.checked_at ? (
                 <time dateTime={citation.checked_at}>
                   {tKey("assistant.checkedAt").replace(

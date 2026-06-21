@@ -7,6 +7,7 @@ import {
   DEFAULT_CITY,
   normalizeCityValue
 } from "./city-scope";
+import { cityPackFor } from "./city-coverage";
 
 describe("city scope helpers", () => {
   it("normalizes supported city values and falls back for unknown values", () => {
@@ -25,5 +26,10 @@ describe("city scope helpers", () => {
   it("returns representative coordinates for each supported city", () => {
     expect(cityCoordinates("tampere")).toEqual({ latitude: 61.4978, longitude: 23.761 });
     expect(cityCoordinates("unknown")).toEqual({ latitude: 60.1699, longitude: 24.9384 });
+  });
+
+  it("keeps city capabilities explicit instead of inferring them from a city name", () => {
+    expect(cityPackFor("tampere").signals.transit).toBe("planned");
+    expect(cityPackFor("helsinki").signals.city_services).toBe("live");
   });
 });

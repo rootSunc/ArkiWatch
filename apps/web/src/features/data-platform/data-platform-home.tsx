@@ -22,12 +22,10 @@ import "./data-platform.css";
 
 import { categoryVisibleToCurrentUser } from "./category-access";
 import {
-  categorySupportsCityScope,
   cityLabel,
   normalizeCityValue,
 } from "./city-scope";
 import { localizedContent } from "./content-localization";
-import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import {
   HistoricalWarningBanner,
   PRIMARY_NAV_ITEMS,
@@ -56,7 +54,6 @@ import { usePersonalDashboard } from "./hooks/use-personal-dashboard";
 import { PlatformSkeleton } from "./platform-skeleton";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
-  CATEGORY_ICONS,
   CROSS_TIMELINE_LIMIT,
   EVENT_QUERY_KEY,
   FALLBACK_NAV_KEY,
@@ -93,10 +90,11 @@ import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
 import { TodayOverview } from "./today/today-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import { DataPlatformWorkspaceRouter } from "./data-platform-workspace-router";
+import { SignalCard } from "./signal-card";
 import {
-  categorySignalAttribution,
-  formatSignalAttributionLine,
-} from "./signal-attribution";
+  dashboardShellClassName,
+  dashboardSideNavClassName,
+} from "./data-platform-layout";
 import { buildSignalSystemTiles } from "./signals-console";
 import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
@@ -129,8 +127,6 @@ import {
   mergeMobilityCategories,
   notificationToneForEvents,
   pickPriorityEvent,
-  signalReadout,
-  statusLabel,
 } from "./data-platform-view-model";
 // Floating overlay, never part of the first paint: keep it out of the route bundle.
 const AssistantWidget = dynamic(
@@ -1019,102 +1015,34 @@ export function DataPlatformHome({
   }
 
   function renderSignalCard(category: PlatformCategory) {
-    const readout = signalReadout(
-      category,
-      weather,
-      airQuality,
-      energy,
-      roadRail,
-      transit,
-      languageMode,
-      platformTimezone,
-    );
-    const attribution = formatSignalAttributionLine(
-      categorySignalAttribution(
-        category,
-        weather,
-        airQuality,
-        energy,
-        householdEnergy,
-        roadRail,
-        transit,
-      ),
-      languageMode,
-    );
-    const tone = readout.tone;
-    const followsSelectedCity = categorySupportsCityScope(category.key);
-
     return (
-      <button
-        className={`signal-card signal-card-${tone}`}
+      <SignalCard
+        airQuality={airQuality}
+        category={category}
+        energy={energy}
+        householdEnergy={householdEnergy}
         key={category.key}
-        onClick={() => selectNav(category.key)}
-        type="button"
-      >
-        <span className="signal-card-top">
-          <span className="signal-title">
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {CATEGORY_ICONS[category.key] ?? "database"}
-            </span>
-            <strong>{displayTitle(category, languageMode)}</strong>
-          </span>
-          <span className={`status-badge status-badge-${tone}`}>
-            {statusLabel(category, languageMode)}
-          </span>
-        </span>
-        <span className="signal-card-bottom">
-          <span className="signal-readout">
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: readout.helpKey,
-                label: readout.label,
-                language: languageMode,
-              })}
-            >
-              {readout.label}
-            </DataLabelWithHelp>
-            <strong>{readout.value}</strong>
-          </span>
-          <span
-            className={
-              followsSelectedCity
-                ? "signal-scope-chip signal-scope-chip-city"
-                : "signal-scope-chip"
-            }
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {followsSelectedCity ? "location_on" : "public"}
-            </span>
-            <span>
-              {followsSelectedCity
-                ? cityLabel(selectedCity)
-                : tKey("shell.regionalScope")}
-            </span>
-          </span>
-          <span className="signal-card-attribution" title={attribution}>
-            {attribution}
-          </span>
-        </span>
-      </button>
+        language={languageMode}
+        onSelect={() => selectNav(category.key)}
+        platformTimezone={platformTimezone}
+        regionalScopeLabel={tKey("shell.regionalScope")}
+        roadRail={roadRail}
+        selectedCity={selectedCity}
+        transit={transit}
+        weather={weather}
+      />
     );
   }
 
-  const dashboardShellClassName = [
-    "dashboard-shell",
-    `dashboard-shell-mode-${workspaceMode}`,
-    isSideNavHidden ? "dashboard-shell-nav-hidden" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const sideNavClassName = [
-    isDetailPage
-      ? "dashboard-side-nav detail-side-nav"
-      : "dashboard-side-nav",
-    isMobileMenuOpen ? "mobile-side-nav-open" : "",
-    isSideNavHidden ? "dashboard-side-nav-hidden" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const shellClassName = dashboardShellClassName(
+    workspaceMode,
+    isSideNavHidden,
+  );
+  const sideNavClassName = dashboardSideNavClassName(
+    isDetailPage,
+    isMobileMenuOpen,
+    isSideNavHidden,
+  );
   const restoreSideNavButton = isSideNavHidden ? (
     <SideNavRestoreButton onShow={() => setIsSideNavHidden(false)} />
   ) : null;
@@ -1172,7 +1100,7 @@ export function DataPlatformHome({
         {tKey("shell.skipToMainContent")}
       </a>
       <div
-        className={dashboardShellClassName}
+        className={shellClassName}
         data-workspace-mode={workspaceMode}
       >
         <DataPlatformSideNav

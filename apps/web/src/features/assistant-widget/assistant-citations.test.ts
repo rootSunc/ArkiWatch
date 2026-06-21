@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assistantCitationDetail,
+  assistantCitationDocumentationUrl,
   assistantCitationFollowUp,
   assistantCitationSourceLabel,
   assistantCitationView,
@@ -43,5 +44,18 @@ describe("assistant citation presentation", () => {
     expect(assistantCitationFollowUp("weather", "en")).toBe("When is the best time to go outside?");
     expect(assistantCitationFollowUp("transit", "zh")).toBe("什么时候出行更合适？");
     expect(assistantCitationFollowUp("custom_source", "en")).toBeNull();
+  });
+
+  it("maps a citation to the scoped provider documentation", () => {
+    expect(
+      assistantCitationDocumentationUrl("weather", {
+        weather: "https://example.test/fmi",
+      }),
+    ).toBe("https://example.test/fmi");
+    expect(
+      assistantCitationDocumentationUrl("fmi", {
+        fmi: "https://example.test/fmi",
+      }),
+    ).toBe("https://example.test/fmi");
   });
 });

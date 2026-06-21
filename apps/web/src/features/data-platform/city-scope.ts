@@ -1,3 +1,5 @@
+import { CITY_PACKS } from "./city-coverage";
+
 export type CityScopeOption = {
   value: string;
   label: string;
@@ -12,31 +14,18 @@ export const CITY_STORAGE_KEY = "arkiwatch-city";
 export const DEFAULT_CITY = "helsinki";
 
 export const CITY_OPTIONS: CityScopeOption[] = [
-  { value: "helsinki", label: "Helsinki" },
-  { value: "espoo", label: "Espoo" },
-  { value: "vantaa", label: "Vantaa" },
-  { value: "tampere", label: "Tampere" },
-  { value: "turku", label: "Turku" },
-  { value: "oulu", label: "Oulu" }
+  ...CITY_PACKS.map(({ value, label }) => ({ value, label })),
 ];
 
 export const CITY_COVERAGE_AREAS: Record<string, string> = {
-  helsinki: "Helsinki / Uusimaa",
-  espoo: "Espoo / Uusimaa",
-  vantaa: "Vantaa / Uusimaa",
-  tampere: "Tampere / Pirkanmaa",
-  turku: "Turku / Southwest Finland",
-  oulu: "Oulu / North Ostrobothnia",
+  ...Object.fromEntries(CITY_PACKS.map((pack) => [pack.value, `${pack.label} / ${pack.region}`])),
 };
 
 /** Representative coordinates used for city-scoped data summaries and maps. */
 export const CITY_COORDINATES: Record<string, CityCoordinates> = {
-  helsinki: { latitude: 60.1699, longitude: 24.9384 },
-  espoo: { latitude: 60.2055, longitude: 24.6559 },
-  vantaa: { latitude: 60.2934, longitude: 25.0378 },
-  tampere: { latitude: 61.4978, longitude: 23.761 },
-  turku: { latitude: 60.4518, longitude: 22.2666 },
-  oulu: { latitude: 65.0121, longitude: 25.4651 },
+  ...Object.fromEntries(
+    CITY_PACKS.map((pack) => [pack.value, { latitude: pack.latitude, longitude: pack.longitude }]),
+  ),
 };
 
 const CITY_SCOPED_CATEGORY_KEYS = new Set(["weather", "air", "transit", "water", "city_services", "events"]);

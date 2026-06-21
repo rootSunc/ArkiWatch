@@ -174,6 +174,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/health/data-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Data Quality
+         * @description Expose source freshness as a small probe for uptime monitors and operators.
+         */
+        get: operations["data_quality_api_health_data_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications": {
         parameters: {
             query?: never;
@@ -217,6 +237,26 @@ export interface paths {
         };
         /** Get Platform Category */
         get: operations["get_platform_category_api_platform_categories__category_key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Platform Coverage
+         * @description Describe configured city capabilities without implying source health.
+         */
+        get: operations["get_platform_coverage_api_platform_coverage_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -867,6 +907,29 @@ export interface components {
          * @enum {string}
          */
         ChannelType: "TELEGRAM";
+        /** CityPackRead */
+        CityPackRead: {
+            /** City Ref */
+            city_ref: string;
+            /** Configured */
+            configured: boolean;
+            /** Coverage Area */
+            coverage_area: string;
+            /** Label */
+            label: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Recommendation Scope */
+            recommendation_scope: string;
+            /** Region */
+            region: string;
+            /** Signals */
+            signals: {
+                [key: string]: string;
+            };
+        };
         /** CollectorRunRead */
         CollectorRunRead: {
             /** Error Message */
@@ -1027,6 +1090,34 @@ export interface components {
             unit?: string | null;
             /** Value Type */
             value_type: string;
+        };
+        /** DataQualityRead */
+        DataQualityRead: {
+            /** Checked At */
+            checked_at: string;
+            /** Healthy Count */
+            healthy_count: number;
+            /** Issue Count */
+            issue_count: number;
+            /** Source Count */
+            source_count: number;
+            /** Sources */
+            sources: components["schemas"]["DataQualitySourceRead"][];
+            /** Status */
+            status: string;
+        };
+        /** DataQualitySourceRead */
+        DataQualitySourceRead: {
+            /** Error */
+            error?: string | null;
+            /** Last Checked At */
+            last_checked_at?: string | null;
+            /** Records Ingested */
+            records_ingested?: number | null;
+            /** Source Code */
+            source_code: string;
+            /** Status */
+            status: string;
         };
         /** EnergyCurrentRead */
         EnergyCurrentRead: {
@@ -1334,6 +1425,13 @@ export interface components {
             title: string;
             /** Visualizations */
             visualizations: components["schemas"]["PlatformVisualizationRead"][];
+        };
+        /** PlatformCoverageRead */
+        PlatformCoverageRead: {
+            /** Cities */
+            cities: components["schemas"]["CityPackRead"][];
+            /** Default City */
+            default_city: string;
         };
         /** PlatformEventRead */
         PlatformEventRead: {
@@ -2842,6 +2940,26 @@ export interface operations {
             };
         };
     };
+    data_quality_api_health_data_quality_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataQualityRead"];
+                };
+            };
+        };
+    };
     list_notifications_api_notifications_get: {
         parameters: {
             query: {
@@ -2935,6 +3053,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_platform_coverage_api_platform_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformCoverageRead"];
                 };
             };
         };

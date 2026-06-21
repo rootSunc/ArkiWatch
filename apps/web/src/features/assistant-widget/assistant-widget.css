@@ -475,6 +475,28 @@
   color: var(--primary);
 }
 
+.assistant-citation-doc-link {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+}
+
+.assistant-citation-doc-link:hover,
+.assistant-citation-doc-link:focus-visible {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  outline: none;
+}
+
+.assistant-citation-doc-link .material-symbols-outlined {
+  font-size: 13px;
+}
+
 .assistant-citation-source-button:hover .material-symbols-outlined,
 .assistant-citation-source-button:focus-visible .material-symbols-outlined {
   color: inherit;

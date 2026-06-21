@@ -49,6 +49,7 @@
     "sourcesMore": "and {count} more",
     "checkedAt": "Checked {time}",
     "openSource": "Open {source} workspace",
+    "openProviderDocs": "Open provider documentation",
     "sourcePlatformOverview": "Platform overview",
     "sourceWeather": "Weather",
     "sourceAirQuality": "Air quality",

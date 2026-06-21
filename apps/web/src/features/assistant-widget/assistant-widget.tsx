@@ -101,6 +101,24 @@ export function AssistantWidget({
     ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
     : tKey("assistant.scopeLive");
   const assistantCoverageArea = overview?.coverage_area?.trim() || cityLabel(city);
+  const sourceDocumentation = useMemo(() => {
+    const documentation: Record<string, string> = {};
+
+    for (const category of overview?.categories ?? []) {
+      const categoryUrl = category.sources.find((source) => source.documentation_url)?.documentation_url;
+      if (categoryUrl) {
+        documentation[category.key.trim().toLowerCase()] = categoryUrl;
+      }
+
+      for (const source of category.sources) {
+        if (source.documentation_url) {
+          documentation[source.source_code.trim().toLowerCase()] = source.documentation_url;
+        }
+      }
+    }
+
+    return documentation;
+  }, [overview]);
   // A background data refresh changes checked_at but not the user's scope.
   // Keep the conversation intact until city, date, workspace, or identity changes.
   const assistantScopeKey = [
@@ -731,6 +749,7 @@ export function AssistantWidget({
                             closeAssistant();
                             onOpenView?.(view);
                           }}
+                          sourceDocumentation={sourceDocumentation}
                           tKey={tKey}
                         />
                       </details>

@@ -49,6 +49,7 @@
     "sourcesMore": "另有 {count} 个",
     "checkedAt": "核验于 {time}",
     "openSource": "打开 {source} 工作区",
+    "openProviderDocs": "打开数据提供方文档",
     "sourcePlatformOverview": "平台总览",
     "sourceWeather": "天气",
     "sourceAirQuality": "空气质量",

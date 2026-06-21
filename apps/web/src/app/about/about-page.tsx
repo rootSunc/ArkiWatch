@@ -11,10 +11,13 @@ import {
   storedLanguageMode,
   type LanguageMode,
 } from "@/features/data-platform/i18n";
+import { CITY_PACKS, type CitySignalKey, type CitySignalAvailability } from "@/features/data-platform/city-coverage";
+import {
+  PROJECT_GITHUB_ISSUES_URL,
+  PROJECT_GITHUB_URL,
+} from "@/features/shared/project-links";
 
 import "./about.css";
-
-const GITHUB_URL = "https://github.com/rootSunc/ArkiWatch";
 
 const COPY = {
   en: {
@@ -45,6 +48,14 @@ const COPY = {
     dataLead: "Structured workspaces for checking freshness, scope, and source evidence.",
     dataPoints: ["Clear source health", "City and date scope", "Evidence before interpretation"],
     dataCta: "Explore the data",
+    coverageEyebrow: "Coverage you can see",
+    coverageTitle: "Every city has an honest capability map.",
+    coverageLead: "Live means the feed is configured; planned means the city is visible but that source pack is not claimed as live yet.",
+    coverageRecommendation: "Recommendations",
+    coverageColumns: ["Weather", "Air", "Transit", "Water", "City services", "Events"],
+    coverageLive: "Live",
+    coveragePlanned: "Planned",
+    coverageRegional: "Regional",
     flowEyebrow: "Designed for trust",
     flowTitle: "From signal to next step in three moves.",
     flow: [
@@ -58,6 +69,7 @@ const COPY = {
       "Star the project, try the demo, or contribute a collector. The architecture is intentionally open so more everyday use cases can be grounded in data.",
     ctaDemo: "Open the demo",
     ctaGithub: "Star on GitHub",
+    ctaIssue: "Report a data issue",
     footer: "ArkiWatch · Finnish public data, made practical.",
   },
   zh: {
@@ -87,6 +99,14 @@ const COPY = {
     dataLead: "用结构化工作区检查数据新鲜度、范围和来源依据。",
     dataPoints: ["清晰的来源健康度", "城市与日期范围", "先看证据，再看解释"],
     dataCta: "探索数据",
+    coverageEyebrow: "可见的覆盖范围",
+    coverageTitle: "每座城市都有诚实的能力地图。",
+    coverageLead: "Live 表示已配置数据流；Planned 表示城市可选择，但该数据源还没有被标记为实时覆盖。",
+    coverageRecommendation: "建议范围",
+    coverageColumns: ["天气", "空气", "出行", "水文", "城市服务", "活动"],
+    coverageLive: "实时",
+    coveragePlanned: "规划中",
+    coverageRegional: "区域级",
     flowEyebrow: "为信任而设计",
     flowTitle: "三步，从信号走到下一步行动。",
     flow: [
@@ -100,9 +120,19 @@ const COPY = {
       "欢迎 Star 项目、体验演示或贡献一个数据采集器。架构保持开放，让更多日常场景建立在真实数据之上。",
     ctaDemo: "打开演示",
     ctaGithub: "在 GitHub 点 Star",
+    ctaIssue: "报告数据问题",
     footer: "ArkiWatch · 让芬兰公共数据真正服务日常。",
   },
 } as const;
+
+const COVERAGE_KEYS: CitySignalKey[] = ["weather", "air", "transit", "water", "city_services", "events"];
+
+function coverageStateLabel(
+  state: CitySignalAvailability,
+  copy: (typeof COPY)[keyof typeof COPY],
+): string {
+  return state === "live" ? copy.coverageLive : state === "regional" ? copy.coverageRegional : copy.coveragePlanned;
+}
 
 export default function AboutPage() {
   const [language, setLanguage] = useState<LanguageMode>("en");
@@ -165,7 +195,7 @@ export default function AboutPage() {
                 {copy.heroPrimary}
                 <span className="material-symbols-outlined" aria-hidden="true">chevron_right</span>
               </Link>
-              <a className="about-button about-button-secondary" href={GITHUB_URL} rel="noreferrer" target="_blank">
+              <a className="about-button about-button-secondary" href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">
                 {copy.heroSecondary}
                 <span className="material-symbols-outlined" aria-hidden="true">open_in_new</span>
               </a>
@@ -218,6 +248,36 @@ export default function AboutPage() {
           </div>
         </section>
 
+        <section className="about-coverage">
+          <div className="about-section-heading">
+            <p className="about-eyebrow"><span />{copy.coverageEyebrow}</p>
+            <h2>{copy.coverageTitle}</h2>
+            <p>{copy.coverageLead}</p>
+          </div>
+          <div className="about-coverage-scroll">
+            <div className="about-coverage-table" role="table" aria-label={copy.coverageTitle}>
+              <div className="about-coverage-row about-coverage-header" role="row">
+                <span role="columnheader">City</span>
+                {copy.coverageColumns.map((column) => <span key={column} role="columnheader">{column}</span>)}
+                <span role="columnheader">{copy.coverageRecommendation}</span>
+              </div>
+              {CITY_PACKS.map((pack) => (
+                <div className="about-coverage-row" key={pack.value} role="row">
+                  <span className="about-coverage-city" role="cell"><strong>{pack.label}</strong><small>{pack.region}</small></span>
+                  {COVERAGE_KEYS.map((key) => (
+                    <span className={`about-coverage-state about-coverage-state-${pack.signals[key]}`} key={key} role="cell">
+                      <i aria-hidden="true" />{coverageStateLabel(pack.signals[key], copy)}
+                    </span>
+                  ))}
+                  <span className="about-coverage-recommendation" role="cell">
+                    {pack.recommendationScope === "regional" ? copy.coverageRegional : copy.coveragePlanned}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="about-flow">
           <div className="about-section-heading">
             <p className="about-eyebrow"><span />{copy.flowEyebrow}</p>
@@ -232,10 +292,10 @@ export default function AboutPage() {
 
         <section className="about-cta">
           <div><p className="about-eyebrow"><span />{copy.ctaEyebrow}</p><h2>{copy.ctaTitle}</h2><p>{copy.ctaLead}</p></div>
-          <div className="about-cta-actions"><Link className="about-button about-button-primary" href="/?city=helsinki">{copy.ctaDemo}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link><a className="about-button about-button-secondary" href={GITHUB_URL} rel="noreferrer" target="_blank">{copy.ctaGithub}<span className="material-symbols-outlined" aria-hidden="true">check</span></a></div>
+          <div className="about-cta-actions"><Link className="about-button about-button-primary" href="/?city=helsinki">{copy.ctaDemo}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link><a className="about-button about-button-secondary" href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">{copy.ctaGithub}<span className="material-symbols-outlined" aria-hidden="true">check</span></a><a className="about-button about-button-quiet" href={PROJECT_GITHUB_ISSUES_URL} rel="noreferrer" target="_blank">{copy.ctaIssue}<span className="material-symbols-outlined" aria-hidden="true">info</span></a></div>
         </section>
 
-        <footer className="about-footer"><span>{copy.footer}</span><a href={GITHUB_URL} rel="noreferrer" target="_blank">GitHub <span className="material-symbols-outlined" aria-hidden="true">arrow_outward</span></a></footer>
+        <footer className="about-footer"><span>{copy.footer}</span><a href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">GitHub <span className="material-symbols-outlined" aria-hidden="true">arrow_outward</span></a></footer>
       </div>
     </main>
   );
