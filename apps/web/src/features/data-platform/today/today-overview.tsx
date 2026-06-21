@@ -31,7 +31,7 @@ type TodayOverviewProps = {
   onOpenSignals: () => void;
   onOpenScenario: (scenarioKey: string) => void;
   onOpenSummaryTile: (tileKey: string) => void;
-  onOpenAssistant: () => void;
+  onOpenAssistant: (question?: string) => void;
   onOpenSettings?: () => void;
   onOpenEvent?: (event: PlatformEvent) => void;
   onRetryPersonalDashboard?: () => void;
@@ -56,7 +56,7 @@ export function TodayOverview({
   onOpenEvent,
   onRetryPersonalDashboard,
 }: TodayOverviewProps) {
-  const { tKey } = useI18n();
+  const { enumLabel, tKey } = useI18n();
   const localizedPersonalDashboardError = personalDashboardError
     ? platformErrorMessage(personalDashboardError, tKey)
     : null;
@@ -96,6 +96,12 @@ export function TodayOverview({
       : todayBrief.recommendationMode === "stale"
         ? tKey("shell.staleRecommendationsDetail")
         : tKey("shell.recommendationsUnavailableForScopeDetail");
+  const focusAssistantQuestion = focusAction
+    ? tKey("assistant.analyzeCategory").replace(
+        "{category}",
+        enumLabel(focusAction.scenario_key),
+      )
+    : null;
 
   return (
     <section
@@ -154,6 +160,22 @@ export function TodayOverview({
                   <span className="material-symbols-outlined" aria-hidden="true">
                     chevron_right
                   </span>
+                </button>
+              ) : null}
+              {focusAssistantQuestion ? (
+                <button
+                  className="today-assistant-action"
+                  disabled={isScopePending}
+                  onClick={() => onOpenAssistant(focusAssistantQuestion)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    info
+                  </span>
+                  {tKey("assistant.askAboutCategory").replace(
+                    "{category}",
+                    enumLabel(focusAction?.scenario_key),
+                  )}
                 </button>
               ) : null}
               <button className="today-secondary-action" onClick={onOpenSignals} type="button">
@@ -316,6 +338,7 @@ export function TodayOverview({
                   recommendationMode={todayBrief.recommendationMode}
                   section={section}
                   timezone={todayBrief.timezone}
+                  onAskAssistant={onOpenAssistant}
                   onOpen={() => onOpenScenario(section.key)}
                 />
               ))}

@@ -136,7 +136,8 @@
 }
 
 .today-primary-action,
-.today-secondary-action {
+.today-secondary-action,
+.today-assistant-action {
   display: inline-flex;
   min-height: 38px;
   align-items: center;
@@ -164,15 +165,28 @@
   color: var(--on-surface);
 }
 
+.today-assistant-action {
+  border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--outline-variant));
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+.today-assistant-action .material-symbols-outlined {
+  font-size: 17px;
+}
+
 .today-primary-action:hover,
-.today-secondary-action:hover {
+.today-secondary-action:hover,
+.today-assistant-action:hover {
   transform: translateY(-1px);
 }
 
 .today-primary-action:disabled,
 .today-secondary-action:disabled,
+.today-assistant-action:disabled,
 .today-glance-item:disabled,
-.today-action-card:disabled,
+.today-action-card-main:disabled,
+.today-action-card-assistant:disabled,
 .day-plan-timeline-button:disabled {
   cursor: wait;
   opacity: 0.7;
@@ -184,10 +198,17 @@
   background: var(--surface-container-low);
 }
 
+.today-assistant-action:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
 .today-primary-action:focus-visible,
 .today-secondary-action:focus-visible,
+.today-assistant-action:focus-visible,
 .today-glance-item:focus-visible,
-.today-action-card:focus-visible,
+.today-action-card-main:focus-visible,
+.today-action-card-assistant:focus-visible,
 .day-plan-timeline-button:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
@@ -858,13 +879,10 @@
 .today-action-card {
   display: grid;
   min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 11px;
+  grid-template-columns: minmax(0, 1fr);
   border: 1px solid var(--card-border);
   border-radius: 12px;
   background: var(--surface-container-low);
-  padding: 14px;
   color: inherit;
   text-align: left;
   transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
@@ -874,6 +892,19 @@
   border-color: var(--outline-variant);
   background: var(--surface-container-lowest);
   transform: translateY(-1px);
+}
+
+.today-action-card-main {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 11px;
+  border: 0;
+  background: transparent;
+  padding: 14px 14px 11px;
+  color: inherit;
+  text-align: left;
 }
 
 .today-action-card-icon {
@@ -993,6 +1024,31 @@
   font-size: 17px;
 }
 
+.today-action-card-assistant {
+  display: inline-flex;
+  min-width: 0;
+  grid-column: 1;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  border: 0;
+  border-top: 1px solid var(--card-border);
+  background: transparent;
+  padding: 8px 14px 10px;
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.today-action-card-assistant:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.today-action-card-assistant .material-symbols-outlined {
+  font-size: 15px;
+}
+
 @media (max-width: 1100px) {
   .today-command {
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
@@ -1109,7 +1165,8 @@
   }
 
   .today-primary-action,
-  .today-secondary-action {
+  .today-secondary-action,
+  .today-assistant-action {
     flex: 1;
   }
 
@@ -1142,6 +1199,7 @@
 @media (prefers-reduced-motion: reduce) {
   .today-primary-action,
   .today-secondary-action,
+  .today-assistant-action,
   .today-action-card {
     transition: none;
   }

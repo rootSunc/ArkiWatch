@@ -56,6 +56,24 @@ export function assistantCitationView(source: string): string | null {
     (source.trim().toLowerCase() === "static demo fixture" ? "overview" : null);
 }
 
+export function assistantCitationFollowUp(
+  source: string,
+  language: LanguageMode,
+): string | null {
+  const normalizedSource = source.trim().toLowerCase();
+  const key = normalizedSource.includes("weather") || normalizedSource.includes("air")
+    ? "assistant.bestTimeToGoOutside"
+    : normalizedSource.includes("traffic") || normalizedSource.includes("transit")
+      ? "assistant.bestTimeToCommute"
+      : normalizedSource.includes("energy")
+        ? "assistant.explainCurrent"
+        : normalizedSource.includes("overview") || normalizedSource.includes("history")
+          ? "assistant.whichSourceAbnormal"
+          : null;
+
+  return key ? translateMessageKey(language, key) : null;
+}
+
 function citationTimestamp(value: string, language: LanguageMode): string {
   try {
     return formatTimestamp(value, "dateTime", language);

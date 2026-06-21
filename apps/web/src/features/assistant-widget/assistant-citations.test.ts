@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assistantCitationDetail,
+  assistantCitationFollowUp,
   assistantCitationSourceLabel,
   assistantCitationView,
 } from "./assistant-citations";
@@ -36,5 +37,11 @@ describe("assistant citation presentation", () => {
       assistantCitationDetail("custom_source", "Provider-specific evidence.", "zh"),
     ).toBe("Provider-specific evidence.");
     expect(assistantCitationView("custom_source")).toBeNull();
+  });
+
+  it("offers a practical follow-up based on the cited signal", () => {
+    expect(assistantCitationFollowUp("weather", "en")).toBe("When is the best time to go outside?");
+    expect(assistantCitationFollowUp("transit", "zh")).toBe("什么时候出行更合适？");
+    expect(assistantCitationFollowUp("custom_source", "en")).toBeNull();
   });
 });

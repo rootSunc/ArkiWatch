@@ -233,6 +233,17 @@ export function DataPlatformSideNav({
               <span>{tKey("shell.personalSettingsTitle")}</span>
             </Link>
           ) : null}
+          <Link
+            aria-label={tKey("shell.aboutArkiWatch")}
+            className="nav-row side-nav-utility-row"
+            href="/about"
+            title={tKey("shell.aboutArkiWatch")}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              public
+            </span>
+            <span>{tKey("shell.aboutArkiWatch")}</span>
+          </Link>
           {renderAuthActionButton("nav-row side-nav-utility-row", true)}
         </div>
       </nav>

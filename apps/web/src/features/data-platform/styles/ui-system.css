@@ -665,7 +665,10 @@
 .today-decisions-summary:focus-visible,
 .today-glance-item:focus-visible,
 .today-primary-action:focus-visible,
-.today-secondary-action:focus-visible {
+.today-secondary-action:focus-visible,
+.today-assistant-action:focus-visible,
+.today-action-card-main:focus-visible,
+.today-action-card-assistant:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--ui-mode-accent) 45%, transparent);
   outline-offset: 2px;
 }

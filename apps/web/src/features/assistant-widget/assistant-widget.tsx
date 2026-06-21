@@ -16,6 +16,7 @@ import "./assistant-widget.css";
 import {
   AssistantCitationList,
   MAX_VISIBLE_ASSISTANT_CITATIONS,
+  assistantCitationFollowUp,
 } from "@/features/assistant-widget/assistant-citations";
 import { AssistantMessageBody } from "@/features/assistant-widget/assistant-message-body";
 import { formatAssistantScopeDate } from "@/features/assistant-widget/assistant-scope";
@@ -733,6 +734,35 @@ export function AssistantWidget({
                           tKey={tKey}
                         />
                       </details>
+                      {(() => {
+                        const followUps = Array.from(
+                          new Set(
+                            message.citations
+                              .map((citation) => assistantCitationFollowUp(citation.source, language))
+                              .filter((question): question is string => Boolean(question)),
+                          ),
+                        ).slice(0, 2);
+
+                        return followUps.length > 0 ? (
+                          <div className="assistant-next-actions">
+                            <span>{tKey("assistant.nextSteps")}</span>
+                            <div>
+                              {followUps.map((question) => (
+                                <button
+                                  disabled={isLoading}
+                                  key={question}
+                                  onClick={() => {
+                                    void submitQuestion(question);
+                                  }}
+                                  type="button"
+                                >
+                                  {question}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
                     </footer>
                   ) : null}
                 </article>

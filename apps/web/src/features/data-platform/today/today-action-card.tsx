@@ -12,6 +12,7 @@ type TodayActionCardProps = {
   liveSignals: ScenarioLiveSignals;
   disabled?: boolean;
   now?: number;
+  onAskAssistant: (question?: string) => void;
   onOpen: () => void;
   recommendationMode?: TodayRecommendationMode;
   section: PublicScenarioSectionRead;
@@ -23,6 +24,7 @@ export function TodayActionCard({
   liveSignals,
   disabled = false,
   now,
+  onAskAssistant,
   onOpen,
   recommendationMode = "live",
   section,
@@ -42,46 +44,66 @@ export function TodayActionCard({
   )
     ? enumLabel(view.title)
     : view.title;
+  const assistantQuestion = tKey("assistant.analyzeCategory").replace(
+    "{category}",
+    enumLabel(section.key),
+  );
 
   return (
-    <button
+    <article
       className={`today-action-card today-action-card-${view.tone}`}
-      disabled={disabled}
-      onClick={onOpen}
-      type="button"
     >
-      <span className="today-action-card-icon material-symbols-outlined" aria-hidden="true">
-        {view.icon}
-      </span>
-      <span className="today-action-card-content">
-        <span className="today-action-card-label">
-          {enumLabel(section.key)}
-          {view.signalLabel ? (
-            <span className="today-action-card-live">{view.signalLabel}</span>
+      <button
+        className="today-action-card-main"
+        disabled={disabled}
+        onClick={onOpen}
+        type="button"
+      >
+        <span className="today-action-card-icon material-symbols-outlined" aria-hidden="true">
+          {view.icon}
+        </span>
+        <span className="today-action-card-content">
+          <span className="today-action-card-label">
+            {enumLabel(section.key)}
+            {view.signalLabel ? (
+              <span className="today-action-card-live">{view.signalLabel}</span>
+            ) : null}
+          </span>
+          <strong>{localizedTitle}</strong>
+          <span className="today-action-card-body">{view.body}</span>
+          {view.dataPoints.length > 0 ? (
+            <span className="today-action-card-data" aria-label={tKey("shell.todaySSnapshot")}>
+              {view.dataPoints.map((point) => (
+                <span key={`${section.key}-${point.label}`}>
+                  <small>{point.label}</small>
+                  <b>{point.value}</b>
+                </span>
+              ))}
+            </span>
+          ) : null}
+          {view.detail || view.sources ? (
+            <span className="today-action-card-meta">
+              {view.detail ? <span>{view.detail}</span> : null}
+              {view.sources ? <span>{view.sources}</span> : null}
+            </span>
           ) : null}
         </span>
-        <strong>{localizedTitle}</strong>
-        <span className="today-action-card-body">{view.body}</span>
-        {view.dataPoints.length > 0 ? (
-          <span className="today-action-card-data" aria-label={tKey("shell.todaySSnapshot")}>
-            {view.dataPoints.map((point) => (
-              <span key={`${section.key}-${point.label}`}>
-                <small>{point.label}</small>
-                <b>{point.value}</b>
-              </span>
-            ))}
-          </span>
-        ) : null}
-        {view.detail || view.sources ? (
-          <span className="today-action-card-meta">
-            {view.detail ? <span>{view.detail}</span> : null}
-            {view.sources ? <span>{view.sources}</span> : null}
-          </span>
-        ) : null}
-      </span>
-      <span className="today-action-card-arrow material-symbols-outlined" aria-hidden="true">
-        chevron_right
-      </span>
-    </button>
+        <span className="today-action-card-arrow material-symbols-outlined" aria-hidden="true">
+          chevron_right
+        </span>
+      </button>
+      <button
+        aria-label={tKey("assistant.askAboutCategory").replace("{category}", enumLabel(section.key))}
+        className="today-action-card-assistant"
+        disabled={disabled}
+        onClick={() => onAskAssistant(assistantQuestion)}
+        type="button"
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          info
+        </span>
+        <span>{tKey("assistant.askAboutCategory").replace("{category}", enumLabel(section.key))}</span>
+      </button>
+    </article>
   );
 }
