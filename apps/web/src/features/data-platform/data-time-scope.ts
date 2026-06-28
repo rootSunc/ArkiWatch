@@ -146,5 +146,9 @@ export function scopedStatusLabel(
     return tKey("shell.historicalEvidence");
   }
 
+  if (isStaticDemoTimeScope(timeScope) && tone !== "empty" && tone !== "failed") {
+    return tKey("shell.demoSnapshot");
+  }
+
   return liveStatusLabel(status, tKey, readyKey, staleKey);
 }

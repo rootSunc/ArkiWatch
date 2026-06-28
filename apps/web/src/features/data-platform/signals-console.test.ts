@@ -54,12 +54,11 @@ describe("buildSignalSystemTiles", () => {
       sources: [],
       recentEvents: [],
       language: "en",
-      timezone: "Europe/Helsinki",
     });
 
     expect(tiles[0]).toMatchObject({
       value: "2",
-      detail: "1 Active · 1 Catalog",
+      detail: "1 Active · 0 Empty · 1 Catalog",
     });
     expect(tiles[1]).toMatchObject({
       label: "Recent events",
@@ -95,12 +94,11 @@ describe("buildSignalSystemTiles", () => {
       sources: [],
       recentEvents: [],
       language: "en",
-      timezone: "Europe/Helsinki",
     });
 
     expect(tiles[0]).toMatchObject({
       value: "3",
-      detail: "0 captured · 1 Catalog",
+      detail: "0 captured · 2 Empty · 1 Catalog",
       tone: "neutral",
     });
   });

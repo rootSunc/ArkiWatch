@@ -298,14 +298,38 @@
   font-weight: 700;
 }
 
+.signals-console-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.signals-console-header > div {
+  min-width: 0;
+}
+
 .signals-console-header p,
 .signal-section-header p {
   color: var(--refresh-muted);
   font-size: 12px;
 }
 
+.signals-console-header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--refresh-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.signals-console-header-meta .material-symbols-outlined {
+  font-size: 15px;
+}
+
 .summary-grid-system {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -552,7 +576,7 @@
   }
 
   .summary-grid-system {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -568,6 +592,19 @@
   .mobile-dashboard-header .city-scope-control,
   .mobile-dashboard-header .date-scope-control {
     flex: 1 1 0;
+  }
+
+  .signals-console-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .signals-console-header-meta {
+    white-space: normal;
+  }
+
+  .summary-grid-system {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .desktop-dashboard-heading {

@@ -4,9 +4,11 @@ import {
   buildNavigationQueryParams,
   isCatalogCategoryKey,
   loadReadRecentEventIds,
+  mobileNavigationItems,
   READ_RECENT_EVENTS_STORAGE_KEY,
   resolveNavKey,
 } from "./data-platform-nav-utils";
+import type { PlatformCategory } from "./types";
 
 describe("isCatalogCategoryKey", () => {
   it("keeps reference catalog domains out of the core signal group", () => {
@@ -63,6 +65,30 @@ describe("buildNavigationQueryParams", () => {
 describe("resolveNavKey", () => {
   it("preserves a mobility deep link while categories are still loading", () => {
     expect(resolveNavKey("mobility", [])).toBe("mobility");
+  });
+});
+
+describe("mobileNavigationItems", () => {
+  it("keeps the persistent mobile switcher focused and availability-aware", () => {
+    const categories = [
+      { key: "weather" },
+      { key: "transit" },
+      { key: "air" },
+    ] as PlatformCategory[];
+
+    expect(mobileNavigationItems(categories).map((item) => item.key)).toEqual([
+      "today",
+      "overview",
+      "weather",
+      "mobility",
+    ]);
+  });
+
+  it("does not expose unavailable category destinations", () => {
+    expect(mobileNavigationItems([]).map((item) => item.key)).toEqual([
+      "today",
+      "overview",
+    ]);
   });
 });
 

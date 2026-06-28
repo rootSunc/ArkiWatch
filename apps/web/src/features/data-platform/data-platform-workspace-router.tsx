@@ -30,20 +30,12 @@ export type DataPlatformWorkspaceRouterProps = {
   highlightedEventId: string | null;
   history: PlatformHistoryResponse;
   householdEnergy: EnergyCurrentResponse | null;
-  isAirDetail: boolean;
-  isCityServicesDetail: boolean;
-  isEnergyDetail: boolean;
-  isGeospatialDetail: boolean;
-  isLinkedEventsDetail: boolean;
-  isMobilityDetail: boolean;
-  isRegionalProfileDetail: boolean;
-  isWaterDetail: boolean;
-  isWeatherDetail: boolean;
   onEnergyPanelChange: (panel: EnergyPanelKey) => void;
   onMobilityTabChange: (tab: MobilityTabKey) => void;
   overview: PlatformOverviewResponse;
   roadRail: RoadRailCurrentResponse | null;
   roadRailCategory: PlatformCategory | null;
+  route: WorkspaceRoute | null;
   selectedCategory: PlatformCategory | null;
   selectedEnergyTab: EnergyPanelKey;
   selectedMobilityTab: MobilityTabKey;
@@ -52,26 +44,49 @@ export type DataPlatformWorkspaceRouterProps = {
   weather: WeatherForecastResponse | null;
 };
 
+export type WorkspaceRoute =
+  | "air"
+  | "city_services"
+  | "energy"
+  | "geospatial"
+  | "linked_events"
+  | "mobility"
+  | "regional_profile"
+  | "water"
+  | "weather";
+
+export function workspaceRouteForCategory(
+  categoryKey: string | null | undefined,
+): WorkspaceRoute | null {
+  switch (categoryKey) {
+    case "air":
+    case "city_services":
+    case "energy":
+    case "geospatial":
+    case "mobility":
+    case "regional_profile":
+    case "water":
+    case "weather":
+      return categoryKey;
+    case "events":
+      return "linked_events";
+    default:
+      return null;
+  }
+}
+
 export function DataPlatformWorkspaceRouter({
   airQuality,
   energy,
   highlightedEventId,
   history,
   householdEnergy,
-  isAirDetail,
-  isCityServicesDetail,
-  isEnergyDetail,
-  isGeospatialDetail,
-  isLinkedEventsDetail,
-  isMobilityDetail,
-  isRegionalProfileDetail,
-  isWaterDetail,
-  isWeatherDetail,
   onEnergyPanelChange,
   onMobilityTabChange,
   overview,
   roadRail,
   roadRailCategory,
+  route,
   selectedCategory,
   selectedEnergyTab,
   selectedMobilityTab,
@@ -79,7 +94,7 @@ export function DataPlatformWorkspaceRouter({
   transitCategory,
   weather,
 }: DataPlatformWorkspaceRouterProps) {
-  if (isWeatherDetail) {
+  if (route === "weather") {
     return (
       <WeatherDetailView
         category={selectedCategory}
@@ -90,7 +105,7 @@ export function DataPlatformWorkspaceRouter({
     );
   }
 
-  if (isAirDetail) {
+  if (route === "air") {
     return (
       <AirQualityWorkspace
         airQuality={airQuality}
@@ -101,7 +116,7 @@ export function DataPlatformWorkspaceRouter({
     );
   }
 
-  if (isEnergyDetail) {
+  if (route === "energy") {
     return (
       <EnergyWorkspace
         activePanel={selectedEnergyTab}
@@ -116,7 +131,7 @@ export function DataPlatformWorkspaceRouter({
     );
   }
 
-  if (isMobilityDetail) {
+  if (route === "mobility") {
     return (
       <MobilityWorkspace
         activeTab={selectedMobilityTab}
@@ -132,15 +147,15 @@ export function DataPlatformWorkspaceRouter({
     );
   }
 
-  if (isWaterDetail) {
+  if (route === "water") {
     return <WaterSnowWorkspace category={selectedCategory} timeScope={overview.time_scope} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
-  if (isCityServicesDetail) {
+  if (route === "city_services") {
     return <CityServicesWorkspace category={selectedCategory} timeScope={overview.time_scope} timezone={overview.time_scope?.timezone ?? overview.timezone} />;
   }
 
-  if (isLinkedEventsDetail) {
+  if (route === "linked_events") {
     return (
       <LinkedEventsWorkspace
         category={selectedCategory}
@@ -151,11 +166,11 @@ export function DataPlatformWorkspaceRouter({
     );
   }
 
-  if (isGeospatialDetail) {
+  if (route === "geospatial") {
     return <GeospatialWorkspace category={selectedCategory} timeScope={overview.time_scope} />;
   }
 
-  if (isRegionalProfileDetail) {
+  if (route === "regional_profile") {
     return <RegionalProfileWorkspace category={selectedCategory} timeScope={overview.time_scope} />;
   }
 

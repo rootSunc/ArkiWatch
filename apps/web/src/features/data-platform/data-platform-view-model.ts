@@ -358,6 +358,7 @@ export function signalReadout(
   weather: WeatherForecastResponse | null,
   airQuality: AirQualityCurrentResponse | null,
   energy: EnergyCurrentResponse | null,
+  householdEnergy: EnergyCurrentResponse | null,
   roadRail: RoadRailCurrentResponse | null,
   transit: TransitCurrentResponse | null,
   language: LanguageMode,
@@ -367,6 +368,9 @@ export function signalReadout(
   const usableWeather = weather && !isEmptyStatus(weather.status) ? weather : null;
   const usableAirQuality = airQuality && !isEmptyStatus(airQuality.status) ? airQuality : null;
   const usableEnergy = energy && !isEmptyStatus(energy.status) ? energy : null;
+  const usableHouseholdEnergy = householdEnergy && !isEmptyStatus(householdEnergy.status)
+    ? householdEnergy
+    : null;
   const usableRoadRail = roadRail && !isEmptyStatus(roadRail.status) ? roadRail : null;
   const usableTransit = transit && !isEmptyStatus(transit.status) ? transit : null;
   const categoryEmpty = isEmptyStatus(category.status);
@@ -455,18 +459,21 @@ export function signalReadout(
   }
 
   if (category.key === "energy") {
-    const window = usableEnergy?.current_window;
+    const householdWindow = usableHouseholdEnergy?.current_window;
+    const systemWindow = usableEnergy?.current_window;
+    const window = householdWindow ?? systemWindow;
+    const isHouseholdPrice = Boolean(householdWindow);
     return {
       label: translateMessageKey(
         language,
-        window?.unit?.includes("kWh") ? "shell.bestPrice" : "shell.bestWindow",
+        isHouseholdPrice ? "shell.bestPrice" : "shell.currentGridLoad",
       ),
       value: categoryEmpty
         ? translateMessageKey(language, "shell.na")
         : window !== null && window !== undefined
           ? `${window.average_value.toFixed(2)}${window.unit ? ` ${window.unit}` : ""}`
           : formatMetricValue(metricByKey(category, "low_energy_window"), language),
-      helpKey: window?.unit?.includes("kWh") ? "best_price" : "best_window",
+      helpKey: isHouseholdPrice ? "best_price" : "grid_load",
       tone: window ? "good" : tone,
     };
   }

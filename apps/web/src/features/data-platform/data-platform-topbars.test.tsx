@@ -14,6 +14,7 @@ describe("DataPlatformWorkspaceTopbar", () => {
           availability={[]}
           city="Helsinki"
           date={null}
+          isDemo={false}
           isAuthenticated={false}
           isCityPending={false}
           isDatePending={false}

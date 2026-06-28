@@ -435,6 +435,7 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
 export function DateScopeSelector({
   availability = [],
   date,
+  isDemo = false,
   isPending,
   language,
   onCalendarOpen,
@@ -442,6 +443,7 @@ export function DateScopeSelector({
 }: {
   availability?: PlatformHistoryAvailabilityDay[];
   date: string | null;
+  isDemo?: boolean;
   isPending: boolean;
   language: LanguageMode;
   onCalendarOpen?: () => void;
@@ -459,7 +461,10 @@ export function DateScopeSelector({
     monthKeyFromDateValue(displayValue),
   );
   const isHistorical = date !== null;
-  const statusLabel = translateMessageKey(language, isHistorical ? "shell.historyMode" : "shell.liveMode");
+  const statusLabel = translateMessageKey(
+    language,
+    isHistorical ? "shell.historyMode" : isDemo ? "shell.demoSnapshot" : "shell.liveMode",
+  );
   const valueLabel = isHistorical
     ? formatDateScopeValue(displayValue, language)
     : translateMessageKey(language, "shell.navToday");

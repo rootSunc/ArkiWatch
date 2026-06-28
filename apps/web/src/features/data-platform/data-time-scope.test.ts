@@ -83,6 +83,24 @@ describe("data time scope presentation", () => {
     ).toBe("shell.empty");
   });
 
+  it("does not call a static demo snapshot a live feed", () => {
+    const demo = {
+      mode: "live",
+      is_demo: true,
+      date: null,
+      timezone: "Europe/Helsinki",
+      reference_time: "2026-05-31T20:59:59Z",
+      window_start: "2026-05-31T20:59:59Z",
+      window_end: "2026-06-01T14:59:59Z",
+    } as const;
+    const demoLabel = (key: string) =>
+      key === "shell.demoSnapshot" ? "Static demo snapshot" : key;
+
+    expect(
+      scopedStatusLabel("ready", demo, demoLabel, "live.ready", "live.stale"),
+    ).toBe("Static demo snapshot");
+  });
+
   it("uses the snapshot reference instead of the calendar window start", () => {
     expect(scopedReferenceTime(historical)).toBe("2026-05-31T20:59:59Z");
     expect(

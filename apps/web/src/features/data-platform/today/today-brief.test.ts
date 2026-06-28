@@ -71,6 +71,39 @@ describe("buildPlanItems", () => {
       "scenario-info",
     ]);
   });
+
+  it("does not repeat a source event when a normalized scenario covers it", () => {
+    const items = [
+      {
+        ...timelineItem("transit-event", "HIGH", "2026-08-09T08:00:00Z", "event"),
+        categoryKey: "transit",
+        endsAt: "2026-08-09T11:00:00Z",
+      },
+      {
+        ...timelineItem("commute-scenario", "HIGH", "2026-08-09T08:00:00Z"),
+        categoryKey: "mobility",
+        scenarioKey: "commute",
+        endsAt: "2026-08-09T11:00:00Z",
+      },
+    ];
+
+    expect(buildPlanItems(items, Date.parse("2026-08-09T08:30:00Z")).map((item) => item.id)).toEqual([
+      "commute-scenario",
+    ]);
+  });
+
+  it("removes the primary recommendation scenario from the supporting plan", () => {
+    const items = [
+      { ...timelineItem("commute-scenario", "HIGH", "2026-08-09T08:00:00Z"), scenarioKey: "commute" },
+      { ...timelineItem("outdoor-scenario", "MEDIUM", "2026-08-09T09:00:00Z"), scenarioKey: "outdoor" },
+    ];
+
+    expect(
+      buildPlanItems(items, Date.parse("2026-08-09T08:30:00Z"), {
+        excludeScenarioKey: "commute",
+      }).map((item) => item.id),
+    ).toEqual(["outdoor-scenario"]);
+  });
 });
 
 describe("isPlaceholderRecommendation", () => {

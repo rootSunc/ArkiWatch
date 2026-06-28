@@ -74,7 +74,12 @@ export function WorkspaceEvidenceHeader({
         {sourceLabel ? <span className="workspace-evidence-source">{sourceLabel}</span> : null}
         <span className="workspace-evidence-separator" aria-hidden="true">·</span>
         <time dateTime={observedAt ?? undefined}>{timestamp}</time>
-        {children}
+        {children ? (
+          <details className="workspace-evidence-extra">
+            <summary>{tKey("shell.details")}</summary>
+            <div className="workspace-evidence-extra-content">{children}</div>
+          </details>
+        ) : null}
       </div>
     </header>
   );

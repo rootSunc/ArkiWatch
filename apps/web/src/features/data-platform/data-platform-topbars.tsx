@@ -28,6 +28,7 @@ type ScopeControlProps = {
   availability: PlatformHistoryAvailabilityDay[];
   city: string;
   date: string | null;
+  isDemo: boolean;
   isAuthenticated: boolean;
   isCityPending: boolean;
   isDatePending: boolean;
@@ -117,6 +118,7 @@ export function DataPlatformMobileHeader({
   currentUserInitials,
   currentUserLabel,
   date,
+  isDemo,
   isAuthenticated,
   isCityPending,
   isDatePending,
@@ -194,6 +196,7 @@ export function DataPlatformMobileHeader({
           <DateScopeSelector
             availability={availability}
             date={date}
+            isDemo={isDemo}
             isPending={isDatePending}
             language={language}
             onCalendarOpen={onCalendarOpen}
@@ -264,6 +267,7 @@ export function DataPlatformWorkspaceTopbar({
   assistantButtonRef,
   city,
   date,
+  isDemo,
   isAuthenticated,
   isCityPending,
   isDatePending,
@@ -343,6 +347,7 @@ export function DataPlatformWorkspaceTopbar({
           availability={availability}
           city={city}
           date={date}
+          isDemo={isDemo}
           isAuthenticated={isAuthenticated}
           isCityPending={isCityPending}
           isDatePending={isDatePending}
@@ -396,6 +401,7 @@ export function DataPlatformDesktopHeader({
   availability,
   city,
   date,
+  isDemo,
   isAuthenticated,
   isCityPending,
   isDatePending,
@@ -460,6 +466,7 @@ export function DataPlatformDesktopHeader({
           availability={availability}
           city={city}
           date={date}
+          isDemo={isDemo}
           isAuthenticated={isAuthenticated}
           isCityPending={isCityPending}
           isDatePending={isDatePending}

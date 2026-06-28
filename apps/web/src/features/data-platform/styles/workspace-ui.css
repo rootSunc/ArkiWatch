@@ -172,6 +172,48 @@
   color: var(--ui-refresh-line);
 }
 
+.workspace-evidence-extra {
+  position: relative;
+  color: var(--ui-refresh-muted);
+  font-size: 11px;
+}
+
+.workspace-evidence-extra summary {
+  cursor: pointer;
+  color: var(--ui-refresh-blue);
+  font-weight: 650;
+  list-style: none;
+}
+
+.workspace-evidence-extra summary::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-evidence-extra summary::after {
+  content: "⌄";
+  display: inline-block;
+  margin-left: 4px;
+  transition: transform 150ms ease;
+}
+
+.workspace-evidence-extra[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.workspace-evidence-extra-content {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: min(360px, 80vw);
+  border: 1px solid var(--ui-refresh-line);
+  border-radius: var(--ui-refresh-radius-sm);
+  background: var(--ui-refresh-surface);
+  box-shadow: var(--ui-refresh-shadow);
+  padding: 9px 11px;
+  text-align: left;
+}
+
 .workspace-empty-state {
   display: grid;
   min-height: 280px;
@@ -227,6 +269,11 @@
   .workspace-evidence-meta {
     justify-content: flex-start;
     text-align: left;
+  }
+
+  .workspace-evidence-extra-content {
+    right: auto;
+    left: 0;
   }
 
   .weather-detail-header,

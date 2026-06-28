@@ -182,6 +182,18 @@ export function navItemAvailable(item: NavItem, categories: PlatformCategory[]):
   return categories.some((category) => category.key === item.categoryKey);
 }
 
+/**
+ * Keep the mobile shell focused on the few destinations that work as a
+ * persistent thumb-friendly task switcher. The full navigation remains in the
+ * side drawer and is still driven by PRIMARY_NAV_ITEMS.
+ */
+export function mobileNavigationItems(categories: PlatformCategory[]): NavItem[] {
+  const mobilePriority = new Set([TODAY_NAV_KEY, FALLBACK_NAV_KEY, "weather", MOBILITY_NAV_KEY]);
+  return PRIMARY_NAV_ITEMS.filter(
+    (item) => mobilePriority.has(item.key) && navItemAvailable(item, categories),
+  );
+}
+
 export function resolveNavKey(
   requestedKey: string | null,
   categories: PlatformCategory[],

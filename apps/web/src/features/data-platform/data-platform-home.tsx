@@ -13,10 +13,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   formatTimestamp,
-  severityTone,
 } from "@/features/shared/format";
 import { appEnv } from "@/lib/env";
-import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import "./data-platform.css";
 
@@ -28,12 +26,11 @@ import {
 import { localizedContent } from "./content-localization";
 import {
   HistoricalWarningBanner,
-  PRIMARY_NAV_ITEMS,
   RefreshErrorBanner,
   saveCityValue,
   storedCityValue,
 } from "./data-platform-shell";
-import type { DashboardTone, NavItem, WorkspaceMode } from "./data-platform-shell";
+import type { NavItem, WorkspaceMode } from "./data-platform-shell";
 import {
   DataPlatformSideNav,
   DataPlatformSideNavBackdrop,
@@ -63,7 +60,7 @@ import {
   categoryByKey,
   currentSearchParams,
   isCatalogCategoryKey,
-  navItemAvailable,
+  mobileNavigationItems,
   pathWithParams,
   profileInitials,
   resolveNavKey,
@@ -77,7 +74,6 @@ import {
   eventAnchorId,
   eventNavigationId,
   eventTarget,
-  recentEventDetails,
   RECENT_EVENT_LIMIT,
 } from "./recent-events";
 import type { MobilityTabKey } from "./mobility-workspace";
@@ -89,18 +85,24 @@ import { buildCrossDomainTimeline } from "./cross-domain-timeline";
 import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
 import { TodayOverview } from "./today/today-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
-import { DataPlatformWorkspaceRouter } from "./data-platform-workspace-router";
+import {
+  DataPlatformWorkspaceRouter,
+  workspaceRouteForCategory,
+} from "./data-platform-workspace-router";
 import { SignalCard } from "./signal-card";
 import {
   dashboardShellClassName,
   dashboardSideNavClassName,
 } from "./data-platform-layout";
 import { buildSignalSystemTiles } from "./signals-console";
+import { SignalObservatoryOverview } from "./signal-observatory-overview";
+import { MobileBottomNav } from "./mobile-bottom-nav";
+import { RecentEventsPanel } from "./recent-events-panel";
 import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
 import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
-import { scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
+import { scopedReferenceTime } from "./data-time-scope";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import { viewerStateLabel } from "./viewer-state";
@@ -116,10 +118,7 @@ import {
   recentEventLabel,
   buildMobilityCategory,
   displayTitle,
-  eventAttributeRows,
   eventCategoryLabel,
-  eventTypeLabel,
-  eventTimeLabel,
   eventMatchesSearch,
   isMobilityCategoryKey,
   isNotificationEvent,
@@ -610,9 +609,8 @@ export function DataPlatformHome({
         sources,
         recentEvents,
         language: languageMode,
-        timezone: platformTimezone,
       }),
-    [displayCategories, languageMode, platformTimezone, recentEvents, sources, visibleOverview],
+    [displayCategories, languageMode, recentEvents, sources, visibleOverview],
   );
   const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
   const visibleCategories = selectedCategories.filter((category) =>
@@ -656,9 +654,6 @@ export function DataPlatformHome({
   const selectedEvent = selectedEventId
     ? (eventById.get(selectedEventId) ?? null)
     : null;
-  const selectedEventRows = selectedEvent
-    ? eventAttributeRows(selectedEvent, languageMode)
-    : [];
   const priorityVisibleEvent = pickPriorityEvent(visibleNotificationEvents);
   const overallScopeLabel = selectedCategory
     ? displayTitle(selectedCategory, languageMode)
@@ -686,25 +681,8 @@ export function DataPlatformHome({
         )
       : null) ??
     tKey("shell.recentEventsRemainAvailableBelowForSourceLevelInspection");
-  const isWeatherDetail = selectedCategory?.key === "weather";
-  const isAirDetail = selectedCategory?.key === "air";
-  const isEnergyDetail = selectedCategory?.key === "energy";
-  const isMobilityDetail = selectedCategory?.key === MOBILITY_NAV_KEY;
-  const isWaterDetail = selectedCategory?.key === "water";
-  const isCityServicesDetail = selectedCategory?.key === "city_services";
-  const isLinkedEventsDetail = selectedCategory?.key === "events";
-  const isGeospatialDetail = selectedCategory?.key === "geospatial";
-  const isRegionalProfileDetail = selectedCategory?.key === "regional_profile";
-  const isDetailPage =
-    isWeatherDetail ||
-    isAirDetail ||
-    isEnergyDetail ||
-    isMobilityDetail ||
-    isWaterDetail ||
-    isCityServicesDetail ||
-    isLinkedEventsDetail ||
-    isGeospatialDetail ||
-    isRegionalProfileDetail;
+  const workspaceRoute = workspaceRouteForCategory(selectedCategory?.key);
+  const isDetailPage = workspaceRoute !== null;
   const showsWorkspaceTopbar =
     isDetailPage ||
     selectedNavKey === FALLBACK_NAV_KEY ||
@@ -736,6 +714,16 @@ export function DataPlatformHome({
   function closeEventDetail(): void {
     setSelectedEventId(null);
     window.requestAnimationFrame(() => eventDetailTriggerRef.current?.focus());
+  }
+
+  function selectRecentEvent(event: PlatformEvent, trigger: HTMLButtonElement): void {
+    if (selectedEventId === event.id) {
+      closeEventDetail();
+      return;
+    }
+
+    eventDetailTriggerRef.current = trigger;
+    setSelectedEventId(event.id);
   }
 
   function openRecentEvent(event: PlatformEvent): void {
@@ -1051,6 +1039,7 @@ export function DataPlatformHome({
     city: selectedCity,
     date: selectedDate,
     isAuthenticated,
+    isDemo: appEnv.demoMode,
     // The router transition ends before the new scope's data arrives; keep the
     // control in its pending state until the placeholder is replaced.
     isCityPending: isScopePending,
@@ -1070,15 +1059,7 @@ export function DataPlatformHome({
     showExport: workspaceMode === "data" && !appEnv.demoMode,
     renderAuthActionButton,
   };
-  const mobileNavItems = useMemo(
-    () => {
-      const mobilePriority = new Set(["today", "overview", "weather", "mobility"]);
-      return PRIMARY_NAV_ITEMS.filter(
-        (item) => mobilePriority.has(item.key) && navItemAvailable(item, categories),
-      );
-    },
-    [categories],
-  );
+  const mobileNavItems = useMemo(() => mobileNavigationItems(categories), [categories]);
 
   // Streamed first paint: the overview arrives after the shell, and without the
   // overview the nav and workspaces would render as empty states rather than as
@@ -1295,20 +1276,12 @@ export function DataPlatformHome({
                   highlightedEventId={highlightedEventId}
                   history={history}
                   householdEnergy={householdEnergy}
-                  isAirDetail={isAirDetail}
-                  isCityServicesDetail={isCityServicesDetail}
-                  isEnergyDetail={isEnergyDetail}
-                  isGeospatialDetail={isGeospatialDetail}
-                  isLinkedEventsDetail={isLinkedEventsDetail}
-                  isMobilityDetail={isMobilityDetail}
-                  isRegionalProfileDetail={isRegionalProfileDetail}
-                  isWaterDetail={isWaterDetail}
-                  isWeatherDetail={isWeatherDetail}
                   onEnergyPanelChange={selectEnergyTab}
                   onMobilityTabChange={selectMobilityTab}
                   overview={visibleOverview}
                   roadRail={roadRail}
                   roadRailCategory={roadRailCategory}
+                  route={workspaceRoute}
                   selectedCategory={selectedCategory}
                   selectedEnergyTab={selectedEnergyTab}
                   selectedMobilityTab={selectedMobilityTab}
@@ -1326,47 +1299,11 @@ export function DataPlatformHome({
                       )}
                     </p>
                   ) : null}
-                  <section className="signals-console-overview" aria-label={tKey("shell.signalObservatory")}>
-                    <header className="signals-console-header">
-                      <div>
-                        <h3>
-                          <span className="material-symbols-outlined" aria-hidden="true">
-                            monitoring
-                          </span>
-                          {tKey("shell.signalObservatory")}
-                        </h3>
-                        <p>{tKey("shell.signalObservatoryLead")}</p>
-                      </div>
-                    </header>
-                    <div
-                      className="summary-grid summary-grid-system"
-                      aria-label={tKey("shell.signalSystemSummary")}
-                    >
-                      {signalSystemTiles.map((tile) => (
-                        <article
-                          className={`metric-tile metric-tile-${tile.tone} signal-system-tile`}
-                          key={tile.key}
-                        >
-                          <div>
-                            <span>{tile.label}</span>
-                            <span className="material-symbols-outlined" aria-hidden="true">
-                              {tile.icon}
-                            </span>
-                          </div>
-                          <strong
-                            className={
-                              tile.valueStyle === "emphasis"
-                                ? "metric-tile-value-emphasis"
-                                : "metric-tile-value-body"
-                            }
-                          >
-                            {tile.value}
-                          </strong>
-                          <small className="metric-tile-detail">{tile.detail}</small>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
+                  <SignalObservatoryOverview
+                    overview={visibleOverview}
+                    platformTimezone={platformTimezone}
+                    tiles={signalSystemTiles}
+                  />
 
                   <CrossDomainTimelinePanel
                     collapsible
@@ -1451,331 +1388,36 @@ export function DataPlatformHome({
                       </details>
                     ) : null}
 
-                    {isEventsExpanded ? (
-                      <aside
-                        className="events-panel events-panel-expanded"
-                        aria-label={tKey("shell.recentEvents")}
-                      >
-                        <header>
-                          <button
-                            aria-controls="recent-events-timeline"
-                            aria-expanded={isEventsExpanded}
-                            aria-label={tKey("shell.collapseRecentEvents")}
-                            className="events-panel-toggle"
-                            onClick={() =>
-                              setIsEventsExpanded((isExpanded) => !isExpanded)
-                            }
-                            type="button"
-                          >
-                            <span
-                              className={`events-panel-icon events-panel-icon-${latestEventTone}`}
-                              aria-hidden="true"
-                            >
-                              <span className="material-symbols-outlined">
-                                notifications
-                              </span>
-                            </span>
-                            <span className="events-panel-copy">
-                              <span className="events-panel-title">
-                                <span className="events-panel-heading">
-                                  {tKey("shell.recentEvents2")}
-                                </span>
-                                <span className="events-count-badge">
-                                  {unreadVisibleEvents.length}
-                                </span>
-                              </span>
-                              <span className="events-panel-summary">
-                                {latestUnreadEvent
-                                  ? `${eventTimeLabel(categories, latestUnreadEvent, languageMode, eventReferenceAt, platformTimezone)} · ${localizedContent(
-                                      languageMode,
-                                      latestUnreadEvent.title,
-                                      latestUnreadEvent.title_zh,
-                                    )}`
-                                  : tKey("shell.noRecentEventsMatchTheCurrentView")}
-                              </span>
-                            </span>
-                            <span
-                              className="material-symbols-outlined events-panel-chevron"
-                              aria-hidden="true"
-                            >
-                              expand_less
-                            </span>
-                          </button>
-                        </header>
-                        <div
-                          className="event-timeline"
-                          hidden={!isEventsExpanded}
-                          id="recent-events-timeline"
-                        >
-                          <section
-                            className={`overall-notification overall-notification-${latestEventTone}`}
-                            aria-label={tKey("shell.overallNotification")}
-                            aria-live="polite"
-                          >
-                            <div className="overall-notification-main">
-                              <span
-                                className={`events-panel-icon events-panel-icon-${latestEventTone}`}
-                                aria-hidden="true"
-                              >
-                                <span className="material-symbols-outlined">
-                                  notifications
-                                </span>
-                              </span>
-                              <div className="overall-notification-copy">
-                                <span className="overall-notification-kicker">
-                                  {tKey("shell.overallNotification")} ·{" "}
-                                  {cityLabel(selectedCity)}
-                                </span>
-                                <strong>{overallNotificationTitle}</strong>
-                                <p>{overallNotificationBody}</p>
-                              </div>
-                            </div>
-                            <div className="overall-notification-meta">
-                              <span>
-                                {tKey("shell.updated")}{" "}
-                                {scopedDataTimestamp(
-                                  visibleOverview.checked_at,
-                                  visibleOverview.time_scope,
-                                  languageMode,
-                                  tKey,
-                                  "shell.notCollected",
-                                  platformTimezone,
-                                )}
-                              </span>
-                              <span
-                                className={`status-badge status-badge-${latestEventTone}`}
-                              >
-                                {visibleNotificationEvents.length > 0
-                                  ? tKey("shell.needsAttention")
-                                  : tKey("shell.nominal")}
-                              </span>
-                            </div>
-                            <p className="overall-notification-detail">
-                              {overallNotificationDetail}
-                            </p>
-                          </section>
-                          {selectedEvent ? (
-                            <section
-                              className="event-detail-panel"
-                              aria-label={tKey("shell.eventDetail")}
-                            >
-                              <header className="event-detail-header">
-                                <div>
-                                  <span className="event-detail-kicker">
-                                    {eventCategoryLabel(
-                                      categories,
-                                      selectedEvent,
-                                      languageMode,
-                                    )}{" "}
-                                    · {eventTypeLabel(selectedEvent.event_type, languageMode)}
-                                  </span>
-                                  <strong>
-                                    {localizedContent(
-                                      languageMode,
-                                      selectedEvent.title,
-                                      selectedEvent.title_zh,
-                                    )}
-                                  </strong>
-                                </div>
-                                <button
-                                  aria-label={tKey("shell.closeEventDetail")}
-                                  className="event-detail-close"
-                                  ref={eventDetailCloseRef}
-                                  onClick={closeEventDetail}
-                                  title={tKey("shell.closeEventDetail")}
-                                  type="button"
-                                >
-                                  <span
-                                    className="material-symbols-outlined"
-                                    aria-hidden="true"
-                                  >
-                                    close
-                                  </span>
-                                </button>
-                                <button
-                                  aria-label={tKey("shell.openWorkspace")}
-                                  className="event-detail-close"
-                                  onClick={() => openRecentEvent(selectedEvent)}
-                                  title={tKey("shell.openWorkspace")}
-                                  type="button"
-                                >
-                                  <span
-                                    className="material-symbols-outlined"
-                                    aria-hidden="true"
-                                  >
-                                    open_in_new
-                                  </span>
-                                </button>
-                              </header>
-                              <p>
-                                {localizedContent(
-                                  languageMode,
-                                  selectedEvent.body,
-                                  selectedEvent.body_zh,
-                                )}
-                              </p>
-                              <div className="event-detail-meta">
-                                <span>
-                                  {tKey("shell.validity")}:{" "}
-                                  {formatTimestamp(
-                                    selectedEvent.starts_at,
-                                    "dateTime",
-                                    languageMode,
-                                    platformTimezone,
-                                  )}{" "}
-                                  -{" "}
-                                  {formatTimestamp(
-                                    selectedEvent.ends_at,
-                                    "dateTime",
-                                    languageMode,
-                                    platformTimezone,
-                                  )}
-                                </span>
-                                <span>
-                                  {tKey("shell.sources")}:{" "}
-                                  {selectedEvent.source_codes.join(", ") ||
-                                    tKey("shell.derived")}
-                                </span>
-                              </div>
-                              {selectedEvent.evidence.length > 0 ? (
-                                <div className="event-detail-evidence">
-                                  <span>{tKey("shell.evidence")}</span>
-                                  <div className="event-tags">
-                                    {selectedEvent.evidence.map((item) => (
-                                      <span key={item}>{item}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null}
-                              <dl className="event-detail-attributes">
-                                {selectedEventRows.length > 0 ? (
-                                  selectedEventRows.map((row) => (
-                                    <div key={row.label}>
-                                      <dt>{row.label}</dt>
-                                      <dd>{row.value}</dd>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div>
-                                    <dt>{tKey("shell.details")}</dt>
-                                    <dd>{tKey("shell.noStructuredAttributes")}</dd>
-                                  </div>
-                                )}
-                              </dl>
-                            </section>
-                          ) : null}
-                          {visibleEvents.length > 0 ? (
-                            visibleEvents.map((event) => {
-                              const tone = severityTone(
-                                event.severity,
-                              ) as DashboardTone;
-                              const isRead = readRecentEventIds.has(event.id);
-                              const isSelected = selectedEventId === event.id;
-                              const details = recentEventDetails(
-                                event,
-                                languageMode,
-                                tKey,
-                                platformTimezone,
-                              );
-                              return (
-                                <article
-                                  className={[
-                                    "timeline-item",
-                                    `timeline-item-${tone}`,
-                                    isSelected ? "timeline-item-selected" : null,
-                                    isRead
-                                      ? "timeline-item-read"
-                                      : "timeline-item-unread",
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" ")}
-                                  key={event.id}
-                                >
-                                  <span
-                                    className={`timeline-dot timeline-dot-${tone}`}
-                                    aria-hidden="true"
-                                  />
-                                  <button
-                                    aria-expanded={isSelected}
-                                    aria-label={`${tKey("shell.openEventDetail")}: ${localizedContent(
-                                      languageMode,
-                                      event.title,
-                                      event.title_zh,
-                                    )}`}
-                                    className="timeline-item-content"
-                                    onClick={(clickEvent) => {
-                                      markRecentEventRead(event.id);
-                                      if (isSelected) {
-                                        closeEventDetail();
-                                        return;
-                                      }
-                                      eventDetailTriggerRef.current = clickEvent.currentTarget;
-                                      setSelectedEventId(event.id);
-                                    }}
-                                    type="button"
-                                  >
-                                    <time>
-                                      {eventTimeLabel(
-                                        categories,
-                                        event,
-                                        languageMode,
-                                        eventReferenceAt,
-                                        platformTimezone,
-                                      )}
-                                    </time>
-                                    <span className="timeline-item-heading">
-                                      <h4>
-                                        {localizedContent(
-                                          languageMode,
-                                          event.title,
-                                          event.title_zh,
-                                        )}
-                                      </h4>
-                                      <span
-                                        className={
-                                          isRead
-                                            ? "timeline-read-state timeline-read-state-read"
-                                            : "timeline-read-state timeline-read-state-unread"
-                                        }
-                                      >
-                                        {isRead ? tKey("shell.read") : tKey("shell.unread")}
-                                      </span>
-                                    </span>
-                                    <p>
-                                      {localizedContent(
-                                        languageMode,
-                                        event.body,
-                                        event.body_zh,
-                                      )}
-                                    </p>
-                                    {details.length > 0 ? (
-                                      <div className="event-detail-chips">
-                                        {details.map((detail) => (
-                                          <span key={detail.key}>
-                                            <strong>{detail.label}</strong>
-                                            {detail.value}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : null}
-                                    <div className="event-tags">
-                                      <span>{eventTypeLabel(event.event_type, languageMode)}</span>
-                                      {event.evidence[0] ? (
-                                        <span>{event.evidence[0]}</span>
-                                      ) : null}
-                                    </div>
-                                  </button>
-                                </article>
-                              );
-                            })
-                          ) : (
-                            <div className="dashboard-empty-state">
-                              {tKey("shell.noRecentEventsMatchTheCurrentView")}
-                            </div>
-                          )}
-                        </div>
-                      </aside>
-                    ) : null}
+                    <RecentEventsPanel
+                      categories={categories}
+                      checkedAt={visibleOverview.checked_at}
+                      city={selectedCity}
+                      eventDetailCloseRef={eventDetailCloseRef}
+                      eventReferenceAt={eventReferenceAt}
+                      isExpanded={isEventsExpanded}
+                      latestEventTone={latestEventTone}
+                      latestUnreadEvent={latestUnreadEvent}
+                      onCloseEventDetail={closeEventDetail}
+                      onMarkEventRead={markRecentEventRead}
+                      onOpenEvent={openRecentEvent}
+                      onSelectEvent={selectRecentEvent}
+                      onToggleExpanded={() =>
+                        setIsEventsExpanded((isExpanded) => !isExpanded)
+                      }
+                      platformTimezone={platformTimezone}
+                      readRecentEventIds={readRecentEventIds}
+                      selectedEvent={selectedEvent}
+                      selectedEventId={selectedEventId}
+                      timeScope={visibleOverview.time_scope}
+                      unreadVisibleEvents={unreadVisibleEvents}
+                      visibleEvents={visibleEvents}
+                      visibleNotificationEvents={visibleNotificationEvents}
+                      overallNotification={{
+                        body: overallNotificationBody,
+                        detail: overallNotificationDetail,
+                        title: overallNotificationTitle,
+                      }}
+                    />
 
                     {!isHistorical ? <SourceHealthStrip overview={visibleOverview} /> : null}
                   </div>
@@ -1813,65 +1455,14 @@ export function DataPlatformHome({
             </div>
           </main>
 
-          <footer
-            className="mobile-dashboard-footer"
-            aria-label={tKey("shell.mobileNavigation")}
-          >
-            <nav className="mobile-bottom-nav" aria-label={tKey("shell.signalNavigation")}>
-              {mobileNavItems.map((item) => {
-                const isActive =
-                  selectedNavKey === item.key ||
-                  (item.categoryKey != null &&
-                    selectedNavKey === item.categoryKey);
-                return (
-                  <button
-                    aria-current={isActive ? "page" : undefined}
-                    className={
-                      isActive
-                        ? "mobile-bottom-nav-item mobile-bottom-nav-item-active"
-                        : "mobile-bottom-nav-item"
-                    }
-                    key={item.key}
-                    onClick={() => selectNavItem(item)}
-                    title={tKey(`shell.${item.labelKey}`)}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      {item.icon}
-                    </span>
-                    <span>{tKey(`shell.${item.labelKey}`)}</span>
-                  </button>
-                );
-              })}
-              <button
-                className="mobile-bottom-nav-item"
-                onClick={() => setIsMobileMenuOpen(true)}
-                title={tKey("shell.openNavigation")}
-                type="button"
-              >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  menu
-                </span>
-                <span>{tKey("shell.more")}</span>
-              </button>
-              <button
-                aria-disabled={isScopePending || undefined}
-                className="mobile-bottom-nav-item mobile-bottom-nav-assistant"
-                disabled={isScopePending}
-                onClick={() => requestAssistant()}
-                ref={assistantNavButtonRef}
-                title={
-                  isScopePending
-                    ? tKey("shell.scopeUpdating")
-                    : tKey("assistant.openAssistant")
-                }
-                type="button"
-              >
-                <AssistantGlyph />
-                <span>{tKey("shell.assistant")}</span>
-              </button>
-            </nav>
-          </footer>
+          <MobileBottomNav
+            assistantButtonRef={assistantNavButtonRef}
+            isScopePending={isScopePending}
+            items={mobileNavItems}
+            onOpenAssistant={requestAssistant}
+            onSelectNavItem={selectNavItem}
+            selectedNavKey={selectedNavKey}
+          />
           <AssistantWidget
             city={selectedCity}
             date={historicalDate}

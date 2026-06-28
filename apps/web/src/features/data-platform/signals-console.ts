@@ -4,7 +4,7 @@ import { translateMessageKey } from "./i18n";
 import { isCatalogCategoryKey } from "./data-platform-nav-utils";
 import { healthySourceCount, isCatalogOnlySource, isSourceTrackedForHealth } from "./source-health";
 import { isEmptyStatus } from "./platform-status";
-import { isHistoricalTimeScope, scopedDataTimestamp } from "./data-time-scope";
+import { isHistoricalTimeScope } from "./data-time-scope";
 import type {
   DashboardSource,
   PlatformCategory,
@@ -32,14 +32,12 @@ export function buildSignalSystemTiles({
   sources,
   recentEvents,
   language,
-  timezone,
 }: {
   overview: PlatformOverviewResponse | null;
   categories: PlatformCategory[];
   sources: DashboardSource[];
   recentEvents: PlatformEvent[];
   language: LanguageMode;
-  timezone?: string;
 }): SignalSystemTile[] {
 
   const trackedSources = sources.filter(isSourceTrackedForHealth);
@@ -53,6 +51,9 @@ export function buildSignalSystemTiles({
   const availableCoreCategories = categories.filter(
     (category) => !isCatalogCategoryKey(category.key) && !isEmptyStatus(category.status),
   ).length;
+  const unavailableCoreCategories = categories.filter(
+    (category) => !isCatalogCategoryKey(category.key) && isEmptyStatus(category.status),
+  ).length;
   const isHistorical = isHistoricalTimeScope(overview?.time_scope);
 
   return [
@@ -60,7 +61,7 @@ export function buildSignalSystemTiles({
       key: "signal_categories",
       label: translateMessageKey(language, "shell.signalCategories"),
       value: String(categories.length),
-      detail: `${availableCoreCategories} ${translateMessageKey(language, isHistorical ? "shell.captured" : "shell.active")} · ${catalogCategoryCount} ${translateMessageKey(language, "shell.catalog")}`,
+      detail: `${availableCoreCategories} ${translateMessageKey(language, isHistorical ? "shell.captured" : "shell.active")} · ${unavailableCoreCategories} ${translateMessageKey(language, "shell.empty")} · ${catalogCategoryCount} ${translateMessageKey(language, "shell.catalog")}`,
       tone: availableCoreCategories > 0 ? "good" : "neutral",
       icon: "hub",
       valueStyle: "emphasis",
@@ -93,22 +94,6 @@ export function buildSignalSystemTiles({
       tone: issueSources > 0 ? "warn" : trackedSources.length > 0 ? "good" : "neutral",
       icon: "database",
       valueStyle: "emphasis",
-    },
-    {
-      key: "last_platform_check",
-      label: translateMessageKey(language, "shell.lastPlatformCheck"),
-      value: scopedDataTimestamp(
-        overview?.checked_at ?? null,
-        overview?.time_scope,
-        language,
-        (key) => translateMessageKey(language, key),
-        "shell.notCollected",
-        timezone ?? overview?.time_scope?.timezone ?? overview?.timezone,
-      ),
-      detail: overview?.coverage_area ?? translateMessageKey(language, "shell.regionalScope"),
-      tone: overview ? "good" : "neutral",
-      icon: "schedule",
-      valueStyle: "body",
     },
   ];
 }

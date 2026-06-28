@@ -51,6 +51,7 @@ export function SignalCard({
     weather,
     airQuality,
     energy,
+    householdEnergy,
     roadRail,
     transit,
     language,

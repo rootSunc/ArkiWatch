@@ -78,6 +78,32 @@ function severityRank(severity: string): number {
   }
 }
 
+const EVENT_SCENARIO_KEYS: Record<string, string> = {
+  air: "home_air",
+  energy: "energy",
+  traffic: "commute",
+  transit: "commute",
+  weather: "outdoor",
+};
+
+function scenarioKeyForTimelineItem(item: CrossDomainTimelineItem): string | null {
+  return item.scenarioKey ?? EVENT_SCENARIO_KEYS[item.categoryKey] ?? null;
+}
+
+function timelineItemsOverlap(
+  left: CrossDomainTimelineItem,
+  right: CrossDomainTimelineItem,
+): boolean {
+  const leftStart = Date.parse(left.startsAt);
+  const leftEnd = Date.parse(left.endsAt);
+  const rightStart = Date.parse(right.startsAt);
+  const rightEnd = Date.parse(right.endsAt);
+
+  return [leftStart, leftEnd, rightStart, rightEnd].every(Number.isFinite)
+    && leftStart < rightEnd
+    && rightStart < leftEnd;
+}
+
 function buildHeadline(
   topActions: PublicActionRead[],
   summaryTiles: UserSummaryTile[],
@@ -149,14 +175,41 @@ function isLiveSnapshotFresh(publicDashboard: PublicDashboardRead, now: number):
 export function buildPlanItems(
   items: CrossDomainTimelineItem[],
   now = Date.now(),
+  options: { excludeScenarioKey?: string } = {},
 ): CrossDomainTimelineItem[] {
-  return items
+  const eligibleItems = items
     .filter(
       (item) =>
         Number.isFinite(Date.parse(item.endsAt)) && Date.parse(item.endsAt) >= now &&
         !/^no active .+ recommendation/i.test(item.title) &&
         (item.kind === "scenario" || severityRank(item.severity) >= 2),
     )
+    .filter((item) => {
+      if (!options.excludeScenarioKey) {
+        return true;
+      }
+
+      return scenarioKeyForTimelineItem(item) !== options.excludeScenarioKey;
+    });
+
+  const scenarioItems = eligibleItems.filter((item) => item.kind === "scenario");
+
+  return eligibleItems
+    // A normalized scenario and its source event often describe the same
+    // decision window. Keep the scenario in Today and retain the event in the
+    // Data timeline, where source-level evidence can be inspected.
+    .filter((item) => {
+      if (item.kind !== "event") {
+        return true;
+      }
+
+      const itemScenarioKey = scenarioKeyForTimelineItem(item);
+      return !scenarioItems.some(
+        (scenario) =>
+          scenarioKeyForTimelineItem(scenario) === itemScenarioKey
+          && timelineItemsOverlap(scenario, item),
+      );
+    })
     .sort((left, right) => {
       const severityDiff = severityRank(right.severity) - severityRank(left.severity);
       if (severityDiff !== 0) {
@@ -222,7 +275,11 @@ export function buildTodayBrief({
             ? translateMessageKey(language, "shell.staleRecommendations")
           : buildHeadline(topActions, summaryTiles, language),
     recommendationMode,
-    planItems: buildPlanItems(recommendationMode === "live" ? timelineItems : [], now),
+    planItems: buildPlanItems(
+      recommendationMode === "live" ? timelineItems : [],
+      now,
+      { excludeScenarioKey: topActions[0]?.scenario_key },
+    ),
     scenarioSections: publicDashboard.scenario_sections,
     summaryTiles,
     topActions: recommendationMode === "live" ? topActions : [],

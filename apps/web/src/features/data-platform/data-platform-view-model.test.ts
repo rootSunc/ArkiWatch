@@ -108,6 +108,7 @@ describe("data platform view model", () => {
       null,
       null,
       null,
+      null,
       "en"
     );
 
@@ -137,9 +138,57 @@ describe("data platform view model", () => {
       ],
     };
 
-    const readout = signalReadout(catalogCategory, null, null, null, null, null, "en");
+    const readout = signalReadout(catalogCategory, null, null, null, null, null, null, "en");
 
     expect(readout.value).toBe("not collected");
+  });
+
+  it("uses household price semantics when both energy feeds are available", () => {
+    const energyCategory = {
+      ...category("energy"),
+      summary_metrics: [],
+    };
+    const systemEnergy = {
+      status: "ready",
+      current_window: { average_value: 980, unit: "MW" },
+    } as never;
+    const householdEnergy = {
+      status: "ready",
+      current_window: { average_value: 7.8, unit: "c/kWh" },
+    } as never;
+
+    const readout = signalReadout(
+      energyCategory,
+      null,
+      null,
+      systemEnergy,
+      householdEnergy,
+      null,
+      null,
+      "zh",
+    );
+
+    expect(readout.label).toBe("最佳电价");
+    expect(readout.value).toBe("7.80 c/kWh");
+  });
+
+  it("labels a system-only energy card as grid load", () => {
+    const readout = signalReadout(
+      { ...category("energy"), summary_metrics: [] },
+      null,
+      null,
+      {
+        status: "ready",
+        current_window: { average_value: 980, unit: "MW" },
+      } as never,
+      null,
+      null,
+      null,
+      "en",
+    );
+
+    expect(readout.label).toBe("Current grid load");
+    expect(readout.value).toBe("980.00 MW");
   });
 
   it("keeps the merged mobility category empty when both sources are empty", () => {

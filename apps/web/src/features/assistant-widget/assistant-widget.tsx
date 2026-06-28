@@ -92,6 +92,7 @@ export function AssistantWidget({
     [tKey],
   );
   const isHistoricalScope = date !== null;
+  const isDemoScope = appEnv.demoMode || overview?.time_scope?.is_demo === true;
   const assistantScopeLabel = isHistoricalScope
     ? tKey(mode === "today" ? "assistant.scopeHistoricalToday" : "assistant.scopeHistoricalData")
     : mode === "today"
@@ -99,7 +100,9 @@ export function AssistantWidget({
       : tKey("assistant.scopeData");
   const assistantScopeDate = date
     ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
-    : tKey("assistant.scopeLive");
+    : isDemoScope
+      ? tKey("shell.staticDemoFixture")
+      : tKey("assistant.scopeLive");
   const assistantCoverageArea = overview?.coverage_area?.trim() || cityLabel(city);
   const sourceDocumentation = useMemo(() => {
     const documentation: Record<string, string> = {};

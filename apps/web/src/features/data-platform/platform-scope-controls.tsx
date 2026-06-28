@@ -18,6 +18,7 @@ type PlatformScopeControlsProps = {
   availability: PlatformHistoryAvailabilityDay[];
   city: string;
   date: string | null;
+  isDemo: boolean;
   isAuthenticated: boolean;
   isCityPending: boolean;
   isDatePending: boolean;
@@ -43,6 +44,7 @@ export function PlatformScopeControls({
   availability,
   city,
   date,
+  isDemo,
   isAuthenticated,
   isCityPending,
   isDatePending,
@@ -74,6 +76,7 @@ export function PlatformScopeControls({
       <DateScopeSelector
         availability={availability}
         date={date}
+        isDemo={isDemo}
         isPending={isDatePending}
         language={language}
         onCalendarOpen={onCalendarOpen}

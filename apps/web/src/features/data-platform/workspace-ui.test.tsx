@@ -30,6 +30,34 @@ describe("WorkspaceEvidenceHeader", () => {
     expect(screen.getByText("FMI")).toBeInTheDocument();
     expect(screen.getByText(/2026|09:30|12 Aug/)).toBeInTheDocument();
   });
+
+  it("keeps secondary evidence behind an explicit details disclosure", () => {
+    render(
+      <WorkspaceEvidenceHeader
+        fallbackKey="shell.notCollected"
+        language="en"
+        observedAt="2026-08-12T09:30:00Z"
+        sourceLabel="FMI"
+        status="Live"
+        statusTone="good"
+        tKey={(key) => (key === "shell.details" ? "Details" : key)}
+        timeScope={{
+          mode: "live",
+          date: null,
+          timezone: "Europe/Helsinki",
+          reference_time: "2026-08-12T09:30:00Z",
+          window_start: null,
+          window_end: null,
+        }}
+        title="Weather"
+      >
+        <span>LAT 60.1699 · LON 24.9384</span>
+      </WorkspaceEvidenceHeader>,
+    );
+
+    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByText("LAT 60.1699 · LON 24.9384")).toBeInTheDocument();
+  });
 });
 describe("WorkspaceEmptyState", () => {
   it("renders a semantic heading and description", () => {
