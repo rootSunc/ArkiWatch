@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   createApiClient,
   normalizeApiBaseUrl,
+  resolveApiBaseUrl,
   type ApiJsonResult,
   unwrapApiResult,
 } from "@/lib/api-client";
@@ -116,7 +117,7 @@ export const platformKeys = {
 export { normalizeApiBaseUrl };
 
 export function resolvePlatformScope(scope: PlatformQueryScope = {}) {
-  const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const apiBaseUrl = resolveApiBaseUrl();
   const city = normalizeCityValue(scope.city ?? DEFAULT_CITY);
   const date = normalizeSourceDateValue(scope.date);
   const userId = scope.userId ?? appEnv.defaultUserId;

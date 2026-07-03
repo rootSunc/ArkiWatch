@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { normalizeApiBaseUrl } from "@/lib/api-client";
+import { resolveApiBaseUrl } from "@/lib/api-client";
 
 import { translateMessageKey, type LanguageMode } from "./i18n";
 
@@ -16,7 +16,7 @@ type ExportState = "idle" | "loading" | "success" | "error";
 
 function exportUrl(city: string, date: string | null): URL {
   const url = new URL(
-    `${normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)}/platform/overview/export`,
+    `${resolveApiBaseUrl()}/platform/overview/export`,
   );
   url.searchParams.set("city", city);
   url.searchParams.set("format", "csv");

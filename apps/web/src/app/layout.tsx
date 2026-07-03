@@ -38,10 +38,22 @@ export const metadata: Metadata = {
   }
 };
 
+export const dynamic = "force-dynamic";
+
+function runtimeConfigScript(): string {
+  const apiBaseUrl =
+    process.env.API_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return `window.__ARKIWATCH_RUNTIME_CONFIG__=${JSON.stringify({ apiBaseUrl }).replace(/</g, "\\u003c")};`;
+}
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html suppressHydrationWarning className="light" data-theme="light" lang="en">
       <head>
+        <script
+          id="arkiwatch-runtime-config"
+          dangerouslySetInnerHTML={{ __html: runtimeConfigScript() }}
+        />
         <script
           id="theme-initializer"
           dangerouslySetInnerHTML={{

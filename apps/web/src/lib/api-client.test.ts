@@ -5,6 +5,7 @@ import {
   apiFetchJson,
   apiTransportErrorMessage,
   normalizeApiBaseUrl,
+  resolveApiBaseUrl,
   unwrapApiResult,
 } from "@/lib/api-client";
 
@@ -17,6 +18,16 @@ describe("api-client", () => {
   it("normalizes API base URLs", () => {
     expect(normalizeApiBaseUrl("https://example.com/api/")).toBe("https://example.com/api");
     expect(normalizeApiBaseUrl(undefined)).toBe("http://127.0.0.1:8000/api");
+  });
+
+  it("prefers the server-rendered runtime API URL in the browser", () => {
+    window.__ARKIWATCH_RUNTIME_CONFIG__ = {
+      apiBaseUrl: "https://runtime.example/api/",
+    };
+
+    expect(resolveApiBaseUrl()).toBe("https://runtime.example/api");
+
+    delete window.__ARKIWATCH_RUNTIME_CONFIG__;
   });
 
   it("builds query params and parses JSON responses", async () => {

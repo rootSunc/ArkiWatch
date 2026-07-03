@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQueries } from "@tanstack/react-query";
 
-import { unwrapApiResult } from "@/lib/api-client";
+import { resolveApiBaseUrl, unwrapApiResult } from "@/lib/api-client";
 
 import {
   fetchAirQualityCurrent,
@@ -15,7 +15,6 @@ import {
   fetchRoadRailCurrent,
   fetchTransitCurrent,
   fetchWeatherForecast,
-  normalizeApiBaseUrl,
   platformKeys,
   type PlatformFetchResult,
   type PlatformQueryScope,
@@ -202,7 +201,7 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     isLoadingView: activeResults.some((query) => query.isPending),
     isPreviousScope: activeResults.some((query) => query.isPlaceholderData),
     retry,
-    apiBaseUrl: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL),
+    apiBaseUrl: resolveApiBaseUrl(),
     defaultUserId: userId,
     overview: overviewQuery.data ?? null,
     publicDashboard: publicDashboardQuery.data ?? null,

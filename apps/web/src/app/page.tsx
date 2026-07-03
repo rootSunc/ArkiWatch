@@ -28,34 +28,26 @@ export default async function Page({ searchParams }: PageProps) {
   const selectedDate = normalizeSourceDateValue(resolvedSearchParams?.date);
   const queryClient = getQueryClient();
 
-  const prefetch = prefetchPlatformHome(queryClient, {
-    city: selectedCity,
-    date: selectedDate,
-    authToken: session?.token,
-    userId: session?.user.id,
-    activeNavKey: resolvedSearchParams?.view ?? "today",
-    isHistorical: Boolean(selectedDate),
-  });
-
   if (appEnv.demoMode) {
     // Demo fixtures resolve locally. Awaiting them keeps the server HTML and
     // hydrated client tree identical, so the first-run path has no hydration
     // warning or loading flash.
-    await prefetch.catch(() => undefined);
-  } else {
-    // Live upstream calls remain streamed: the shell can paint while the
-    // slowest public source finishes, and failures surface in the client state.
-    void prefetch.catch(() => undefined);
+    await prefetchPlatformHome(queryClient, {
+      city: selectedCity,
+      date: selectedDate,
+      authToken: session?.token,
+      userId: session?.user.id,
+      activeNavKey: resolvedSearchParams?.view ?? "today",
+      isHistorical: Boolean(selectedDate),
+    }).catch(() => undefined);
   }
 
   return (
     <QueryProvider
       dehydratedState={dehydrate(queryClient, {
-        // Live upstream requests are intentionally allowed to continue after
-        // the shell renders. Never serialize pending queries: if an upstream
-        // later rejects, React Query would otherwise stream a rejected
-        // hydration promise into the document. The client will issue the
-        // missing query itself and expose the retryable error state.
+        // Only deterministic demo queries are prefetched on the server. Live
+        // queries start in the browser so each request has one owner and a
+        // failed upstream cannot leave an abandoned server-side request.
         shouldDehydrateQuery: (query) => query.state.status === "success",
       })}
     >

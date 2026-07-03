@@ -1,4 +1,5 @@
 import { requestSignalWithTimeout } from "./request-signal";
+import { runtimeApiBaseUrl } from "./runtime-config";
 
 export type ApiJsonResult<T> = {
   data: T | null;
@@ -109,6 +110,20 @@ export function normalizeApiBaseUrl(rawValue: string | undefined): string {
   return normalizedValue.endsWith("/") ? normalizedValue.slice(0, -1) : normalizedValue;
 }
 
+/**
+ * Resolve the browser API URL from runtime configuration when available.
+ * NEXT_PUBLIC_* values are build-time constants in Next.js, so production
+ * containers inject this value from the server-rendered runtime config.
+ */
+export function resolveApiBaseUrl(): string {
+  const runtimeValue = runtimeApiBaseUrl();
+  const serverValue =
+    typeof window === "undefined" ? process.env.API_INTERNAL_BASE_URL : undefined;
+  return normalizeApiBaseUrl(
+    runtimeValue ?? serverValue ?? process.env.NEXT_PUBLIC_API_BASE_URL,
+  );
+}
+
 function buildApiUrl(
   path: string,
   params: Record<string, string | null | undefined> | undefined,
@@ -133,7 +148,7 @@ export async function apiFetchJson<T>(
   config: ApiClientConfig = {},
   params?: Record<string, string | null | undefined>,
 ): Promise<ApiJsonResult<T>> {
-  const baseUrl = normalizeApiBaseUrl(config.baseUrl ?? process.env.NEXT_PUBLIC_API_BASE_URL);
+  const baseUrl = resolveApiBaseUrlFromConfig(config.baseUrl);
   const url = buildApiUrl(path, params, baseUrl);
   const signal = config.signal
     ? requestSignalWithTimeout(config.signal, config.timeoutMs ?? DEFAULT_API_TIMEOUT_MS)
@@ -172,6 +187,12 @@ export async function apiFetchJson<T>(
       status: null,
     };
   }
+}
+
+function resolveApiBaseUrlFromConfig(configuredValue: string | undefined): string {
+  return configuredValue === undefined
+    ? resolveApiBaseUrl()
+    : normalizeApiBaseUrl(configuredValue);
 }
 
 export function createApiClient(config: ApiClientConfig = {}) {
