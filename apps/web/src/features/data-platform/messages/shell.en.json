@@ -62,6 +62,8 @@
     "historicalSnapshotUnavailable": "No saved public snapshot for this date",
     "historicalEvidenceAt": "Historical evidence at",
     "reviewAction": "Review action",
+    "todayDigestLabel": "Today's recommendation",
+    "todayDigestAction": "View details",
     "todayAtAGlance": "At a glance",
     "dailyDecisions": "Daily decisions",
     "dailyDecisionsLead": "What may change your plans",

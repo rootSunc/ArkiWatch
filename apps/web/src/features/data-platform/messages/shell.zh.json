@@ -62,6 +62,8 @@
     "historicalSnapshotUnavailable": "所选日期没有保存的公共快照",
     "historicalEvidenceAt": "历史证据时间",
     "reviewAction": "查看建议",
+    "todayDigestLabel": "今日建议",
+    "todayDigestAction": "查看详情",
     "todayAtAGlance": "一眼看懂",
     "dailyDecisions": "生活决策",
     "dailyDecisionsLead": "可能改变今日计划的事情",
