@@ -256,10 +256,10 @@ type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
   isDetailPage: boolean;
   onOpenAssistant?: () => void;
   workspaceMode: WorkspaceMode;
-  onSearchChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   onSelectNav: (navKey: string) => void;
   restoreSideNavButton: ReactNode;
-  searchValue: string;
+  searchValue?: string;
 };
 
 export function DataPlatformWorkspaceTopbar({
@@ -274,7 +274,6 @@ export function DataPlatformWorkspaceTopbar({
   isDetailPage,
   onOpenAssistant,
   workspaceMode,
-  onSearchChange,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -290,7 +289,6 @@ export function DataPlatformWorkspaceTopbar({
   onSelectNav,
   renderAuthActionButton,
   restoreSideNavButton,
-  searchValue,
   showExport,
 }: DataPlatformWorkspaceTopbarProps) {
   const { tKey } = useI18n();
@@ -333,16 +331,6 @@ export function DataPlatformWorkspaceTopbar({
         </nav>
       ) : null}
       <div className="detail-topbar-actions">
-        {workspaceMode === "data" && !isDetailPage ? (
-          <DashboardSearch
-            className="workspace-search"
-            clearLabel={tKey("shell.clearSearch")}
-            label={tKey("shell.searchSignalsPlaceholder")}
-            onChange={onSearchChange}
-            placeholder={tKey("shell.searchSignalsPlaceholder")}
-            value={searchValue}
-          />
-        ) : null}
         <PlatformScopeControls
           availability={availability}
           city={city}

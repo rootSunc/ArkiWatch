@@ -32,12 +32,12 @@ export function buildNavigationQueryParams(
 ): URLSearchParams {
   const nextParams = new URLSearchParams(currentParams.toString());
 
-  if (nextNavKey === TODAY_NAV_KEY) {
+  if (nextNavKey === FALLBACK_NAV_KEY) {
     nextParams.delete(NAV_QUERY_KEY);
     nextParams.delete(MOBILITY_TAB_QUERY_KEY);
     nextParams.delete(ENERGY_TAB_QUERY_KEY);
-  } else if (nextNavKey === FALLBACK_NAV_KEY) {
-    nextParams.set(NAV_QUERY_KEY, FALLBACK_NAV_KEY);
+  } else if (nextNavKey === TODAY_NAV_KEY) {
+    nextParams.set(NAV_QUERY_KEY, TODAY_NAV_KEY);
     nextParams.delete(MOBILITY_TAB_QUERY_KEY);
     nextParams.delete(ENERGY_TAB_QUERY_KEY);
   } else if (nextNavKey === MOBILITY_NAV_KEY) {
@@ -200,12 +200,12 @@ export function resolveNavKey(
 ): string {
   const normalized = requestedKey?.trim() || null;
 
-  if (!normalized || normalized === TODAY_NAV_KEY) {
-    return TODAY_NAV_KEY;
+  if (!normalized || normalized === FALLBACK_NAV_KEY) {
+    return FALLBACK_NAV_KEY;
   }
 
-  if (normalized === FALLBACK_NAV_KEY) {
-    return FALLBACK_NAV_KEY;
+  if (normalized === TODAY_NAV_KEY) {
+    return TODAY_NAV_KEY;
   }
 
   if (normalized === MOBILITY_NAV_KEY || isMobilityCategoryKey(normalized)) {

@@ -50,10 +50,21 @@ describe("buildNavigationQueryParams", () => {
     );
   });
 
-  it("removes deep-link state when returning to Today", () => {
+  it("keeps a linkable view=today param while clearing deep-link state", () => {
     const params = buildNavigationQueryParams(
       new URLSearchParams("view=energy&energyTab=fingrid&event=old"),
       "today",
+      {},
+      defaults,
+    );
+
+    expect(params.toString()).toBe("view=today");
+  });
+
+  it("removes deep-link state when returning to the default data overview", () => {
+    const params = buildNavigationQueryParams(
+      new URLSearchParams("view=energy&energyTab=fingrid&event=old"),
+      "overview",
       {},
       defaults,
     );
@@ -63,6 +74,10 @@ describe("buildNavigationQueryParams", () => {
 });
 
 describe("resolveNavKey", () => {
+  it("defaults to the data overview when no view is requested", () => {
+    expect(resolveNavKey(null, [])).toBe("overview");
+  });
+
   it("preserves a mobility deep link while categories are still loading", () => {
     expect(resolveNavKey("mobility", [])).toBe("mobility");
   });
@@ -77,8 +92,8 @@ describe("mobileNavigationItems", () => {
     ] as PlatformCategory[];
 
     expect(mobileNavigationItems(categories).map((item) => item.key)).toEqual([
-      "today",
       "overview",
+      "today",
       "weather",
       "mobility",
     ]);
@@ -86,8 +101,8 @@ describe("mobileNavigationItems", () => {
 
   it("does not expose unavailable category destinations", () => {
     expect(mobileNavigationItems([]).map((item) => item.key)).toEqual([
-      "today",
       "overview",
+      "today",
     ]);
   });
 });

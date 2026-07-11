@@ -82,7 +82,6 @@ import {
   resolveSummaryTileTarget,
 } from "./scenario-navigation";
 import { buildCrossDomainTimeline } from "./cross-domain-timeline";
-import { CrossDomainTimelinePanel } from "./cross-domain-timeline-panel";
 import { TodayOverview } from "./today/today-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import {
@@ -95,13 +94,14 @@ import {
   dashboardSideNavClassName,
 } from "./data-platform-layout";
 import { buildSignalSystemTiles } from "./signals-console";
-import { SignalObservatoryOverview } from "./signal-observatory-overview";
+import { DataPlatformOverview } from "./data-platform-overview";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { RecentEventsPanel } from "./recent-events-panel";
 import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
 import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
+import { isEmptyStatus } from "./platform-status";
 import { scopedReferenceTime } from "./data-time-scope";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
@@ -559,19 +559,6 @@ export function DataPlatformHome({
       ),
     [eventReferenceAt, publicDashboard, recentEventCandidates, selectedCity],
   );
-  const signalEventTimeline = useMemo(
-    () =>
-      buildCrossDomainTimeline(
-        curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
-          city: selectedCity,
-          referenceAt: eventReferenceAt,
-        }),
-        null,
-        CROSS_TIMELINE_LIMIT,
-        eventReferenceAt,
-      ),
-    [eventReferenceAt, recentEventCandidates, selectedCity],
-  );
   const demoSnapshotCheckedAt = publicDashboard?.checked_at
     ? formatTimestamp(publicDashboard.checked_at, "dateTime", languageMode, platformTimezone)
     : null;
@@ -617,7 +604,8 @@ export function DataPlatformHome({
     matchesSearch(category, searchValue, languageMode),
   );
   const primaryVisibleCategories = visibleCategories.filter(
-    (category) => !isCatalogCategoryKey(category.key),
+    (category) =>
+      !isCatalogCategoryKey(category.key) && !isEmptyStatus(category.status),
   );
   const catalogVisibleCategories = visibleCategories.filter((category) =>
     isCatalogCategoryKey(category.key),
@@ -1131,11 +1119,9 @@ export function DataPlatformHome({
               {...scopeControlProps}
               assistantButtonRef={assistantTopbarButtonRef}
               isDetailPage={isDetailPage}
-              onSearchChange={setSearchValue}
               onOpenAssistant={requestAssistant}
               onSelectNav={selectNav}
               restoreSideNavButton={restoreSideNavButton}
-              searchValue={searchValue}
               workspaceMode={workspaceMode}
             />
           ) : null}
@@ -1290,104 +1276,28 @@ export function DataPlatformHome({
                   weather={weather}
                 />
               ) : (
-                <>
-                  {searchValue.trim() ? (
-                    <p className="dashboard-search-status" role="status">
-                      {tKey("shell.searchResultsSummary").replace(
-                        "{count}",
-                        String(visibleCategories.length),
-                      )}
-                    </p>
-                  ) : null}
-                  <SignalObservatoryOverview
-                    overview={visibleOverview}
-                    platformTimezone={platformTimezone}
-                    tiles={signalSystemTiles}
-                  />
-
-                  <CrossDomainTimelinePanel
-                    collapsible
-                    historical={isHistorical}
-                    items={signalEventTimeline}
-                    language={languageMode}
-                    timezone={platformTimezone}
-                    onOpenEvent={openRecentEvent}
-                    onOpenScenario={openScenario}
-                  />
-
-                  <div
-                    className={
-                      isEventsExpanded
-                        ? "dashboard-main-grid"
-                        : "dashboard-main-grid dashboard-main-grid-events-collapsed"
-                    }
-                  >
-                    {primaryVisibleCategories.length > 0 || catalogVisibleCategories.length === 0 ? (
-                      <section
-                        className="signal-section"
-                        aria-label={tKey("shell.signalStatusArray")}
-                      >
-                        <header className="signal-section-header">
-                          <div>
-                            <h3>
-                              <span
-                                className="material-symbols-outlined"
-                                aria-hidden="true"
-                              >
-                                sensors
-                              </span>
-                              {tKey("shell.coreSignals")}
-                            </h3>
-                            <p>{isHistorical ? tKey("shell.historicalCoreSignalsLead") : tKey("shell.coreSignalsLead")}</p>
-                          </div>
-                        </header>
-
-                        <div className="signal-grid">
-                          {primaryVisibleCategories.length > 0 ? (
-                            primaryVisibleCategories.map(renderSignalCard)
-                          ) : (
-                            <div className="dashboard-empty-state">
-                              {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
-                            </div>
-                          )}
-                        </div>
-                      </section>
-                    ) : null}
-
-                    {catalogVisibleCategories.length > 0 ? (
-                      <details
-                        className="signal-section signal-catalog-disclosure"
-                        open={isCatalogExpanded || Boolean(searchValue.trim())}
-                        onToggle={(event) =>
-                          setIsCatalogExpanded(event.currentTarget.open)
-                        }
-                      >
-                        <summary
-                          aria-label={tKey("shell.toggleCatalogSignals")}
-                          className="signal-section-summary"
-                        >
-                          <span>
-                            <span className="material-symbols-outlined" aria-hidden="true">
-                              database
-                            </span>
-                            <span>
-                              <strong>{tKey("shell.catalogSignals")}</strong>
-                              <small>{tKey("shell.catalogSignalsLead")}</small>
-                            </span>
-                          </span>
-                          <span className="signal-section-summary-meta">
-                            <span>{catalogVisibleCategories.length}</span>
-                            <span className="material-symbols-outlined" aria-hidden="true">
-                              expand_more
-                            </span>
-                          </span>
-                        </summary>
-                        <div className="signal-grid signal-grid-catalog">
-                          {catalogVisibleCategories.map(renderSignalCard)}
-                        </div>
-                      </details>
-                    ) : null}
-
+                <DataPlatformOverview
+                  catalogSignalCards={catalogVisibleCategories.map(renderSignalCard)}
+                  catalogSignalCount={catalogVisibleCategories.length}
+                  checkedAt={visibleOverview.checked_at}
+                  coreSignalCards={
+                    primaryVisibleCategories.length > 0
+                      ? primaryVisibleCategories.map(renderSignalCard)
+                      : null
+                  }
+                  coreSignalCount={primaryVisibleCategories.length}
+                  isCatalogExpanded={isCatalogExpanded}
+                  isHistorical={isHistorical}
+                  onCatalogToggle={setIsCatalogExpanded}
+                  onOpenToday={() => selectNav(TODAY_NAV_KEY)}
+                  onSearchChange={setSearchValue}
+                  overview={visibleOverview}
+                  platformTimezone={platformTimezone}
+                  searchValue={searchValue}
+                  signalSystemTiles={signalSystemTiles}
+                  todayBrief={todayBrief}
+                  secondaryContent={
+                    <>
                     <RecentEventsPanel
                       categories={categories}
                       checkedAt={visibleOverview.checked_at}
@@ -1420,8 +1330,9 @@ export function DataPlatformHome({
                     />
 
                     {!isHistorical ? <SourceHealthStrip overview={visibleOverview} /> : null}
-                  </div>
-                </>
+                    </>
+                  }
+                />
               )
             ) : (
               <section
