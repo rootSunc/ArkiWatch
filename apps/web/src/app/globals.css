@@ -23,6 +23,7 @@
   --tertiary-container: #f1a02b;
   --error: #ffb4ab;
   --error-container: #93000a;
+  --on-error-container: #ffdad6;
   --on-surface: #dee3e8;
   --on-background: #dee3e8;
   --on-surface-variant: #bdc8d1;
@@ -83,6 +84,7 @@
   --tertiary-container: #b97000;
   --error: #ba1a1a;
   --error-container: #ffdad6;
+  --on-error-container: #410e0b;
   --on-surface: #172026;
   --on-background: #172026;
   --on-surface-variant: #56636d;

@@ -14,6 +14,8 @@
   --ui-refresh-radius-sm: 10px;
   --ui-refresh-radius-md: 16px;
   --ui-refresh-radius-lg: 20px;
+  --control-height-desktop: 36px;
+  --control-height-touch: 44px;
 }
 
 :root[data-theme="dark"] {
