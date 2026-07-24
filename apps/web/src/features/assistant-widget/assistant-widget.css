@@ -30,7 +30,7 @@
   min-width: 52px;
   height: 52px;
   gap: 8px;
-  border: 1px solid var(--ui-border-strong, var(--detail-panel-border-strong));
+  border: 1px solid var(--ui-border-strong);
   border-radius: 999px;
   background: var(--surface-container-lowest);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--on-surface) 14%, transparent);
@@ -119,9 +119,8 @@
   position: absolute;
   right: 96px;
   bottom: 24px;
-  background: var(--detail-panel-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--detail-panel-border-strong);
+  background: var(--ui-refresh-surface, var(--surface-container-lowest));
+  border: 1px solid var(--ui-border-strong);
   border-radius: 12px;
   padding: 8px 14px;
   color: var(--on-surface);
@@ -146,10 +145,8 @@
   height: 540px;
   display: flex;
   flex-direction: column;
-  background: var(--detail-panel-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--detail-panel-border-stronger);
+  background: var(--ui-refresh-surface, var(--surface-container-lowest));
+  border: 1px solid var(--ui-border-strong);
   border-radius: var(--ui-radius-lg, 18px);
   box-shadow: var(--elevated-shadow);
   overflow: hidden;
@@ -173,7 +170,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  border-bottom: 1px solid var(--detail-panel-border-soft);
+  border-bottom: 1px solid var(--ui-border-subtle);
   background: var(--ui-muted-surface, var(--surface-container-low));
 }
 

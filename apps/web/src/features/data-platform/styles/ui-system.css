@@ -30,11 +30,11 @@
  * domain cards inherit a stable accent without duplicating mode logic.
  */
 .dashboard-shell-mode-today {
-  --ui-mode-accent: var(--primary);
+  --ui-mode-accent: var(--ui-refresh-today);
 }
 
 .dashboard-shell-mode-data {
-  --ui-mode-accent: var(--primary-fixed-dim);
+  --ui-mode-accent: var(--ui-refresh-blue);
 }
 
 .dashboard-shell-mode-today .dashboard-app {
@@ -180,7 +180,7 @@
 }
 
 .nav-row {
-  min-height: 38px;
+  min-height: var(--control-height-desktop, 36px);
   gap: 10px;
   border-radius: var(--ui-radius-sm);
   padding: 8px 10px;

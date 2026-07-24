@@ -21,6 +21,7 @@
 @import "./styles/tokens.css";
 @import "./styles/design-refresh.css";
 @import "./styles/workspace-ui.css";
+@import "./styles/minimal-overhaul.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {
