@@ -67,46 +67,51 @@ export function PlatformScopeControls({
 }: PlatformScopeControlsProps) {
   return (
     <>
-      <CityScopeSelector
-        city={city}
-        isPending={isCityPending}
-        language={language}
-        onCityChange={onCityChange}
-      />
-      <DateScopeSelector
-        availability={availability}
-        date={date}
-        isDemo={isDemo}
-        isPending={isDatePending}
-        language={language}
-        onCalendarOpen={onCalendarOpen}
-        onDateChange={onDateChange}
-      />
-      <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
-      {showRefresh && isAuthenticated && !isHistorical ? (
-        <RefreshDataButton
-          isRefreshing={isRefreshing}
+      <div className="scope-control-cluster">
+        <CityScopeSelector
+          city={city}
+          isPending={isCityPending}
           language={language}
-          onRefresh={onRefresh}
+          onCityChange={onCityChange}
         />
-      ) : null}
-      {showExport ? (
-        <ExportSnapshotButton city={city} date={date} language={language} />
-      ) : null}
-      <ShareViewLinkButton
-        language={language}
-        scopeKey={`${city}:${date ?? "live"}`}
-      />
-      {showNotifications ? (
-        <NotificationButton
-          count={notificationCount}
-          isActive={isEventsExpanded}
+        <DateScopeSelector
+          availability={availability}
+          date={date}
+          isDemo={isDemo}
+          isPending={isDatePending}
           language={language}
-          onClick={onNotificationsClick}
-          tone={notificationTone}
+          onCalendarOpen={onCalendarOpen}
+          onDateChange={onDateChange}
         />
-      ) : null}
-      {renderAuthActionButton("icon-button")}
+      </div>
+      <span aria-hidden="true" className="scope-control-divider" />
+      <div className="scope-control-cluster">
+        <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
+        {showRefresh && isAuthenticated && !isHistorical ? (
+          <RefreshDataButton
+            isRefreshing={isRefreshing}
+            language={language}
+            onRefresh={onRefresh}
+          />
+        ) : null}
+        {showExport ? (
+          <ExportSnapshotButton city={city} date={date} language={language} />
+        ) : null}
+        <ShareViewLinkButton
+          language={language}
+          scopeKey={`${city}:${date ?? "live"}`}
+        />
+        {showNotifications ? (
+          <NotificationButton
+            count={notificationCount}
+            isActive={isEventsExpanded}
+            language={language}
+            onClick={onNotificationsClick}
+            tone={notificationTone}
+          />
+        ) : null}
+        {renderAuthActionButton("icon-button")}
+      </div>
     </>
   );
 }

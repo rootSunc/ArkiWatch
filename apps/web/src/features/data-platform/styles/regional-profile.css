@@ -62,7 +62,7 @@
 
 .regional-field-card .material-symbols-outlined {
   font-size: 1.3rem;
-  color: var(--blue, #3b82f6);
+  color: var(--blue);
 }
 
 .regional-field-card-text {
@@ -145,12 +145,12 @@
 
 .regional-growth-badge.good {
   background-color: rgba(134, 239, 172, 0.12);
-  color: var(--success, #10b981);
+  color: var(--success);
 }
 
 .regional-growth-badge.warn {
   background-color: rgba(241, 160, 43, 0.12);
-  color: var(--amber, #f59e0b);
+  color: var(--amber);
 }
 
 .regional-growth-badge.neutral {
@@ -178,11 +178,11 @@
 }
 
 .regional-cell-progress-bar.primary {
-  background-color: var(--blue, #3b82f6);
+  background-color: var(--blue);
 }
 
 .regional-cell-progress-bar.good {
-  background-color: var(--success, #10b981);
+  background-color: var(--success);
 }
 
 .regional-morbidity-box {
@@ -205,7 +205,7 @@
 
 .regional-morbidity-header span:last-child {
   font-size: 0.8rem;
-  color: var(--success, #10b981);
+  color: var(--success);
   font-weight: bold;
 }
 
@@ -226,7 +226,7 @@
 .regional-morbidity-bar {
   display: block;
   height: 100%;
-  background-color: var(--success, #10b981);
+  background-color: var(--success);
   border-radius: 2px;
 }
 

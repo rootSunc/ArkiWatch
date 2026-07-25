@@ -159,15 +159,18 @@
   font-size: 17px;
 }
 
-.today-secondary-action {
-  border: 1px solid var(--outline-variant);
+.today-secondary-action,
+.today-assistant-action {
+  border: 1px solid transparent;
   background: transparent;
-  color: var(--on-surface);
+  font-weight: 650;
+}
+
+.today-secondary-action {
+  color: var(--on-surface-variant);
 }
 
 .today-assistant-action {
-  border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--outline-variant));
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
   color: var(--primary);
 }
 
@@ -193,14 +196,9 @@
   pointer-events: none;
 }
 
-.today-secondary-action:hover {
-  border-color: var(--outline);
-  background: var(--surface-container-low);
-}
-
+.today-secondary-action:hover,
 .today-assistant-action:hover {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  background: var(--surface-container-low);
 }
 
 .today-primary-action:focus-visible,
@@ -634,31 +632,124 @@
 .demo-mode-banner {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   margin-bottom: 12px;
-  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  padding: 9px 13px;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  padding: 6px 12px;
   color: var(--on-surface-variant);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   line-height: 1.35;
 }
 
 .demo-mode-banner .material-symbols-outlined {
   color: var(--primary);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .demo-mode-banner-copy {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   min-width: 0;
-  gap: 2px;
+  column-gap: 6px;
+  row-gap: 0;
 }
 
 .demo-mode-banner-copy time {
   color: var(--on-surface-variant);
   font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.demo-mode-banner-copy time::before {
+  content: "\00b7";
+  margin-right: 6px;
+}
+
+.today-digest-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid var(--ui-border-subtle, var(--card-border));
+  border-radius: 10px;
+  background: var(--ui-refresh-surface, var(--surface-container-lowest));
+  padding: 10px 14px;
+  color: var(--on-surface);
+  text-align: left;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.today-digest-strip:hover,
+.today-digest-strip:focus-visible {
+  border-color: var(--outline);
+  background: var(--surface-container-low);
+  outline: none;
+}
+
+.today-digest-strip > .material-symbols-outlined:first-child {
+  flex: 0 0 auto;
+  color: var(--ui-refresh-today, var(--amber));
+  font-size: 18px;
+}
+
+.today-digest-strip-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.today-digest-strip-label {
+  flex: 0 0 auto;
+  color: var(--on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.today-digest-strip-copy strong {
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-digest-strip-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.today-digest-strip-action .material-symbols-outlined {
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  .today-digest-strip {
+    flex-wrap: wrap;
+  }
+
+  .today-digest-strip-copy {
+    flex-basis: 100%;
+  }
+
+  .today-digest-strip-action {
+    margin-left: 28px;
+  }
 }
 
 .today-content-grid {
@@ -1164,10 +1255,13 @@
     padding: 8px;
   }
 
-  .today-primary-action,
+  .today-primary-action {
+    flex: 1 1 100%;
+  }
+
   .today-secondary-action,
   .today-assistant-action {
-    flex: 1;
+    flex: 0 1 auto;
   }
 
   .today-action-card-meta {
