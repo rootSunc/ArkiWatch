@@ -7,11 +7,15 @@ test.describe("deterministic demo", () => {
     await expect(page.getByRole("main")).toBeVisible();
   });
 
-  test("shows a grounded daily decision and demo scope", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Leave a few minutes earlier" })).toBeVisible();
+  test("shows the data platform overview and demo scope by default", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
     await expect(page.getByRole("status")).toContainText("Static example data");
     await expect(page.getByRole("combobox", { name: "City" })).toHaveValue("helsinki");
-    await expect(page.getByRole("button", { name: "Review action" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Source health" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /9 data sources · 9 healthy/ })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Today.s recommendation.*Leave a few minutes earlier/ }),
+    ).toBeVisible();
   });
 
   test("switches language without losing the selected scope", async ({ page }) => {
@@ -21,20 +25,21 @@ test.describe("deterministic demo", () => {
     await expect(page.getByRole("status")).toContainText("静态示例");
     await expect(page.getByRole("combobox", { name: "城市" })).toHaveValue("helsinki");
 
-    await page.getByRole("button", { name: "EN" }).click();
+    await page.getByRole("button", { name: "EN", exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
-  test("opens the data observatory from the workspace navigation", async ({ page }, testInfo) => {
+  test("opens life assistant from the workspace navigation", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only smoke");
 
+    await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
+
     await page
-      .getByRole("button", { name: /Data platform Inspect public signals/ })
+      .getByRole("button", { name: /Life assistant Turn today/ })
       .click();
 
-    await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Source health" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /9 data sources · 9 healthy/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Leave a few minutes earlier" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Review action" })).toBeVisible();
   });
 
   test("keeps the mobile navigation reachable", async ({ page }, testInfo) => {
