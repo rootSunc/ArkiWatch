@@ -1,19 +1,29 @@
 # ArkiWatch frontend UI system
 
 ArkiWatch has two product jobs that should feel related, but should not compete
-for the same attention:
+for the same attention. The Data platform is the product's main body; Today /
+life assistant is a secondary, on-demand surface layered on top of it:
 
 | Workspace | User question | Primary action |
 | --- | --- | --- |
-| Today / life assistant | “What should I know or do today?” | Review one recommendation and act on it. |
 | Data / public data platform | “What is happening in the data?” | Inspect a signal, its scope, freshness, and evidence. |
+| Today / life assistant | “What should I know or do today?” | Review one recommendation and act on it. |
 
 ## Information architecture
 
-The shell always exposes a small workspace switcher. Today is the default,
-decision-oriented surface. Data opens the signal overview and then the
-category workspaces. Source health, event history, and catalog views remain
-available from Data, but are intentionally secondary to the signal overview.
+The shell always exposes a small workspace switcher, with Data listed first.
+Data is the default, evidence-oriented landing surface: it opens the signal
+overview and then the category workspaces. Source health, event history, and
+catalog views remain available from Data, but are intentionally secondary to
+the signal overview.
+
+Today / life assistant is reachable from the switcher or a direct `?view=today`
+link, but is no longer the default landing state. Its headline recommendation
+is still surfaced without leaving Data: a single-line `TodayDigestStrip`
+(`apps/web/src/features/data-platform/today/today-digest-strip.tsx`) sits above
+the signal observatory and links straight into the full Today page. This keeps
+the decision-first value reachable in one glance without making it compete
+with the data-first narrative for the default view.
 
 Every page follows the same hierarchy:
 
