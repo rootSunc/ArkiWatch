@@ -1,6 +1,7 @@
 "use client";
 
 import { formatTimestamp } from "@/features/shared/format";
+import { MaterialIcon } from "@/features/shared/material-icon";
 import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import type { LanguageMode } from "../i18n";
@@ -94,9 +95,10 @@ export function PersonalTodayCards({
               className={`today-personal-recommendation today-personal-recommendation-${tone}`}
               key={`${type}-${card.title}-${index}`}
             >
-              <span className="today-personal-recommendation-icon material-symbols-outlined" aria-hidden="true">
-                {CARD_ICONS[type] ?? "lightbulb"}
-              </span>
+              <MaterialIcon
+                name={CARD_ICONS[type] ?? "lightbulb"}
+                className="today-personal-recommendation-icon"
+              />
               <span className="today-personal-recommendation-copy">
                 <span className="today-personal-recommendation-type">{typeLabel}</span>
                 <strong>{title}</strong>

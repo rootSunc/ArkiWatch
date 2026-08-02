@@ -270,7 +270,7 @@
   font-size: clamp(28px, 3vw, 40px);
   font-weight: 800;
   line-height: 1.02;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   word-break: normal;
 }
 
@@ -337,8 +337,10 @@
 }
 
 .water-signal-panel header strong {
-  flex: 0 0 auto;
-  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .water-coverage-list,
@@ -501,7 +503,7 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 16px;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   text-transform: capitalize;
   word-break: normal;
 }
@@ -533,9 +535,10 @@
 
 .water-field-lattice-head span:not(:first-child) {
   justify-self: center;
-  min-height: 38px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+  min-height: 26px;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
 }
 
 .water-field-lattice-head span:first-child,
@@ -725,7 +728,7 @@
 .water-source-panel header strong {
   font-size: 16px;
   line-height: 20px;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   word-break: normal;
 }
 

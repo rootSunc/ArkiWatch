@@ -22,3 +22,21 @@
   font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
+
+/* Keep SVG fallbacks and font icons on the same sizing/alignment contract. */
+.material-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.material-icon:not(svg) {
+  overflow: hidden;
+}
+
+svg.material-icon {
+  width: 24px;
+  height: 24px;
+}

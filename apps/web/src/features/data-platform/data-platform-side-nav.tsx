@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PROJECT_GITHUB_ISSUES_URL } from "@/features/shared/project-links";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import { appEnv } from "@/lib/env";
 
@@ -120,9 +121,7 @@ export function DataPlatformSideNav({
               onClick={() => onSelectNavItem(item)}
               type="button"
             >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {item.icon}
-              </span>
+              <MaterialIcon name={item.icon} />
               <span>
                 <strong>{modeLabel}</strong>
                 <small>
@@ -160,9 +159,7 @@ export function DataPlatformSideNav({
               title={navLabel}
               type="button"
             >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {item.icon}
-              </span>
+              <MaterialIcon name={item.icon} />
               <span>{navLabel}</span>
             </button>
           );
@@ -188,9 +185,7 @@ export function DataPlatformSideNav({
                 title={navLabel}
                 type="button"
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {item.icon}
-                </span>
+                <MaterialIcon name={item.icon} />
                 <span>{navLabel}</span>
               </button>
             );
@@ -207,9 +202,7 @@ export function DataPlatformSideNav({
             title={themeActionLabel}
             type="button"
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {themeMode === "light" ? "dark_mode" : "light_mode"}
-            </span>
+            <MaterialIcon name={themeMode === "light" ? "dark_mode" : "light_mode"} />
             <span>{tKey("shell.themeMode")}</span>
           </button>
           <div
@@ -217,9 +210,7 @@ export function DataPlatformSideNav({
             aria-label={userStateLabel}
             title={displayUserLabel}
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {isAuthenticated ? "manage_accounts" : "visibility"}
-            </span>
+            <MaterialIcon name={isAuthenticated ? "manage_accounts" : "visibility"} />
             <span>{displayUserLabel}</span>
           </div>
           {isAuthenticated ? (
@@ -229,9 +220,7 @@ export function DataPlatformSideNav({
               href="/settings"
               title={tKey("shell.personalSettingsTitle")}
             >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                tune
-              </span>
+              <MaterialIcon name="tune" />
               <span>{tKey("shell.personalSettingsTitle")}</span>
             </Link>
           ) : null}

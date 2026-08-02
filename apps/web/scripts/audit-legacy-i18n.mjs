@@ -86,7 +86,7 @@ function walkCode(dir, acc = []) {
         continue;
       }
       walkCode(absolutePath, acc);
-    } else if (/\.(tsx?|py)$/.test(entry.name)) {
+    } else if (/\.(tsx?|go)$/.test(entry.name)) {
       acc.push(fs.readFileSync(absolutePath, "utf8"));
     }
   }
@@ -99,13 +99,14 @@ function camelToSnake(value) {
 
 const legacyZh = readJson("zh.json");
 const labelsEn = readJson("labels.en.json").labels;
-const apiCorpus = walkCode(path.join(repoRoot, "apps/api/backend")).join("\n");
+const apiCorpus = walkCode(path.join(repoRoot, "apps/api")).join("\n");
 const webCorpus = walkCode(path.join(repoRoot, "apps/web/src")).join("\n");
 
 const runtimeTexts = new Set();
 const runtimeSnakes = new Set();
 
 for (const pattern of [
+  /metric\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g,
   /_metric\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g,
   /_build_metric\(\s*\n?\s*"([^"]+)"\s*,\s*\n?\s*"([^"]+)"/g,
 ]) {
@@ -117,7 +118,11 @@ for (const pattern of [
   }
 }
 
-for (const pattern of [/label=\"([^\"\\]{2,200})\"/g, /title=\"([^\"\\]{2,200})\"/g]) {
+for (const pattern of [
+  /label=\"([^\"\\]{2,200})\"/g,
+  /title=\"([^\"\\]{2,200})\"/g,
+  /(?:Label|Title|TitleZH):\s*\"([^\"\\]{2,200})\"/g,
+]) {
   let match = pattern.exec(apiCorpus);
   while (match) {
     runtimeTexts.add(match[1]);
@@ -127,7 +132,7 @@ for (const pattern of [/label=\"([^\"\\]{2,200})\"/g, /title=\"([^\"\\]{2,200})\
 
 for (const file of [
   path.join(repoRoot, "apps/web/src/features/data-platform/category-metadata.ts"),
-  path.join(repoRoot, "apps/api/backend/app/data_catalog_entries.py"),
+  path.join(repoRoot, "apps/api/internal/platform/overview.go"),
 ]) {
   const text = fs.readFileSync(file, "utf8");
   for (const match of text.matchAll(/"([a-z0-9_]+)"/g)) {

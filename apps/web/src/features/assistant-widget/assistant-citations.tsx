@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
   translateDataLabel,
@@ -166,9 +167,7 @@ export function AssistantCitationList({
                   type="button"
                 >
                   <strong>{sourceLabel}</strong>
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    arrow_forward
-                  </span>
+                  <MaterialIcon name="arrow_forward" />
                 </button>
               ) : (
                 <strong>{sourceLabel}</strong>

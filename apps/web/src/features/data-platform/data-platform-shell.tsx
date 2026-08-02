@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
   CITY_OPTIONS,
@@ -214,9 +215,7 @@ export function RefreshErrorBanner({
 
   return (
     <div className="refresh-error-banner" role="alert">
-      <span className="material-symbols-outlined" aria-hidden="true">
-        sync_problem
-      </span>
+      <MaterialIcon name="sync_problem" />
       <span className="refresh-error-banner-copy">
         <strong>{translateMessageKey(language, "shell.refreshFailed")}</strong>
         <span>
@@ -230,9 +229,7 @@ export function RefreshErrorBanner({
         title={translateMessageKey(language, "shell.dismissRefreshError")}
         type="button"
       >
-        <span className="material-symbols-outlined" aria-hidden="true">
-          close
-        </span>
+        <MaterialIcon name="close" />
       </button>
     </div>
   );
@@ -634,9 +631,7 @@ export function DateScopeSelector({
                 title={translateMessageKey(language, "shell.previousMonth")}
                 type="button"
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_arrow_left
-                </span>
+                <MaterialIcon name="keyboard_arrow_left" />
               </button>
               <button
                 aria-label={translateMessageKey(language, "shell.nextMonth")}
@@ -645,9 +640,7 @@ export function DateScopeSelector({
                 title={translateMessageKey(language, "shell.nextMonth")}
                 type="button"
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_arrow_right
-                </span>
+                <MaterialIcon name="keyboard_arrow_right" />
               </button>
             </div>
           </div>

@@ -1,0 +1,107 @@
+/* Shared mixed-script layout rules. Keep labels readable in both English and Chinese. */
+.dashboard-shell :where(.dashboard-content, .detail-content-shell, .dashboard-scope-content) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-shell :where(.dashboard-scope-content > *, .dashboard-content > *, .detail-content-shell > *) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-shell :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  dt,
+  dd,
+  li,
+  a,
+  button,
+  strong,
+  em,
+  span:not(.material-symbols-outlined):not(.material-icon)
+) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* A label may be short in English but much longer in Chinese. Ellipsis is
+ * reserved for compact metadata where the surrounding control cannot grow. */
+.dashboard-shell :where(
+  .signals-console-header-meta,
+  .water-signal-panel header > strong,
+  .water-timeband-row strong,
+  .source-chip span,
+  .source-chip small,
+  .linked-events-category-chip span:not(.material-symbols-outlined),
+  .linked-events-row-meta,
+  .linked-events-detail-tags span,
+  .linked-events-meta-list span
+) {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep the shared field matrix horizontal. Narrow columns are allowed to
+ * scroll, but glyphs should never be rotated into a vertical label. */
+.water-field-lattice-head,
+.water-field-lattice-row {
+  grid-template-columns: minmax(64px, 1fr) repeat(5, minmax(32px, 1fr));
+}
+
+.water-field-lattice-head span:not(:first-child) {
+  min-height: 26px;
+  overflow-wrap: anywhere;
+  text-align: center;
+  transform: none;
+  white-space: normal;
+  writing-mode: horizontal-tb;
+}
+
+.water-field-grid article strong,
+.water-source-panel header strong,
+.water-current-cluster strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.dashboard-shell :where(
+  .energy-window-panel header > strong,
+  .energy-signal-panel header > strong,
+  .energy-source-panel header > strong,
+  .energy-volume-panel header > strong,
+  .energy-severity-panel header > strong
+) {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.energy-stat-chip strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 720px) {
+  .signals-console-header-meta {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .water-field-lattice {
+    overflow-x: auto;
+  }
+}

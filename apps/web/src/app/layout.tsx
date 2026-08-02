@@ -6,6 +6,7 @@ import { appEnv } from "@/lib/env";
 
 import "./globals.css";
 import "./material-symbols.css";
+import "./minimal-global.css";
 
 const inter = Inter({
   subsets: ["latin"],

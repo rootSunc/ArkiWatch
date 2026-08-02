@@ -1002,8 +1002,8 @@
 
   .source-chip span {
     min-width: 0;
-    overflow: visible;
-    text-overflow: clip;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 

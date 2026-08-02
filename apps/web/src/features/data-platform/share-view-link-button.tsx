@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { translateMessageKey } from "./i18n";
 import type { LanguageMode } from "./i18n";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 type ShareViewLinkButtonProps = {
   language: LanguageMode;
@@ -90,13 +91,9 @@ export function ShareViewLinkButton({ language, scopeKey = "" }: ShareViewLinkBu
       title={label}
       type="button"
     >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        {copyState === "success"
-          ? "check"
-          : copyState === "error"
-            ? "error"
-            : "link"}
-      </span>
+      <MaterialIcon
+        name={copyState === "success" ? "check" : copyState === "error" ? "error" : "link"}
+      />
     </button>
   );
 }

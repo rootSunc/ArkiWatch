@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { scopedDataTimestamp } from "./data-time-scope";
 import type { LanguageMode } from "./i18n";
 import type { PlatformTimeScope } from "./types";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 type TranslateMessage = (key: string) => string;
 
@@ -104,9 +105,7 @@ export function WorkspaceEmptyState({
   return (
     <section className={`workspace-empty-state ${className}`.trim()}>
       {eyebrow ? <span className="workspace-empty-state-eyebrow">{eyebrow}</span> : null}
-      <span className="material-symbols-outlined workspace-empty-state-icon" aria-hidden="true">
-        cloud_off
-      </span>
+      <MaterialIcon name="cloud_off" className="workspace-empty-state-icon" />
       <h2>{title}</h2>
       <p>{description}</p>
       {action ? <div className="workspace-empty-state-action">{action}</div> : null}

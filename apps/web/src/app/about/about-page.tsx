@@ -16,6 +16,7 @@ import {
   PROJECT_GITHUB_ISSUES_URL,
   PROJECT_GITHUB_URL,
 } from "@/features/shared/project-links";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import "./about.css";
 
@@ -295,7 +296,7 @@ export default function AboutPage() {
           <div className="about-cta-actions"><Link className="about-button about-button-primary" href="/?city=helsinki">{copy.ctaDemo}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link><a className="about-button about-button-secondary" href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">{copy.ctaGithub}<span className="material-symbols-outlined" aria-hidden="true">check</span></a><a className="about-button about-button-quiet" href={PROJECT_GITHUB_ISSUES_URL} rel="noreferrer" target="_blank">{copy.ctaIssue}<span className="material-symbols-outlined" aria-hidden="true">info</span></a></div>
         </section>
 
-        <footer className="about-footer"><span>{copy.footer}</span><a href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">GitHub <span className="material-symbols-outlined" aria-hidden="true">arrow_outward</span></a></footer>
+        <footer className="about-footer"><span>{copy.footer}</span><a href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">GitHub <MaterialIcon name="arrow_outward" /></a></footer>
       </div>
     </main>
   );

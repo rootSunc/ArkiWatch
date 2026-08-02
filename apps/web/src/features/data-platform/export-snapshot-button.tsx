@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { resolveApiBaseUrl } from "@/lib/api-client";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import { translateMessageKey, type LanguageMode } from "./i18n";
 
@@ -123,15 +124,18 @@ export function ExportSnapshotButton({
       title={label}
       type="button"
     >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        {state === "loading"
-          ? "progress_activity"
-          : state === "error"
-            ? "error"
-            : state === "success"
-              ? "check"
-              : "download"}
-      </span>
+      <MaterialIcon
+        name={
+          state === "loading"
+            ? "progress_activity"
+            : state === "error"
+              ? "error"
+              : state === "success"
+                ? "check"
+                : "download"
+        }
+        className={state === "loading" ? "spin-animation" : undefined}
+      />
     </button>
   );
 }

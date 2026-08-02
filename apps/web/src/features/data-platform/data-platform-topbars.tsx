@@ -125,7 +125,6 @@ export function DataPlatformMobileHeader({
   isDetailPage,
   isMobileMenuOpen,
   navigationButtonRef,
-  onSearchChange,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -141,7 +140,6 @@ export function DataPlatformMobileHeader({
   onRefresh,
   onToggleTheme,
   renderAuthActionButton,
-  searchValue,
   showExport,
   themeMode,
   userStateLabel,
@@ -237,16 +235,6 @@ export function DataPlatformMobileHeader({
           {renderAuthActionButton("icon-button mobile-overflow-action")}
         </div>
       </div>
-      {workspaceMode === "data" && !isDetailPage ? (
-        <DashboardSearch
-          className="mobile-dashboard-search"
-          clearLabel={tKey("shell.clearSearch")}
-          label={tKey("shell.searchSignalsPlaceholder")}
-          onChange={onSearchChange}
-          placeholder={tKey("shell.searchSignalsPlaceholder")}
-          value={searchValue}
-        />
-      ) : null}
     </header>
   );
 }

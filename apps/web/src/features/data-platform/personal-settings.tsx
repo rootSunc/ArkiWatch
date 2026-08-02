@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import type { SessionUser } from "@/features/auth/config";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
   fetchPersonalContext,
@@ -432,9 +433,7 @@ function PersonalSettingsContent({
       <div className={styles.shell}>
         <header className={styles.header}>
           <div className={styles.brandRow}>
-            <span className={`material-symbols-outlined ${styles.brandMark}`} aria-hidden="true">
-              sparkles
-            </span>
+            <MaterialIcon name="sparkles" className={styles.brandMark} />
             <div>
               <span className={styles.eyebrow}>ArkiWatch · {user.name ?? user.email ?? user.id}</span>
               <h1 className={styles.title}>{tKey("shell.personalSettingsTitle")}</h1>
@@ -463,9 +462,7 @@ function PersonalSettingsContent({
                 onClick={() => setActiveSection(section.key)}
                 type="button"
               >
-                <span className={`material-symbols-outlined ${styles.navIcon}`} aria-hidden="true">
-                  {section.icon}
-                </span>
+                <MaterialIcon name={section.icon} className={styles.navIcon} />
                 <span className={styles.navCopy}>
                   <span className={styles.navTitle}>{tKey(`shell.${section.labelKey}`)}</span>
                   <span className={styles.navStatus}>
@@ -499,9 +496,7 @@ function PersonalSettingsContent({
 
             {notice ? (
               <div className={`${styles.notice}${notice.tone === "error" ? ` ${styles.noticeError}` : ""}`} role="status">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {notice.tone === "error" ? "error" : "check_circle"}
-                </span>
+                <MaterialIcon name={notice.tone === "error" ? "error" : "check_circle"} />
                 {notice.text}
               </div>
             ) : null}

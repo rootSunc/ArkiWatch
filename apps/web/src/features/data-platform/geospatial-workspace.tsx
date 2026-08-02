@@ -1,5 +1,7 @@
 "use client";
 
+import { MaterialIcon } from "@/features/shared/material-icon";
+
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -312,9 +314,7 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
             <time>{historicalEvidence ? tKey("shell.historicalEvidence") : catalogOnly ? tKey("geospatial.catalog") : translateEnumLabel(language, category.stage ?? "background")}</time>
           </div>
           <div className="water-current-cluster">
-            <span className="material-symbols-outlined water-condition-icon" aria-hidden="true">
-              map
-            </span>
+            <MaterialIcon className="water-condition-icon" name="map" />
             <div>
               <strong>{heroTitle}</strong>
               <p>{heroDetail}</p>
@@ -363,9 +363,7 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
           <div className="water-field-grid">
             {keyDataItems.map((field) => (
               <article key={field.key}>
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {FIELD_ICONS[field.key] ?? "database"}
-                </span>
+                <MaterialIcon name={FIELD_ICONS[field.key] ?? "database"} />
                 <div>
                   <strong>{dataItemLabel(field)}</strong>
                   <small>{fieldState}</small>

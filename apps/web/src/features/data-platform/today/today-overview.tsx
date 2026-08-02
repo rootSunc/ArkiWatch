@@ -1,6 +1,7 @@
 "use client";
 
 import { formatTimestamp, severityTone } from "@/features/shared/format";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import { localizedContent } from "../content-localization";
 import type { LanguageMode } from "../i18n";
@@ -267,9 +268,7 @@ export function TodayOverview({
 
       {!isHistorical && personalDashboardError ? (
         <div className="today-personal-warning" role="alert">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            person_alert
-          </span>
+          <MaterialIcon name="person_alert" />
           <span className="today-personal-warning-copy">
             <strong>{tKey("shell.personalContextUnavailable")}</strong>
             <span>{tKey("shell.personalContextUnavailableDetail")}</span>

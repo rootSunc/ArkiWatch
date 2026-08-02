@@ -386,7 +386,7 @@
   font-weight: 700;
   line-height: 24px;
   min-width: 0;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   word-break: normal;
 }
 
@@ -1003,9 +1003,9 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   word-break: normal;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .energy-stat-chip span {
