@@ -1,0 +1,37 @@
+name: Public data source proposal
+description: Propose a Finnish public data source for ArkiWatch.
+title: "[Source]: "
+labels:
+  - data-source
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and dataset
+      placeholder: Finnish Transport Infrastructure Agency — ...
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: API or documentation URL
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: What daily decision would it improve?
+      description: Explain who benefits and what action the data could support.
+    validations:
+      required: true
+  - type: textarea
+    id: terms
+    attributes:
+      label: License, terms, and limits
+      description: Include attribution rules, rate limits, authentication, and update cadence.
+    validations:
+      required: true
+  - type: textarea
+    id: coverage
+    attributes:
+      label: Geographic and temporal coverage
