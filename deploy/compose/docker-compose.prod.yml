@@ -1,0 +1,113 @@
+name: arkiwatch
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-application-security: &application-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - ${ARKIWATCH_ENV_DIR:-../env}/postgres.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+    networks:
+      - arkiwatch_internal
+
+  api:
+    # Keep this service at one replica until the rate limiter is shared across processes.
+    <<: *application-security
+    image: ${ARKIWATCH_API_IMAGE:?Set ARKIWATCH_API_IMAGE}:${ARKIWATCH_IMAGE_TAG:?Set ARKIWATCH_IMAGE_TAG}
+    restart: unless-stopped
+    env_file:
+      - ${ARKIWATCH_ENV_DIR:-../env}/api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+    networks:
+      - arkiwatch_internal
+
+  scheduler:
+    <<: *application-security
+    image: ${ARKIWATCH_API_IMAGE:?Set ARKIWATCH_API_IMAGE}:${ARKIWATCH_IMAGE_TAG:?Set ARKIWATCH_IMAGE_TAG}
+    restart: unless-stopped
+    command: ["/app/arkiwatch-scheduler"]
+    env_file:
+      - ${ARKIWATCH_ENV_DIR:-../env}/api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *default-logging
+    networks:
+      - arkiwatch_internal
+
+  web:
+    <<: *application-security
+    image: ${ARKIWATCH_WEB_IMAGE:?Set ARKIWATCH_WEB_IMAGE}:${ARKIWATCH_IMAGE_TAG:?Set ARKIWATCH_IMAGE_TAG}
+    restart: unless-stopped
+    env_file:
+      - ${ARKIWATCH_ENV_DIR:-../env}/web.env
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+    networks:
+      - arkiwatch_internal
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file:
+      - ${ARKIWATCH_ENV_DIR:-../env}/caddy.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    logging: *default-logging
+    networks:
+      - arkiwatch_internal
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  arkiwatch_internal:
+    driver: bridge
