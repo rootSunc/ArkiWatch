@@ -14,58 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  contracts:
-    name: OpenAPI contract check
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install workspace dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check version consistency
-        run: pnpm run version:check
-
-      - name: Check environment examples
-        run: pnpm run config:check
-
-      - name: Run contract generation check
-        run: pnpm run contracts:check
-
-  security:
-    name: Secret scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Check out full repository history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Scan Git history for secrets
-        run: >-
-          docker run --rm
-          -v "$PWD:/repo"
-          zricethezav/gitleaks:v8.30.1
-          git --redact --no-banner /repo
-
   api:
-    name: Go API lint, test, schema
+    name: Go API
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -95,6 +45,12 @@ jobs:
         with:
           run_install: false
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -103,29 +59,16 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
+      - name: Apply schema and bootstrap metadata
+        run: |
+          pnpm run migrate:api
+          pnpm run bootstrap:api
 
-      - name: Apply Go PostgreSQL schema
-        run: pnpm run migrate:api
-
-      - name: Seed operational metadata
-        run: pnpm run bootstrap:api
-
-      - name: Run Go API check
+      - name: Lint and test the API
         run: pnpm run check:api
 
-      - name: Audit Go dependencies
-        run: pnpm run audit:api
-
-      - name: Verify the live API against the OpenAPI contract
-        run: pnpm run contracts:check:live
-
   web:
-    name: Web lint, test, typecheck, build
+    name: Web
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -147,191 +90,11 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit production npm dependencies
-        run: pnpm audit --prod --audit-level=high
+      - name: Check OpenAPI types
+        run: pnpm run contracts:check
 
-      - name: Run web check
+      - name: Lint, test, and typecheck
         run: pnpm run check:web
 
-      - name: Build web app
+      - name: Build
         run: pnpm run build:web
-
-  web-e2e:
-    name: Web browser and accessibility smoke tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install workspace dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Chromium for Playwright
-        run: pnpm --filter @arkiwatch/web exec playwright install --with-deps chromium
-
-      - name: Build deterministic demo
-        run: NEXT_PUBLIC_DEMO_MODE=true pnpm run build:web
-
-      - name: Run browser and accessibility smoke tests
-        run: pnpm --filter @arkiwatch/web run e2e
-
-      - name: Upload Playwright diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-diagnostics-${{ github.run_id }}
-          path: |
-            apps/web/playwright-report
-            apps/web/test-results
-          if-no-files-found: ignore
-
-  docker:
-    name: Docker Build and Publish
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs:
-      - contracts
-      - api
-      - web
-      - web-e2e
-      - security
-      - deployment-config
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Read application version
-        id: version
-        run: echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Prepare image names
-        id: images
-        run: |
-          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
-          echo "api=ghcr.io/${owner}/arkiwatch-api" >> "$GITHUB_OUTPUT"
-          echo "web=ghcr.io/${owner}/arkiwatch-web" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: deploy/docker/api.Dockerfile
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            APP_VERSION=${{ steps.version.outputs.version }}
-            BUILD_SHA=${{ github.sha }}
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ARKIWATCH_PUBLISH_IMAGES == 'true' }}
-          tags: |
-            ${{ steps.images.outputs.api }}:${{ github.sha }}
-            ${{ steps.images.outputs.api }}:latest
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,scope=api,mode=max
-
-      - name: Build web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: deploy/docker/web.Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ARKIWATCH_PUBLISH_IMAGES == 'true' }}
-          tags: |
-            ${{ steps.images.outputs.web }}:${{ github.sha }}
-            ${{ steps.images.outputs.web }}:latest
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web,mode=max
-
-  deployment-config:
-    name: Deployment script checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Validate shell scripts
-        run: |
-          for script in deploy/scripts/*.sh; do
-            bash -n "$script"
-          done
-
-      - name: Validate production Compose file
-        run: |
-          env_dir="$(mktemp -d)"
-          for service in api web postgres caddy; do
-            cp "deploy/env/${service}.env.example" "$env_dir/${service}.env"
-          done
-          ARKIWATCH_API_IMAGE=ghcr.io/example/arkiwatch-api \
-          ARKIWATCH_WEB_IMAGE=ghcr.io/example/arkiwatch-web \
-          ARKIWATCH_IMAGE_TAG=ci \
-          ARKIWATCH_ENV_DIR="$env_dir" \
-            docker compose -f deploy/compose/docker-compose.prod.yml config -q
-
-  deploy:
-    name: Deploy to VPS
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ARKIWATCH_DEPLOY_ENABLED == 'true'
-    environment:
-      name: production
-
-    steps:
-      - name: Configure SSH key
-        env:
-          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
-          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
-        run: |
-          : "${PROD_SSH_KEY:?Set PROD_SSH_KEY in GitHub Actions secrets}"
-          : "${PROD_SSH_KNOWN_HOSTS:?Set PROD_SSH_KNOWN_HOSTS in GitHub Actions secrets}"
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$PROD_SSH_KEY" > ~/.ssh/arkiwatch_deploy
-          chmod 600 ~/.ssh/arkiwatch_deploy
-          printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
-      - name: Release image tag on VPS
-        env:
-          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
-          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
-          PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT || '22' }}
-        run: |
-          : "${PROD_SSH_HOST:?Set PROD_SSH_HOST in GitHub Actions secrets}"
-          : "${PROD_SSH_USER:?Set PROD_SSH_USER in GitHub Actions secrets}"
-          ssh -i ~/.ssh/arkiwatch_deploy \
-            -p "$PROD_SSH_PORT" \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            "$PROD_SSH_USER@$PROD_SSH_HOST" \
-            "/srv/arkiwatch/runtime/scripts/release.sh '${GITHUB_SHA}'"

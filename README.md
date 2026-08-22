@@ -19,8 +19,7 @@
 <p align="center">
   <a href="#try-the-demo">Try the demo</a> ·
   <a href="#see-the-product">See the product</a> ·
-  <a href="#run-the-live-stack">Run locally</a> ·
-  <a href="CONTRIBUTING.md">Contribute</a>
+  <a href="#run-the-live-stack">Run locally</a>
 </p>
 
 > ArkiWatch brings scattered public signals into one practical daily workspace — while keeping scope, freshness, provenance, and evidence visible.
@@ -35,9 +34,8 @@
 - [Run the live stack](#run-the-live-stack)
 - [Repository map](#repository-map)
 - [Development](#development)
-- [Contributing](#contributing)
 - [Project status](#project-status)
-- [Security, privacy, and license](#security-privacy-and-license)
+- [Privacy and license](#privacy-and-license)
 
 ## Why ArkiWatch
 
@@ -253,17 +251,6 @@ For focused work, use `pnpm run test:api`, `pnpm run test:web`, `pnpm run lint:a
 
 The production backend and schema lifecycle are owned by `apps/api`. The production image contains only Go API/worker/migration binaries plus the minimal runtime image. The static API contract lives in `contracts/openapi.json`.
 
-## Contributing
-
-Contributions are welcome across connectors, backend services, frontend product surfaces, tests, and documentation. The most useful changes make public data more useful and more honest:
-
-- add a provider with clear licensing, coverage, cadence, rate limits, and provenance;
-- improve a recommendation rule with deterministic fixtures and tests;
-- fix a misleading state, translation, responsive behavior, or accessibility issue;
-- improve the demo so a new user understands the product faster.
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. UI changes should include screenshots or a short recording; provider changes should document the source boundary and attribution requirements. The repository also includes a [Code of Conduct](CODE_OF_CONDUCT.md) and issue templates for bugs, feature requests, and data-source proposals.
-
 ## Project status
 
 ArkiWatch is pre-release software under active development. The main product paths and engineering foundations are in place, but provider availability, geographic coverage, external API limits, and UI details can change.
@@ -275,11 +262,10 @@ The project is currently focused on:
 - expanding Finnish city coverage and community-contributed collectors;
 - keeping demo, historical, and live data semantics visibly separate.
 
-See [CHANGELOG.md](CHANGELOG.md) for the unreleased change log. The optional self-hosting recipe in [`deploy/`](deploy/README.md) is not required for the demo or normal development.
+The optional self-hosting recipe in [`deploy/`](deploy/README.md) is not required for the demo or normal development.
 
-## Security, privacy, and license
+## Privacy and license
 
-- Report vulnerabilities privately using [SECURITY.md](SECURITY.md); please do not open a public issue.
 - Read [PRIVACY.md](PRIVACY.md) for the project’s data boundary and handling notes.
 - ArkiWatch is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 

@@ -1,0 +1,14 @@
+# Keep the default rule set, then ignore known false positives that are not
+# credentials: i18n label keys and deterministic auth fixtures used in tests.
+title = "ArkiWatch"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and localized label keys"
+regexes = [
+  '''week7DayHorizon''',
+  '''secret-for-tests-0123456789012345''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJhdWQiOiJhcmtpd2F0Y2gtd2ViIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoyMDAwMDAzNjAwLCJpYXQiOjIwMDAwMDAwMDAsImlzcyI6ImFya2l3YXRjaC1hcGkiLCJuYW1lIjoiVXNlciIsInN1YiI6InVzZXItMSJ9\.W1S--kx67iWNVewe81OqzOqLbb-aQTO8hB-1cr_T9zI''',
+]

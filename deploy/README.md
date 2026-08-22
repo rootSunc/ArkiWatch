@@ -8,8 +8,8 @@ is needed.
 The production model is intentionally split by responsibility:
 
 ```text
-MacBook:          development and operator commands
-GitHub Actions:  tests, Docker image builds, GHCR publishing
+MacBook:          development, image builds, and operator commands
+GitHub Actions:  API and web checks
 VPS:             Docker Compose runtime, Caddy, PostgreSQL, backups
 ```
 
@@ -156,21 +156,13 @@ PROD_SSH_PORT optional, defaults to 22
 Do not replace this with `StrictHostKeyChecking=accept-new` in production. Rotate
 the deploy key and host entries together when a server is rebuilt.
 
-The repository owner should also configure these Actions variables before enabling
-publishing or deployment. They default to false so forks can run the build without
-publishing images or attempting to SSH into a production host:
-
-```text
-ARKIWATCH_PUBLISH_IMAGES=true
-ARKIWATCH_DEPLOY_ENABLED=true
-```
+Image publishing and VPS releases are operator commands, not CI jobs.
 
 Each release waits for PostgreSQL and application health checks, creates a
 database backup before changing images, and attempts to restore the previously
 running API/Web image tag if an existing deployment fails its health check.
 Image tags are Git SHAs in normal deployments. The root `VERSION` file is only a
-package-metadata placeholder until the first release is decided; CI checks it for
-consistency with package and OpenAPI metadata.
+package-metadata placeholder until the first release is decided.
 The release script runs `/app/arkiwatch-migrate` and `/app/arkiwatch-bootstrap`
 before starting the Go API and scheduler. Do not roll back an image across a
 schema migration until the restore procedure has been validated.
@@ -180,20 +172,11 @@ Redis/edge limiter before scaling the API horizontally.
 The release script also fails closed if more than one API container is running,
 so an accidental `docker compose --scale api=2` cannot be treated as a healthy release.
 
-For production protection, configure a GitHub Actions environment named `production`
-with required reviewers and restrict deployment branches to `main`. The deploy job is
-attached to that environment and will wait for its approval rules before opening the
-SSH session.
-
 Manual release from your Mac:
 
 ```bash
 ARKIWATCH_HOST=arkiwatch-prod deploy/scripts/deploy.sh <git-sha>
 ```
-
-When you are ready to publish a GitHub release, set `VERSION`, align package
-metadata, run the version and contract checks, then push a matching `v<version>`
-tag. The release workflow validates the tag against `VERSION` and generates notes.
 
 ## Manual VPS Commands
 

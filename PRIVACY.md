@@ -36,4 +36,4 @@ Use strong, unique values for `AUTH_TOKEN_SECRET`, admin credentials, database
 credentials, metrics tokens, provider keys, and Telegram secrets. Restrict
 production API and documentation paths at the edge, protect backups, rotate
 credentials after any suspected exposure, and do not commit `.env` files or
-production data. Report vulnerabilities privately through [`SECURITY.md`](SECURITY.md).
+production data.
