@@ -1,0 +1,126 @@
+---
+- name: Sync ArkiWatch runtime files and optionally release an image tag
+  hosts: arkiwatch
+  vars_files:
+    - ../group_vars/prod.yml
+  vars:
+    arkiwatch_remote_root: "{{ arkiwatch_remote_root | default('/srv/arkiwatch') }}"
+    arkiwatch_deploy_user: "{{ arkiwatch_deploy_user | default('deploy') }}"
+    arkiwatch_remote_runtime_dir: "{{ arkiwatch_remote_root }}/runtime"
+    arkiwatch_remote_env_dir: "{{ arkiwatch_remote_root }}/env"
+    arkiwatch_required_env_files:
+      - api.env
+      - web.env
+      - postgres.env
+      - caddy.env
+      - images.env
+    arkiwatch_runtime_scripts:
+      - release.sh
+      - backup-db.sh
+      - restore-db-copy.sh
+      - logs.sh
+
+  pre_tasks:
+    - name: Check local environment files
+      ansible.builtin.stat:
+        path: "{{ arkiwatch_local_env_dir }}/{{ item }}"
+      register: arkiwatch_local_env_stats
+      loop: "{{ arkiwatch_required_env_files }}"
+      delegate_to: localhost
+      become: false
+
+    - name: Fail when a local environment file is missing
+      ansible.builtin.fail:
+        msg: "Missing {{ item.item }} in {{ arkiwatch_local_env_dir }}. Copy deploy/env/*.example first."
+      loop: "{{ arkiwatch_local_env_stats.results }}"
+      when: not item.stat.exists
+
+  tasks:
+    - name: Ensure remote runtime directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0750"
+      loop:
+        - "{{ arkiwatch_remote_runtime_dir }}"
+        - "{{ arkiwatch_remote_runtime_dir }}/compose"
+        - "{{ arkiwatch_remote_runtime_dir }}/caddy"
+        - "{{ arkiwatch_remote_runtime_dir }}/scripts"
+        - "{{ arkiwatch_remote_env_dir }}"
+        - "{{ arkiwatch_remote_root }}/backups/postgres"
+        - "{{ arkiwatch_remote_root }}/logs"
+
+    - name: Upload production Compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../compose/docker-compose.prod.yml"
+        dest: "{{ arkiwatch_remote_runtime_dir }}/compose/docker-compose.prod.yml"
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0640"
+
+    - name: Upload Caddyfile
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../caddy/Caddyfile"
+        dest: "{{ arkiwatch_remote_runtime_dir }}/caddy/Caddyfile"
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0640"
+
+    - name: Upload runtime scripts
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../scripts/{{ item }}"
+        dest: "{{ arkiwatch_remote_runtime_dir }}/scripts/{{ item }}"
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0750"
+      loop: "{{ arkiwatch_runtime_scripts }}"
+
+    - name: Upload environment files
+      ansible.builtin.copy:
+        src: "{{ arkiwatch_local_env_dir }}/{{ item }}"
+        dest: "{{ arkiwatch_remote_env_dir }}/{{ item }}"
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0600"
+      loop: "{{ arkiwatch_required_env_files }}"
+
+    - name: Check optional restic environment file
+      ansible.builtin.stat:
+        path: "{{ arkiwatch_local_env_dir }}/restic.env"
+      register: arkiwatch_restic_env
+      delegate_to: localhost
+      become: false
+
+    - name: Upload optional restic environment file
+      ansible.builtin.copy:
+        src: "{{ arkiwatch_local_env_dir }}/restic.env"
+        dest: "{{ arkiwatch_remote_env_dir }}/restic.env"
+        owner: "{{ arkiwatch_deploy_user }}"
+        group: "{{ arkiwatch_deploy_user }}"
+        mode: "0600"
+      when: arkiwatch_restic_env.stat.exists
+
+    - name: Log in to the image registry when credentials are configured
+      ansible.builtin.command:
+        cmd: "docker login {{ arkiwatch_registry_server | default('ghcr.io') }} -u {{ arkiwatch_registry_username }} --password-stdin"
+        stdin: "{{ arkiwatch_registry_password }}"
+      no_log: true
+      when:
+        - arkiwatch_registry_username | default('') | length > 0
+        - arkiwatch_registry_password | default('') | length > 0
+
+    - name: Run release script
+      ansible.builtin.command:
+        cmd: "{{ arkiwatch_remote_runtime_dir }}/scripts/release.sh {{ arkiwatch_image_tag | default('latest') }}"
+      environment:
+        ARKIWATCH_ROOT: "{{ arkiwatch_remote_root }}"
+      when: arkiwatch_run_release | default(true) | bool
+
+    - name: Install daily database backup cron
+      ansible.builtin.cron:
+        name: arkiwatch postgres backup
+        minute: "17"
+        hour: "2"
+        job: "ARKIWATCH_ROOT={{ arkiwatch_remote_root }} {{ arkiwatch_remote_runtime_dir }}/scripts/backup-db.sh >> {{ arkiwatch_remote_root }}/logs/backup.log 2>&1"

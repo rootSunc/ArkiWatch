@@ -1,0 +1,15 @@
+arkiwatch_remote_root: /srv/arkiwatch
+arkiwatch_deploy_user: deploy
+arkiwatch_image_tag: latest
+
+# Local directory on your Mac that contains api.env, web.env, postgres.env,
+# caddy.env, and images.env.
+arkiwatch_local_env_dir: "{{ playbook_dir }}/../../env"
+
+# Optional. Set these only when GHCR images are private and the VPS needs docker login.
+arkiwatch_registry_server: ghcr.io
+arkiwatch_registry_username: ""
+arkiwatch_registry_password: ""
+
+# Set false when you only want to sync runtime files/env without starting a release.
+arkiwatch_run_release: true
