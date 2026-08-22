@@ -61,7 +61,7 @@ pnpm install
 pnpm demo
 ```
 
-Open [localhost:3000](http://localhost:3000), then explore:
+Open [http://localhost:3000](http://localhost:3000), then explore:
 
 1. **Today** — see the most useful decision first.
 2. **Data** — inspect the source, scope, freshness, and evidence behind it.
@@ -147,19 +147,10 @@ The machine-readable coverage contract is available at `GET /api/platform/covera
 
 The data path is intentionally explicit: provider adapters isolate external APIs, raw records preserve fetch metadata, and normalized products feed both guidance and inspectable workspaces.
 
-```mermaid
-flowchart LR
-  Sources[Public providers] --> Collectors[Collector adapters]
-  Collectors --> Raw[Raw records]
-  Raw --> Products[Normalized events and snapshots]
-  Products --> Guidance[Rules and recommendations]
-  Products --> API[Go serving layer]
-  Guidance --> API
-  API --> Today[Next.js Today workspace]
-  API --> Data[Next.js Data workspace]
-  API --> Assistant[Assistant context and citations]
-  Guidance --> Delivery[Optional Telegram delivery]
-```
+<p align="center">
+  <img src="docs/architecture-overview.jpg" alt="ArkiWatch system architecture: public providers, collector adapters, raw records, normalized events, rules, Go serving layer, Today and Data workspaces, optional Telegram and assistant channels" width="100%">
+</p>
+
 
 ### Main technologies
 
@@ -203,10 +194,11 @@ Local surfaces:
 
 | Surface | URL |
 | --- | --- |
-| Web app | [localhost:3000](http://localhost:3000) |
-| Product overview | [localhost:3000/about](http://localhost:3000/about) |
-| API root | [127.0.0.1:8000/api](http://127.0.0.1:8000/api) |
-| Health | [127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health) |
+| Web app | [http://localhost:3000](http://localhost:3000) |
+| Product overview | [http://localhost:3000/about](http://localhost:3000/about) |
+| API root | [http://localhost:8000/api](http://localhost:8000/api) |
+| Health | [http://localhost:8000/api/health](http://localhost:8000/api/health) |
+
 
 Start from the two `.env.example` files. Do not commit `.env` files, tokens, provider credentials, production data, or personal information. The full local-stack notes are in [docs/development.md](docs/development.md).
 

@@ -32,9 +32,11 @@ The local surfaces are:
 | --- | --- |
 | Web app | [http://localhost:3000](http://localhost:3000) |
 | Product overview | [http://localhost:3000/about](http://localhost:3000/about) |
-| API root | [http://127.0.0.1:8000](http://127.0.0.1:8000) |
+| API root | [http://localhost:8000](http://localhost:8000) |
 | OpenAPI contract | [`contracts/openapi.json`](../contracts/openapi.json) (static contract source) |
-| Health | [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health) |
+| Health | [http://localhost:8000/api/health](http://localhost:8000/api/health) |
+
+Use `localhost` in the browser. The example files bind the API to `127.0.0.1:8000` and point the web app at `http://127.0.0.1:8000/api`; on a typical local machine that is the same loopback host.
 
 The example configuration uses `postgresql://postgres:postgres@localhost:5432/arkiwatch`. Change it in `apps/api/.env` if your local PostgreSQL setup differs.
 
