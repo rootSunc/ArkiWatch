@@ -217,7 +217,7 @@ Start from the two `.env.example` files. Do not commit `.env` files, tokens, pro
 │   └── package.json
 ├── docs                  # Development, data-source, and UI system notes
 ├── deploy                # Docker, VPS deployment, operations scripts, and runbooks
-├── .github               # CI, dependency automation, and issue templates
+├── .github               # CI workflow, issue templates, and PR template
 └── package.json          # Workspace commands
 ```
 
