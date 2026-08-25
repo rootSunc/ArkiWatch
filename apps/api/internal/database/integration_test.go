@@ -131,12 +131,15 @@ func TestPublicDashboardIgnoresStaleRegionalSnapshot(t *testing.T) {
 	}
 
 	// Move the stored snapshot into the past; the live read must fall through
-	// to a freshly composed payload instead of reusing it.
-	if _, err := store.pool.Exec(ctx, `UPDATE regional_snapshots SET snapshot_date = $1::date WHERE snapshot_date = $2::date`, now.AddDate(0, 0, -3).Format("2006-01-02"), now.Format("2006-01-02")); err != nil {
+	// to a freshly composed payload instead of reusing it. The offset is years,
+	// not days, so this can't collide with the unique (scope, date) constraint
+	// against real snapshots a long-lived local dev database has accumulated.
+	staleDate := now.AddDate(-5, 0, 0).Format("2006-01-02")
+	if _, err := store.pool.Exec(ctx, `UPDATE regional_snapshots SET snapshot_date = $1::date WHERE snapshot_date = $2::date`, staleDate, now.Format("2006-01-02")); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		_, _ = store.pool.Exec(context.Background(), `DELETE FROM regional_snapshots WHERE snapshot_date = $1::date`, now.AddDate(0, 0, -3).Format("2006-01-02"))
+		_, _ = store.pool.Exec(context.Background(), `DELETE FROM regional_snapshots WHERE snapshot_date = $1::date`, staleDate)
 	})
 
 	fresh, err := store.LoadPublicDashboard(ctx, nil, now)
