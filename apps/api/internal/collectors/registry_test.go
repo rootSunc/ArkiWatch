@@ -592,6 +592,60 @@ func TestLinkedEventsCollectStopsAtMaxPagesDespiteAnEndlessNextLink(t *testing.T
 	}
 }
 
+func TestRegistryConstructsEveryExpectedSourceWithMatchingSourceCode(t *testing.T) {
+	registry := Registry(config.DefaultConfig())
+
+	want := []string{"fmi", "hsy", "open_meteo_air", "porssisahko", "fingrid", "digitraffic", "digitransit", "syke", "servicemap", "linkedevents"}
+	if len(registry) != len(want) {
+		t.Fatalf("expected %d registered sources, got %d: %v", len(want), len(registry), registryKeys(registry))
+	}
+	for _, sourceCode := range want {
+		collector, ok := registry[sourceCode]
+		if !ok {
+			t.Fatalf("expected %q to be registered, got %v", sourceCode, registryKeys(registry))
+		}
+		if collector.SourceCode() != sourceCode {
+			t.Fatalf("expected the map key to match the collector's own SourceCode(), key=%q SourceCode()=%q", sourceCode, collector.SourceCode())
+		}
+		if collector.Dataset() == "" {
+			t.Fatalf("expected %q to have a non-empty Dataset()", sourceCode)
+		}
+	}
+}
+
+func registryKeys(registry map[string]Collector) []string {
+	keys := make([]string, 0, len(registry))
+	for key := range registry {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func TestHeaderIfPresentOmitsBlankValues(t *testing.T) {
+	if headerIfPresent("x-api-key", "") != nil {
+		t.Fatal("expected a blank value to produce no header")
+	}
+	if headerIfPresent("x-api-key", "  ") != nil {
+		t.Fatal("expected a whitespace-only value to produce no header")
+	}
+	got := headerIfPresent("x-api-key", "secret")
+	if !reflect.DeepEqual(got, map[string]string{"x-api-key": "secret"}) {
+		t.Fatalf("unexpected header map: %v", got)
+	}
+}
+
+func TestNonEmptyFallsBackOnlyWhenBlank(t *testing.T) {
+	if nonEmpty("value", "fallback") != "value" {
+		t.Fatal("expected a non-blank value to win")
+	}
+	if nonEmpty("", "fallback") != "fallback" {
+		t.Fatal("expected a blank value to use the fallback")
+	}
+	if nonEmpty("   ", "fallback") != "fallback" {
+		t.Fatal("expected a whitespace-only value to use the fallback")
+	}
+}
+
 func TestHistoricalPriceURLReplacesLatestEndpoint(t *testing.T) {
 	value, err := historicalPriceURL("https://api.porssisahko.net/v2/latest-prices.json")
 	if err != nil {
