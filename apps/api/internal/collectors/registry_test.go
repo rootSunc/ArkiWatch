@@ -255,6 +255,91 @@ func TestHistoricalPriceQuerySwitchesFormatForV2Endpoint(t *testing.T) {
 	}
 }
 
+func TestCollectorIntCoercesEachSupportedInputType(t *testing.T) {
+	cases := []struct {
+		name  string
+		value any
+		want  int
+		ok    bool
+	}{
+		{"float64 truncates", 3.9, 3, true},
+		{"int passes through", 7, 7, true},
+		{"int64 converts", int64(42), 42, true},
+		{"numeric string parses", " 12 ", 12, true},
+		{"non-numeric string fails", "abc", 0, false},
+		{"unsupported type fails", []int{1}, 0, false},
+		{"nil fails", nil, 0, false},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, ok := collectorInt(testCase.value)
+			if got != testCase.want || ok != testCase.ok {
+				t.Fatalf("collectorInt(%#v) = (%d, %v), want (%d, %v)", testCase.value, got, ok, testCase.want, testCase.ok)
+			}
+		})
+	}
+}
+
+func TestSykeStationIDsFiltersByMeasureAndSkipsNonMatchesWithoutErodingLimit(t *testing.T) {
+	stations := []any{
+		map[string]any{"Paikka_Id": 1.0, "Suure_Id": 1.0}, // matches measure 1
+		map[string]any{"Paikka_Id": 2.0, "Suure_Id": 2.0}, // different measure, should not count against the limit
+		map[string]any{"Paikka_Id": 3.0, "Suure_Id": 1.0}, // matches measure 1
+		map[string]any{"Paikka_Id": 4.0, "Suure_Id": 1.0}, // matches measure 1, but excluded once limit=2 is reached
+		"not-a-station", // malformed entries are skipped
+		map[string]any{"Paikka_Id": "not-a-number", "Suure_Id": 1.0},
+	}
+
+	limited := sykeStationIDs(stations, 1, 2)
+	if !reflect.DeepEqual(limited, []int{1, 3}) {
+		t.Fatalf("expected the two matching stations before the limit, non-matches not counted: %v", limited)
+	}
+
+	unlimited := sykeStationIDs(stations, 1, 0)
+	if !reflect.DeepEqual(unlimited, []int{1, 3, 4}) {
+		t.Fatalf("expected all three matching stations (including the one past the limit=2 case) with limit<=0 meaning unlimited: %v", unlimited)
+	}
+
+	if none := sykeStationIDs(stations, 99, 10); len(none) != 0 {
+		t.Fatalf("expected no matches for an unused measure ID, got %v", none)
+	}
+}
+
+func TestCapFeaturesTruncatesAndRecordsOriginalCountOnlyWhenOverLimit(t *testing.T) {
+	features := []any{"a", "b", "c"}
+	body := map[string]any{"type": "FeatureCollection", "features": features}
+
+	untouched := capFeatures(body, 5)
+	if !reflect.DeepEqual(untouched, body) {
+		t.Fatalf("expected the body unchanged when under the limit, got %#v", untouched)
+	}
+	if untouched["feature_count_original"] != nil {
+		t.Fatalf("expected no truncation metadata when nothing was truncated")
+	}
+
+	capped := capFeatures(body, 2)
+	cappedFeatures, ok := capped["features"].([]any)
+	if !ok || len(cappedFeatures) != 2 {
+		t.Fatalf("expected features truncated to 2, got %#v", capped["features"])
+	}
+	if capped["feature_count_original"] != 3 || capped["feature_count_returned"] != 2 {
+		t.Fatalf("expected truncation metadata to record the original and returned counts: %#v", capped)
+	}
+	if capped["type"] != "FeatureCollection" {
+		t.Fatalf("expected other body fields to be preserved: %#v", capped)
+	}
+	if len(body["features"].([]any)) != 3 {
+		t.Fatalf("expected the original body to be left untouched")
+	}
+
+	if result := capFeatures(nil, 5); result != nil {
+		t.Fatalf("expected a nil body to pass through as nil, got %#v", result)
+	}
+	if result := capFeatures(body, 0); !reflect.DeepEqual(result, body) {
+		t.Fatalf("expected limit<=0 to disable capping entirely, got %#v", result)
+	}
+}
+
 func TestHistoricalPriceURLReplacesLatestEndpoint(t *testing.T) {
 	value, err := historicalPriceURL("https://api.porssisahko.net/v2/latest-prices.json")
 	if err != nil {
