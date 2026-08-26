@@ -340,6 +340,154 @@ func TestCapFeaturesTruncatesAndRecordsOriginalCountOnlyWhenOverLimit(t *testing
 	}
 }
 
+func TestEndpointCollectUsesQueryClosureAndHeaders(t *testing.T) {
+	var mu sync.Mutex
+	var seenQuery url.Values
+	var seenHeader string
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		mu.Lock()
+		seenQuery = request.URL.Query()
+		seenHeader = request.Header.Get("x-api-key")
+		mu.Unlock()
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"data":[1,2,3]}`))
+	}))
+	defer server.Close()
+
+	collector := endpointCollector{
+		cfg: config.DefaultConfig(), source: "fingrid", dataset: "energy_timeseries", endpoint: server.URL, area: "helsinki",
+		headers: map[string]string{"x-api-key": "secret-key"},
+		query:   func() map[string]string { return map[string]string{"pageSize": "200"} },
+	}
+
+	items, err := collector.Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if len(items) != 1 || items[0].Dataset != "energy_timeseries" || items[0].AreaCode != "helsinki" || len(items[0].Hash) != 64 {
+		t.Fatalf("unexpected observation: %#v", items)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if seenQuery.Get("pageSize") != "200" {
+		t.Fatalf("expected the query closure's params to be sent, got %v", seenQuery)
+	}
+	if seenHeader != "secret-key" {
+		t.Fatalf("expected the configured header to be sent, got %q", seenHeader)
+	}
+}
+
+func TestEndpointCollectRangeErrorsWithoutHittingTheNetworkWhenUnsupported(t *testing.T) {
+	collector := endpointCollector{cfg: config.DefaultConfig(), source: "hsy", endpoint: "http://127.0.0.1:1"} // rangeQuery is nil; a real request here would hang/refuse, not just error cleanly
+	now := time.Date(2026, 4, 12, 0, 0, 0, 0, time.UTC)
+
+	_, err := collector.CollectRange(context.Background(), now, now.Add(time.Hour), "", "")
+	if err == nil || !strings.Contains(err.Error(), "does not support historical backfill") {
+		t.Fatalf("expected a clean unsupported-backfill error without attempting the request, got: %v", err)
+	}
+}
+
+func TestEndpointCollectRangeRejectsNonPositiveWindowWithoutHittingTheNetwork(t *testing.T) {
+	collector := endpointCollector{
+		cfg: config.DefaultConfig(), source: "fingrid", endpoint: "http://127.0.0.1:1",
+		rangeQuery: func(start, end time.Time) map[string]string { return nil },
+	}
+	now := time.Date(2026, 4, 12, 0, 0, 0, 0, time.UTC)
+
+	if _, err := collector.CollectRange(context.Background(), now, now, "", ""); err == nil {
+		t.Fatal("expected an error when the window end does not come after the start")
+	}
+}
+
+func TestEndpointCollectRangeFallsBackToConfiguredAreaAndStampsWindow(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"data":[]}`))
+	}))
+	defer server.Close()
+
+	collector := endpointCollector{
+		cfg: config.DefaultConfig(), source: "fingrid", dataset: "energy_timeseries", endpoint: server.URL, area: "helsinki",
+		rangeQuery: func(start, end time.Time) map[string]string {
+			return map[string]string{"startTime": start.Format(time.RFC3339), "endTime": end.Format(time.RFC3339)}
+		},
+	}
+	start := time.Date(2026, 4, 10, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2026, 4, 11, 0, 0, 0, 0, time.UTC)
+
+	fallback, err := collector.CollectRange(context.Background(), start, end, "", "cursor-3")
+	if err != nil {
+		t.Fatalf("collect range: %v", err)
+	}
+	if len(fallback) != 1 || fallback[0].AreaCode != "helsinki" {
+		t.Fatalf("expected an empty areaCode to fall back to the configured area, got %#v", fallback)
+	}
+	if fallback[0].Payload["window_start"] != start.UTC().Format(time.RFC3339Nano) || fallback[0].Payload["window_end"] != end.UTC().Format(time.RFC3339Nano) || fallback[0].Payload["cursor"] != "cursor-3" {
+		t.Fatalf("expected the window and cursor to be stamped on the payload: %#v", fallback[0].Payload)
+	}
+
+	explicit, err := collector.CollectRange(context.Background(), start, end, "vantaa", "cursor-4")
+	if err != nil {
+		t.Fatalf("collect range: %v", err)
+	}
+	if len(explicit) != 1 || explicit[0].AreaCode != "vantaa" {
+		t.Fatalf("expected an explicit areaCode to override the configured area, got %#v", explicit)
+	}
+}
+
+func TestMultiEndpointCollectFetchesEveryConfiguredMessageType(t *testing.T) {
+	var mu sync.Mutex
+	seenPaths := map[string]bool{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		mu.Lock()
+		seenPaths[request.URL.Path] = true
+		mu.Unlock()
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"features":[{"id":1},{"id":2},{"id":3}]}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.DigitrafficRoadAPIBaseURL = server.URL
+	cfg.DigitrafficMaxFeaturesPerType = 2
+	collector := multiEndpointCollector{cfg: cfg, endpoints: map[string]string{
+		"traffic_announcements": "/api/traffic-message/v2/traffic-announcements",
+		"roadworks":             "/api/traffic-message/v2/roadworks",
+	}}
+
+	items, err := collector.Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected one observation per configured message type, got %d", len(items))
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	for _, path := range []string{"/api/traffic-message/v2/traffic-announcements", "/api/traffic-message/v2/roadworks"} {
+		if !seenPaths[path] {
+			t.Fatalf("expected a request to %s, saw %v", path, seenPaths)
+		}
+	}
+	for _, item := range items {
+		if item.AreaCode != "finland" || item.Dataset != "traffic_messages" {
+			t.Fatalf("unexpected observation shape: %#v", item)
+		}
+		body, ok := item.Payload["body"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected a body payload: %#v", item.Payload)
+		}
+		features, ok := body["features"].([]any)
+		if !ok || len(features) != 2 || body["feature_count_original"] != 3 {
+			t.Fatalf("expected capFeatures to truncate to the configured max, got %#v", body)
+		}
+	}
+}
+
 func TestHistoricalPriceURLReplacesLatestEndpoint(t *testing.T) {
 	value, err := historicalPriceURL("https://api.porssisahko.net/v2/latest-prices.json")
 	if err != nil {
