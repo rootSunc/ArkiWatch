@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -485,6 +486,109 @@ func TestMultiEndpointCollectFetchesEveryConfiguredMessageType(t *testing.T) {
 		if !ok || len(features) != 2 || body["feature_count_original"] != 3 {
 			t.Fatalf("expected capFeatures to truncate to the configured max, got %#v", body)
 		}
+	}
+}
+
+func TestServicemapCollectSendsRadiusQueryAndStampsMetadata(t *testing.T) {
+	var mu sync.Mutex
+	var seenQuery url.Values
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		mu.Lock()
+		seenQuery = request.URL.Query()
+		mu.Unlock()
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"items":[{"id":1,"name_fi":"Kirjasto"}]}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.ServicemapAPIBaseURL = server.URL
+	cfg.DefaultLat, cfg.DefaultLon = 60.1699, 24.9384
+	cfg.ServicemapRadiusMeters = 5000
+
+	items, err := (servicemapCollector{cfg: cfg}).Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if len(items) != 1 || items[0].AreaCode != strings.ToLower(cfg.DefaultPlace) {
+		t.Fatalf("unexpected observation: %#v", items)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if seenQuery.Get("lat") != "60.1699" || seenQuery.Get("lon") != "24.9384" || seenQuery.Get("distance") != "5000" {
+		t.Fatalf("expected the configured centre and radius in the query, got %v", seenQuery)
+	}
+
+	payload := items[0].Payload
+	if payload["radius_meters"] != 5000 || payload["unit_count_original"] != 1 || payload["unit_count_returned"] != 1 {
+		t.Fatalf("expected radius and unit-count metadata to be stamped: %#v", payload)
+	}
+}
+
+func TestLinkedEventsCollectFollowsPaginationUntilNoNextPage(t *testing.T) {
+	var calls atomic.Int32
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		if calls.Add(1) == 1 {
+			_, _ = writer.Write([]byte(`{"data":[{"id":"e1"},{"id":"e2"}],"meta":{"count":5,"next":"` + server.URL + `/event/?page=2"}}`))
+			return
+		}
+		_, _ = writer.Write([]byte(`{"data":[{"id":"e3"}],"meta":{"count":5}}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.LinkedEventsCityAPIBaseURLs = []string{"helsinki=" + server.URL}
+	cfg.LinkedEventsMaxPages = 5
+
+	items, err := (linkedEventsCollector{cfg: cfg}).Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("expected pagination to stop once a page has no meta.next, made %d requests", calls.Load())
+	}
+	if len(items) != 1 || items[0].AreaCode != "helsinki" {
+		t.Fatalf("unexpected observations: %#v", items)
+	}
+	payload := items[0].Payload
+	if payload["event_count_returned"] != 3 {
+		t.Fatalf("expected 2+1 events aggregated across both pages, got %#v", payload["event_count_returned"])
+	}
+	if payload["event_count_total"] != float64(5) {
+		t.Fatalf("expected meta.count to be carried through, got %#v", payload["event_count_total"])
+	}
+	if urls, ok := payload["request_urls"].([]string); !ok || len(urls) != 2 {
+		t.Fatalf("expected both page requests recorded, got %#v", payload["request_urls"])
+	}
+}
+
+func TestLinkedEventsCollectStopsAtMaxPagesDespiteAnEndlessNextLink(t *testing.T) {
+	var calls atomic.Int32
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		calls.Add(1)
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"data":[{"id":"e"}],"meta":{"count":100,"next":"` + server.URL + `/event/"}}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.LinkedEventsCityAPIBaseURLs = []string{"helsinki=" + server.URL}
+	cfg.LinkedEventsMaxPages = 2
+
+	items, err := (linkedEventsCollector{cfg: cfg}).Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("expected exactly LinkedEventsMaxPages=2 requests despite an endless next link, got %d", calls.Load())
+	}
+	if len(items) != 1 || items[0].Payload["event_count_returned"] != 2 {
+		t.Fatalf("expected 2 pages worth of events aggregated before the cap stopped it, got %#v", items)
 	}
 }
 
