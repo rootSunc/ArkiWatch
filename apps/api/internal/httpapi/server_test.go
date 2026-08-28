@@ -325,6 +325,28 @@ func (assistantGroundingDatabase) LoadPlatform(context.Context, platform.Platfor
 	return platform.PlatformData{}, nil
 }
 
+type platformHistoryDatabase struct {
+	sourceDatabase
+	historyCalls int
+	err          error
+}
+
+func (database *platformHistoryDatabase) LoadPlatformHistory(context.Context, string, *time.Time, int, time.Time) (map[string]any, error) {
+	database.historyCalls++
+	return map[string]any{"days": 1}, database.err
+}
+
+func (database *platformHistoryDatabase) LoadPlatformHistoryAvailability(context.Context, string, *time.Time, int, time.Time) (map[string]any, error) {
+	return map[string]any{"available": true}, database.err
+}
+
+func (database *platformHistoryDatabase) LoadPlatformEvent(_ context.Context, eventID string) (map[string]any, error) {
+	if database.err != nil {
+		return nil, database.err
+	}
+	return map[string]any{"id": eventID}, nil
+}
+
 func bearerRequest(method, target, body string) *http.Request {
 	var request *http.Request
 	if body == "" {
@@ -546,6 +568,136 @@ func TestPlatformOverviewPayloadFallsBackWithoutWiredReaders(t *testing.T) {
 	got := server.platformOverviewPayload(context.Background(), "helsinki", scope)
 	if got == nil {
 		t.Fatal("expected a non-nil overview payload even with nothing wired")
+	}
+}
+
+func TestPlatformHistoryHandlerValidatesDaysRangeAndCaches(t *testing.T) {
+	cfg := config.DefaultConfig()
+	database := &platformHistoryDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, httptest.NewRequest(http.MethodGet, "/api/platform/history?city=helsinki&days=7", nil))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+	server.Handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/api/platform/history?city=helsinki&days=7", nil))
+	if database.historyCalls != 1 {
+		t.Fatalf("expected the identical repeat request to be served from cache, got %d store calls", database.historyCalls)
+	}
+
+	tooManyDays := httptest.NewRecorder()
+	server.Handler().ServeHTTP(tooManyDays, httptest.NewRequest(http.MethodGet, "/api/platform/history?days=50", nil))
+	if tooManyDays.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected days=50 to be rejected for /history (max 31), got %d", tooManyDays.Code)
+	}
+
+	unsupportedCity := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unsupportedCity, httptest.NewRequest(http.MethodGet, "/api/platform/history?city=narnia", nil))
+	if unsupportedCity.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unsupported city to be rejected, got %d", unsupportedCity.Code)
+	}
+}
+
+func TestPlatformHistoryAvailabilityAllowsTheWiderDaysRange(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, &platformHistoryDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+
+	wideRange := httptest.NewRecorder()
+	server.Handler().ServeHTTP(wideRange, httptest.NewRequest(http.MethodGet, "/api/platform/history/availability?days=50", nil))
+	if wideRange.Code != http.StatusOK {
+		t.Fatalf("expected days=50 to be accepted for /availability (max 90, vs 31 for /history), got %d; body = %s", wideRange.Code, wideRange.Body.String())
+	}
+
+	tooMany := httptest.NewRecorder()
+	server.Handler().ServeHTTP(tooMany, httptest.NewRequest(http.MethodGet, "/api/platform/history/availability?days=91", nil))
+	if tooMany.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected days=91 to still be rejected, got %d", tooMany.Code)
+	}
+}
+
+func TestPlatformEventLookupHandlesNestedPathsAndNotFound(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, &platformHistoryDatabase{sourceDatabase: sourceDatabase{active: true}})
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, httptest.NewRequest(http.MethodGet, "/api/platform/events/event-1", nil))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+
+	nested := httptest.NewRecorder()
+	server.Handler().ServeHTTP(nested, httptest.NewRequest(http.MethodGet, "/api/platform/events/event-1/extra", nil))
+	if nested.Code != http.StatusNotFound {
+		t.Fatalf("expected a nested path segment to 404, got %d", nested.Code)
+	}
+
+	notFoundServer := New(cfg, &platformHistoryDatabase{sourceDatabase: sourceDatabase{active: true}, err: pgx.ErrNoRows})
+	notFound := httptest.NewRecorder()
+	notFoundServer.Handler().ServeHTTP(notFound, httptest.NewRequest(http.MethodGet, "/api/platform/events/missing", nil))
+	if notFound.Code != http.StatusNotFound {
+		t.Fatalf("expected a missing event to 404, got %d", notFound.Code)
+	}
+}
+
+func TestPlatformOverviewExportSupportsJSONAndCSVFormats(t *testing.T) {
+	cfg := config.DefaultConfig()
+	now := time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC)
+	database := &platformDatabase{
+		sourceDatabase: sourceDatabase{active: true},
+		data: platform.PlatformData{Events: []observations.NormalizedEvent{{
+			ID: "weather-event", EventType: "weather_outlook", SourceCode: "fmi", Severity: "MEDIUM", LocationRef: "helsinki", StartsAt: now, EndsAt: now.Add(6 * time.Hour), Title: "Cloudy", Summary: "Cloudy.",
+		}}},
+	}
+	server := New(cfg, database)
+	server.now = func() time.Time { return now }
+
+	jsonExport := httptest.NewRecorder()
+	server.Handler().ServeHTTP(jsonExport, httptest.NewRequest(http.MethodGet, "/api/platform/overview/export", nil))
+	if jsonExport.Code != http.StatusOK || !strings.Contains(jsonExport.Header().Get("Content-Disposition"), "arkiwatch-helsinki-live.json") {
+		t.Fatalf("status = %d; Content-Disposition = %q", jsonExport.Code, jsonExport.Header().Get("Content-Disposition"))
+	}
+
+	csvExport := httptest.NewRecorder()
+	server.Handler().ServeHTTP(csvExport, httptest.NewRequest(http.MethodGet, "/api/platform/overview/export?format=csv", nil))
+	if csvExport.Code != http.StatusOK || csvExport.Header().Get("Content-Type") != "text/csv; charset=utf-8" {
+		t.Fatalf("csv status = %d; content-type = %q", csvExport.Code, csvExport.Header().Get("Content-Type"))
+	}
+	if !strings.Contains(csvExport.Body.String(), "category,event_type,title,severity,starts_at,ends_at,source_codes") || !strings.Contains(csvExport.Body.String(), "Cloudy") {
+		t.Fatalf("expected a CSV header and the weather event row, got: %s", csvExport.Body.String())
+	}
+
+	badFormat := httptest.NewRecorder()
+	server.Handler().ServeHTTP(badFormat, httptest.NewRequest(http.MethodGet, "/api/platform/overview/export?format=xml", nil))
+	if badFormat.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unsupported format to be 422, got %d", badFormat.Code)
+	}
+}
+
+func TestPlatformCategoryFindsByKeyOrReturns404(t *testing.T) {
+	cfg := config.DefaultConfig()
+	database := &platformDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+
+	found := httptest.NewRecorder()
+	server.Handler().ServeHTTP(found, httptest.NewRequest(http.MethodGet, "/api/platform/categories/weather", nil))
+	if found.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", found.Code, found.Body.String())
+	}
+
+	missing := httptest.NewRecorder()
+	server.Handler().ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/api/platform/categories/not-a-category", nil))
+	if missing.Code != http.StatusNotFound {
+		t.Fatalf("expected an unknown category key to 404, got %d", missing.Code)
+	}
+
+	nested := httptest.NewRecorder()
+	server.Handler().ServeHTTP(nested, httptest.NewRequest(http.MethodGet, "/api/platform/categories/weather/extra", nil))
+	if nested.Code != http.StatusNotFound {
+		t.Fatalf("expected a nested path segment to 404, got %d", nested.Code)
 	}
 }
 
