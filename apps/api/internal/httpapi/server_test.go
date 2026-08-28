@@ -448,6 +448,165 @@ func TestPublicDashboardHandlerParsesDateAndCachesByKey(t *testing.T) {
 	}
 }
 
+func TestFormatOptionalTimeHandlesNilAndUTCFormatting(t *testing.T) {
+	if formatOptionalTime(nil) != nil {
+		t.Fatal("expected nil in, nil out")
+	}
+	helsinki, err := time.LoadLocation("Europe/Helsinki")
+	if err != nil {
+		t.Fatal(err)
+	}
+	moment := time.Date(2026, 4, 12, 15, 0, 0, 0, helsinki)
+	got := formatOptionalTime(&moment)
+	if got == nil || *got != "2026-04-12T12:00:00Z" {
+		t.Fatalf("expected the moment converted to UTC RFC3339Nano, got %v", got)
+	}
+}
+
+func TestLocationByIDUpdatesAndRejectsNestedPaths(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, &profileDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	update := `{"label":"Home","country_code":"FI","city":"Helsinki","lat":60.17,"lon":24.94}`
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, bearerRequest(http.MethodPut, "/api/user/locations/loc-1", update))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+
+	wrongMethod := httptest.NewRecorder()
+	server.Handler().ServeHTTP(wrongMethod, bearerRequest(http.MethodGet, "/api/user/locations/loc-1", ""))
+	if wrongMethod.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected GET on a specific location to be 405, got %d", wrongMethod.Code)
+	}
+
+	nested := httptest.NewRecorder()
+	server.Handler().ServeHTTP(nested, bearerRequest(http.MethodPut, "/api/user/locations/loc-1/extra", update))
+	if nested.Code != http.StatusNotFound {
+		t.Fatalf("expected a nested path segment to 404, got %d", nested.Code)
+	}
+}
+
+func TestPreferencesGetAndUpsertAppliesDefaultsAndClockValidation(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, &profileDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	get := httptest.NewRecorder()
+	server.Handler().ServeHTTP(get, bearerRequest(http.MethodGet, "/api/user/preferences?user_id=user-1", ""))
+	if get.Code != http.StatusOK {
+		t.Fatalf("get status = %d; body = %s", get.Code, get.Body.String())
+	}
+
+	upsert := httptest.NewRecorder()
+	server.Handler().ServeHTTP(upsert, bearerRequest(http.MethodPost, "/api/user/preferences", `{"user_id":"user-1"}`))
+	if upsert.Code != http.StatusCreated {
+		t.Fatalf("expected an empty body to fall back to defaults (max_notifications_per_day=6), got %d; body = %s", upsert.Code, upsert.Body.String())
+	}
+	var preference profile.Preference
+	if err := json.Unmarshal(upsert.Body.Bytes(), &preference); err != nil || preference.MaxNotificationsPerDay != 6 {
+		t.Fatalf("expected the default of 6, got %#v (err=%v)", preference, err)
+	}
+
+	badClock := httptest.NewRecorder()
+	server.Handler().ServeHTTP(badClock, bearerRequest(http.MethodPost, "/api/user/preferences", `{"user_id":"user-1","quiet_hours_start":"25:00"}`))
+	if badClock.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an invalid quiet-hours clock value to be 422, got %d", badClock.Code)
+	}
+
+	badCount := httptest.NewRecorder()
+	server.Handler().ServeHTTP(badCount, bearerRequest(http.MethodPost, "/api/user/preferences", `{"user_id":"user-1","max_notifications_per_day":21}`))
+	if badCount.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected max_notifications_per_day over 20 to be 422, got %d", badCount.Code)
+	}
+}
+
+func TestCommuteProfilesHandlersCoverListCreateAndUpdate(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	database := &profileDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	list := httptest.NewRecorder()
+	server.Handler().ServeHTTP(list, bearerRequest(http.MethodGet, "/api/user/commute-profiles?user_id=user-1", ""))
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d; body = %s", list.Code, list.Body.String())
+	}
+
+	create := `{"user_id":"user-1","name":"Work","origin_location_id":"loc-a","destination_location_id":"loc-b","departure_time_local":"07:30","weekdays":[1,2,3,4,5]}`
+	created := httptest.NewRecorder()
+	server.Handler().ServeHTTP(created, bearerRequest(http.MethodPost, "/api/user/commute-profiles", create))
+	if created.Code != http.StatusCreated || database.lastCommuteInput.PreferredMode != "TRANSIT" {
+		t.Fatalf("expected a blank preferred_mode to default to TRANSIT on create: status=%d input=%#v body=%s", created.Code, database.lastCommuteInput, created.Body.String())
+	}
+
+	update := httptest.NewRecorder()
+	server.Handler().ServeHTTP(update, bearerRequest(http.MethodPut, "/api/user/commute-profiles/commute-1", create))
+	if update.Code != http.StatusOK {
+		t.Fatalf("update status = %d; body = %s", update.Code, update.Body.String())
+	}
+
+	invalid := httptest.NewRecorder()
+	server.Handler().ServeHTTP(invalid, bearerRequest(http.MethodPost, "/api/user/commute-profiles", `{"user_id":"user-1","name":"Work","origin_location_id":"loc-a","destination_location_id":"loc-a","departure_time_local":"07:30","weekdays":[1]}`))
+	if invalid.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected identical origin/destination to be rejected, got %d", invalid.Code)
+	}
+}
+
+func TestChannelsHandlerDefaultsAndRejectsUnsupportedType(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, &profileDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	list := httptest.NewRecorder()
+	server.Handler().ServeHTTP(list, bearerRequest(http.MethodGet, "/api/user/channels?user_id=user-1", ""))
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d; body = %s", list.Code, list.Body.String())
+	}
+
+	defaulted := httptest.NewRecorder()
+	server.Handler().ServeHTTP(defaulted, bearerRequest(http.MethodPost, "/api/user/channels", `{"user_id":"user-1"}`))
+	if defaulted.Code != http.StatusCreated {
+		t.Fatalf("expected a blank channel_type to default to TELEGRAM and succeed, got %d; body = %s", defaulted.Code, defaulted.Body.String())
+	}
+
+	unsupported := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unsupported, bearerRequest(http.MethodPost, "/api/user/channels", `{"user_id":"user-1","channel_type":"SMS"}`))
+	if unsupported.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unsupported channel type to be 422, got %d", unsupported.Code)
+	}
+}
+
+func TestPublicSubscriptionsValidatesScenarioKey(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, &profileDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	list := httptest.NewRecorder()
+	server.Handler().ServeHTTP(list, bearerRequest(http.MethodGet, "/api/public/subscriptions?user_id=user-1", ""))
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d; body = %s", list.Code, list.Body.String())
+	}
+
+	valid := httptest.NewRecorder()
+	server.Handler().ServeHTTP(valid, bearerRequest(http.MethodPost, "/api/public/subscriptions", `{"user_id":"user-1","scenario_key":"commute"}`))
+	if valid.Code != http.StatusCreated {
+		t.Fatalf("expected a valid scenario_key to succeed, got %d; body = %s", valid.Code, valid.Body.String())
+	}
+
+	invalid := httptest.NewRecorder()
+	server.Handler().ServeHTTP(invalid, bearerRequest(http.MethodPost, "/api/public/subscriptions", `{"user_id":"user-1","scenario_key":"unknown"}`))
+	if invalid.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unsupported scenario_key to be 422, got %d", invalid.Code)
+	}
+}
+
 func TestValidateAssistantChatEnforcesMessageAndLanguageRules(t *testing.T) {
 	valid := assistantChatPayload{Language: "en", Messages: []assistantMessagePayload{{Role: "user", Content: "hello"}}}
 	if !validateAssistantChat(valid) {
