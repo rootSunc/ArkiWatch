@@ -13,6 +13,7 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/airquality"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/observability"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/profile"
@@ -457,6 +458,43 @@ func TestPublicDashboardHandlerParsesDateAndCachesByKey(t *testing.T) {
 	server.Handler().ServeHTTP(malformed, httptest.NewRequest(http.MethodGet, "/api/dashboard?date=12-04-2026", nil))
 	if malformed.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected a malformed date to be rejected, got %d", malformed.Code)
+	}
+}
+
+func TestMetricsRequiresBearerTokenOnlyWhenConfigured(t *testing.T) {
+	open := httptest.NewRecorder()
+	New(config.DefaultConfig(), fakeDatabase{}).Handler().ServeHTTP(open, httptest.NewRequest(http.MethodGet, "/api/metrics", nil))
+	if open.Code != http.StatusOK {
+		t.Fatalf("expected metrics to be open when no token is configured, got %d", open.Code)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.MetricsBearerToken = "secret-metrics-token"
+	server := New(cfg, fakeDatabase{})
+
+	missing := httptest.NewRecorder()
+	server.Handler().ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/api/metrics", nil))
+	if missing.Code != http.StatusUnauthorized {
+		t.Fatalf("expected a missing bearer token to be 401, got %d", missing.Code)
+	}
+
+	wrong := httptest.NewRecorder()
+	wrongRequest := httptest.NewRequest(http.MethodGet, "/api/metrics", nil)
+	wrongRequest.Header.Set("Authorization", "Bearer nope")
+	server.Handler().ServeHTTP(wrong, wrongRequest)
+	if wrong.Code != http.StatusUnauthorized {
+		t.Fatalf("expected the wrong bearer token to be 401, got %d", wrong.Code)
+	}
+
+	correct := httptest.NewRecorder()
+	correctRequest := httptest.NewRequest(http.MethodGet, "/api/metrics", nil)
+	correctRequest.Header.Set("Authorization", "Bearer secret-metrics-token")
+	server.Handler().ServeHTTP(correct, correctRequest)
+	if correct.Code != http.StatusOK {
+		t.Fatalf("expected the correct bearer token to be 200, got %d", correct.Code)
+	}
+	if correct.Header().Get("Content-Type") != observability.PrometheusContentType {
+		t.Fatalf("expected the Prometheus content type, got %q", correct.Header().Get("Content-Type"))
 	}
 }
 
