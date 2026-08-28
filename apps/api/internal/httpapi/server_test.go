@@ -722,3 +722,146 @@ func TestPlatformOverviewAppliesHistoricalScope(t *testing.T) {
 		t.Fatalf("status = %d; query = %#v; body = %s", recorder.Code, database.lastQuery, recorder.Body.String())
 	}
 }
+
+func TestRequireOwnUserRejectsBlankOrMismatchedIDs(t *testing.T) {
+	if err := requireOwnUser("user-1", "user-1"); err != nil {
+		t.Fatalf("expected no error for a matching user, got %v", err)
+	}
+	if err := requireOwnUser("user-1", "  "); err == nil {
+		t.Fatal("expected an error for a blank requested user_id")
+	}
+	if err := requireOwnUser("user-1", "user-2"); err == nil {
+		t.Fatal("expected an error when the requested user differs from the authenticated one")
+	}
+}
+
+func TestValidScenarioAcceptsBothCases(t *testing.T) {
+	for _, value := range []string{"commute", "outdoor", "home_air", "energy", "COMMUTE", "OUTDOOR", "HOME_AIR", "ENERGY"} {
+		if !validScenario(value) {
+			t.Fatalf("expected %q to be a valid scenario", value)
+		}
+	}
+	for _, value := range []string{"", "Commute", "unknown", "commute "} {
+		if validScenario(value) {
+			t.Fatalf("expected %q to be rejected", value)
+		}
+	}
+}
+
+func TestValidClockAcceptsNilAndHHMMOnly(t *testing.T) {
+	if !validClock(nil) {
+		t.Fatal("expected nil to be valid (no preference set)")
+	}
+	blank := ""
+	if !validClock(&blank) {
+		t.Fatal("expected an empty string to be valid")
+	}
+	for _, value := range []string{"07:30", "00:00", "23:59"} {
+		v := value
+		if !validClock(&v) {
+			t.Fatalf("expected %q to be a valid clock value", value)
+		}
+	}
+	for _, value := range []string{"7:30", "07-30", "24:00", "07:60", "0730", "ab:cd"} {
+		v := value
+		if validClock(&v) {
+			t.Fatalf("expected %q to be rejected", value)
+		}
+	}
+}
+
+func TestBoolOrFallsBackOnlyWhenNil(t *testing.T) {
+	yes := true
+	if !boolOr(&yes, false) {
+		t.Fatal("expected the pointer's value to win over the fallback")
+	}
+	if !boolOr(nil, true) {
+		t.Fatal("expected the fallback when the pointer is nil")
+	}
+}
+
+func TestDecodeRequestRejectsInvalidJSONWithUnprocessableEntity(t *testing.T) {
+	var destination map[string]string
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{not json"))
+	if ok := decodeRequest(recorder, request, &destination); ok {
+		t.Fatal("expected decodeRequest to report failure for invalid JSON")
+	}
+	if recorder.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", recorder.Code)
+	}
+
+	recorder2 := httptest.NewRecorder()
+	request2 := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"a":"b"}`))
+	var target map[string]string
+	if ok := decodeRequest(recorder2, request2, &target); !ok || target["a"] != "b" {
+		t.Fatalf("expected successful decode, ok=%v target=%v", ok, target)
+	}
+}
+
+func TestMethodNotAllowedWritesStatusAndAllowHeader(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	methodNotAllowed(recorder)
+	if recorder.Code != http.StatusMethodNotAllowed || recorder.Header().Get("Allow") != http.MethodGet {
+		t.Fatalf("status = %d, Allow = %q", recorder.Code, recorder.Header().Get("Allow"))
+	}
+}
+
+func TestLoginRateLimitKeyFallsBackWhenRemoteAddrHasNoPort(t *testing.T) {
+	withPort := httptest.NewRequest(http.MethodPost, "/", nil)
+	withPort.RemoteAddr = "203.0.113.5:54321"
+	if got := loginRateLimitKey(withPort); got != "login:203.0.113.5" {
+		t.Fatalf("expected the host without its port, got %q", got)
+	}
+
+	withoutPort := httptest.NewRequest(http.MethodPost, "/", nil)
+	withoutPort.RemoteAddr = "203.0.113.5" // no ":port" -- net.SplitHostPort fails, so the raw value is used
+	if got := loginRateLimitKey(withoutPort); got != "login:203.0.113.5" {
+		t.Fatalf("expected the raw RemoteAddr as a fallback, got %q", got)
+	}
+}
+
+func TestWithCORSSetsHeadersForAllowedOriginAndHandlesPreflight(t *testing.T) {
+	next := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) { writer.WriteHeader(http.StatusOK) })
+	handler := withCORS(next, []string{"https://example.com"})
+
+	allowed := httptest.NewRecorder()
+	allowedRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+	allowedRequest.Header.Set("Origin", "https://example.com")
+	handler.ServeHTTP(allowed, allowedRequest)
+	if allowed.Header().Get("Access-Control-Allow-Origin") != "https://example.com" || allowed.Header().Get("Access-Control-Allow-Credentials") != "true" {
+		t.Fatalf("expected CORS headers for an allowed origin: %#v", allowed.Header())
+	}
+	if allowed.Code != http.StatusOK {
+		t.Fatalf("expected the request to still reach the handler, got %d", allowed.Code)
+	}
+
+	disallowed := httptest.NewRecorder()
+	disallowedRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+	disallowedRequest.Header.Set("Origin", "https://evil.example")
+	handler.ServeHTTP(disallowed, disallowedRequest)
+	if disallowed.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Fatalf("expected no CORS header for a disallowed origin, got %q", disallowed.Header().Get("Access-Control-Allow-Origin"))
+	}
+	if disallowed.Code != http.StatusOK {
+		t.Fatalf("expected the request to still reach the handler even without CORS headers, got %d", disallowed.Code)
+	}
+
+	preflight := httptest.NewRecorder()
+	preflightRequest := httptest.NewRequest(http.MethodOptions, "/", nil)
+	preflightRequest.Header.Set("Origin", "https://example.com")
+	handler.ServeHTTP(preflight, preflightRequest)
+	if preflight.Code != http.StatusNoContent {
+		t.Fatalf("expected a 204 preflight response, got %d", preflight.Code)
+	}
+	if preflight.Header().Get("Access-Control-Allow-Methods") == "" || preflight.Header().Get("Access-Control-Allow-Headers") == "" {
+		t.Fatalf("expected preflight-specific headers to be set: %#v", preflight.Header())
+	}
+
+	passthrough := withCORS(next, nil)
+	bare := httptest.NewRecorder()
+	passthrough.ServeHTTP(bare, httptest.NewRequest(http.MethodGet, "/", nil))
+	if bare.Code != http.StatusOK {
+		t.Fatalf("expected no configured origins to just pass through, got %d", bare.Code)
+	}
+}
