@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/airquality"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
@@ -242,6 +243,42 @@ func (database *profileDatabase) ListNotifications(_ context.Context, _ string, 
 	return items, nil
 }
 
+type todayDatabase struct {
+	sourceDatabase
+	result map[string]any
+	err    error
+}
+
+func (database todayDatabase) LoadToday(context.Context, string, time.Time) (map[string]any, error) {
+	return database.result, database.err
+}
+
+type personalDashboardDatabase struct {
+	sourceDatabase
+	result map[string]any
+	err    error
+}
+
+func (database personalDashboardDatabase) LoadPersonalDashboard(context.Context, string, time.Time) (map[string]any, error) {
+	return database.result, database.err
+}
+
+type publicDashboardDatabase struct {
+	sourceDatabase
+	calls int
+	dates []string
+}
+
+func (database *publicDashboardDatabase) LoadPublicDashboard(_ context.Context, date *time.Time, _ time.Time) (map[string]any, error) {
+	database.calls++
+	value := "live"
+	if date != nil {
+		value = date.Format("2006-01-02")
+	}
+	database.dates = append(database.dates, value)
+	return map[string]any{"snapshot_date": value}, nil
+}
+
 func bearerRequest(method, target, body string) *http.Request {
 	var request *http.Request
 	if body == "" {
@@ -323,6 +360,151 @@ func TestListNotificationsValidatesLimitAndOwnership(t *testing.T) {
 	server.Handler().ServeHTTP(notOwner, bearerRequest(http.MethodGet, "/api/notifications?user_id=someone-else", ""))
 	if notOwner.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected an ownership mismatch to be rejected, got %d", notOwner.Code)
+	}
+}
+
+func TestTodaySummaryReturnsNotFoundForAMissingUser(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, todayDatabase{sourceDatabase: sourceDatabase{active: true}, result: map[string]any{"lead": "bike"}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, bearerRequest(http.MethodGet, "/api/today?user_id=user-1", ""))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+
+	mismatch := httptest.NewRecorder()
+	server.Handler().ServeHTTP(mismatch, bearerRequest(http.MethodGet, "/api/today?user_id=someone-else", ""))
+	if mismatch.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an ownership mismatch to be 422, got %d", mismatch.Code)
+	}
+
+	notFoundServer := New(cfg, todayDatabase{sourceDatabase: sourceDatabase{active: true}, err: pgx.ErrNoRows})
+	notFoundServer.now = server.now
+	notFound := httptest.NewRecorder()
+	notFoundServer.Handler().ServeHTTP(notFound, bearerRequest(http.MethodGet, "/api/today?user_id=user-1", ""))
+	if notFound.Code != http.StatusNotFound {
+		t.Fatalf("expected a missing user to be 404, got %d; body = %s", notFound.Code, notFound.Body.String())
+	}
+}
+
+func TestPersonalDashboardHandlerEnforcesOwnershipAndNotFound(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, personalDashboardDatabase{sourceDatabase: sourceDatabase{active: true}, result: map[string]any{"lead": "umbrella"}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, bearerRequest(http.MethodGet, "/api/personal/dashboard", ""))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+
+	forbidden := httptest.NewRecorder()
+	server.Handler().ServeHTTP(forbidden, bearerRequest(http.MethodGet, "/api/personal/dashboard?user_id=someone-else", ""))
+	if forbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected an ownership mismatch here to be 403 (this handler checks inline, not via requireOwnUser's 422), got %d", forbidden.Code)
+	}
+
+	notFoundServer := New(cfg, personalDashboardDatabase{sourceDatabase: sourceDatabase{active: true}, err: pgx.ErrNoRows})
+	notFoundServer.now = server.now
+	notFound := httptest.NewRecorder()
+	notFoundServer.Handler().ServeHTTP(notFound, bearerRequest(http.MethodGet, "/api/personal/dashboard", ""))
+	if notFound.Code != http.StatusNotFound {
+		t.Fatalf("expected a missing user to be 404, got %d", notFound.Code)
+	}
+}
+
+func TestPublicDashboardHandlerParsesDateAndCachesByKey(t *testing.T) {
+	cfg := config.DefaultConfig()
+	database := &publicDashboardDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	live := httptest.NewRecorder()
+	server.Handler().ServeHTTP(live, httptest.NewRequest(http.MethodGet, "/api/dashboard", nil))
+	if live.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", live.Code, live.Body.String())
+	}
+
+	liveAgain := httptest.NewRecorder()
+	server.Handler().ServeHTTP(liveAgain, httptest.NewRequest(http.MethodGet, "/api/dashboard", nil))
+	if liveAgain.Code != http.StatusOK || database.calls != 1 {
+		t.Fatalf("expected the second identical request to be served from cache (1 store call), got %d calls", database.calls)
+	}
+
+	dated := httptest.NewRecorder()
+	server.Handler().ServeHTTP(dated, httptest.NewRequest(http.MethodGet, "/api/dashboard?date=2026-04-12", nil))
+	if dated.Code != http.StatusOK || database.calls != 2 {
+		t.Fatalf("expected a different date to bypass the live cache entry and hit the store, got %d calls", database.calls)
+	}
+
+	malformed := httptest.NewRecorder()
+	server.Handler().ServeHTTP(malformed, httptest.NewRequest(http.MethodGet, "/api/dashboard?date=12-04-2026", nil))
+	if malformed.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected a malformed date to be rejected, got %d", malformed.Code)
+	}
+}
+
+func TestValidateAssistantChatEnforcesMessageAndLanguageRules(t *testing.T) {
+	valid := assistantChatPayload{Language: "en", Messages: []assistantMessagePayload{{Role: "user", Content: "hello"}}}
+	if !validateAssistantChat(valid) {
+		t.Fatal("expected a well-formed payload to pass")
+	}
+
+	blankLanguage := valid
+	blankLanguage.Language = ""
+	if !validateAssistantChat(blankLanguage) {
+		t.Fatal("expected a blank language to default to English and pass")
+	}
+
+	noMessages := valid
+	noMessages.Messages = nil
+	if validateAssistantChat(noMessages) {
+		t.Fatal("expected zero messages to be rejected")
+	}
+
+	tooMany := valid
+	tooMany.Messages = make([]assistantMessagePayload, 21)
+	for i := range tooMany.Messages {
+		tooMany.Messages[i] = assistantMessagePayload{Role: "user", Content: "hi"}
+	}
+	if validateAssistantChat(tooMany) {
+		t.Fatal("expected more than 20 messages to be rejected")
+	}
+
+	unsupportedLanguage := valid
+	unsupportedLanguage.Language = "sv"
+	if validateAssistantChat(unsupportedLanguage) {
+		t.Fatal("expected an unsupported language to be rejected")
+	}
+
+	badRole := valid
+	badRole.Messages = []assistantMessagePayload{{Role: "system", Content: "hi"}}
+	if validateAssistantChat(badRole) {
+		t.Fatal("expected a role other than user/assistant to be rejected")
+	}
+
+	blankContent := valid
+	blankContent.Messages = []assistantMessagePayload{{Role: "user", Content: "   "}}
+	if validateAssistantChat(blankContent) {
+		t.Fatal("expected blank message content to be rejected")
+	}
+
+	tooLongContent := valid
+	tooLongContent.Messages = []assistantMessagePayload{{Role: "user", Content: strings.Repeat("a", 4001)}}
+	if validateAssistantChat(tooLongContent) {
+		t.Fatal("expected message content over 4000 characters to be rejected")
+	}
+
+	for _, language := range []string{"en", "zh", "fi"} {
+		payload := valid
+		payload.Language = language
+		if !validateAssistantChat(payload) {
+			t.Fatalf("expected supported language %q to pass", language)
+		}
 	}
 }
 
