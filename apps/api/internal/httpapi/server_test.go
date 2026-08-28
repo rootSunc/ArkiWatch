@@ -19,6 +19,7 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/profile"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/recommendations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/sources"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/timescope"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/traffic"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/users"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/weather"
@@ -292,6 +293,38 @@ func (database *publicDashboardDatabase) LoadPublicDashboard(_ context.Context, 
 	return map[string]any{"snapshot_date": value}, nil
 }
 
+// assistantGroundingDatabase wires every reader groundAssistant can draw on
+// (weather, air quality, energy, traffic, transit, platform overview, and
+// source status via the embedded sourceDatabase) so the routing logic in
+// SelectDataSources can be exercised end to end without a real DeepSeek call.
+type assistantGroundingDatabase struct {
+	sourceDatabase
+}
+
+func (assistantGroundingDatabase) LoadWeather(context.Context, observations.WeatherQuery) (observations.WeatherData, error) {
+	return observations.WeatherData{}, nil
+}
+
+func (assistantGroundingDatabase) LoadAirQuality(context.Context, airquality.Query) (airquality.Data, error) {
+	return airquality.Data{}, nil
+}
+
+func (assistantGroundingDatabase) LoadEnergy(context.Context, energy.Query) (energy.Data, error) {
+	return energy.Data{}, nil
+}
+
+func (assistantGroundingDatabase) LoadTraffic(context.Context, traffic.Query) (traffic.Data, error) {
+	return traffic.Data{}, nil
+}
+
+func (assistantGroundingDatabase) LoadTransit(context.Context, observations.TransitQuery) (observations.TransitData, error) {
+	return observations.TransitData{}, nil
+}
+
+func (assistantGroundingDatabase) LoadPlatform(context.Context, platform.PlatformQuery) (platform.PlatformData, error) {
+	return platform.PlatformData{}, nil
+}
+
 func bearerRequest(method, target, body string) *http.Request {
 	var request *http.Request
 	if body == "" {
@@ -458,6 +491,61 @@ func TestPublicDashboardHandlerParsesDateAndCachesByKey(t *testing.T) {
 	server.Handler().ServeHTTP(malformed, httptest.NewRequest(http.MethodGet, "/api/dashboard?date=12-04-2026", nil))
 	if malformed.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected a malformed date to be rejected, got %d", malformed.Code)
+	}
+}
+
+func TestGroundAssistantSelectsDatasetsFromTheQuestionKeywords(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, assistantGroundingDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+	request := httptest.NewRequest(http.MethodPost, "/api/assistant/chat", nil)
+
+	weatherOnly := server.groundAssistant(request, assistantChatPayload{Messages: []assistantMessagePayload{{Role: "user", Content: "will it rain today?"}}})
+	if !containsString(weatherOnly.DataContext, "weather") || !containsString(weatherOnly.DataContext, "platform_overview") {
+		t.Fatalf("expected weather + platform_overview to be grounded for a weather question: %v", weatherOnly.DataContext)
+	}
+	if containsString(weatherOnly.DataContext, "energy") || containsString(weatherOnly.DataContext, "traffic") {
+		t.Fatalf("expected an unrelated dataset like energy/traffic not to be pulled in for a weather-only question: %v", weatherOnly.DataContext)
+	}
+
+	offTopic := server.groundAssistant(request, assistantChatPayload{Messages: []assistantMessagePayload{{Role: "user", Content: "hello there"}}})
+	for _, dataset := range []string{"weather", "air_quality", "energy", "traffic", "transit", "platform_overview"} {
+		if !containsString(offTopic.DataContext, dataset) {
+			t.Fatalf("expected an off-topic question with no keyword match to ground every dataset (the SelectDataSources 'select all' fallback), missing %q: %v", dataset, offTopic.DataContext)
+		}
+	}
+}
+
+func TestGroundAssistantSkipsDatasetsWithoutAWiredReader(t *testing.T) {
+	cfg := config.DefaultConfig()
+	// weatherDatabase only satisfies database.WeatherReader (plus the base
+	// HealthChecker/UserReader via sourceDatabase) -- air quality, energy,
+	// traffic, and transit are all left nil on the Server.
+	server := New(cfg, &weatherDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+	request := httptest.NewRequest(http.MethodPost, "/api/assistant/chat", nil)
+
+	got := server.groundAssistant(request, assistantChatPayload{Messages: []assistantMessagePayload{{Role: "user", Content: "hello"}}})
+	if containsString(got.DataContext, "energy") || containsString(got.DataContext, "traffic") || containsString(got.DataContext, "transit") || containsString(got.DataContext, "air_quality") {
+		t.Fatalf("expected datasets without a wired reader to be silently skipped, not errored: %v", got.DataContext)
+	}
+	if !containsString(got.DataContext, "weather") {
+		t.Fatalf("expected weather (the one wired reader) to still be grounded: %v", got.DataContext)
+	}
+}
+
+func TestPlatformOverviewPayloadFallsBackWithoutWiredReaders(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, fakeDatabase{})
+	scope, err := timescope.DefaultScope(nil, time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Neither sources nor platformReader is wired on a bare fakeDatabase; this
+	// must degrade to an empty-but-valid overview rather than panicking.
+	got := server.platformOverviewPayload(context.Background(), "helsinki", scope)
+	if got == nil {
+		t.Fatal("expected a non-nil overview payload even with nothing wired")
 	}
 }
 
