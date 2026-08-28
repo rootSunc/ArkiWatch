@@ -14,6 +14,7 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/profile"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/recommendations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/sources"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/traffic"
@@ -172,6 +173,157 @@ type platformDatabase struct {
 func (database *platformDatabase) LoadPlatform(_ context.Context, query platform.PlatformQuery) (platform.PlatformData, error) {
 	database.lastQuery = &query
 	return database.data, database.err
+}
+
+// profileDatabase implements the full (13-method) database.ProfileStore so it
+// can back every /api/user/* handler (locations, preferences, commute
+// profiles, channels, subscriptions, notifications) with one fake.
+type profileDatabase struct {
+	sourceDatabase
+	lastLocationInput profile.LocationInput
+	lastCommuteInput  profile.CommuteProfileInput
+}
+
+func (database *profileDatabase) ListLocations(context.Context, string) ([]profile.Location, error) {
+	return []profile.Location{{ID: "loc-1", Label: "Home"}}, nil
+}
+
+func (database *profileDatabase) CreateLocation(_ context.Context, userID string, input profile.LocationInput) (profile.Location, error) {
+	database.lastLocationInput = input
+	return profile.Location{ID: "loc-new", UserID: userID, Label: input.Label}, nil
+}
+
+func (database *profileDatabase) UpdateLocation(_ context.Context, userID, locationID string, input profile.LocationInput) (profile.Location, error) {
+	return profile.Location{ID: locationID, UserID: userID, Label: input.Label}, nil
+}
+
+func (database *profileDatabase) GetPreferences(context.Context, string) (*profile.Preference, error) {
+	return &profile.Preference{ID: "pref-1", MaxNotificationsPerDay: 6}, nil
+}
+
+func (database *profileDatabase) UpsertPreferences(_ context.Context, userID string, input profile.PreferenceInput) (profile.Preference, error) {
+	return profile.Preference{ID: "pref-1", UserID: userID, MaxNotificationsPerDay: input.MaxNotificationsPerDay}, nil
+}
+
+func (database *profileDatabase) ListCommuteProfiles(context.Context, string) ([]profile.CommuteProfile, error) {
+	return []profile.CommuteProfile{{ID: "commute-1", Name: "Work"}}, nil
+}
+
+func (database *profileDatabase) CreateCommuteProfile(_ context.Context, userID string, input profile.CommuteProfileInput) (profile.CommuteProfile, error) {
+	database.lastCommuteInput = input
+	return profile.CommuteProfile{ID: "commute-new", UserID: userID, Name: input.Name}, nil
+}
+
+func (database *profileDatabase) UpdateCommuteProfile(_ context.Context, userID, profileID string, input profile.CommuteProfileInput) (profile.CommuteProfile, error) {
+	return profile.CommuteProfile{ID: profileID, UserID: userID, Name: input.Name}, nil
+}
+
+func (database *profileDatabase) ListChannels(context.Context, string) ([]profile.Channel, error) {
+	return []profile.Channel{{ID: "channel-1", ChannelType: "TELEGRAM"}}, nil
+}
+
+func (database *profileDatabase) UpsertChannel(_ context.Context, userID string, input profile.ChannelInput) (profile.Channel, error) {
+	return profile.Channel{ID: "channel-1", UserID: userID, ChannelType: input.ChannelType}, nil
+}
+
+func (database *profileDatabase) ListSubscriptions(context.Context, string) ([]profile.Subscription, error) {
+	return []profile.Subscription{{ID: "sub-1", ScenarioKey: "commute"}}, nil
+}
+
+func (database *profileDatabase) UpsertSubscription(_ context.Context, userID, scenarioKey string) (profile.Subscription, error) {
+	return profile.Subscription{ID: "sub-new", ChannelID: userID, ScenarioKey: scenarioKey}, nil
+}
+
+func (database *profileDatabase) ListNotifications(_ context.Context, _ string, limit int) ([]profile.Notification, error) {
+	items := make([]profile.Notification, 0, limit)
+	for i := 0; i < limit && i < 2; i++ {
+		items = append(items, profile.Notification{ID: "notif-1"})
+	}
+	return items, nil
+}
+
+func bearerRequest(method, target, body string) *http.Request {
+	var request *http.Request
+	if body == "" {
+		request = httptest.NewRequest(method, target, nil)
+	} else {
+		request = httptest.NewRequest(method, target, strings.NewReader(body))
+	}
+	request.Header.Set("Authorization", "Bearer "+legacyCompatibleToken)
+	return request
+}
+
+func TestLocationsHandlerCoversListCreateValidationAndOwnership(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	database := &profileDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	list := httptest.NewRecorder()
+	server.Handler().ServeHTTP(list, bearerRequest(http.MethodGet, "/api/user/locations?user_id=user-1", ""))
+	if list.Code != http.StatusOK {
+		t.Fatalf("list status = %d; body = %s", list.Code, list.Body.String())
+	}
+
+	wrongUser := httptest.NewRecorder()
+	server.Handler().ServeHTTP(wrongUser, bearerRequest(http.MethodGet, "/api/user/locations?user_id=someone-else", ""))
+	if wrongUser.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected a GET ownership mismatch to be 422, got %d", wrongUser.Code)
+	}
+
+	validCreate := `{"user_id":"user-1","label":"Home","country_code":"FI","city":"Helsinki","lat":60.17,"lon":24.94}`
+	created := httptest.NewRecorder()
+	server.Handler().ServeHTTP(created, bearerRequest(http.MethodPost, "/api/user/locations", validCreate))
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create status = %d; body = %s", created.Code, created.Body.String())
+	}
+	if database.lastLocationInput.Label != "Home" {
+		t.Fatalf("expected the create input to reach the store: %#v", database.lastLocationInput)
+	}
+
+	invalidCreate := `{"user_id":"user-1","label":"","country_code":"FI","city":"Helsinki","lat":60.17,"lon":24.94}`
+	rejected := httptest.NewRecorder()
+	server.Handler().ServeHTTP(rejected, bearerRequest(http.MethodPost, "/api/user/locations", invalidCreate))
+	if rejected.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected a blank label to be 422, got %d", rejected.Code)
+	}
+
+	mismatchedOwner := `{"user_id":"someone-else","label":"Home","country_code":"FI","city":"Helsinki","lat":60.17,"lon":24.94}`
+	forbidden := httptest.NewRecorder()
+	server.Handler().ServeHTTP(forbidden, bearerRequest(http.MethodPost, "/api/user/locations", mismatchedOwner))
+	if forbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected a POST body user_id mismatch to be 403 (not 422 like the GET case), got %d", forbidden.Code)
+	}
+}
+
+func TestListNotificationsValidatesLimitAndOwnership(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, &profileDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, bearerRequest(http.MethodGet, "/api/notifications?user_id=user-1&limit=2", ""))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+	var items []profile.Notification
+	if err := json.Unmarshal(ok.Body.Bytes(), &items); err != nil || len(items) != 2 {
+		t.Fatalf("expected 2 notifications, got %v (err=%v)", items, err)
+	}
+
+	tooMany := httptest.NewRecorder()
+	server.Handler().ServeHTTP(tooMany, bearerRequest(http.MethodGet, "/api/notifications?user_id=user-1&limit=201", ""))
+	if tooMany.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected limit>200 to be rejected, got %d", tooMany.Code)
+	}
+
+	notOwner := httptest.NewRecorder()
+	server.Handler().ServeHTTP(notOwner, bearerRequest(http.MethodGet, "/api/notifications?user_id=someone-else", ""))
+	if notOwner.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an ownership mismatch to be rejected, got %d", notOwner.Code)
+	}
 }
 
 func TestRootMatchesPublicMetadataContract(t *testing.T) {
@@ -720,6 +872,91 @@ func TestPlatformOverviewAppliesHistoricalScope(t *testing.T) {
 	server.Handler().ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusOK || database.lastQuery == nil || !database.lastQuery.Historical || database.lastQuery.WindowStart == nil {
 		t.Fatalf("status = %d; query = %#v; body = %s", recorder.Code, database.lastQuery, recorder.Body.String())
+	}
+}
+
+func TestValidateLocationPayloadRejectsOutOfBoundsAndBlankValues(t *testing.T) {
+	valid := locationPayload{UserID: "user-1", Label: "Home", CountryCode: "FI", City: "Helsinki", Latitude: 60.17, Longitude: 24.94}
+	if !validateLocationPayload(valid, true) {
+		t.Fatal("expected a well-formed payload to pass")
+	}
+	if validateLocationPayload(valid, false) != true {
+		t.Fatal("expected requireUserID=false to still accept a payload that happens to have one")
+	}
+
+	withoutUserID := valid
+	withoutUserID.UserID = ""
+	if validateLocationPayload(withoutUserID, true) {
+		t.Fatal("expected a missing user_id to fail when required")
+	}
+	if !validateLocationPayload(withoutUserID, false) {
+		t.Fatal("expected a missing user_id to be fine when not required (e.g. on update)")
+	}
+
+	cases := []struct {
+		name    string
+		mutate  func(locationPayload) locationPayload
+		wantErr bool
+	}{
+		{"blank label", func(p locationPayload) locationPayload { p.Label = "  "; return p }, true},
+		{"label too long", func(p locationPayload) locationPayload { p.Label = strings.Repeat("a", 41); return p }, true},
+		{"country code too short", func(p locationPayload) locationPayload { p.CountryCode = "F"; return p }, true},
+		{"country code too long", func(p locationPayload) locationPayload { p.CountryCode = "FIN"; return p }, true},
+		{"blank city", func(p locationPayload) locationPayload { p.City = " "; return p }, true},
+		{"city too long", func(p locationPayload) locationPayload { p.City = strings.Repeat("a", 81); return p }, true},
+		{"latitude too high", func(p locationPayload) locationPayload { p.Latitude = 90.1; return p }, true},
+		{"latitude too low", func(p locationPayload) locationPayload { p.Latitude = -90.1; return p }, true},
+		{"longitude too high", func(p locationPayload) locationPayload { p.Longitude = 180.1; return p }, true},
+		{"longitude too low", func(p locationPayload) locationPayload { p.Longitude = -180.1; return p }, true},
+		{"boundary latitude/longitude accepted", func(p locationPayload) locationPayload { p.Latitude, p.Longitude = 90, -180; return p }, false},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got := validateLocationPayload(testCase.mutate(valid), true)
+			if got == testCase.wantErr {
+				t.Fatalf("validateLocationPayload = %v, wantErr %v", got, testCase.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateCommutePayloadRejectsInvalidModeWeekdaysAndClock(t *testing.T) {
+	valid := commutePayload{UserID: "user-1", Name: "Work", OriginLocationID: "loc-a", DestinationLocationID: "loc-b", PreferredMode: "TRANSIT", DepartureTimeLocal: "07:30", Weekdays: []int{1, 2, 3, 4, 5}}
+	if !validateCommutePayload(valid, true) {
+		t.Fatal("expected a well-formed payload to pass")
+	}
+
+	blankMode := valid
+	blankMode.PreferredMode = ""
+	if !validateCommutePayload(blankMode, true) {
+		t.Fatal("expected a blank preferred mode to default to TRANSIT and pass")
+	}
+
+	cases := []struct {
+		name   string
+		mutate func(commutePayload) commutePayload
+	}{
+		{"blank name", func(p commutePayload) commutePayload { p.Name = " "; return p }},
+		{"name too long", func(p commutePayload) commutePayload { p.Name = strings.Repeat("a", 81); return p }},
+		{"same origin and destination", func(p commutePayload) commutePayload { p.DestinationLocationID = p.OriginLocationID; return p }},
+		{"malformed departure time", func(p commutePayload) commutePayload { p.DepartureTimeLocal = "7:30"; return p }},
+		{"no weekdays", func(p commutePayload) commutePayload { p.Weekdays = nil; return p }},
+		{"weekday out of range low", func(p commutePayload) commutePayload { p.Weekdays = []int{0}; return p }},
+		{"weekday out of range high", func(p commutePayload) commutePayload { p.Weekdays = []int{8}; return p }},
+		{"unsupported preferred mode", func(p commutePayload) commutePayload { p.PreferredMode = "FLY"; return p }},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			if validateCommutePayload(testCase.mutate(valid), true) {
+				t.Fatalf("expected %q to be rejected", testCase.name)
+			}
+		})
+	}
+
+	duplicateWeekdays := valid
+	duplicateWeekdays.Weekdays = []int{1, 1, 1}
+	if !validateCommutePayload(duplicateWeekdays, true) {
+		t.Fatal("expected duplicate weekdays to still pass (deduplicated, non-empty)")
 	}
 }
 
