@@ -164,6 +164,18 @@ func (database *trafficDatabase) LoadTraffic(_ context.Context, query traffic.Qu
 	return database.data, database.err
 }
 
+type transitDatabase struct {
+	sourceDatabase
+	data      observations.TransitData
+	err       error
+	lastQuery *observations.TransitQuery
+}
+
+func (database *transitDatabase) LoadTransit(_ context.Context, query observations.TransitQuery) (observations.TransitData, error) {
+	database.lastQuery = &query
+	return database.data, database.err
+}
+
 type platformDatabase struct {
 	sourceDatabase
 	data      platform.PlatformData
@@ -445,6 +457,51 @@ func TestPublicDashboardHandlerParsesDateAndCachesByKey(t *testing.T) {
 	server.Handler().ServeHTTP(malformed, httptest.NewRequest(http.MethodGet, "/api/dashboard?date=12-04-2026", nil))
 	if malformed.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected a malformed date to be rejected, got %d", malformed.Code)
+	}
+}
+
+func TestTransitCurrentValidatesCityAndFallsBackToUnavailable(t *testing.T) {
+	cfg := config.DefaultConfig()
+	database := &transitDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	now := time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC)
+	server.now = func() time.Time { return now }
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, httptest.NewRequest(http.MethodGet, "/api/transit/current?city=helsinki", nil))
+	if ok.Code != http.StatusOK || database.lastQuery == nil || database.lastQuery.LocationRef != "helsinki" {
+		t.Fatalf("status = %d; query = %#v; body = %s", ok.Code, database.lastQuery, ok.Body.String())
+	}
+
+	unsupported := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unsupported, httptest.NewRequest(http.MethodGet, "/api/transit/current?city=narnia", nil))
+	if unsupported.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unconfigured city to be 422, got %d; body = %s", unsupported.Code, unsupported.Body.String())
+	}
+
+	malformedDate := httptest.NewRecorder()
+	server.Handler().ServeHTTP(malformedDate, httptest.NewRequest(http.MethodGet, "/api/transit/current?date=not-a-date", nil))
+	if malformedDate.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected a malformed date to be 422, got %d", malformedDate.Code)
+	}
+
+	failing := &transitDatabase{sourceDatabase: sourceDatabase{active: true}, err: context.DeadlineExceeded}
+	failingServer := New(cfg, failing)
+	failingServer.now = server.now
+	degraded := httptest.NewRecorder()
+	failingServer.Handler().ServeHTTP(degraded, httptest.NewRequest(http.MethodGet, "/api/transit/current", nil))
+	if degraded.Code != http.StatusOK {
+		t.Fatalf("expected a store error to be swallowed into an 'unavailable' 200 (not a 5xx), got %d", degraded.Code)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(degraded.Body.Bytes(), &payload); err != nil || payload["status"] != "unavailable" {
+		t.Fatalf("expected an unavailable status payload, got %#v (err=%v)", payload, err)
+	}
+
+	noReader := httptest.NewRecorder()
+	New(cfg, sourceDatabase{active: true}).Handler().ServeHTTP(noReader, httptest.NewRequest(http.MethodGet, "/api/transit/current", nil))
+	if noReader.Code != http.StatusOK {
+		t.Fatalf("expected no TransitReader wired to also degrade to 200, got %d", noReader.Code)
 	}
 }
 
