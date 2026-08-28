@@ -19,6 +19,7 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/profile"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/recommendations"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/scheduler"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/sources"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/timescope"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/traffic"
@@ -360,6 +361,27 @@ func (telegramDB *telegramDatabase) ProcessTelegramUpdate(_ context.Context, _ *
 	telegramDB.calls++
 	telegramDB.lastChatID, telegramDB.lastText = chatID, text
 	return nil, telegramDB.err
+}
+
+type schedulerDatabase struct {
+	sourceDatabase
+	jobs []database.ScheduledJobRead
+}
+
+func (schedulerDB schedulerDatabase) ListScheduledJobs(context.Context) ([]database.ScheduledJobRead, error) {
+	return schedulerDB.jobs, nil
+}
+
+func (schedulerDatabase) SyncDefaultScheduledJobs(context.Context, config.Config) (scheduler.SyncResult, error) {
+	return scheduler.SyncResult{Created: 1, Updated: 2, Jobs: 3}, nil
+}
+
+func (schedulerDatabase) EnqueuePlatformRefresh(context.Context) (map[string]any, error) {
+	return map[string]any{"status": "queued"}, nil
+}
+
+func (schedulerDatabase) PlatformRefreshStatus(context.Context) (map[string]any, error) {
+	return map[string]any{"status": "idle"}, nil
 }
 
 func bearerRequest(method, target, body string) *http.Request {
@@ -771,6 +793,78 @@ func TestTelegramWebhookValidatesSecretAndProcessesUpdates(t *testing.T) {
 	server.Handler().ServeHTTP(methodNotAllowedRecorder, getRequest)
 	if methodNotAllowedRecorder.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected GET to be 405, got %d", methodNotAllowedRecorder.Code)
+	}
+}
+
+func TestSourcesRefreshAndStatusRequireAuthAndDelegateToScheduler(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, schedulerDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	unauthenticated := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unauthenticated, httptest.NewRequest(http.MethodPost, "/api/sources/refresh", nil))
+	if unauthenticated.Code != http.StatusUnauthorized {
+		t.Fatalf("expected refresh without a bearer token to be 401, got %d", unauthenticated.Code)
+	}
+
+	refresh := httptest.NewRecorder()
+	server.Handler().ServeHTTP(refresh, bearerRequest(http.MethodPost, "/api/sources/refresh", ""))
+	if refresh.Code != http.StatusAccepted {
+		t.Fatalf("expected a successful refresh enqueue to be 202, got %d; body = %s", refresh.Code, refresh.Body.String())
+	}
+
+	status := httptest.NewRecorder()
+	server.Handler().ServeHTTP(status, bearerRequest(http.MethodGet, "/api/sources/refresh/status", ""))
+	if status.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", status.Code, status.Body.String())
+	}
+}
+
+func TestSchedulerJobsRedactsLastErrorDetail(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	rawError := "pq: connection refused to internal-db.private:5432"
+	database := schedulerDatabase{sourceDatabase: sourceDatabase{active: true}, jobs: []database.ScheduledJobRead{
+		{ID: "job-1", JobKey: "pipeline", TaskType: "collect", NextRunAt: time.Unix(2000000100, 0).UTC(), LastStatus: stringPointer("failed"), LastError: &rawError},
+	}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, bearerRequest(http.MethodGet, "/api/scheduler/jobs", ""))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", recorder.Code, recorder.Body.String())
+	}
+	if strings.Contains(recorder.Body.String(), "internal-db.private") {
+		t.Fatalf("expected the raw provider error to be redacted, but it leaked into the response: %s", recorder.Body.String())
+	}
+	var payload []map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil || len(payload) != 1 || payload[0]["last_error"] == nil {
+		t.Fatalf("expected a generic last_error message to still be present: %#v (err=%v)", payload, err)
+	}
+}
+
+func TestSchedulerSyncRequiresAuthAndReturnsResult(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, schedulerDatabase{sourceDatabase: sourceDatabase{active: true}})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	unauthenticated := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unauthenticated, httptest.NewRequest(http.MethodPost, "/api/scheduler/sync", nil))
+	if unauthenticated.Code != http.StatusUnauthorized {
+		t.Fatalf("expected sync without a bearer token to be 401, got %d", unauthenticated.Code)
+	}
+
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, bearerRequest(http.MethodPost, "/api/scheduler/sync", ""))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", recorder.Code, recorder.Body.String())
+	}
+	var payload scheduler.SyncResult
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil || payload.Jobs != 3 {
+		t.Fatalf("unexpected sync result: %#v (err=%v)", payload, err)
 	}
 }
 
