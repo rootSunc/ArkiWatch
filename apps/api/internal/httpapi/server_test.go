@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/airquality"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/database"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observability"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
@@ -345,6 +346,20 @@ func (database *platformHistoryDatabase) LoadPlatformEvent(_ context.Context, ev
 		return nil, database.err
 	}
 	return map[string]any{"id": eventID}, nil
+}
+
+type telegramDatabase struct {
+	sourceDatabase
+	err        error
+	calls      int
+	lastChatID string
+	lastText   string
+}
+
+func (telegramDB *telegramDatabase) ProcessTelegramUpdate(_ context.Context, _ *int64, chatID, text string, _ time.Time) (*database.TelegramReply, error) {
+	telegramDB.calls++
+	telegramDB.lastChatID, telegramDB.lastText = chatID, text
+	return nil, telegramDB.err
 }
 
 func bearerRequest(method, target, body string) *http.Request {
@@ -698,6 +713,64 @@ func TestPlatformCategoryFindsByKeyOrReturns404(t *testing.T) {
 	server.Handler().ServeHTTP(nested, httptest.NewRequest(http.MethodGet, "/api/platform/categories/weather/extra", nil))
 	if nested.Code != http.StatusNotFound {
 		t.Fatalf("expected a nested path segment to 404, got %d", nested.Code)
+	}
+}
+
+func TestTelegramWebhookValidatesSecretAndProcessesUpdates(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.TelegramWebhookSecret = "shh-its-a-secret"
+	database := &telegramDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	unconfiguredServer := New(config.DefaultConfig(), database)
+	unconfigured := httptest.NewRecorder()
+	unconfiguredServer.Handler().ServeHTTP(unconfigured, httptest.NewRequest(http.MethodPost, "/api/telegram/webhook", strings.NewReader("{}")))
+	if unconfigured.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected no configured secret to be 503, got %d", unconfigured.Code)
+	}
+
+	wrongSecret := httptest.NewRequest(http.MethodPost, "/api/telegram/webhook", strings.NewReader("{}"))
+	wrongSecret.Header.Set("X-Telegram-Bot-Api-Secret-Token", "not-it")
+	forbidden := httptest.NewRecorder()
+	server.Handler().ServeHTTP(forbidden, wrongSecret)
+	if forbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected a wrong secret to be 403, got %d", forbidden.Code)
+	}
+
+	messageBody := `{"update_id":42,"message":{"chat":{"id":777},"text":"hello"}}`
+	messageRequest := httptest.NewRequest(http.MethodPost, "/api/telegram/webhook", strings.NewReader(messageBody))
+	messageRequest.Header.Set("X-Telegram-Bot-Api-Secret-Token", "shh-its-a-secret")
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, messageRequest)
+	if ok.Code != http.StatusOK || database.calls != 1 || database.lastChatID != "777" || database.lastText != "hello" {
+		t.Fatalf("status = %d; calls = %d; chatID = %q; text = %q", ok.Code, database.calls, database.lastChatID, database.lastText)
+	}
+
+	updateOnlyBody := `{"update_id":43}`
+	updateOnlyRequest := httptest.NewRequest(http.MethodPost, "/api/telegram/webhook", strings.NewReader(updateOnlyBody))
+	updateOnlyRequest.Header.Set("X-Telegram-Bot-Api-Secret-Token", "shh-its-a-secret")
+	updateOnly := httptest.NewRecorder()
+	server.Handler().ServeHTTP(updateOnly, updateOnlyRequest)
+	if updateOnly.Code != http.StatusOK || database.calls != 2 || database.lastChatID != "" {
+		t.Fatalf("expected an update-only payload (no message) to still process with an empty chatID: status=%d calls=%d chatID=%q", updateOnly.Code, database.calls, database.lastChatID)
+	}
+
+	failing := &telegramDatabase{sourceDatabase: sourceDatabase{active: true}, err: context.DeadlineExceeded}
+	failingServer := New(cfg, failing)
+	failingRequest := httptest.NewRequest(http.MethodPost, "/api/telegram/webhook", strings.NewReader(messageBody))
+	failingRequest.Header.Set("X-Telegram-Bot-Api-Secret-Token", "shh-its-a-secret")
+	degraded := httptest.NewRecorder()
+	failingServer.Handler().ServeHTTP(degraded, failingRequest)
+	if degraded.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected a store error to be 503, got %d", degraded.Code)
+	}
+
+	getRequest := httptest.NewRequest(http.MethodGet, "/api/telegram/webhook", nil)
+	methodNotAllowedRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(methodNotAllowedRecorder, getRequest)
+	if methodNotAllowedRecorder.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected GET to be 405, got %d", methodNotAllowedRecorder.Code)
 	}
 }
 
