@@ -868,6 +868,119 @@ func TestSchedulerSyncRequiresAuthAndReturnsResult(t *testing.T) {
 	}
 }
 
+// All of these tests leave cfg.DeepseekAPIKey unset, which makes
+// assistant.Chat/Translate use their built-in offline fallback and never
+// attempt a real network call -- confirmed by these tests actually passing
+// fast and deterministically rather than hanging or hitting a real API.
+
+func TestAssistantChatAnonymousHappyPathUsesOfflineFallback(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, fakeDatabase{})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	body := `{"messages":[{"role":"user","content":"hello"}]}`
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/assistant/chat", strings.NewReader(body)))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", recorder.Code, recorder.Body.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil || payload["answer_mode"] == "deepseek" {
+		t.Fatalf("expected the offline fallback (not deepseek) with no API key configured: %#v (err=%v)", payload, err)
+	}
+}
+
+func TestAssistantChatRejectsInvalidPayload(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	New(config.DefaultConfig(), fakeDatabase{}).Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/assistant/chat", strings.NewReader(`{"messages":[]}`)))
+	if recorder.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected zero messages to be 422, got %d", recorder.Code)
+	}
+}
+
+func TestAssistantChatEnforcesRateLimit(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AssistantRateLimitRequests = 1
+	cfg.AssistantRateLimitWindowSeconds = 60
+	server := New(cfg, fakeDatabase{})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+	body := `{"messages":[{"role":"user","content":"hello"}]}`
+
+	first := httptest.NewRecorder()
+	server.Handler().ServeHTTP(first, httptest.NewRequest(http.MethodPost, "/api/assistant/chat", strings.NewReader(body)))
+	if first.Code != http.StatusOK {
+		t.Fatalf("expected the first request to succeed, got %d", first.Code)
+	}
+
+	second := httptest.NewRecorder()
+	server.Handler().ServeHTTP(second, httptest.NewRequest(http.MethodPost, "/api/assistant/chat", strings.NewReader(body)))
+	if second.Code != http.StatusTooManyRequests || second.Header().Get("Retry-After") == "" {
+		t.Fatalf("expected the second request from the same anonymous caller to be rate-limited with a Retry-After header, got status=%d retry-after=%q", second.Code, second.Header().Get("Retry-After"))
+	}
+}
+
+func TestAssistantChatStreamEmitsServerSentEventsAndTerminator(t *testing.T) {
+	cfg := config.DefaultConfig()
+	server := New(cfg, fakeDatabase{})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	recorder := httptest.NewRecorder()
+	body := `{"messages":[{"role":"user","content":"hello"}]}`
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/assistant/chat/stream", strings.NewReader(body)))
+	if recorder.Code != http.StatusOK || recorder.Header().Get("Content-Type") != "text/event-stream" {
+		t.Fatalf("status = %d; content-type = %q", recorder.Code, recorder.Header().Get("Content-Type"))
+	}
+	if !strings.Contains(recorder.Body.String(), "data: ") || !strings.HasSuffix(recorder.Body.String(), "data: [DONE]\n\n") {
+		t.Fatalf("expected SSE-framed data lines ending in the [DONE] terminator, got: %s", recorder.Body.String())
+	}
+}
+
+func TestAssistantTranslateValidatesAndPassesThroughWithoutDeepSeek(t *testing.T) {
+	server := New(config.DefaultConfig(), fakeDatabase{})
+
+	blank := httptest.NewRecorder()
+	server.Handler().ServeHTTP(blank, httptest.NewRequest(http.MethodPost, "/api/assistant/translate", strings.NewReader(`{"text":"  ","target_language":"en"}`)))
+	if blank.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected blank text to be 422, got %d", blank.Code)
+	}
+
+	unsupportedLanguage := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unsupportedLanguage, httptest.NewRequest(http.MethodPost, "/api/assistant/translate", strings.NewReader(`{"text":"hello","target_language":"fi"}`)))
+	if unsupportedLanguage.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unsupported target_language (only en/zh) to be 422, got %d", unsupportedLanguage.Code)
+	}
+
+	ok := httptest.NewRecorder()
+	server.Handler().ServeHTTP(ok, httptest.NewRequest(http.MethodPost, "/api/assistant/translate", strings.NewReader(`{"text":"hello","target_language":"zh"}`)))
+	if ok.Code != http.StatusOK {
+		t.Fatalf("status = %d; body = %s", ok.Code, ok.Body.String())
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(ok.Body.Bytes(), &payload); err != nil || payload["translated_text"] != "hello" || payload["target_language"] != "zh" {
+		t.Fatalf("expected a pass-through translation without an API key configured: %#v (err=%v)", payload, err)
+	}
+}
+
+func TestOptionalCurrentUserAllowsAnonymousButPropagatesInvalidBearer(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthTokenSecret = "secret-for-tests-0123456789012345"
+	server := New(cfg, sourceDatabase{active: true})
+	server.now = func() time.Time { return time.Unix(2000000001, 0).UTC() }
+
+	anonymous := httptest.NewRequest(http.MethodPost, "/x", nil)
+	user, failure := server.optionalCurrentUser(anonymous)
+	if user != nil || failure != nil {
+		t.Fatalf("expected a request with no bearer token at all to be treated as anonymous, not a failure: user=%v failure=%v", user, failure)
+	}
+
+	invalid := httptest.NewRequest(http.MethodPost, "/x", nil)
+	invalid.Header.Set("Authorization", "Bearer garbage")
+	_, invalidFailure := server.optionalCurrentUser(invalid)
+	if invalidFailure == nil {
+		t.Fatal("expected a present but invalid bearer token to propagate an auth failure rather than fall back to anonymous")
+	}
+}
+
 func TestMetricsRequiresBearerTokenOnlyWhenConfigured(t *testing.T) {
 	open := httptest.NewRecorder()
 	New(config.DefaultConfig(), fakeDatabase{}).Handler().ServeHTTP(open, httptest.NewRequest(http.MethodGet, "/api/metrics", nil))
