@@ -489,6 +489,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
     <section className="water-detail-page" aria-label={tKey("waterSnow.detailAria")}>
       <WorkspaceEvidenceHeader
         className="water-detail-header"
+        eyebrow={tKey("waterSnow.workspace")}
         fallbackKey="waterSnow.notObserved"
         language={language}
         observedAt={isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt}

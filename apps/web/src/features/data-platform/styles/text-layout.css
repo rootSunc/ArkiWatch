@@ -6,7 +6,6 @@
 
 .dashboard-shell :where(.dashboard-scope-content > *, .dashboard-content > *, .detail-content-shell > *) {
   min-width: 0;
-  max-width: 100%;
 }
 
 .dashboard-shell :where(

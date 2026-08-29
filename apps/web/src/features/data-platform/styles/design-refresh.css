@@ -2840,7 +2840,10 @@
   }
 
   .transit-main-grid,
-  .road-rail-main-grid {
+  .road-rail-main-grid,
+  .water-main-grid,
+  .city-main-grid,
+  .linked-events-main-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -2859,9 +2862,268 @@
   .city-bento-grid > *,
   .city-main-grid > *,
   .city-side-grid,
-  .city-visual-grid > * {
+  .city-visual-grid > *,
+  .linked-events-command > *,
+  .linked-events-main-grid > *,
+  .linked-events-side-grid {
     grid-column: auto;
   }
+
+  .water-insight-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 56px;
+  }
+}
+
+/* --- Water and snow (README §7) --- */
+.water-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.water-summary-strip {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.water-command-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.water-glass-panel,
+.water-command-panel {
+  padding: 28px;
+}
+
+.water-insight-grid .water-coverage-panel,
+.water-insight-grid .water-field-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.water-insight-grid h2,
+.water-insight-grid h3 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+.water-coverage-row,
+.water-coverage-list > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.water-field-lattice-row,
+.water-observation-row {
+  border-top: 1px solid var(--line-soft);
+  padding: 18px 0;
+}
+
+.water-command-status strong {
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.water-command-facts strong {
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.water-signal {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+
+.water-detail-freshness {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+/* --- Linked events (README §8) --- */
+.linked-events-page {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.linked-events-header {
+  margin-bottom: 0;
+}
+
+.linked-events-command {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.linked-events-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px;
+}
+
+.linked-events-filter-panel,
+.linked-events-category-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.linked-events-filter-grid,
+.linked-events-time-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.linked-events-filter-chip,
+.linked-events-time-filter {
+  border: 1px solid var(--line);
+  border-radius: var(--r-filter);
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  box-shadow: none;
+}
+
+.linked-events-filter-chip-active,
+.linked-events-time-filter-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+
+.linked-events-category-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+}
+
+.linked-events-category-chip,
+.linked-events-category-grid > button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-3);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  padding: 0 0 6px;
+  box-shadow: none;
+}
+
+.linked-events-category-chip-active,
+.linked-events-category-grid > button[aria-pressed="true"] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.linked-events-timeline-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.linked-events-timeline-row {
+  display: grid;
+  grid-template-columns: 112px 1fr auto;
+  gap: 28px;
+  align-items: start;
+  padding: 26px 0;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+
+.linked-events-date-rail strong {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.linked-events-date-rail span {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-2);
+}
+
+.linked-events-row-main strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.linked-events-category-tag,
+.linked-events-free-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted-3);
+}
+
+.linked-events-free-tag {
+  border-color: var(--blue-soft);
+  color: var(--blue);
+}
+
+.linked-events-inspector {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.linked-events-venue-track {
+  background: var(--line-soft);
+}
+
+.linked-events-venue-track span {
+  background: var(--blue);
+}
+
+.linked-events-footer,
+.linked-events-detail-freshness {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+  text-transform: none;
 }
 
 @media (max-width: 900px) {

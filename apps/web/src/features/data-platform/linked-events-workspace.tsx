@@ -840,6 +840,7 @@ export function LinkedEventsWorkspace({
     <section className="linked-events-page" aria-label={tKey("linkedEvents.linkedEventsDetail")}>
       <WorkspaceEvidenceHeader
         className="linked-events-header"
+        eyebrow={tKey("linkedEvents.workspace")}
         fallbackKey="linkedEvents.notCollected"
         language={language}
         observedAt={sourceRun}

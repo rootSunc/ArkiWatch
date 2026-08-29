@@ -66,6 +66,7 @@
     "sources": "来源",
     "keyFields": "关键字段",
     "categoryDescription": "水文与季节性状况。",
-    "providerName": "芬兰环境研究所"
+    "providerName": "芬兰环境研究所",
+    "workspace": "水与雪工作区"
   }
 }

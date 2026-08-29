@@ -66,6 +66,7 @@
     "sources": "Sources",
     "keyFields": "Key fields",
     "categoryDescription": "Hydrology and seasonal conditions.",
-    "providerName": "Finnish Environment Institute"
+    "providerName": "Finnish Environment Institute",
+    "workspace": "Water and snow workspace"
   }
 }
