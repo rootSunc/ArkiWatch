@@ -35,7 +35,6 @@ import {
   forecastWindow,
   formatCompactTime,
   formatDegree,
-  formatTimeZoneName,
   formatNumber,
   formatRainWindow,
   latestPoint,
@@ -92,7 +91,7 @@ export function WeatherDetailView({
         : (nextTrendPoint?.temperature_c ?? current.temperature_c) - current.temperature_c
       : null;
   const trendLabel = previous ? tKey("weather.trend3h") : tKey("weather.next3h");
-  const trendArrow = trend === null ? null : trend > 0 ? "↑" : trend < 0 ? "↓" : "→";
+  const trendArrow = trend === null ? null : trend > 0 ? "+" : trend < 0 ? "−" : "";
   const timelineItems = buildTimelineItems(
     weather,
     category,
@@ -163,10 +162,6 @@ export function WeatherDetailView({
         <article className="weather-hero-card weather-glass-panel">
           <div className="weather-card-kicker">
             <span>{tKey("weather.currentCondition")}</span>
-            <time>
-              {formatCompactTime(current?.timestamp ?? dataTime, language, dataTimezone)}{" "}
-              {formatTimeZoneName(current?.timestamp ?? dataTime, language, dataTimezone)}
-            </time>
           </div>
           <div className="weather-current-cluster">
             <span className="material-symbols-outlined weather-condition-icon" aria-hidden="true">
@@ -270,7 +265,11 @@ export function WeatherDetailView({
       <TrendChart
         className="weather-glass-panel"
         emptyMessage={tKey("weather.noDailyWeatherHistoryIsAvailable")}
-        eyebrow={`${historyPoints.length}D ${tKey("weather.history")}`}
+        eyebrow={
+          historyPoints.length > 0
+            ? `${historyPoints.length}D ${tKey("weather.history")}`
+            : tKey("weather.history")
+        }
         maximumFractionDigits={1}
         points={historyPoints}
         title={tKey("weather.dailyAverageTemperature")}

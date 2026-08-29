@@ -434,6 +434,7 @@
     "bad": "Bad",
     "helsinkiUusimaa": "Helsinki & Uusimaa",
     "helsinkiRegion": "Helsinki region",
-    "helsinkiMetro": "Helsinki metro"
+    "helsinkiMetro": "Helsinki metro",
+    "sourceDetails": "Source details"
   }
 }

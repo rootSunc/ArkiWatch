@@ -1355,7 +1355,19 @@
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+/* Only the page eyebrow (TODAY · <area>) carries the mode accent; section
+   kickers and the glance title stay quiet grey (design §8). */
+.today-eyebrow,
+.dashboard-shell-mode-today .today-eyebrow {
   color: var(--amber);
+}
+
+.dashboard-shell-mode-today .today-glance-title,
+.dashboard-shell-mode-today .today-section-kicker {
+  color: var(--muted-2);
 }
 
 .today-eyebrow {
@@ -1839,6 +1851,13 @@
   background: var(--canvas);
 }
 
+/* The design carries supplementary help in clearer labels + sublabels, not a
+   hover-only "info" glyph after every metric name. Drop the icon everywhere in
+   the shell; the label text (the actual information) stays. */
+.dashboard-shell .data-help-icon {
+  display: none;
+}
+
 /* ==========================================================================
    9b. Detail workspaces — the design's hairline grammar (README §3–8). The
    shared evidence header + empty state live in workspace-ui.css (later in the
@@ -1869,6 +1888,17 @@
 .weather-metric-alert::after,
 .weather-metric-warn::after {
   content: none;
+}
+
+/* Hero-card kickers carry only their mono label — the collected-at time already
+   sits in the header meta stack, so the design never repeats it here. */
+.weather-card-kicker time,
+.air-card-kicker time,
+.energy-card-kicker time,
+.transit-card-kicker time,
+.road-rail-card-kicker time,
+.water-card-kicker time {
+  display: none;
 }
 
 /* --- Weather workspace --- */
@@ -1927,13 +1957,6 @@
   color: var(--muted-2);
 }
 
-.weather-card-kicker time {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--muted-3);
-  text-transform: none;
-}
-
 .weather-current-cluster {
   align-items: center;
   gap: 18px;
@@ -1986,6 +2009,13 @@
 .weather-trend-up { color: var(--blue) !important; }
 .weather-trend-down { color: var(--blue) !important; }
 .weather-trend-flat { color: var(--muted-3) !important; }
+
+/* Signed delta ("+1°" / "−1°"), not an arrow glyph — matches the design. */
+.weather-trend-symbol {
+  margin-right: 1px;
+  font-family: var(--font-mono);
+  font-size: inherit;
+}
 
 /* Metrics + summary strip -> hairline grid (README §3, 6-up at 190px) */
 .weather-detail-metrics,

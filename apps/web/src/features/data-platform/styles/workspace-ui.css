@@ -101,6 +101,12 @@
   text-align: right;
 }
 
+/* Beat weather.css's legacy `.weather-detail-header > div:last-child` uppercase,
+   which now lands on the shared meta stack. Source + time opt back in below. */
+.workspace-evidence-header > .workspace-evidence-meta:last-child {
+  text-transform: none;
+}
+
 .workspace-evidence-source {
   max-width: none;
   overflow: visible;
@@ -142,14 +148,8 @@
 }
 
 .workspace-evidence-extra summary::after {
-  content: "⌄";
-  display: inline-block;
-  margin-left: 4px;
-  transition: transform 150ms ease;
-}
-
-.workspace-evidence-extra[open] summary::after {
-  transform: rotate(180deg);
+  content: " →";
+  white-space: pre;
 }
 
 .workspace-evidence-extra-content {

@@ -82,7 +82,7 @@ export function WorkspaceEvidenceHeader({
         <time dateTime={observedAt ?? undefined}>{timestamp}</time>
         {children ? (
           <details className="workspace-evidence-extra">
-            <summary>{tKey("shell.details")}</summary>
+            <summary>{tKey("shell.sourceDetails")}</summary>
             <div className="workspace-evidence-extra-content">{children}</div>
           </details>
         ) : null}

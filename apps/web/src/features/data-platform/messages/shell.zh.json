@@ -434,6 +434,7 @@
     "connectApi": "连接 API",
     "publicData": "公共数据",
     "snapshotChecked": "快照检查于",
-    "tracked": "个信号"
+    "tracked": "个信号",
+    "sourceDetails": "数据来源详情"
   }
 }

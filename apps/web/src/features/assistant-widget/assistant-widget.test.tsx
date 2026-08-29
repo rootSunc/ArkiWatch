@@ -139,7 +139,9 @@ describe("AssistantRetryButton", () => {
     expect(
       await screen.findByRole("heading", { name: "Historical assistant" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Historical · evidence only")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Historical · evidence only/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "What mattered most on the selected date?" }),
     ).toBeInTheDocument();

@@ -126,7 +126,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-panel-scope {
-  display: flex;
+  display: block;
   min-width: 0;
   overflow: hidden;
   font-family: var(--font-mono);
@@ -135,16 +135,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   color: var(--muted-3);
   text-transform: uppercase;
   white-space: nowrap;
-}
-
-.assistant-panel-scope span {
-  overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.assistant-panel-scope span:not(:last-child)::after {
-  content: " · ";
-  white-space: pre;
 }
 
 .assistant-close {
@@ -155,7 +146,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  border-radius: var(--r-panel);
+  border-radius: var(--r-card);
   background: var(--canvas);
   color: var(--ink-soft);
   cursor: pointer;

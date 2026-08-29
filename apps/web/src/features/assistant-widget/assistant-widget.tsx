@@ -573,12 +573,12 @@ export function AssistantWidget({
             <span className="assistant-panel-identity">
               <h2 id="assistant-dialog-title">{assistantName}</h2>
               <span
-                aria-label={tKey("assistant.scopeLabel")}
+                aria-label={`${tKey("assistant.scopeLabel")}: ${assistantScopeLabel}`}
                 className="assistant-panel-scope"
                 id="assistant-scope-label"
               >
-                <span>{assistantScopeLabel}</span>
                 <span>{assistantCoverageArea}</span>
+                <span aria-hidden="true"> · </span>
                 <span>{assistantScopeDate}</span>
               </span>
             </span>

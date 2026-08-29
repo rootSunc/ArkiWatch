@@ -40,7 +40,7 @@ describe("WorkspaceEvidenceHeader", () => {
         sourceLabel="FMI"
         status="Live"
         statusTone="good"
-        tKey={(key) => (key === "shell.details" ? "Details" : key)}
+        tKey={(key) => (key === "shell.sourceDetails" ? "Source details" : key)}
         timeScope={{
           mode: "live",
           date: null,
@@ -55,7 +55,7 @@ describe("WorkspaceEvidenceHeader", () => {
       </WorkspaceEvidenceHeader>,
     );
 
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByText("Source details")).toBeInTheDocument();
     expect(screen.getByText("LAT 60.1699 · LON 24.9384")).toBeInTheDocument();
   });
 });
