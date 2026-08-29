@@ -3126,6 +3126,200 @@
   text-transform: none;
 }
 
+/* --- Catalog workspaces (README §9–11) — quieter: muted eyebrow, no accent --- */
+.catalog-detail-header .workspace-evidence-eyebrow {
+  color: var(--muted-2);
+}
+
+.city-detail-page,
+.geospatial-detail-page,
+.regional-profile-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.city-summary-strip,
+.regional-summary-strip,
+.geo-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.city-summary-strip > article,
+.regional-summary-strip > article,
+.geo-summary-strip > article {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.city-summary-strip article span,
+.regional-summary-strip article span,
+.geo-summary-strip article span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.city-summary-strip article strong,
+.regional-summary-strip article strong,
+.geo-summary-strip article strong {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.city-glass-panel,
+.geo-glass-panel,
+.regional-glass-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px;
+}
+
+.city-service-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.city-service-row {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding: 22px 0;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+
+.city-service-kind,
+.city-service-row > span:first-child {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-3);
+}
+
+.city-service-kind-closure {
+  color: var(--amber);
+}
+
+.city-service-row time,
+.city-service-row > :last-child {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+/* Regional indicator table -> hairline */
+.regional-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.regional-table th {
+  text-align: left;
+  padding: 0 16px 14px 0;
+  border-bottom: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.regional-table thead tr {
+  background: transparent;
+}
+
+.regional-table td {
+  padding: 16px 16px 16px 0;
+  border-bottom: 1px solid var(--line-softest);
+  color: var(--muted);
+}
+
+.regional-table tbody tr:hover {
+  background: var(--row-hover);
+}
+
+.regional-table td:first-child {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.regional-cell-trend-up,
+.regional-cell-trend.good { color: var(--green); }
+.regional-cell-trend-down,
+.regional-cell-trend.bad { color: var(--red); }
+
+/* Dataset-shape / coverage bars stay (README §10/§11) but take hairline rails */
+.geo-density-progress-track,
+.regional-coverage-progress-track,
+.regional-cell-progress-track,
+.regional-morbidity-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+}
+
+.geo-density-progress-bar,
+.regional-coverage-progress-bar,
+.regional-cell-progress-bar {
+  background: var(--blue);
+}
+
+.geo-density-progress-bar.good,
+.regional-coverage-progress-bar.good,
+.regional-cell-progress-bar.good {
+  background: var(--green);
+}
+
+.geo-density-progress-bar.warn {
+  background: var(--amber);
+}
+
+.regional-morbidity-bar {
+  background: var(--blue);
+}
+
+.city-detail-freshness,
+.geo-detail-freshness,
+.regional-detail-freshness,
+.catalog-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
 @media (max-width: 900px) {
   .weather-bento-grid {
     grid-template-columns: 1fr;

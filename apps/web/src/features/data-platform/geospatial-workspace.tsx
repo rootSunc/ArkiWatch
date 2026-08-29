@@ -295,7 +295,8 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
   return (
     <section className="water-detail-page" aria-label={tKey("geospatial.detailAria")}>
       <WorkspaceEvidenceHeader
-        className="water-detail-header"
+        className="water-detail-header catalog-detail-header"
+        eyebrow={tKey("shell.dataCatalog")}
         fallbackKey="geospatial.notObserved"
         language={language}
         observedAt={historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt}

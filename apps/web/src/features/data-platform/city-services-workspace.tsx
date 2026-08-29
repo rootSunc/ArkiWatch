@@ -263,7 +263,8 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
   return (
     <section className="city-detail-page" aria-label={tKey("cityServices.detailAria")}>
       <WorkspaceEvidenceHeader
-        className="city-detail-header"
+        className="city-detail-header catalog-detail-header"
+        eyebrow={tKey("shell.dataCatalog")}
         fallbackKey="cityServices.notCollected"
         language={language}
         observedAt={isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at}

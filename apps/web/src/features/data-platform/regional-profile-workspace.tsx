@@ -207,7 +207,8 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
   return (
     <section className="water-detail-page" aria-label={tKey("regionalProfile.detailAria")}>
       <WorkspaceEvidenceHeader
-        className="water-detail-header"
+        className="water-detail-header catalog-detail-header"
+        eyebrow={tKey("shell.dataCatalog")}
         fallbackKey="regionalProfile.notObserved"
         language={language}
         observedAt={historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt}
