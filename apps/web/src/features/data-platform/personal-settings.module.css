@@ -1,15 +1,14 @@
 .page {
   min-height: 100vh;
   overflow-y: auto;
-  padding: 28px clamp(18px, 4vw, 56px) 56px;
-  background:
-    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34%),
-    var(--background);
-  color: var(--on-background);
+  padding: 56px clamp(18px, 4vw, 40px) 96px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
 }
 
 .shell {
-  width: min(1120px, 100%);
+  width: min(900px, 100%);
   margin: 0 auto;
 }
 
@@ -38,13 +37,14 @@
 
 .brandMark {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border-radius: 14px;
-  background: var(--primary-container);
-  color: var(--on-primary-container);
-  font-size: 22px;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--blue);
+  font-size: 20px;
+  overflow: hidden;
 }
 
 .eyebrow,
@@ -55,30 +55,35 @@
 .statusText,
 .progressLabel,
 .navStatus {
-  color: var(--on-surface-variant);
+  color: var(--muted);
 }
 
 .eyebrow,
 .sectionKicker {
   display: block;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--muted-2);
 }
 
 .title {
-  margin-top: 4px;
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
-  letter-spacing: -0.04em;
+  margin-top: 18px;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  color: var(--ink);
 }
 
 .subtitle {
   max-width: 680px;
-  margin-top: 8px;
-  color: var(--on-surface-variant);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  margin-top: 12px;
+  color: var(--body);
+  font-size: 16.5px;
+  line-height: 1.6;
 }
 
 .headerActions {
@@ -99,34 +104,36 @@
 .quietButton,
 .primaryButton,
 .textButton {
-  min-height: 40px;
-  border-radius: 12px;
-  padding: 0 14px;
-  font-size: 0.83rem;
-  font-weight: 750;
+  min-height: 44px;
+  border-radius: var(--r-control);
+  padding: 0 20px;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  font-weight: 500;
 }
 
 .quietButton,
 .textButton {
-  border: 1px solid var(--detail-panel-border);
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
+  border: 1px solid var(--line);
+  background: var(--canvas);
+  color: var(--ink);
 }
 
 .quietButton:hover,
 .textButton:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .primaryButton {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  border: 1px solid var(--btn-fill);
+  background: var(--btn-fill);
+  color: var(--btn-label);
 }
 
 .primaryButton:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
+  background: var(--btn-fill-hover);
+  border-color: var(--btn-fill-hover);
 }
 
 .primaryButton:disabled,
@@ -138,66 +145,78 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   align-items: start;
-  gap: 20px;
-}
-
-.nav,
-.panel,
-.hero,
-.card {
-  border: 1px solid var(--detail-panel-border);
-  background: color-mix(in srgb, var(--surface-container-lowest) 94%, transparent);
-  box-shadow: var(--shadow);
+  gap: 40px;
+  margin-top: 40px;
 }
 
 .nav {
   position: sticky;
   top: 18px;
   display: grid;
-  gap: 6px;
-  padding: 10px;
-  border-radius: 18px;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel,
+.hero,
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
 }
 
 .navItem {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 9px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
   width: 100%;
-  padding: 11px 10px;
-  border: 1px solid transparent;
-  border-radius: 12px;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--on-surface-variant);
+  color: var(--ink-soft);
+  font-size: 13.5px;
   text-align: left;
 }
 
 .navItem:hover {
-  background: var(--surface-container-low);
-  color: var(--on-surface);
+  background: var(--nav-hover);
+  color: var(--ink);
 }
 
 .navItemActive {
-  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
-  background: var(--status-good-bg);
-  color: var(--on-surface);
+  border: 0;
+  background: var(--nav-active);
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .navItemComplete .navIcon {
-  color: var(--success);
+  color: var(--green);
 }
 
 .navIcon {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   place-items: center;
-  border-radius: 9px;
-  background: var(--surface-container);
-  font-size: 17px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--icon-idle);
+  font-size: 18px;
+}
+
+.navItemActive .navIcon {
+  color: var(--blue);
 }
 
 .navCopy {
@@ -224,24 +243,26 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
   align-items: center;
   padding: 22px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
 }
 
 .hero h2 {
   margin-top: 5px;
-  font-size: 1.15rem;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .hero p {
   max-width: 640px;
   margin-top: 8px;
-  color: var(--on-surface-variant);
-  font-size: 0.85rem;
-  line-height: 1.5;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
 }
 
 .progress {
@@ -252,29 +273,28 @@
 
 .progressRing {
   display: grid;
-  width: 92px;
-  height: 92px;
+  width: auto;
+  height: auto;
   place-items: center;
-  border-radius: 50%;
-  background: conic-gradient(var(--primary) var(--progress), var(--surface-container-high) 0);
+  border-radius: 0;
+  background: none;
 }
 
 .progressRing::after {
-  display: grid;
-  width: 72px;
-  height: 72px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--surface-container-lowest);
-  color: var(--on-surface);
-  content: attr(data-value) "%";
-  font-size: 1.1rem;
-  font-weight: 800;
+  display: block;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  content: attr(data-value) "% configured";
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .progressLabel {
-  font-size: 0.72rem;
-  font-weight: 700;
+  display: none;
 }
 
 .notice {
@@ -283,80 +303,99 @@
   gap: 8px;
   margin-top: 12px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--status-good-bg);
-  color: var(--on-surface);
-  font-size: 0.78rem;
-  font-weight: 700;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .noticeError {
-  background: var(--status-bad-bg);
-  color: var(--error);
+  border-color: var(--amber-line);
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 .card {
-  margin-top: 14px;
-  padding: 22px;
-  border-radius: 18px;
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: var(--r-card);
 }
 
 .sectionHeader {
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .sectionHeader h3 {
-  margin-top: 4px;
-  font-size: 1.14rem;
+  margin-top: 8px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .hint {
   max-width: 720px;
-  margin-top: 7px;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-3);
 }
 
 .formGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 .field {
   display: grid;
-  gap: 6px;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 32px;
+  align-items: center;
   min-width: 0;
+  padding: 24px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.field:last-child {
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .fieldWide {
-  grid-column: 1 / -1;
+  align-items: start;
 }
 
 .label {
-  font-size: 0.72rem;
-  font-weight: 750;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .input,
 .select {
   width: 100%;
-  min-height: 42px;
-  border: 1px solid var(--detail-panel-border);
-  border-radius: 10px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
   outline: none;
-  background: var(--surface-container-low);
-  color: var(--on-surface);
-  padding: 0 11px;
-  font-size: 0.84rem;
+  background: var(--canvas);
+  color: var(--ink);
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
 }
 
 .input:focus,
 .select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: var(--blue);
+  box-shadow: none;
 }
 
 .toggleGrid {
@@ -369,24 +408,24 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 44px;
   padding: 10px 12px;
-  border: 1px solid var(--detail-panel-border);
-  border-radius: 12px;
-  background: var(--surface-container-low);
-  color: var(--on-surface);
-  font-size: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 13.5px;
   text-align: left;
 }
 
 .toggleRow:hover {
-  border-color: var(--primary);
+  border-color: var(--quiet-value);
 }
 
 .toggleRow input {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
 }
 
 .fieldRow {
@@ -412,25 +451,29 @@
 .savedRow {
   justify-content: space-between;
   gap: 14px;
-  padding: 11px 12px;
-  border-radius: 11px;
-  background: var(--surface-container-low);
+  padding: 16px 0;
+  border-radius: 0;
+  border-top: 1px solid var(--line-soft);
+  background: transparent;
 }
 
 .savedRow strong {
   display: block;
-  font-size: 0.82rem;
+  font-size: 14px;
+  color: var(--ink);
 }
 
 .savedRow span {
-  color: var(--on-surface-variant);
-  font-size: 0.72rem;
+  color: var(--muted-3);
+  font-size: 12px;
 }
 
 .savedMeta {
   white-space: nowrap;
-  font-size: 0.7rem;
-  font-weight: 750;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted-2);
 }
 
 .savedActions {
@@ -442,30 +485,33 @@
 
 .savedActions .textButton {
   min-height: 32px;
-  padding: 0 10px;
-  font-size: 0.72rem;
+  padding: 0 12px;
+  font-size: 12px;
 }
 
 .statusRow {
   justify-content: space-between;
   gap: 12px;
-  min-height: 48px;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 11px;
-  background: var(--surface-container-low);
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--surface-soft);
 }
 
 .statusText {
-  font-size: 0.78rem;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .empty {
-  padding: 14px;
-  border-radius: 11px;
-  background: var(--surface-container-low);
-  color: var(--on-surface-variant);
-  font-size: 0.8rem;
+  padding: 16px 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-3);
+  font-size: 13.5px;
 }
 
 .days {
@@ -477,19 +523,20 @@
 .dayButton {
   min-width: 40px;
   min-height: 34px;
-  border: 1px solid var(--detail-panel-border);
-  border-radius: 9px;
-  background: var(--surface-container-low);
-  color: var(--on-surface-variant);
-  font-size: 0.74rem;
-  font-weight: 750;
+  border: 1px solid var(--line);
+  border-radius: var(--r-filter);
+  background: var(--canvas);
+  color: var(--muted-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .dayButton:hover,
 .dayButtonActive {
-  border-color: var(--primary);
-  background: var(--status-good-bg);
-  color: var(--on-surface);
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #ffffff;
 }
 
 .loading {
@@ -546,17 +593,14 @@
     grid-template-columns: auto 1fr;
   }
 
-  .progressLabel {
-    align-self: center;
+  .field {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    align-items: start;
   }
 
-  .formGrid,
   .toggleGrid {
     grid-template-columns: 1fr;
-  }
-
-  .fieldWide {
-    grid-column: auto;
   }
 
   .buttonRow {

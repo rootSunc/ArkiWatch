@@ -3420,6 +3420,59 @@
   .day-plan-timeline-detail {
     grid-column: 1;
   }
+
+  /* Mobile app bar — 52px, menu + logo + name + notifications only; the
+   * scope switchers keep their compact row (README §16 keeps one context row).
+   * Secondary tools live behind the drawer. */
+  .mobile-dashboard-header {
+    min-height: 52px;
+    padding: 8px 16px;
+  }
+
+  .mobile-dashboard-header .mobile-utility-actions
+    > :is(.theme-toggle-button, .share-view-link-button, .refresh-button,
+          .export-snapshot-button, .language-switcher, .profile-avatar,
+          .mobile-overflow-action) {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: 64px;
+  }
+
+  .mobile-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 0;
+    background: transparent;
+    color: var(--muted-2);
+    font-size: 10px;
+  }
+
+  .mobile-bottom-nav-item .material-symbols-outlined,
+  .mobile-bottom-nav-item .assistant-glyph {
+    font-size: 21px;
+    width: 21px;
+    height: 21px;
+  }
+
+  .mobile-bottom-nav-item-active {
+    color: var(--amber);
+  }
+
+  .mobile-bottom-nav-item-active .material-symbols-outlined,
+  .mobile-bottom-nav-item-active .assistant-glyph {
+    color: var(--amber);
+  }
+
+  .mobile-dashboard-footer {
+    border-top: 1px solid var(--line);
+    background: var(--canvas);
+  }
 }
 
 /* ==========================================================================
