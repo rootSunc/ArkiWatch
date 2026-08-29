@@ -1,134 +1,183 @@
-/* Shared visual baseline for routes outside the data-platform shell. */
-:root {
-  --minimal-canvas: #f7f8fc;
-  --minimal-surface: #ffffff;
-  --minimal-ink: #0f172a;
-  --minimal-muted: #56636d;
-  --minimal-line: #e2e8f0;
-  --minimal-accent: #3657d6;
-  --minimal-accent-soft: #eef2ff;
-  --minimal-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+/*
+ * Baseline for the routes that live outside the data-platform shell
+ * (/about, /settings, /login). The design token layer only ships with the
+ * dashboard bundle, so pull it in here too — this file is imported globally
+ * from app/layout.tsx.
+ */
+@import "../features/data-platform/styles/tokens.css";
 
-  --background: #f7f8fc;
-  --surface: #f7f8fc;
-  --primary: #3657d6;
-  --primary-container: #e7ebff;
-  --on-primary: #ffffff;
-  --on-primary-container: #1f2a63;
-  --secondary-container: #e9eefb;
-  --on-secondary-container: #2a3c68;
-  --tertiary: #a16207;
-  --tertiary-container: #f5d38a;
-  --success: #0f766e;
-  --blue: #3657d6;
-  --amber: #a16207;
-  --red: #b42318;
-  --card-border: rgba(15, 23, 42, 0.1);
-  --focus-ring: rgba(54, 87, 214, 0.18);
-}
-
-:root[data-theme="dark"] {
-  --minimal-canvas: #0b1020;
-  --minimal-surface: #121a2c;
-  --minimal-ink: #f1f5f9;
-  --minimal-muted: #9aa8bd;
-  --minimal-line: #263452;
-  --minimal-accent: #8da2ff;
-  --minimal-accent-soft: #1b2850;
-  --minimal-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-
-  --background: #0b1020;
-  --surface: #0b1020;
-  --primary: #8da2ff;
-  --primary-container: #2b3970;
-  --on-primary: #0b1020;
-  --on-primary-container: #dbe3ff;
-  --secondary-container: #1b2850;
-  --on-secondary-container: #dbe3ff;
-  --tertiary: #f2b84b;
-  --tertiary-container: #6e4a12;
-  --success: #5eead4;
-  --blue: #8da2ff;
-  --amber: #f2b84b;
-  --red: #ff8e83;
-  --card-border: rgba(226, 232, 240, 0.14);
-  --focus-ring: rgba(141, 162, 255, 0.24);
-}
-
+/* --- Admin sign in (README §15) --- */
 .login-shell {
-  background: var(--minimal-canvas);
-  padding: 24px;
+  display: grid;
+  min-height: calc(100vh - 64px);
+  place-items: center;
+  background: var(--surface-soft);
+  padding: 48px 40px;
 }
 
 .login-panel {
-  width: min(100%, 400px);
-  gap: 26px;
-  border: 1px solid var(--minimal-line);
-  border-top: 3px solid var(--minimal-accent);
-  border-radius: 12px;
-  background: var(--minimal-surface);
-  box-shadow: var(--minimal-shadow);
-  padding: 30px;
+  display: grid;
+  width: 100%;
+  max-width: 400px;
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 36px;
 }
 
 .login-brand {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
 .login-brand-mark {
-  width: 42px;
-  height: 42px;
-  border-color: var(--minimal-line);
-  border-radius: 9px;
-  background: var(--minimal-accent-soft);
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-card);
+  background: transparent;
 }
 
-.login-brand span,
-.login-form label span {
-  color: var(--minimal-muted);
+.login-brand-mark img {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.login-brand > div {
+  display: grid;
+  gap: 4px;
+}
+
+.login-brand span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  line-height: 1;
 }
 
 .login-brand h1 {
-  color: var(--minimal-ink);
-  font-size: 22px;
-  letter-spacing: -0.04em;
+  margin: 0;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.login-form {
+  display: grid;
+  gap: 18px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.login-form label span {
+  color: var(--muted-3);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .login-form input {
+  width: 100%;
   height: 44px;
-  border-color: var(--minimal-line);
-  border-radius: 7px;
-  background: var(--minimal-canvas);
-  color: var(--minimal-ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+  color: var(--ink);
+  outline: none;
+  padding: 0 13px;
+  font-size: 14.5px;
 }
 
 .login-form input:focus {
-  border-color: var(--minimal-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--minimal-accent) 14%, transparent);
+  border-color: var(--blue);
+  box-shadow: none;
+}
+
+.login-error {
+  border: 1px solid var(--amber-line);
+  border-radius: var(--r-card);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 10px 12px;
 }
 
 .login-submit {
+  display: inline-flex;
   height: 44px;
-  border-radius: 7px;
-  background: var(--minimal-accent);
-  color: #ffffff;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--btn-fill);
+  border-radius: var(--r-control);
+  background: var(--btn-fill);
+  color: var(--btn-label);
+  font-size: 14.5px;
+  font-weight: 500;
+  margin-top: 6px;
+}
+
+.login-submit:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: var(--btn-fill-hover);
+  border-color: var(--btn-fill-hover);
+}
+
+.login-submit .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .login-secondary {
+  display: inline-flex;
   height: 44px;
-  border-color: var(--minimal-line);
-  border-radius: 7px;
-  color: var(--minimal-ink);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .login-secondary:hover,
 .login-secondary:focus-visible {
-  background: var(--minimal-accent-soft);
+  border-color: var(--ink);
+  background: var(--canvas);
+  outline: none;
 }
 
 .skip-link {
-  border-color: var(--minimal-accent);
-  border-radius: 7px;
-  background: var(--minimal-surface);
+  border: 1px solid var(--blue);
+  border-radius: var(--r-control);
+  background: var(--canvas);
   box-shadow: none;
+  color: var(--ink);
 }
