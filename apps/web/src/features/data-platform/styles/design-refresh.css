@@ -216,7 +216,7 @@
   color: var(--icon-idle);
 }
 
-.nav-row span:last-child {
+.nav-row > span:not(.side-nav-count-badge):not(.material-symbols-outlined):not(.material-icon):not(.assistant-glyph) {
   flex: 1;
   min-width: 0;
   font-size: 13.5px;
@@ -885,7 +885,7 @@
 .today-digest-strip-copy {
   display: flex;
   align-items: baseline;
-  gap: 16px;
+  gap: 12px 20px;
   flex: 1;
   min-width: 0;
   flex-wrap: wrap;
@@ -902,10 +902,21 @@
 }
 
 .today-digest-strip-copy strong {
+  flex: 0 0 auto;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
+}
+
+.today-digest-strip-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--muted-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .today-digest-strip-action {
@@ -916,10 +927,6 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--blue);
-}
-
-.today-digest-strip-action .material-symbols-outlined {
-  font-size: 16px;
 }
 
 /* --- Summary strip: 4-up hairline grid (README §1.4) --- */
@@ -1146,7 +1153,7 @@
 }
 
 /* ==========================================================================
-   7. Signal card (README §1.5) — hairline card, bare-text status
+   7. Signal card (README §1.5) — 3 rows (top / readout / footer), gap 22px
    ========================================================================== */
 
 .signal-card {
@@ -1178,39 +1185,33 @@
   outline: none;
 }
 
+.signal-card-warn {
+  border-left: 2px solid var(--amber);
+}
+
 .signal-card-warn:hover,
 .signal-card-warn:focus-visible {
   border-color: var(--amber);
 }
 
-.signal-card-warn {
-  border-left: 2px solid var(--amber);
-}
-
+/* --- top row: icon · title · status --- */
 .signal-card-top {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.signal-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.signal-title .material-symbols-outlined {
+.signal-card-top > .material-symbols-outlined {
+  flex: 0 0 auto;
   font-size: 19px;
   color: var(--blue);
 }
 
-.signal-card-warn .signal-title .material-symbols-outlined {
+.signal-card-warn .signal-card-top > .material-symbols-outlined {
   color: var(--amber);
 }
 
-.signal-title strong {
+.signal-card-title {
   flex: 1;
   min-width: 0;
   font-size: 15px;
@@ -1221,13 +1222,8 @@
   white-space: nowrap;
 }
 
-/* Status is bare mono text now, not a pill. */
-.status-badge {
+.signal-card-status {
   flex: 0 0 auto;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
   font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 400;
@@ -1236,28 +1232,12 @@
   color: var(--muted-2);
 }
 
-.status-badge-good {
-  background: transparent;
-  color: var(--green);
-}
+.signal-card-status-good { color: var(--green); }
+.signal-card-status-warn { color: var(--amber); }
+.signal-card-status-bad { color: var(--red); }
+.signal-card-status-neutral { color: var(--muted-2); }
 
-.status-badge-warn {
-  background: transparent;
-  color: var(--amber);
-}
-
-.status-badge-bad {
-  background: transparent;
-  color: var(--red);
-}
-
-.signal-card-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  min-height: 0;
-}
-
+/* --- readout: mono label · mono value --- */
 .signal-readout {
   display: flex;
   flex-direction: column;
@@ -1274,6 +1254,10 @@
   color: var(--muted-2);
 }
 
+.signal-readout .data-help-icon {
+  display: none;
+}
+
 .signal-readout strong {
   font-family: var(--font-mono);
   font-size: 24px;
@@ -1283,43 +1267,42 @@
   color: var(--ink);
 }
 
-.signal-scope-chip {
+/* --- footer: scope icon · scope · [spacer] · provider, above a hairline --- */
+.signal-card-footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: auto;
-  border: 0;
+  padding-top: 16px;
   border-top: 1px solid var(--line-softest);
-  border-radius: 0;
-  background: transparent;
-  padding: 16px 0 0;
-  font-size: 12px;
-  color: var(--muted-3);
 }
 
-.signal-scope-chip .material-symbols-outlined {
+.signal-card-footer > .material-symbols-outlined {
+  flex: 0 0 auto;
   font-size: 14px;
   color: var(--muted-2);
 }
 
-.signal-card-attribution {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 10px;
+.signal-card-scope {
+  font-size: 12px;
   color: var(--muted-3);
-  text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Lay the scope line + provider on one row above the footer rule. */
-.signal-card-bottom {
-  position: relative;
+.signal-card-footer-spacer {
+  flex: 1;
 }
 
-.signal-scope-chip {
-  padding-right: 0;
+.signal-card-provider {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
 }
 
 /* ==========================================================================
@@ -1483,7 +1466,7 @@
   border-color: var(--blue);
 }
 
-.today-focus-footer > span {
+.today-provenance {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1495,9 +1478,34 @@
   color: var(--muted-2);
 }
 
-.today-focus-footer > span .material-symbols-outlined {
+.today-provenance > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.today-provenance .material-symbols-outlined {
   font-size: 15px;
   color: var(--green);
+}
+
+.today-provenance-spacer {
+  flex: 1;
+}
+
+.today-provenance-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--blue);
+  cursor: pointer;
+}
+
+.today-provenance-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* --- At a glance card --- */
@@ -1574,7 +1582,7 @@
 
 .today-glance-item > span:last-child {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 12px;

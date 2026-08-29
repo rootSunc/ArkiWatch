@@ -38,6 +38,8 @@ type PlatformScopeControlsProps = {
   showExport?: boolean;
   showNotifications?: boolean;
   showRefresh?: boolean;
+  showShare?: boolean;
+  showAuth?: boolean;
 };
 
 export function PlatformScopeControls({
@@ -64,6 +66,8 @@ export function PlatformScopeControls({
   showExport = false,
   showNotifications = true,
   showRefresh = true,
+  showShare = true,
+  showAuth = true,
 }: PlatformScopeControlsProps) {
   return (
     <>
@@ -97,10 +101,12 @@ export function PlatformScopeControls({
         {showExport ? (
           <ExportSnapshotButton city={city} date={date} language={language} />
         ) : null}
-        <ShareViewLinkButton
-          language={language}
-          scopeKey={`${city}:${date ?? "live"}`}
-        />
+        {showShare ? (
+          <ShareViewLinkButton
+            language={language}
+            scopeKey={`${city}:${date ?? "live"}`}
+          />
+        ) : null}
         {showNotifications ? (
           <NotificationButton
             count={notificationCount}
@@ -110,7 +116,7 @@ export function PlatformScopeControls({
             tone={notificationTone}
           />
         ) : null}
-        {renderAuthActionButton("icon-button")}
+        {showAuth ? renderAuthActionButton("icon-button") : null}
       </div>
     </>
   );

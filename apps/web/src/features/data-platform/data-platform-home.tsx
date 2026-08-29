@@ -1078,6 +1078,10 @@ export function DataPlatformHome({
           currentUserLabel={currentUserLabel}
           isAuthenticated={isAuthenticated}
           isMobileMenuOpen={isMobileMenuOpen}
+          navBadges={{
+            today: todayBrief?.topActions.length ?? 0,
+            mobility: mobilityCategory?.events.length ?? 0,
+          }}
           navigationRef={mobileNavigationRef}
           onHide={() => {
             if (isMobileMenuOpen) {

@@ -1,4 +1,4 @@
-import { formatSignalAttributionLine, categorySignalAttribution } from "./signal-attribution";
+import { categorySignalAttribution } from "./signal-attribution";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { categorySupportsCityScope, cityLabel } from "./city-scope";
 import { CATEGORY_ICONS } from "./data-platform-nav-utils";
@@ -57,18 +57,15 @@ export function SignalCard({
     language,
     platformTimezone,
   );
-  const attribution = formatSignalAttributionLine(
-    categorySignalAttribution(
-      category,
-      weather,
-      airQuality,
-      energy,
-      householdEnergy,
-      roadRail,
-      transit,
-    ),
-    language,
-  );
+  const provider = categorySignalAttribution(
+    category,
+    weather,
+    airQuality,
+    energy,
+    householdEnergy,
+    roadRail,
+    transit,
+  ).sources;
   const followsSelectedCity = categorySupportsCityScope(category.key);
 
   return (
@@ -78,45 +75,38 @@ export function SignalCard({
       type="button"
     >
       <span className="signal-card-top">
-        <span className="signal-title">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            {CATEGORY_ICONS[category.key] ?? "database"}
-          </span>
-          <strong>{displayTitle(category, language)}</strong>
+        <span className="material-symbols-outlined" aria-hidden="true">
+          {CATEGORY_ICONS[category.key] ?? "database"}
         </span>
-        <span className={`status-badge status-badge-${readout.tone}`}>
+        <strong className="signal-card-title">{displayTitle(category, language)}</strong>
+        <span className={`signal-card-status signal-card-status-${readout.tone}`}>
           {statusLabel(category, language)}
         </span>
       </span>
-      <span className="signal-card-bottom">
-        <span className="signal-readout">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: readout.helpKey,
-              label: readout.label,
-              language,
-            })}
-          >
-            {readout.label}
-          </DataLabelWithHelp>
-          <strong>{readout.value}</strong>
-        </span>
-        <span
-          className={
-            followsSelectedCity
-              ? "signal-scope-chip signal-scope-chip-city"
-              : "signal-scope-chip"
-          }
+
+      <span className="signal-readout">
+        <DataLabelWithHelp
+          helpText={dataHelpText({
+            key: readout.helpKey,
+            label: readout.label,
+            language,
+          })}
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            {followsSelectedCity ? "location_on" : "public"}
-          </span>
-          <span>
-            {followsSelectedCity ? cityLabel(selectedCity) : regionalScopeLabel}
-          </span>
+          {readout.label}
+        </DataLabelWithHelp>
+        <strong>{readout.value}</strong>
+      </span>
+
+      <span className="signal-card-footer">
+        <span className="material-symbols-outlined" aria-hidden="true">
+          {followsSelectedCity ? "location_on" : "public"}
         </span>
-        <span className="signal-card-attribution" title={attribution}>
-          {attribution}
+        <span className="signal-card-scope">
+          {followsSelectedCity ? cityLabel(selectedCity) : regionalScopeLabel}
+        </span>
+        <span className="signal-card-footer-spacer" />
+        <span className="signal-card-provider" title={provider}>
+          {provider}
         </span>
       </span>
     </button>

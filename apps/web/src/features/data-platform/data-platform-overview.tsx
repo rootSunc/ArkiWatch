@@ -2,9 +2,30 @@
 
 import type { ChangeEvent, ReactNode } from "react";
 
+import { formatTimestamp } from "@/features/shared/format";
+
 import { scopedDataTimestamp } from "./data-time-scope";
 import { useI18n } from "./i18n";
 import type { PlatformOverviewResponse } from "./types";
+
+function snapshotClock(value: string | null, timeZone: string): string {
+  if (!value) {
+    return "";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    }).format(parsed);
+  } catch {
+    return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(parsed);
+  }
+}
 import type { SignalSystemTile } from "./signals-console";
 import type { TodayBrief } from "./today/today-brief";
 import { TodayDigestStrip } from "./today/today-digest-strip";
@@ -79,14 +100,13 @@ function OverviewStatusBar({
   tiles: SignalSystemTile[];
 }) {
   const { language, tKey } = useI18n();
-  const snapshotTimestamp = scopedDataTimestamp(
+  const snapshotDate = formatTimestamp(
     overview.checked_at,
-    overview.time_scope,
+    "date",
     language,
-    tKey,
-    "shell.notCollected",
     platformTimezone,
   );
+  const snapshotTime = snapshotClock(overview.checked_at, platformTimezone);
 
   return (
     <section className="overview-status-bar" aria-label={tKey("shell.signalSystemSummary")}>
@@ -109,7 +129,15 @@ function OverviewStatusBar({
           </span>
           <div>
             <span>{tKey("shell.snapshotChecked")}</span>
-            <strong>{snapshotTimestamp}</strong>
+            <strong>
+              {snapshotDate}
+              {snapshotTime ? (
+                <>
+                  <br />
+                  {snapshotTime}
+                </>
+              ) : null}
+            </strong>
             <small>{platformTimezone}</small>
           </div>
         </article>

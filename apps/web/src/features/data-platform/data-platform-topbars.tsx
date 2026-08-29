@@ -331,7 +331,9 @@ export function DataPlatformWorkspaceTopbar({
           onNotificationsClick={onNotificationsClick}
           onRefresh={onRefresh}
           renderAuthActionButton={renderAuthActionButton}
+          showAuth={false}
           showExport={showExport}
+          showShare={false}
         />
         {onOpenAssistant ? (
           <button

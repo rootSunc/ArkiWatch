@@ -132,23 +132,6 @@ export function TodayOverview({
                 : tKey("shell.coreDailyScenariosClear"))}
           </p>
           <div className="today-focus-footer">
-            <span>
-              <span className="material-symbols-outlined" aria-hidden="true">
-                check_circle
-              </span>
-              {tKey(
-                todayBrief.recommendationMode === "historical"
-                  ? todayBrief.historicalSnapshotAvailable
-                    ? "shell.historicalSnapshotGenerated"
-                    : "shell.historicalSnapshotUnavailable"
-                  : todayBrief.recommendationMode === "stale"
-                    ? "shell.staleSnapshot"
-                    : "shell.dataChecked",
-              )}
-              {todayBrief.checkedAt ? (
-                <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}</>
-              ) : null}
-            </span>
             <div className="today-focus-actions">
               {focusAction && !isRecommendationLimited ? (
                 <button
@@ -179,8 +162,29 @@ export function TodayOverview({
                   )}
                 </button>
               ) : null}
-              <button className="today-secondary-action" onClick={onOpenSignals} type="button">
+            </div>
+            <div className="today-provenance">
+              <span>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  check_circle
+                </span>
+                {tKey(
+                  todayBrief.recommendationMode === "historical"
+                    ? todayBrief.historicalSnapshotAvailable
+                      ? "shell.historicalSnapshotGenerated"
+                      : "shell.historicalSnapshotUnavailable"
+                    : todayBrief.recommendationMode === "stale"
+                      ? "shell.staleSnapshot"
+                      : "shell.dataChecked",
+                )}
+                {todayBrief.checkedAt ? (
+                  <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}</>
+                ) : null}
+              </span>
+              <span className="today-provenance-spacer" />
+              <button className="today-provenance-link" onClick={onOpenSignals} type="button">
                 {tKey("shell.openAllSignals")}
+                <span aria-hidden="true"> →</span>
               </button>
             </div>
           </div>

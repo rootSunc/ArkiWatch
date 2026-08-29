@@ -30,6 +30,7 @@ type DataPlatformSideNavProps = {
   currentUserLabel: string;
   isAuthenticated: boolean;
   isMobileMenuOpen: boolean;
+  navBadges?: Record<string, number>;
   navigationRef: RefObject<HTMLElement>;
   onHide: () => void;
   onPrefetchNavItem?: (item: NavItem) => void;
@@ -53,6 +54,7 @@ export function DataPlatformSideNav({
   currentUserLabel,
   isAuthenticated,
   isMobileMenuOpen,
+  navBadges,
   navigationRef,
   onHide,
   onPrefetchNavItem,
@@ -77,6 +79,7 @@ export function DataPlatformSideNav({
       selectedNavKey === item.key ||
       (item.categoryKey != null && selectedNavKey === item.categoryKey);
     const navLabel = tKey(navRowLabelKey(item));
+    const badge = navBadges?.[item.key] ?? 0;
 
     return (
       <button
@@ -92,6 +95,11 @@ export function DataPlatformSideNav({
       >
         <MaterialIcon name={item.icon} />
         <span>{navLabel}</span>
+        {badge > 0 ? (
+          <span className="side-nav-count-badge" aria-hidden="true">
+            {badge}
+          </span>
+        ) : null}
       </button>
     );
   }
