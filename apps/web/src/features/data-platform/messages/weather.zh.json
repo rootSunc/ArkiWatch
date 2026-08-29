@@ -120,6 +120,7 @@
     "fmiForecast": "FMI 预报",
     "staticDemoLayer": "静态演示图层",
     "fmiProviderLabel": "FMI（芬兰气象研究所）",
-    "historyPointDetail": "降雨 {rain} mm · {points} 个点"
+    "historyPointDetail": "降雨 {rain} mm · {points} 个点",
+    "weatherWorkspace": "天气工作区"
   }
 }

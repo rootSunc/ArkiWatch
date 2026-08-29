@@ -19,6 +19,7 @@ export type WorkspaceTone =
 
 type WorkspaceEvidenceHeaderProps = {
   className?: string;
+  eyebrow?: ReactNode;
   title: ReactNode;
   status?: ReactNode;
   statusTone?: WorkspaceTone;
@@ -39,6 +40,7 @@ type WorkspaceEvidenceHeaderProps = {
  */
 export function WorkspaceEvidenceHeader({
   className = "",
+  eyebrow,
   title,
   status,
   statusTone = "neutral",
@@ -63,6 +65,9 @@ export function WorkspaceEvidenceHeader({
   return (
     <header className={`workspace-evidence-header ${className}`.trim()}>
       <div className="workspace-evidence-heading">
+        {eyebrow ? (
+          <span className="workspace-evidence-eyebrow">{eyebrow}</span>
+        ) : null}
         <h2>{title}</h2>
         {status ? (
           <div className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}>

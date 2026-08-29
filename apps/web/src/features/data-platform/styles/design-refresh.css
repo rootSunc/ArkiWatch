@@ -1823,6 +1823,564 @@
 }
 
 /* ==========================================================================
+   9b. Detail workspaces — shared evidence header + Weather (README §3, the
+   canonical reference the other workspaces reuse)
+   ========================================================================== */
+
+/* --- Shared evidence header --- */
+.workspace-evidence-header,
+.dashboard-content :where(
+  .weather-detail-header,
+  .air-detail-header,
+  .energy-detail-header,
+  .transit-detail-header,
+  .road-rail-detail-header,
+  .water-detail-header,
+  .city-detail-header,
+  .linked-events-header
+) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin: 0 0 56px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.workspace-evidence-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.workspace-evidence-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 16px;
+}
+
+.workspace-evidence-heading h2,
+.dashboard-content :where(
+  .weather-detail-header,
+  .air-detail-header,
+  .energy-detail-header,
+  .transit-detail-header,
+  .road-rail-detail-header,
+  .water-detail-header,
+  .city-detail-header,
+  .linked-events-header
+) h2 {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+
+.workspace-evidence-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--muted-3);
+}
+
+.workspace-evidence-status > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 4px;
+}
+
+.workspace-evidence-status strong {
+  font-weight: 400;
+  color: inherit;
+}
+
+.workspace-evidence-status-good > span,
+.workspace-evidence-status-ready > span { background: var(--green); }
+.workspace-evidence-status-warn > span,
+.workspace-evidence-status-stale > span { background: var(--amber); }
+.workspace-evidence-status-bad > span,
+.workspace-evidence-status-failed > span { background: var(--red); }
+.workspace-evidence-status-neutral > span,
+.workspace-evidence-status-empty > span { background: var(--icon-idle); }
+
+.workspace-evidence-meta,
+.dashboard-content :where(
+  .weather-detail-header,
+  .air-detail-header,
+  .energy-detail-header,
+  .transit-detail-header,
+  .road-rail-detail-header,
+  .water-detail-header,
+  .city-detail-header,
+  .linked-events-header
+) > div:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  max-width: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--muted-2);
+  text-align: right;
+  white-space: normal;
+}
+
+.workspace-evidence-source {
+  max-width: none;
+  overflow: visible;
+  font-weight: 400;
+  white-space: normal;
+  text-transform: uppercase;
+}
+
+.workspace-evidence-separator {
+  display: none;
+}
+
+.workspace-evidence-meta time {
+  color: var(--muted-2);
+  text-transform: uppercase;
+}
+
+.workspace-evidence-extra {
+  font-size: 11.5px;
+}
+
+.workspace-evidence-extra summary {
+  color: var(--blue);
+  font-weight: 400;
+}
+
+/* --- Kill decorative meters / progress bars under metric values (README §3) --- */
+.weather-progress,
+.weather-rain-meter,
+.weather-quality-meter,
+.weather-pipeline-meter,
+.weather-metric-box em,
+.energy-signal-meter,
+.energy-volume-meter,
+.transit-quality-meter,
+.transit-alert-live-meter,
+.transit-stage-meter,
+.road-rail-quality-meter,
+.road-rail-incident-live-meter,
+.road-rail-stage-meter,
+.water-signal-meter,
+.water-volume-meter,
+.city-readiness-meter {
+  display: none;
+}
+
+.weather-metric-alert::after,
+.weather-metric-warn::after {
+  content: none;
+}
+
+/* --- Weather workspace --- */
+.weather-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.weather-detail-header {
+  margin-bottom: 0;
+}
+
+.weather-live-status {
+  margin-top: 0;
+}
+
+.weather-live-status span {
+  width: 6px;
+  height: 6px;
+  box-shadow: none;
+}
+
+.weather-live-status-ready span { background: var(--green); box-shadow: none; }
+.weather-live-status-stale span { background: var(--amber); box-shadow: none; }
+.weather-live-status-empty span { background: var(--icon-idle); box-shadow: none; }
+.weather-live-status-failed span { background: var(--red); box-shadow: none; }
+
+.weather-bento-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 2fr);
+  gap: 48px;
+  align-items: start;
+  min-width: 0;
+}
+
+.weather-hero-card {
+  min-height: 0;
+  align-self: start;
+  justify-content: flex-start;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  padding: 28px;
+  gap: 0;
+}
+
+.weather-card-kicker span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.weather-card-kicker time {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+.weather-current-cluster {
+  align-items: center;
+  gap: 18px;
+  margin: 26px 0 8px;
+}
+
+.weather-condition-icon {
+  font-size: 52px;
+  color: var(--blue);
+  font-variation-settings: "FILL" 0, "wght" 300;
+}
+
+.weather-current-cluster strong {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.weather-current-cluster p {
+  margin-top: 0;
+  font-size: 15px;
+  color: var(--blue);
+}
+
+.weather-hero-footer {
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+  gap: 24px;
+}
+
+.weather-hero-footer span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--muted-2);
+}
+
+.weather-hero-footer strong {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.weather-trend-up { color: var(--blue) !important; }
+.weather-trend-down { color: var(--blue) !important; }
+.weather-trend-flat { color: var(--muted-3) !important; }
+
+/* Metrics + summary strip -> hairline grid (README §3, 6-up at 190px) */
+.weather-detail-metrics,
+.weather-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.weather-metric-box,
+.weather-summary-strip article {
+  position: static;
+  min-height: 0;
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--canvas);
+  box-shadow: none;
+  overflow: visible;
+  padding: 22px 24px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.weather-metric-label,
+.weather-summary-strip article span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.weather-metric-label .material-symbols-outlined {
+  display: none;
+}
+
+.weather-metric-box strong,
+.weather-summary-strip article strong {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink) !important;
+}
+
+.weather-metric-box small {
+  margin-left: 3px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-2);
+}
+
+.weather-metric-box p {
+  margin-top: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--muted-3);
+}
+
+.weather-metric-danger {
+  color: var(--amber) !important;
+}
+
+/* Trend / history card (README §3) */
+.trend-panel {
+  --trend-color: var(--blue);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px 28px 20px;
+}
+
+.trend-panel > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.trend-panel > header span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.trend-panel > header h3 {
+  margin-top: 8px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.trend-panel > header > strong {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--blue);
+}
+
+.trend-chart-frame {
+  margin: 0;
+}
+
+.trend-chart-svg {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.trend-chart-grid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.trend-chart-line {
+  fill: none;
+  stroke: var(--trend-color);
+  stroke-width: 2;
+}
+
+.trend-chart-area {
+  fill: none;
+}
+
+.trend-chart-dot {
+  fill: var(--trend-color);
+  stroke: none;
+}
+
+.trend-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-3);
+}
+
+.trend-chart-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 18px;
+}
+
+.trend-chart-stats > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.trend-chart-stats strong {
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.trend-chart-empty {
+  padding: 40px 0;
+  color: var(--muted-3);
+  font-size: 13.5px;
+}
+
+/* The remaining lower panels keep their data but take the calm hairline frame. */
+.weather-lower-grid,
+.weather-ops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.weather-glass-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 24px;
+}
+
+.weather-pipeline-stage,
+.weather-source-layer {
+  border: 0;
+  border-top: 2px solid var(--green);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0 0;
+}
+
+.weather-pipeline-empty,
+.weather-pipeline-missing,
+.weather-source-empty,
+.weather-source-missing,
+.weather-pipeline-stale,
+.weather-source-stale {
+  border-top-color: var(--amber);
+}
+
+.weather-pipeline-failed,
+.weather-source-failed {
+  border-top-color: var(--red);
+}
+
+.weather-provider-status {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 16px 0 0;
+}
+
+.weather-detail-freshness {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+/* Neutralise responsive.css's 12-column grid for Weather — the design uses a
+ * simple condition-card + metrics two-column layout. */
+@media (min-width: 768px) {
+  .weather-bento-grid > *,
+  .weather-lower-grid > *,
+  .weather-ops-grid > * {
+    grid-column: auto;
+  }
+
+  .weather-bento-grid {
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 2fr);
+  }
+
+  .weather-detail-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  .weather-lower-grid,
+  .weather-ops-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .weather-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .workspace-evidence-heading h2,
+  .dashboard-content :where(.weather-detail-header, .air-detail-header, .energy-detail-header,
+    .transit-detail-header, .road-rail-detail-header, .water-detail-header,
+    .city-detail-header, .linked-events-header) h2 {
+    font-size: 32px;
+  }
+}
+
+/* ==========================================================================
    10. Responsive
    ========================================================================== */
 

@@ -136,6 +136,7 @@ export function WeatherDetailView({
     <div className="weather-detail-page">
       <WorkspaceEvidenceHeader
         className="weather-detail-header"
+        eyebrow={tKey("weather.weatherWorkspace")}
         fallbackKey="weather.notObserved"
         language={language}
         observedAt={dataTime}
