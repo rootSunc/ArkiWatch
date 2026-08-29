@@ -101,6 +101,7 @@
     "exampleHouseholdWindowDetail": "示例家庭电价时段在 12:00 至 14:00 之间最划算。",
     "systemSummary": "示例上午时段的电网负荷处于中等水平。",
     "staticDemoEnergyNote": "静态演示数据；并非实时市场或电网读数。",
-    "normalizedEnergyCurve": "标准化能源曲线"
+    "normalizedEnergyCurve": "标准化能源曲线",
+    "energyWorkspace": "电力能源工作区"
   }
 }

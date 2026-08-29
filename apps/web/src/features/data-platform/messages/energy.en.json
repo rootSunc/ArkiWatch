@@ -101,6 +101,7 @@
     "exampleHouseholdWindowDetail": "The example household price window is most favourable between 12:00 and 14:00.",
     "systemSummary": "Grid load is moderate in the example morning window.",
     "staticDemoEnergyNote": "Static demo fixture; not a live market or grid reading.",
-    "normalizedEnergyCurve": "Normalized energy curve"
+    "normalizedEnergyCurve": "Normalized energy curve",
+    "energyWorkspace": "Energy workspace"
   }
 }

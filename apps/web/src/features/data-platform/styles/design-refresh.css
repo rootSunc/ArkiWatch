@@ -61,6 +61,15 @@
   background: var(--selection);
 }
 
+/* Icon ligatures break under an inherited text-transform (README icon caveat).
+ * Re-assert the icon contract with enough specificity to beat domain rules. */
+.dashboard-content .material-symbols-outlined,
+.assistant-panel .material-symbols-outlined {
+  text-transform: none;
+  letter-spacing: normal;
+  font-feature-settings: "liga";
+}
+
 /* ==========================================================================
    2. Sidebar — 252px hairline canvas, three groups
    ========================================================================== */
@@ -2466,6 +2475,392 @@
 
   .air-main-grid {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  }
+}
+
+/* --- Underline tabs (README §5, §6) --- */
+.energy-tab-list,
+.mobility-tab-list {
+  display: flex;
+  gap: 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 0;
+  margin: 0 0 48px;
+}
+
+.energy-tab,
+.mobility-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 40px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 18px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted-3);
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.energy-tab:hover,
+.mobility-tab:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.energy-tab-active,
+.mobility-tab-active,
+.energy-tab-active:hover,
+.mobility-tab-active:hover {
+  border-bottom-color: var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.energy-tab .material-symbols-outlined,
+.mobility-tab .material-symbols-outlined {
+  font-size: 18px;
+  color: currentColor;
+}
+
+.mobility-tab-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--amber);
+  background: var(--amber-soft);
+  padding: 2px 6px;
+  border-radius: var(--r-chip);
+}
+
+/* --- Energy workspace (README §5) --- */
+.energy-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.energy-detail-header {
+  border-bottom: 0;
+  margin-bottom: 32px;
+  padding-bottom: 0;
+}
+
+.energy-workspace-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.energy-summary-strip,
+.transit-summary-strip,
+.road-rail-summary-strip,
+.water-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.energy-summary-strip > article,
+.transit-summary-strip > article,
+.road-rail-summary-strip > article,
+.water-summary-strip > article {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.energy-summary-strip article span,
+.transit-summary-strip article span,
+.road-rail-summary-strip article span,
+.water-summary-strip article span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.energy-summary-strip article strong,
+.transit-summary-strip article strong,
+.road-rail-summary-strip article strong,
+.water-summary-strip article strong {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.energy-glass-panel,
+.transit-glass-panel,
+.road-rail-glass-panel,
+.water-glass-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px;
+}
+
+.energy-command-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.energy-command-panel::before,
+.energy-command-panel::after {
+  content: none;
+}
+
+/* Energy hourly cost / system curve chart */
+.energy-price-grid-line {
+  stroke: var(--line-soft);
+}
+
+.energy-price-path,
+.energy-price-line {
+  stroke: var(--blue);
+}
+
+.energy-price-area {
+  fill: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+.energy-price-bar {
+  fill: var(--blue-fill);
+}
+
+.energy-price-bar-window {
+  fill: var(--green);
+}
+
+.energy-price-bar-negative {
+  fill: var(--amber);
+}
+
+.energy-price-axis-text,
+.energy-price-axis-tick {
+  fill: var(--muted-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+/* Energy price table -> hairline */
+.energy-price-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.energy-price-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.4fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line-softest);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.energy-price-row-heading {
+  border-top: 0;
+  border-bottom: 1px solid var(--line-strong);
+  padding-top: 0;
+  padding-bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.energy-signal {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+
+.energy-stat-chip {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.energy-disclaimer,
+.energy-detail-freshness,
+.transit-detail-freshness,
+.road-rail-detail-freshness {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+@media (min-width: 768px) {
+  .energy-main-grid > *,
+  .energy-side-grid,
+  .energy-overview-grid > * {
+    grid-column: auto;
+  }
+
+  .energy-main-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  }
+}
+
+/* --- Mobility: transit + road-rail (README §6) --- */
+.mobility-detail-page,
+.transit-detail-page,
+.road-rail-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.mobility-workspace-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.transit-alert,
+.road-rail-incident {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  padding: 24px 0;
+}
+
+.transit-alert-card,
+.road-rail-incident-card {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.transit-alert-dot,
+.road-rail-incident-dot {
+  display: none;
+}
+
+.transit-alert-window,
+.road-rail-incident-window,
+.transit-alert-meta span,
+.road-rail-incident-meta span {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-2);
+}
+
+.transit-severity-chip,
+.transit-alert-severity,
+.road-rail-incident-kind {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-3);
+}
+
+.transit-alert-severity-high {
+  color: var(--amber);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--r-chip);
+  padding: 4px 8px;
+}
+
+.transit-filter-chip,
+.road-rail-filter-chip {
+  border: 1px solid var(--line);
+  border-radius: var(--r-filter);
+  background: var(--canvas);
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.transit-filter-chip-active,
+.road-rail-filter-chip-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+
+.transit-network-bar,
+.road-rail-network-bar {
+  background: var(--line-soft);
+}
+
+.transit-scope-bar-good,
+.road-rail-network-bar-good { background: var(--green); }
+.transit-scope-bar-warn,
+.road-rail-network-bar-warn { background: var(--amber); }
+.transit-scope-bar-bad,
+.road-rail-network-bar-bad { background: var(--red); }
+
+@media (min-width: 768px) {
+  .transit-main-grid > *,
+  .transit-side-grid,
+  .road-rail-main-grid > *,
+  .road-rail-side-grid {
+    grid-column: auto;
+  }
+
+  .transit-main-grid,
+  .road-rail-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .transit-bento-grid,
+  .road-rail-bento-grid,
+  .water-bento-grid,
+  .city-bento-grid {
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 2fr);
+  }
+
+  .transit-bento-grid > *,
+  .road-rail-bento-grid > *,
+  .water-bento-grid > *,
+  .water-main-grid > *,
+  .water-side-grid,
+  .city-bento-grid > *,
+  .city-main-grid > *,
+  .city-side-grid,
+  .city-visual-grid > * {
+    grid-column: auto;
   }
 }
 

@@ -265,6 +265,21 @@ export function EnergyWorkspace({
 
   return (
     <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={tKey("energy.energyDetail")}>
+      <WorkspaceEvidenceHeader
+        className="energy-detail-header"
+        eyebrow={tKey("energy.energyWorkspace")}
+        fallbackKey="energy.notObserved"
+        language={language}
+        observedAt={activeObservedAt}
+        sourceLabel={activeSourceName}
+        status={activeSourceLabel}
+        statusTone={activeTone}
+        tKey={tKey}
+        timeScope={activeEnergy?.time_scope}
+        title={activeTitle}
+        timezone={dataTimezone}
+      />
+
       <nav className="energy-tab-list" aria-label={tKey("energy.energyWorkspaceTabs")} role="tablist">
         {ENERGY_PANEL_TABS.map((tab) => {
           const tabLabel =
@@ -308,19 +323,6 @@ export function EnergyWorkspace({
         role="tabpanel"
         tabIndex={0}
       >
-      <WorkspaceEvidenceHeader
-        className="energy-detail-header"
-        fallbackKey="energy.notObserved"
-        language={language}
-        observedAt={activeObservedAt}
-        sourceLabel={activeSourceName}
-        status={activeSourceLabel}
-        statusTone={activeTone}
-        tKey={tKey}
-        timeScope={activeEnergy?.time_scope}
-        title={activeTitle}
-        timezone={dataTimezone}
-      />
 
       <section
         className={`energy-glass-panel energy-command-panel energy-command-panel-${activeTone}`}

@@ -69,7 +69,10 @@
   --font-ui: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-ui-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
+  /* The inline var() fallback matters: --font-jetbrains-mono is set by next/font
+   * on <body>, not :root, so this custom property must stay valid when resolved
+   * at :root (otherwise it computes to invalid and inherits as empty). */
+  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace,
     SFMono-Regular, Menlo, monospace;
 
   /* --- Radii (nothing above 14px) --- */

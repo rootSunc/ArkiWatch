@@ -841,6 +841,7 @@ export function TransitWorkspace({
     <section className="transit-detail-page" aria-label={tKey("transit.transitDetail")}>
       <WorkspaceEvidenceHeader
         className="transit-detail-header"
+        eyebrow={tKey("mobility.mobilityWorkspace")}
         fallbackKey="transit.notObserved"
         language={language}
         observedAt={transit.observed_at}

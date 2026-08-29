@@ -4,6 +4,7 @@
     "mobilityWorkspaceTabs": "Mobility workspace tabs",
     "roadRail": "Road & Rail",
     "transit": "Transit",
-    "active": "active"
+    "active": "active",
+    "mobilityWorkspace": "Mobility workspace"
   }
 }

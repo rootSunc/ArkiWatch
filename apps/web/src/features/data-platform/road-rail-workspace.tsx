@@ -878,6 +878,7 @@ export function RoadRailWorkspace({
     <section className="road-rail-detail-page" aria-label={tKey("roadRail.roadAndRailDetail")}>
       <WorkspaceEvidenceHeader
         className="road-rail-detail-header"
+        eyebrow={tKey("mobility.mobilityWorkspace")}
         fallbackKey="roadRail.notObserved"
         language={language}
         observedAt={roadRail.observed_at}

@@ -4,6 +4,7 @@
     "mobilityWorkspaceTabs": "交通出行工作区标签",
     "roadRail": "道路与铁路状况",
     "transit": "公共交通",
-    "active": "活跃"
+    "active": "活跃",
+    "mobilityWorkspace": "交通出行工作区"
   }
 }
