@@ -36,6 +36,7 @@ describe("DataPlatformWorkspaceTopbar", () => {
           renderAuthActionButton={() => null}
           restoreSideNavButton={null}
           searchValue=""
+          selectedNavKey="overview"
           workspaceMode="data"
         />
       </I18nProvider>,

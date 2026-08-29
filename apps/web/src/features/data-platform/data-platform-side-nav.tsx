@@ -12,11 +12,14 @@ import { appEnv } from "@/lib/env";
 import {
   CATALOG_NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
-  WORKSPACE_MODE_ITEMS,
   type NavItem,
   type ThemeMode,
 } from "./data-platform-shell";
-import { BRAND_LOGO_SRC, navItemAvailable } from "./data-platform-nav-utils";
+import {
+  BRAND_LOGO_SRC,
+  FALLBACK_NAV_KEY,
+  navItemAvailable,
+} from "./data-platform-nav-utils";
 import { useI18n } from "./i18n";
 import type { PlatformCategory } from "./types";
 import { viewerStateLabel } from "./viewer-state";
@@ -36,6 +39,13 @@ type DataPlatformSideNavProps = {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
 };
+
+function navRowLabelKey(item: NavItem): string {
+  if (item.key === FALLBACK_NAV_KEY) {
+    return "shell.signalObservatory";
+  }
+  return `shell.${item.labelKey}`;
+}
 
 export function DataPlatformSideNav({
   categories,
@@ -58,9 +68,39 @@ export function DataPlatformSideNav({
   );
   const userStateLabel = viewerStateLabel(isAuthenticated, appEnv.demoMode, language);
   const displayUserLabel = isAuthenticated ? currentUserLabel : userStateLabel;
-  const activeWorkspaceMode = selectedNavKey === "today" ? "today" : "data";
   const navigationActionLabel = tKey(
     isMobileMenuOpen ? "shell.closeNavigation" : "shell.hideNavigation",
+  );
+
+  function renderNavRow(item: NavItem): ReactNode {
+    const isActive =
+      selectedNavKey === item.key ||
+      (item.categoryKey != null && selectedNavKey === item.categoryKey);
+    const navLabel = tKey(navRowLabelKey(item));
+
+    return (
+      <button
+        aria-current={isActive ? "page" : undefined}
+        className={isActive ? "nav-row nav-row-active" : "nav-row"}
+        data-nav-key={item.key}
+        key={item.key}
+        onClick={() => onSelectNavItem(item)}
+        onFocus={() => onPrefetchNavItem?.(item)}
+        onMouseEnter={() => onPrefetchNavItem?.(item)}
+        title={navLabel}
+        type="button"
+      >
+        <MaterialIcon name={item.icon} />
+        <span>{navLabel}</span>
+      </button>
+    );
+  }
+
+  const workspaceItems = PRIMARY_NAV_ITEMS.filter((item) =>
+    navItemAvailable(item, categories),
+  );
+  const catalogItems = CATALOG_NAV_ITEMS.filter((item) =>
+    navItemAvailable(item, categories),
   );
 
   return (
@@ -85,7 +125,7 @@ export function DataPlatformSideNav({
         </div>
         <div className="brand-copy">
           <h1 className="brand-title-main">ArkiWatch</h1>
-          <p className="brand-title-subtitle">{tKey("shell.dataPlatform")}</p>
+          <p className="brand-title-subtitle">{tKey("shell.publicData")}</p>
         </div>
         <button
           className="icon-button side-nav-collapse-button"
@@ -100,96 +140,15 @@ export function DataPlatformSideNav({
         </button>
       </div>
 
-      <nav
-        className="workspace-mode-switcher"
-        aria-label={tKey("shell.workspaceMode")}
-      >
-        {WORKSPACE_MODE_ITEMS.map((item) => {
-          const isActive = activeWorkspaceMode === item.mode;
-          const modeLabel = tKey(
-            `shell.${item.mode === "today" ? "lifeAssistant" : "dataPlatformMode"}`,
-          );
-          return (
-            <button
-              aria-current={isActive ? "page" : undefined}
-              className={
-                isActive
-                  ? "workspace-mode-option workspace-mode-option-active"
-                  : "workspace-mode-option"
-              }
-              key={item.mode}
-              onClick={() => onSelectNavItem(item)}
-              type="button"
-            >
-              <MaterialIcon name={item.icon} />
-              <span>
-                <strong>{modeLabel}</strong>
-                <small>
-                  {tKey(
-                    item.mode === "today"
-                      ? "shell.lifeAssistantLead"
-                      : "shell.dataPlatformLead",
-                  )}
-                </small>
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-
       <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
-        {PRIMARY_NAV_ITEMS.filter(
-          (item) =>
-            item.key !== "today" &&
-            item.key !== "overview" &&
-            navItemAvailable(item, categories),
-        ).map((item) => {
-          const isActive =
-            selectedNavKey === item.key ||
-            (item.categoryKey != null && selectedNavKey === item.categoryKey);
-          const navLabel = tKey(`shell.${item.labelKey}`);
-          return (
-            <button
-              aria-current={isActive ? "page" : undefined}
-              className={isActive ? "nav-row nav-row-active" : "nav-row"}
-              key={item.key}
-              onClick={() => onSelectNavItem(item)}
-              onFocus={() => onPrefetchNavItem?.(item)}
-              onMouseEnter={() => onPrefetchNavItem?.(item)}
-              title={navLabel}
-              type="button"
-            >
-              <MaterialIcon name={item.icon} />
-              <span>{navLabel}</span>
-            </button>
-          );
-        })}
+        <span className="side-nav-group-label">{tKey("shell.workspaceMode")}</span>
+        {workspaceItems.map(renderNavRow)}
       </nav>
 
-      {CATALOG_NAV_ITEMS.some((item) => navItemAvailable(item, categories)) ? (
+      {catalogItems.length > 0 ? (
         <nav className="side-nav-catalog" aria-label={tKey("shell.dataCatalogNavigation")}>
           <span className="side-nav-catalog-label">{tKey("shell.dataCatalog")}</span>
-          {CATALOG_NAV_ITEMS.filter((item) => navItemAvailable(item, categories)).map((item) => {
-            const isActive =
-              selectedNavKey === item.key ||
-              (item.categoryKey != null && selectedNavKey === item.categoryKey);
-            const navLabel = tKey(`shell.${item.labelKey}`);
-            return (
-              <button
-                aria-current={isActive ? "page" : undefined}
-                className={isActive ? "nav-row nav-row-active" : "nav-row"}
-                key={item.key}
-                onClick={() => onSelectNavItem(item)}
-                onFocus={() => onPrefetchNavItem?.(item)}
-                onMouseEnter={() => onPrefetchNavItem?.(item)}
-                title={navLabel}
-                type="button"
-              >
-                <MaterialIcon name={item.icon} />
-                <span>{navLabel}</span>
-              </button>
-            );
-          })}
+          {catalogItems.map(renderNavRow)}
         </nav>
       ) : null}
 
@@ -220,7 +179,9 @@ export function DataPlatformSideNav({
               href="/settings"
               title={tKey("shell.personalSettingsTitle")}
             >
-              <MaterialIcon name="tune" />
+              <span className="material-symbols-outlined" aria-hidden="true">
+                settings
+              </span>
               <span>{tKey("shell.personalSettingsTitle")}</span>
             </Link>
           ) : null}
@@ -231,7 +192,7 @@ export function DataPlatformSideNav({
             title={tKey("shell.aboutArkiWatch")}
           >
             <span className="material-symbols-outlined" aria-hidden="true">
-              public
+              info
             </span>
             <span>{tKey("shell.aboutArkiWatch")}</span>
           </Link>
@@ -244,7 +205,7 @@ export function DataPlatformSideNav({
             title={tKey("shell.reportDataIssue")}
           >
             <span className="material-symbols-outlined" aria-hidden="true">
-              info
+              public
             </span>
             <span>{tKey("shell.reportDataIssue")}</span>
           </a>

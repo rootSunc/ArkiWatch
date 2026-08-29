@@ -79,25 +79,17 @@ function OverviewStatusBar({
   tiles: SignalSystemTile[];
 }) {
   const { language, tKey } = useI18n();
+  const snapshotTimestamp = scopedDataTimestamp(
+    overview.checked_at,
+    overview.time_scope,
+    language,
+    tKey,
+    "shell.notCollected",
+    platformTimezone,
+  );
 
   return (
     <section className="overview-status-bar" aria-label={tKey("shell.signalSystemSummary")}>
-      <div className="overview-status-heading">
-        <span className="overview-status-dot" aria-hidden="true" />
-        <div>
-          <span>{tKey("shell.signalSystemSummary")}</span>
-          <small>
-            {tKey("shell.updated")} {scopedDataTimestamp(
-              overview.checked_at,
-              overview.time_scope,
-              language,
-              tKey,
-              "shell.notCollected",
-              platformTimezone,
-            )}
-          </small>
-        </div>
-      </div>
       <div className="overview-status-items">
         {tiles.map((tile) => (
           <article className={`overview-status-item overview-status-item-${tile.tone}`} key={tile.key}>
@@ -111,6 +103,16 @@ function OverviewStatusBar({
             </div>
           </article>
         ))}
+        <article className="overview-status-item overview-status-item-neutral overview-status-item-snapshot">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            schedule
+          </span>
+          <div>
+            <span>{tKey("shell.snapshotChecked")}</span>
+            <strong>{snapshotTimestamp}</strong>
+            <small>{platformTimezone}</small>
+          </div>
+        </article>
       </div>
     </section>
   );
@@ -194,7 +196,7 @@ export function DataPlatformOverview({
             </p>
           </div>
           <span className="overview-section-count">
-            {coreSignalCount} {tKey("shell.signalLevel").toLowerCase()}
+            {coreSignalCount} {tKey("shell.tracked")}
           </span>
         </div>
         <div className="overview-signal-grid">

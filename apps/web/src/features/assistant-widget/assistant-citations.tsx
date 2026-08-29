@@ -37,6 +37,21 @@ const SOURCE_DEFINITIONS: Record<string, { labelKey: string; view: string }> = {
   platform_history: { labelKey: "assistant.sourceHistory", view: "overview" },
 };
 
+const SOURCE_ICONS: Record<string, string> = {
+  platform_overview: "hub",
+  platform_history: "hub",
+  weather: "cloud",
+  air_quality: "air",
+  energy_grid: "bolt",
+  energy_household: "bolt",
+  traffic: "commute",
+  transit: "commute",
+};
+
+function assistantCitationIcon(source: string): string {
+  return SOURCE_ICONS[source.trim().toLowerCase()] ?? "database";
+}
+
 function sourceDefinition(source: string): { labelKey: string; view: string } | null {
   return SOURCE_DEFINITIONS[source.trim().toLowerCase()] ?? null;
 }
@@ -138,6 +153,12 @@ export function assistantCitationDetail(
   return trimmedDetail;
 }
 
+/**
+ * Evidence cards. Each citation is a button that navigates to the source
+ * workspace when one exists — this is the assistant's citation mechanism
+ * (README §12). A citation carries `{source, checked_at, detail}` only; there
+ * is no numeric readout, so the card shows the source and when it was checked.
+ */
 export function AssistantCitationList({
   citations,
   language,
@@ -147,7 +168,7 @@ export function AssistantCitationList({
   tKey,
 }: AssistantCitationListProps): ReactNode {
   return (
-    <ul>
+    <div className="assistant-evidence" aria-label={tKey("assistant.viewSources")}>
       {citations.slice(0, MAX_VISIBLE_ASSISTANT_CITATIONS).map((citation, index) => {
         const sourceLabel = assistantCitationSourceLabel(citation.source, language);
         const sourceView = assistantCitationView(citation.source);
@@ -155,51 +176,57 @@ export function AssistantCitationList({
           citation.source,
           sourceDocumentation,
         );
+        const checkedLabel = citation.checked_at
+          ? citationTimestamp(citation.checked_at, language)
+          : assistantCitationDetail(citation.source, citation.detail, language);
+        const key = `${messageId}-${index}-${citation.source}-${citation.checked_at ?? ""}`;
+        const cardBody = (
+          <>
+            <span className="assistant-evidence-top">
+              <MaterialIcon name={assistantCitationIcon(citation.source)} />
+              <span className="assistant-evidence-label">{sourceLabel}</span>
+            </span>
+            {checkedLabel ? (
+              <span className="assistant-evidence-value">{checkedLabel}</span>
+            ) : null}
+          </>
+        );
+
+        if (sourceView && onOpenView) {
+          return (
+            <button
+              aria-label={tKey("assistant.openSource").replace("{source}", sourceLabel)}
+              className="assistant-evidence-card"
+              key={key}
+              onClick={() => onOpenView(sourceView)}
+              type="button"
+            >
+              {cardBody}
+            </button>
+          );
+        }
+
+        if (documentationUrl) {
+          return (
+            <a
+              aria-label={`${sourceLabel} · ${tKey("assistant.openProviderDocs")}`}
+              className="assistant-evidence-card"
+              href={documentationUrl}
+              key={key}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {cardBody}
+            </a>
+          );
+        }
 
         return (
-          <li key={`${messageId}-${index}-${citation.source}-${citation.checked_at ?? ""}`}>
-            <div>
-              {sourceView && onOpenView ? (
-                <button
-                  aria-label={tKey("assistant.openSource").replace("{source}", sourceLabel)}
-                  className="assistant-citation-source-button"
-                  onClick={() => onOpenView(sourceView)}
-                  type="button"
-                >
-                  <strong>{sourceLabel}</strong>
-                  <MaterialIcon name="arrow_forward" />
-                </button>
-              ) : (
-                <strong>{sourceLabel}</strong>
-              )}
-              {documentationUrl ? (
-                <a
-                  aria-label={`${sourceLabel} · ${tKey("assistant.openProviderDocs")}`}
-                  className="assistant-citation-doc-link"
-                  href={documentationUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    open_in_new
-                  </span>
-                </a>
-              ) : null}
-              {citation.checked_at ? (
-                <time dateTime={citation.checked_at}>
-                  {tKey("assistant.checkedAt").replace(
-                    "{time}",
-                    citationTimestamp(citation.checked_at, language),
-                  )}
-                </time>
-              ) : null}
-            </div>
-            {citation.detail ? (
-              <span>{assistantCitationDetail(citation.source, citation.detail, language)}</span>
-            ) : null}
-          </li>
+          <span className="assistant-evidence-card assistant-evidence-card-static" key={key}>
+            {cardBody}
+          </span>
         );
       })}
-    </ul>
+    </div>
   );
 }

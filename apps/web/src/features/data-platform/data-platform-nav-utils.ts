@@ -88,6 +88,57 @@ export const CATEGORY_ICONS: Record<string, string> = {
   weather: "cloud",
 };
 
+/**
+ * Route breadcrumb for the top bar (README §Breadcrumbs per route). Returns
+ * message keys plus the nav key the clickable root should navigate to.
+ */
+export function breadcrumbForNav(navKey: string): {
+  rootKey: string;
+  leafKey: string;
+  rootTarget: string;
+} {
+  if (navKey === TODAY_NAV_KEY) {
+    return { rootKey: "shell.lifeAssistant", leafKey: "shell.navToday", rootTarget: TODAY_NAV_KEY };
+  }
+
+  const catalogLeafKeys: Record<string, string> = {
+    city_services: "shell.navCityServices",
+    geospatial: "shell.navGeospatialBase",
+    regional_profile: "shell.navRegionalProfile",
+  };
+  if (catalogLeafKeys[navKey]) {
+    return {
+      rootKey: "shell.dataCatalog",
+      leafKey: catalogLeafKeys[navKey],
+      rootTarget: FALLBACK_NAV_KEY,
+    };
+  }
+
+  const platformLeafKeys: Record<string, string> = {
+    weather: "shell.navWeather",
+    air: "shell.navAirQuality",
+    energy: "shell.navEnergy",
+    mobility: "shell.navMobility",
+    transit: "shell.navMobility",
+    traffic: "shell.navMobility",
+    water: "shell.navWaterAndSnow",
+    events: "shell.navLinkedEvents",
+  };
+  if (platformLeafKeys[navKey]) {
+    return {
+      rootKey: "shell.dataPlatformMode",
+      leafKey: platformLeafKeys[navKey],
+      rootTarget: FALLBACK_NAV_KEY,
+    };
+  }
+
+  return {
+    rootKey: "shell.dataPlatformMode",
+    leafKey: "shell.signalObservatory",
+    rootTarget: FALLBACK_NAV_KEY,
+  };
+}
+
 export function currentSearchParams(
   fallbackParams: { toString: () => string },
 ): URLSearchParams {

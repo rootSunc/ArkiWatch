@@ -36,7 +36,7 @@ describe("buildActionDataPoints", () => {
 
     expect(points).toEqual([
       { label: "Transit", value: "4" },
-      { label: "Road & Rail", value: "7" },
+      { label: "Road & rail", value: "7" },
     ]);
   });
 

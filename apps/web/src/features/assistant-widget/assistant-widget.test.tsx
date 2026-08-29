@@ -52,7 +52,6 @@ describe("AssistantRetryButton", () => {
           openQuestion="Explain my personal recommendations."
           openRequest={1}
           overview={null}
-          showLauncher={false}
           userId=""
         />
       </I18nProvider>,
@@ -75,7 +74,6 @@ describe("AssistantRetryButton", () => {
           openQuestion="Keep this question"
           openRequest={1}
           overview={{ checked_at: checkedAt } as PlatformOverviewResponse}
-          showLauncher={false}
           userId=""
         />
       </I18nProvider>
@@ -111,17 +109,13 @@ describe("AssistantRetryButton", () => {
       </I18nProvider>
     );
 
-    const view = render(renderWidget(false));
-    screen.getByRole("button", { name: "Open ArkiWatch assistant" }).click();
+    const view = render(renderWidget(false, 1));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
 
     view.rerender(renderWidget(true, 1));
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
-    expect(
-      screen.getByRole("button", { name: "Open ArkiWatch assistant" }),
-    ).toBeDisabled();
 
     view.rerender(renderWidget(false, 1));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -137,14 +131,13 @@ describe("AssistantRetryButton", () => {
           mode="today"
           openRequest={1}
           overview={null}
-          showLauncher={false}
           userId=""
         />
       </I18nProvider>,
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Review selected-date evidence" }),
+      await screen.findByRole("heading", { name: "Historical assistant" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Historical · evidence only")).toBeInTheDocument();
     expect(
@@ -165,7 +158,6 @@ describe("AssistantRetryButton", () => {
           mode="today"
           openRequest={1}
           overview={{ coverage_area: "Tampere / Pirkanmaa" } as PlatformOverviewResponse}
-          showLauncher={false}
           userId=""
         />
       </I18nProvider>,
@@ -196,13 +188,13 @@ describe("AssistantRetryButton", () => {
           date={null}
           language="en"
           mode="today"
+          openRequest={1}
           overview={null}
           userId=""
         />
       </I18nProvider>,
     );
 
-    screen.getByRole("button", { name: "Open ArkiWatch assistant" }).click();
     const input = await screen.findByRole("textbox", { name: "Ask about platform data" });
     fireEvent.change(input, { target: { value: "What should I do?" } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);
@@ -232,16 +224,13 @@ describe("AssistantRetryButton", () => {
           date={null}
           language="en"
           mode="today"
+          openRequest={1}
           overview={null}
           userId=""
         />
       </I18nProvider>,
     );
 
-    await act(async () => {
-      screen.getByRole("button", { name: "Open ArkiWatch assistant" }).click();
-      await Promise.resolve();
-    });
     const input = screen.getByRole("textbox", { name: "Ask about platform data" });
     fireEvent.change(input, { target: { value: "What should I do?" } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);

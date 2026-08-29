@@ -1,48 +1,331 @@
-/* Product tokens shared by the shell and every data workspace. */
-:root {
-  --ui-refresh-canvas: #f6f8f9;
-  --ui-refresh-surface: #ffffff;
-  --ui-refresh-surface-soft: #f0f4f6;
-  --ui-refresh-ink: #17242b;
-  --ui-refresh-muted: #5b6870;
-  --ui-refresh-line: #dbe4e8;
-  --ui-refresh-blue: #126c88;
-  --ui-refresh-blue-soft: #e7f3f7;
-  --ui-refresh-today: #8d5800;
-  --ui-refresh-today-soft: #fff4df;
-  --ui-refresh-shadow: 0 10px 30px rgba(26, 49, 61, 0.06);
-  --ui-refresh-radius-sm: 10px;
-  --ui-refresh-radius-md: 16px;
-  --ui-refresh-radius-lg: 20px;
-  --control-height-desktop: 36px;
-  --control-height-touch: 44px;
+/*
+ * ArkiWatch design tokens — minimal business style.
+ *
+ * This is the single source of truth for the refactored visual language
+ * (see code/design_handoff_arkiwatch_minimal_refactor/README.md §Design tokens).
+ * Hues are unchanged from the previous product; the refactor changes *how much*
+ * of each is used — a white canvas with 1px hairline structure, no shadows,
+ * no tinted card fills, nothing above a 14px radius.
+ *
+ * The blocks below also remap every legacy token name that the shell and the
+ * domain workspace stylesheets still consume (`--ui-refresh-*`, `--refresh-*`,
+ * and the Material-style names from app/globals.css) onto the new values, so
+ * those rules inherit the new grammar without a file-by-file rewrite. The
+ * `:root, :root[data-theme="light"]` selector matches app/globals.css's own
+ * specificity and, loading later, wins.
+ */
+
+:root,
+:root[data-theme="light"] {
+  /* --- Surfaces --- */
+  --canvas: #ffffff;
+  --surface-soft: #f7f9fa;
+  --nav-active: #f0f4f6;
+  --nav-hover: #f4f7f8;
+  --row-hover: #fafcfc;
+
+  /* --- Ink & type --- */
+  --ink: #17242b;
+  --ink-hover: #0e1a20;
+  --ink-soft: #40505a;
+  --body: #5b6870;
+  --muted: #6b7a83;
+  --muted-2: #8b989f;
+  --muted-3: #6b7a83; /* same value as --muted by design; distinguished by size + mono tracking only */
+  --icon-idle: #98a5ac;
+
+  /* --- Primary button (ink fill in light; a light-blue fill in dark) --- */
+  --btn-fill: #17242b;
+  --btn-fill-hover: #0e1a20;
+  --btn-label: #ffffff;
+
+  /* --- Hairlines --- */
+  --line: #e4eaed;
+  --line-strong: #dbe4e8;
+  --line-soft: #eef2f4;
+  --line-softest: #f2f5f6;
+  --divider-fill: #cfd8dc;
+  --quiet-value: #c3d0d6;
+
+  /* --- Accents --- */
+  --blue: #126c88;
+  --blue-soft: #cfe4ea;
+  --blue-fill: #cfe0e6;
+  --amber: #8d5800;
+  --amber-soft: #fdf6e9;
+  --amber-tint: #fdfaf3;
+  --amber-line: #f0dcc4;
+  --green: #0f766e;
+  --red: #b42318;
+  --selection: #d7e9ef;
+
+  /* --- Chrome --- */
+  --topbar-scrim: rgba(255, 255, 255, 0.92);
+  --assistant-scrim: rgba(23, 36, 43, 0.14);
+  --assistant-panel-shadow: -32px 0 64px rgba(23, 36, 43, 0.1);
+  --focus-ring: color-mix(in srgb, var(--blue) 30%, transparent);
+
+  /* --- Type families --- */
+  --font-ui: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
+    SFMono-Regular, Menlo, monospace;
+
+  /* --- Radii (nothing above 14px) --- */
+  --r-chip: 4px;
+  --r-filter: 6px;
+  --r-control: 7px;
+  --r-card: 8px;
+  --r-panel: 10px;
+  --r-frame: 14px;
+
+  /* ---------------------------------------------------------------------
+   * Legacy alias remaps — keep the shell + domain workspace CSS working.
+   * ------------------------------------------------------------------- */
+
+  /* design-refresh.css / minimal-overhaul.css / workspace-ui.css */
+  --ui-refresh-canvas: var(--canvas);
+  --ui-refresh-surface: var(--canvas);
+  --ui-refresh-surface-soft: var(--surface-soft);
+  --ui-refresh-ink: var(--ink);
+  --ui-refresh-muted: var(--muted);
+  --ui-refresh-line: var(--line);
+  --ui-refresh-blue: var(--blue);
+  --ui-refresh-blue-soft: var(--blue-soft);
+  --ui-refresh-today: var(--amber);
+  --ui-refresh-today-soft: var(--amber-soft);
+  --ui-refresh-shadow: none;
+  --ui-refresh-radius: var(--r-card);
+  --ui-refresh-radius-sm: var(--r-card);
+  --ui-refresh-radius-md: var(--r-card);
+  --ui-refresh-radius-lg: var(--r-frame);
+  --refresh-canvas: var(--canvas);
+  --refresh-surface: var(--canvas);
+  --refresh-surface-soft: var(--surface-soft);
+  --refresh-ink: var(--ink);
+  --refresh-muted: var(--muted);
+  --refresh-line: var(--line);
+  --refresh-shadow: none;
+  --refresh-radius-sm: var(--r-card);
+  --refresh-radius-md: var(--r-card);
+  --refresh-today: var(--amber);
+
+  /* ui-system.css */
+  --ui-content-max: 1180px;
+  --ui-sidebar-width: 252px;
+  --ui-radius-xs: var(--r-filter);
+  --ui-radius-sm: var(--r-card);
+  --ui-radius-md: var(--r-card);
+  --ui-radius-lg: var(--r-frame);
+  --ui-border-subtle: var(--line-soft);
+  --ui-border-strong: var(--line);
+  --ui-muted-surface: var(--surface-soft);
+  --ui-mode-accent: var(--blue);
+  --ui-mode-accent-soft: var(--nav-active);
+  --ui-mode-accent-border: color-mix(in srgb, var(--blue) 25%, var(--line));
+
+  /* app/globals.css Material-style names */
+  --background: var(--canvas);
+  --surface: var(--canvas);
+  --surface-dim: var(--surface-soft);
+  --surface-container-lowest: var(--canvas);
+  --surface-container-low: var(--surface-soft);
+  --surface-container: var(--line-soft);
+  --surface-container-high: var(--nav-active);
+  --surface-container-highest: var(--line-strong);
+  --surface-bright: var(--canvas);
+  --surface-variant: var(--line-soft);
+  --primary: var(--blue);
+  --primary-fixed: var(--blue);
+  --primary-fixed-dim: var(--blue);
+  --primary-container: var(--blue-soft);
+  --on-primary: #ffffff;
+  --on-primary-container: var(--blue);
+  --secondary-container: var(--nav-active);
+  --on-secondary-container: var(--ink-soft);
+  --secondary-fixed: var(--ink-soft);
+  --tertiary: var(--amber);
+  --tertiary-container: var(--amber);
+  --error: var(--red);
+  --error-container: var(--amber-line);
+  --on-error-container: var(--red);
+  --on-surface: var(--ink);
+  --on-background: var(--ink);
+  --on-surface-variant: var(--muted);
+  --outline: var(--muted-2);
+  --outline-variant: var(--line);
+  --card-bg: var(--canvas);
+  --card-border: var(--line);
+  --weather-bg: var(--surface-soft);
+  --shadow: none;
+  --elevated-shadow: none;
+  --status-good-bg: color-mix(in srgb, var(--green) 9%, transparent);
+  --status-warn-bg: var(--amber-soft);
+  --status-bad-bg: color-mix(in srgb, var(--red) 9%, transparent);
+  --status-neutral-bg: var(--line-soft);
+  --detail-panel-bg: var(--canvas);
+  --detail-panel-border-soft: var(--line-soft);
+  --detail-panel-border: var(--line);
+  --detail-panel-border-medium: var(--line);
+  --detail-panel-border-strong: var(--line-strong);
+  --detail-panel-border-stronger: var(--line-strong);
+  --separator-border: var(--line);
+  --chart-grid-border: var(--line-soft);
+  --chart-axis-color: var(--muted);
+  --score-track: var(--line-soft);
+  --score-ring-center: var(--canvas);
+  --success: var(--green);
+  --success-glow: color-mix(in srgb, var(--green) 24%, transparent);
+
+  /* app/minimal-global.css names (also used by /login, /about, /settings) */
+  --minimal-canvas: var(--surface-soft);
+  --minimal-surface: var(--canvas);
+  --minimal-ink: var(--ink);
+  --minimal-muted: var(--muted);
+  --minimal-line: var(--line);
+  --minimal-accent: var(--blue);
+  --minimal-accent-soft: var(--nav-active);
+  --minimal-shadow: none;
 }
 
 :root[data-theme="dark"] {
-  --ui-refresh-canvas: #11181d;
-  --ui-refresh-surface: #182126;
-  --ui-refresh-surface-soft: #202b31;
-  --ui-refresh-ink: #e9f0f3;
-  --ui-refresh-muted: #9eafb8;
-  --ui-refresh-line: #314049;
-  --ui-refresh-blue: #7bc9e5;
-  --ui-refresh-blue-soft: #173641;
-  --ui-refresh-today: #f1b45b;
-  --ui-refresh-today-soft: #3b2d1d;
-  --ui-refresh-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+  /* --- Surfaces --- */
+  --canvas: #182126;
+  --surface-soft: #202b31;
+  --nav-active: #202b31;
+  --nav-hover: #1e282e;
+  --row-hover: #1e282e;
+
+  /* --- Ink & type --- */
+  --ink: #e9f0f3;
+  --ink-hover: #a5d9ec;
+  --ink-soft: #bccad2;
+  --body: #9eafb8;
+  --muted: #93a4ad;
+  --muted-2: #7e8f98;
+  --muted-3: #93a4ad;
+  --icon-idle: #8598a2;
+
+  /* --- Primary button --- */
+  --btn-fill: #7bc9e5;
+  --btn-fill-hover: #a5d9ec;
+  --btn-label: #11181d;
+
+  /* --- Hairlines --- */
+  --line: #314049;
+  --line-strong: #3a4a54;
+  --line-soft: #263238;
+  --line-softest: #222c32;
+  --divider-fill: #45555e;
+  --quiet-value: #4a5a63;
+
+  /* --- Accents --- */
+  --blue: #7bc9e5;
+  --blue-soft: #2b515e;
+  --blue-fill: #2b515e;
+  --amber: #f1b45b;
+  --amber-soft: #3b2d1d;
+  --amber-tint: #2c2418;
+  --amber-line: #5c4626;
+  --green: #5eead4;
+  --red: #ff8e83;
+  --selection: #274652;
+
+  /* --- Chrome --- */
+  --topbar-scrim: rgba(24, 33, 38, 0.92);
+  --assistant-scrim: rgba(9, 14, 17, 0.42);
+  --assistant-panel-shadow: -32px 0 64px rgba(0, 0, 0, 0.34);
+  --focus-ring: color-mix(in srgb, var(--blue) 34%, transparent);
+
+  /* --- Legacy alias remaps (dark) --- */
+  --ui-refresh-canvas: var(--canvas);
+  --ui-refresh-surface: var(--canvas);
+  --ui-refresh-surface-soft: var(--surface-soft);
+  --ui-refresh-ink: var(--ink);
+  --ui-refresh-muted: var(--muted);
+  --ui-refresh-line: var(--line);
+  --ui-refresh-blue: var(--blue);
+  --ui-refresh-blue-soft: var(--blue-soft);
+  --ui-refresh-today: var(--amber);
+  --ui-refresh-today-soft: var(--amber-soft);
+  --refresh-canvas: var(--canvas);
+  --refresh-surface: var(--canvas);
+  --refresh-surface-soft: var(--surface-soft);
+  --refresh-ink: var(--ink);
+  --refresh-muted: var(--muted);
+  --refresh-line: var(--line);
+
+  --ui-border-subtle: var(--line-soft);
+  --ui-border-strong: var(--line);
+  --ui-muted-surface: var(--surface-soft);
+  --ui-mode-accent: var(--blue);
+  --ui-mode-accent-soft: var(--nav-active);
+  --ui-mode-accent-border: color-mix(in srgb, var(--blue) 25%, var(--line));
+
+  --background: var(--canvas);
+  --surface: var(--canvas);
+  --surface-dim: var(--surface-soft);
+  --surface-container-lowest: var(--canvas);
+  --surface-container-low: var(--surface-soft);
+  --surface-container: var(--line-soft);
+  --surface-container-high: var(--nav-active);
+  --surface-container-highest: var(--line-strong);
+  --surface-bright: var(--canvas);
+  --surface-variant: var(--line-soft);
+  --primary: var(--blue);
+  --primary-fixed: var(--blue);
+  --primary-fixed-dim: var(--blue);
+  --primary-container: var(--blue-soft);
+  --on-primary: var(--btn-label);
+  --on-primary-container: var(--ink);
+  --secondary-container: var(--nav-active);
+  --on-secondary-container: var(--ink-soft);
+  --tertiary: var(--amber);
+  --tertiary-container: var(--amber);
+  --error: var(--red);
+  --error-container: var(--amber-line);
+  --on-error-container: var(--red);
+  --on-surface: var(--ink);
+  --on-background: var(--ink);
+  --on-surface-variant: var(--muted);
+  --outline: var(--muted-2);
+  --outline-variant: var(--line);
+  --card-bg: var(--canvas);
+  --card-border: var(--line);
+  --weather-bg: var(--surface-soft);
+  --shadow: none;
+  --elevated-shadow: none;
+  --status-good-bg: color-mix(in srgb, var(--green) 14%, transparent);
+  --status-warn-bg: var(--amber-soft);
+  --status-bad-bg: color-mix(in srgb, var(--red) 16%, transparent);
+  --status-neutral-bg: var(--line-soft);
+  --detail-panel-bg: var(--canvas);
+  --detail-panel-border-soft: var(--line-soft);
+  --detail-panel-border: var(--line);
+  --detail-panel-border-medium: var(--line);
+  --detail-panel-border-strong: var(--line-strong);
+  --detail-panel-border-stronger: var(--line-strong);
+  --separator-border: var(--line);
+  --chart-grid-border: var(--line-soft);
+  --chart-axis-color: var(--muted);
+  --score-track: var(--line-soft);
+  --score-ring-center: var(--canvas);
+  --success: var(--green);
+  --success-glow: color-mix(in srgb, var(--green) 24%, transparent);
+
+  --minimal-canvas: var(--surface-soft);
+  --minimal-surface: var(--canvas);
+  --minimal-ink: var(--ink);
+  --minimal-muted: var(--muted);
+  --minimal-line: var(--line);
+  --minimal-accent: var(--blue);
+  --minimal-accent-soft: var(--nav-active);
+  --minimal-shadow: none;
 }
 
-/* Backwards-compatible aliases for the first design-refresh pass. New
- * workspace styles should use the `--ui-refresh-*` names above directly. */
-:root {
-  --refresh-canvas: var(--ui-refresh-canvas);
-  --refresh-surface: var(--ui-refresh-surface);
-  --refresh-surface-soft: var(--ui-refresh-surface-soft);
-  --refresh-ink: var(--ui-refresh-ink);
-  --refresh-muted: var(--ui-refresh-muted);
-  --refresh-line: var(--ui-refresh-line);
-  --refresh-shadow: var(--ui-refresh-shadow);
-  --refresh-radius-sm: var(--ui-refresh-radius-sm);
-  --refresh-radius-md: var(--ui-refresh-radius-md);
-  --refresh-today: var(--ui-refresh-today);
+/* Chinese typography: prepend a CJK stack (see README §Chinese typography).
+ * Display-size / tracking / line-height relaxations live in design-refresh.css. */
+:root[data-language="zh"] {
+  --font-ui: var(--font-ui-cjk);
 }

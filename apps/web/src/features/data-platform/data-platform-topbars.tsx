@@ -3,8 +3,6 @@
 import type { ChangeEvent, ReactNode, RefObject } from "react";
 import Image from "next/image";
 
-import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
-
 import {
   CityScopeSelector,
   DateScopeSelector,
@@ -15,7 +13,13 @@ import {
   type ThemeMode,
   type WorkspaceMode,
 } from "./data-platform-shell";
-import { BRAND_LOGO_SRC, FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "./data-platform-nav-utils";
+import {
+  BRAND_LOGO_SRC,
+  FALLBACK_NAV_KEY,
+  breadcrumbForNav,
+} from "./data-platform-nav-utils";
+
+const ASSISTANT_MASCOT_SRC = "/brand/zoro_mascot_launcher.png";
 import { SideNavRestoreButton } from "./data-platform-side-nav";
 import { LanguageSwitchButton, type LanguageMode, useI18n } from "./i18n";
 import { PlatformScopeControls } from "./platform-scope-controls";
@@ -248,6 +252,7 @@ type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
   onSelectNav: (navKey: string) => void;
   restoreSideNavButton: ReactNode;
   searchValue?: string;
+  selectedNavKey: string;
 };
 
 export function DataPlatformWorkspaceTopbar({
@@ -261,7 +266,6 @@ export function DataPlatformWorkspaceTopbar({
   isDatePending,
   isDetailPage,
   onOpenAssistant,
-  workspaceMode,
   isEventsExpanded,
   isHistorical,
   isRefreshing,
@@ -277,47 +281,34 @@ export function DataPlatformWorkspaceTopbar({
   onSelectNav,
   renderAuthActionButton,
   restoreSideNavButton,
+  selectedNavKey,
   showExport,
 }: DataPlatformWorkspaceTopbarProps) {
   const { tKey } = useI18n();
+  const crumb = breadcrumbForNav(selectedNavKey);
+  const scopeUpdating = isCityPending || isDatePending;
 
   return (
     <header className="detail-topbar">
-      <div className="detail-topbar-brand">
-        {restoreSideNavButton}
-        <span className="detail-topbar-mark" aria-hidden="true">
-          <Image
-            alt=""
-            className="brand-logo-image"
-            height={96}
-            src={BRAND_LOGO_SRC}
-            width={96}
-          />
+      {restoreSideNavButton}
+      <nav className="topbar-crumb" aria-label={tKey("shell.breadcrumb")}>
+        <button
+          className="topbar-crumb-root"
+          onClick={() => onSelectNav(crumb.rootTarget)}
+          type="button"
+        >
+          {tKey(crumb.rootKey)}
+        </button>
+        <span className="topbar-crumb-sep" aria-hidden="true">
+          /
         </span>
-        <strong>ArkiWatch</strong>
-      </div>
-      <div className="workspace-context-badge">
-        <span className="material-symbols-outlined" aria-hidden="true">
-          {workspaceMode === "data" ? "hub" : "calendar_today"}
+        <span className="topbar-crumb-leaf" aria-current="page">
+          {tKey(crumb.leafKey)}
         </span>
-        <span>
-          {tKey(
-            workspaceMode === "data"
-              ? "shell.dataPlatformMode"
-              : "shell.lifeAssistant",
-          )}
-        </span>
-      </div>
-      {isDetailPage ? (
-        <nav aria-label={tKey("shell.detailWorkspaceNavigation")}>
-          <button onClick={() => onSelectNav(TODAY_NAV_KEY)} type="button">
-            {tKey("shell.backToToday")}
-          </button>
-          <button onClick={() => onSelectNav(FALLBACK_NAV_KEY)} type="button">
-            {tKey("shell.allSignals")}
-          </button>
-        </nav>
-      ) : null}
+      </nav>
+
+      <span className="topbar-spacer" />
+
       <div className="detail-topbar-actions">
         <PlatformScopeControls
           availability={availability}
@@ -342,22 +333,30 @@ export function DataPlatformWorkspaceTopbar({
           renderAuthActionButton={renderAuthActionButton}
           showExport={showExport}
         />
-        {workspaceMode === "data" && onOpenAssistant ? (
+        {onOpenAssistant ? (
           <button
             aria-label={tKey("assistant.openAssistant")}
-            aria-disabled={isCityPending || isDatePending || undefined}
-            className="icon-button workspace-topbar-assistant"
-            disabled={isCityPending || isDatePending}
+            aria-disabled={scopeUpdating || undefined}
+            className="topbar-assistant"
+            disabled={scopeUpdating}
             onClick={() => onOpenAssistant()}
             ref={assistantButtonRef}
             title={
-              isCityPending || isDatePending
+              scopeUpdating
                 ? tKey("shell.scopeUpdating")
                 : tKey("assistant.openAssistant")
             }
             type="button"
           >
-            <AssistantGlyph />
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="topbar-assistant-mark"
+              height={36}
+              src={ASSISTANT_MASCOT_SRC}
+              width={36}
+            />
+            <span>{tKey("shell.assistant")}</span>
           </button>
         ) : null}
       </div>

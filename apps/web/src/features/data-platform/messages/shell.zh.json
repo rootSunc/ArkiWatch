@@ -429,6 +429,11 @@
     "bad": "差",
     "helsinkiUusimaa": "赫尔辛基与新地区",
     "helsinkiRegion": "赫尔辛基地区",
-    "helsinkiMetro": "赫尔辛基都会区"
+    "helsinkiMetro": "赫尔辛基都会区",
+    "breadcrumb": "面包屑导航",
+    "connectApi": "连接 API",
+    "publicData": "公共数据",
+    "snapshotChecked": "快照检查于",
+    "tracked": "个信号"
   }
 }

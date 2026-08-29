@@ -48,7 +48,6 @@ type AssistantWidgetProps = {
   focusReturnRef?: RefObject<HTMLElement>;
   focusReturnRefs?: Array<RefObject<HTMLElement>>;
   scopePending?: boolean;
-  showLauncher?: boolean;
   onOpenView?: (view: string) => void;
 };
 
@@ -65,6 +64,8 @@ type ChatMessage = {
   retryQuestion?: string;
 };
 
+const ASSISTANT_MASCOT_SRC = "/brand/zoro_mascot_launcher.png";
+
 export function AssistantWidget({
   overview,
   language,
@@ -78,7 +79,6 @@ export function AssistantWidget({
   focusReturnRef,
   focusReturnRefs,
   scopePending = false,
-  showLauncher = true,
   onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -104,6 +104,13 @@ export function AssistantWidget({
       ? tKey("shell.staticDemoFixture")
       : tKey("assistant.scopeLive");
   const assistantCoverageArea = overview?.coverage_area?.trim() || cityLabel(city);
+  const assistantName = tKey(
+    isHistoricalScope
+      ? "assistant.historicalTitle"
+      : mode === "today"
+        ? "assistant.todayTitle"
+        : "assistant.title",
+  );
   const sourceDocumentation = useMemo(() => {
     const documentation: Record<string, string> = {};
 
@@ -132,11 +139,6 @@ export function AssistantWidget({
     userId,
   ].join(":");
 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
-  const totalMovement = useRef(0);
-  const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
@@ -167,58 +169,9 @@ export function AssistantWidget({
     setInputValue("");
   }, [scopePending]);
 
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragStart.current.x;
-      const dy = e.clientY - dragStart.current.y;
-      totalMovement.current = Math.sqrt(dx * dx + dy * dy);
-      setPosition({
-        x: dragStart.current.posX + dx,
-        y: dragStart.current.posY + dy,
-      });
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      const touch = e.touches[0];
-      e.preventDefault();
-      const dx = touch.clientX - dragStart.current.x;
-      const dy = touch.clientY - dragStart.current.y;
-      totalMovement.current = Math.sqrt(dx * dx + dy * dy);
-      setPosition({
-        x: dragStart.current.posX + dx,
-        y: dragStart.current.posY + dy,
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleMouseUp);
-    
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleMouseUp);
-    };
-  }, [isDragging]);
-
   const closeAssistant = useCallback(() => {
     setIsOpen(false);
     window.requestAnimationFrame(() => {
-      const launcher = launcherRef.current;
-      if (launcher && launcher.getClientRects().length > 0) {
-        launcher.focus();
-        return;
-      }
-
       const focusTargets = focusReturnRefs ?? (focusReturnRef ? [focusReturnRef] : []);
       const focusTarget = focusTargets.find(
         (target) => target.current && target.current.getClientRects().length > 0,
@@ -282,31 +235,6 @@ export function AssistantWidget({
     const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
     return () => window.cancelAnimationFrame(frame);
   }, [isOpen]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only left click
-    setIsDragging(true);
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      posX: position.x,
-      posY: position.y,
-    };
-    totalMovement.current = 0;
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
-    setIsDragging(true);
-    dragStart.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      posX: position.x,
-      posY: position.y,
-    };
-    totalMovement.current = 0;
-  };
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
@@ -609,74 +537,67 @@ export function AssistantWidget({
     void submitQuestion(inputValue);
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <div
-      className={`assistant-widget assistant-widget-mode-${mode}${isOpen ? " assistant-widget-open" : ""}`}
-      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
-    >
-      {isOpen ? (
+    <div className={`assistant-widget assistant-widget-open assistant-widget-mode-${mode}`}>
+      <div className="assistant-overlay">
+        <button
+          aria-label={tKey("assistant.close")}
+          className="assistant-scrim"
+          onClick={closeAssistant}
+          type="button"
+        />
+
         <section
           aria-describedby="assistant-scope-label"
           aria-labelledby="assistant-dialog-title"
           aria-modal="true"
-          className="assistant-drawer"
+          className="assistant-panel"
           ref={drawerRef}
           role="dialog"
         >
-          <header>
-            <div className="assistant-mini-person" aria-hidden="true">
+          <header className="assistant-panel-header">
+            <span className="assistant-avatar" aria-hidden="true">
               <Image
-                src="/brand/zoro_mascot.png"
-                alt={tKey("assistant.mascotAlt")}
+                src={ASSISTANT_MASCOT_SRC}
+                alt=""
                 width={36}
                 height={36}
-                className="assistant-mini-mascot-img"
+                className="assistant-avatar-mascot"
               />
-            </div>
-            <div>
-              <span className="label-text">
-                {tKey(
-                  isHistoricalScope
-                    ? "assistant.historicalTitle"
-                    : mode === "today"
-                      ? "assistant.todayTitle"
-                      : "assistant.title",
-                )}
-              </span>
-              <h2 id="assistant-dialog-title">
-                {tKey(
-                  isHistoricalScope
-                    ? "assistant.historicalSubtitle"
-                    : mode === "today"
-                      ? "assistant.todaySubtitle"
-                      : "assistant.subtitle",
-                )}
-              </h2>
-              {appEnv.demoMode ? <p className="assistant-demo-note">{tKey("assistant.demoMode")}</p> : null}
-              <div
+              <span className="assistant-avatar-status" />
+            </span>
+            <span className="assistant-panel-identity">
+              <h2 id="assistant-dialog-title">{assistantName}</h2>
+              <span
                 aria-label={tKey("assistant.scopeLabel")}
-                className="assistant-scope"
+                className="assistant-panel-scope"
                 id="assistant-scope-label"
               >
                 <span>{assistantScopeLabel}</span>
                 <span>{assistantCoverageArea}</span>
                 <span>{assistantScopeDate}</span>
-              </div>
-            </div>
+              </span>
+            </span>
             <button
               aria-label={tKey("assistant.close")}
-              className="assistant-icon-button"
+              className="assistant-close"
               onClick={closeAssistant}
               type="button"
             >
-              <span className="material-symbols-outlined">close</span>
+              <span className="material-symbols-outlined" aria-hidden="true">
+                close
+              </span>
             </button>
           </header>
-          
+
           <div
             aria-busy={isLoading}
             aria-live="polite"
-            className="assistant-messages"
+            className="assistant-thread"
             ref={messagesRef}
             role="log"
           >
@@ -685,14 +606,43 @@ export function AssistantWidget({
                 return null;
               }
 
+              if (message.role === "user") {
+                return (
+                  <p className="assistant-turn assistant-turn-user" key={message.id}>
+                    {message.text}
+                  </p>
+                );
+              }
+
+              const visibleCitations = message.citations?.slice(
+                0,
+                MAX_VISIBLE_ASSISTANT_CITATIONS,
+              );
+              const checkedAt = message.citations?.find((citation) => citation.checked_at)
+                ?.checked_at;
+
               return (
-                <article className={`assistant-message assistant-message-${message.role}`} key={message.id}>
-                  {message.role === "assistant" ? (
-                    <AssistantMessageBody text={message.text} />
-                  ) : (
-                    <span>{message.text}</span>
-                  )}
-                  {message.role === "assistant" && message.errorMessage ? (
+                <article className="assistant-turn assistant-turn-assistant" key={message.id}>
+                  {message.citations?.length ? (
+                    <span className="assistant-answer-provenance">
+                      <span className="assistant-answer-provenance-dot" aria-hidden="true" />
+                      <span>
+                        {tKey("assistant.answeredFromSignals").replace(
+                          "{count}",
+                          String(
+                            Math.min(
+                              message.citations.length,
+                              MAX_VISIBLE_ASSISTANT_CITATIONS,
+                            ),
+                          ),
+                        )}
+                      </span>
+                    </span>
+                  ) : null}
+
+                  <AssistantMessageBody text={message.text} />
+
+                  {message.errorMessage ? (
                     <p className="assistant-message-warning" role="status">
                       <span className="material-symbols-outlined" aria-hidden="true">
                         info
@@ -706,7 +656,7 @@ export function AssistantWidget({
                       </span>
                     </p>
                   ) : null}
-                  {message.role === "assistant" && message.canRetry && message.retryQuestion ? (
+                  {message.canRetry && message.retryQuestion ? (
                     <AssistantRetryButton
                       disabled={isLoading}
                       language={language}
@@ -715,47 +665,45 @@ export function AssistantWidget({
                       }}
                     />
                   ) : null}
-                  {message.role === "assistant" && message.citations?.length ? (
-                    <footer className="assistant-citations">
-                      <div className="assistant-citation-heading">
-                        <span>{tKey("assistant.basis")}</span>
+
+                  {message.citations?.length ? (
+                    <>
+                      <AssistantCitationList
+                        citations={message.citations}
+                        language={language}
+                        messageId={message.id}
+                        onOpenView={(view) => {
+                          closeAssistant();
+                          onOpenView?.(view);
+                        }}
+                        sourceDocumentation={sourceDocumentation}
+                        tKey={tKey}
+                      />
+                      <footer className="assistant-basis">
+                        <span className="assistant-basis-label">{tKey("assistant.basis")}</span>
                         {message.answerMode === "fallback" ? (
-                          <em>{tKey("assistant.fallback")}</em>
+                          <span className="assistant-basis-chip">{tKey("assistant.fallback")}</span>
                         ) : null}
-                        <small>
+                        <span className="assistant-basis-count">
                           {tKey("assistant.sourcesCount").replace(
                             "{count}",
-                            String(
-                              Math.min(
-                                message.citations.length,
-                                MAX_VISIBLE_ASSISTANT_CITATIONS,
-                              ),
-                            ),
+                            String(visibleCitations?.length ?? 0),
                           )}
-                        </small>
+                        </span>
                         {message.citations.length > MAX_VISIBLE_ASSISTANT_CITATIONS ? (
-                          <small>
+                          <span className="assistant-basis-count">
                             {tKey("assistant.sourcesMore").replace(
                               "{count}",
                               String(message.citations.length - MAX_VISIBLE_ASSISTANT_CITATIONS),
                             )}
-                          </small>
+                          </span>
                         ) : null}
-                      </div>
-                      <details className="assistant-citation-details">
-                        <summary>{tKey("assistant.viewSources")}</summary>
-                        <AssistantCitationList
-                          citations={message.citations}
-                          language={language}
-                          messageId={message.id}
-                          onOpenView={(view) => {
-                            closeAssistant();
-                            onOpenView?.(view);
-                          }}
-                          sourceDocumentation={sourceDocumentation}
-                          tKey={tKey}
-                        />
-                      </details>
+                        {checkedAt ? (
+                          <time className="assistant-basis-time" dateTime={checkedAt}>
+                            {tKey("assistant.checkedAt").replace("{time}", checkedAt)}
+                          </time>
+                        ) : null}
+                      </footer>
                       {(() => {
                         const followUps = Array.from(
                           new Set(
@@ -766,7 +714,7 @@ export function AssistantWidget({
                         ).slice(0, 2);
 
                         return followUps.length > 0 ? (
-                          <div className="assistant-next-actions">
+                          <div className="assistant-followups">
                             <span>{tKey("assistant.nextSteps")}</span>
                             <div>
                               {followUps.map((question) => (
@@ -785,18 +733,18 @@ export function AssistantWidget({
                           </div>
                         ) : null;
                       })()}
-                    </footer>
+                    </>
                   ) : null}
                 </article>
               );
             })}
             {isLoading ? (
-              <article className="assistant-message assistant-message-assistant assistant-message-pending">
+              <p className="assistant-turn assistant-turn-assistant assistant-turn-pending">
                 {tKey("assistant.loading")}
-              </article>
+              </p>
             ) : null}
           </div>
-          
+
           {!hasUserMessages ? (
             <div className="assistant-suggestions">
               {suggestedQuestions.map((question) => (
@@ -813,56 +761,29 @@ export function AssistantWidget({
               ))}
             </div>
           ) : null}
-          
-          <form className="assistant-form" onSubmit={onSubmit}>
-            <input
-              aria-label={tKey("assistant.askInputLabel")}
-              disabled={isLoading}
-              onChange={(event) => setInputValue(event.target.value)}
-              placeholder={tKey("assistant.askPlaceholder")}
-              ref={inputRef}
-              value={inputValue}
-            />
-            <button aria-label={tKey("assistant.send")} disabled={isLoading} type="submit">
-              <span className="material-symbols-outlined">send</span>
-            </button>
+
+          <form className="assistant-composer" onSubmit={onSubmit}>
+            <div className="assistant-composer-field">
+              <input
+                aria-label={tKey("assistant.askInputLabel")}
+                disabled={isLoading}
+                onChange={(event) => setInputValue(event.target.value)}
+                placeholder={tKey("assistant.askPlaceholder")}
+                ref={inputRef}
+                value={inputValue}
+              />
+              <button aria-label={tKey("assistant.send")} disabled={isLoading} type="submit">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  send
+                </span>
+              </button>
+            </div>
+            <p className="assistant-composer-note">
+              {tKey(appEnv.demoMode ? "assistant.composerNoteDemo" : "assistant.composerNote")}
+            </p>
           </form>
         </section>
-      ) : showLauncher ? (
-        <button
-          aria-label={tKey("assistant.openAssistant")}
-          aria-disabled={scopePending || undefined}
-          className="assistant-launcher"
-          disabled={scopePending}
-          ref={launcherRef}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          onClick={(e) => {
-            if (totalMovement.current > 5) {
-              e.preventDefault();
-              e.stopPropagation();
-            } else {
-              setIsOpen(true);
-            }
-          }}
-          type="button"
-        >
-          <div className="assistant-mascot-wrapper">
-            <Image
-              src="/brand/zoro_mascot_launcher.png"
-              alt={tKey("assistant.mascotAlt")}
-              width={76}
-              height={76}
-              className="assistant-mascot-img"
-              priority
-            />
-          </div>
-          <span className="assistant-launcher-label">
-            {tKey(mode === "today" ? "assistant.askToday" : "assistant.askData")}
-          </span>
-          <span className="assistant-bubble">{tKey("assistant.tooltip")}</span>
-        </button>
-      ) : null}
+      </div>
     </div>
   );
 }

@@ -67,6 +67,9 @@
     "rateLimitedSoon": "助手请求较多，请稍后再试。",
     "streamInterrupted": "AI 回答中断，请先查看下方来源再行动。",
     "emptyResponse": "AI 服务没有返回回答，本次仅使用有数据依据的内容。",
-    "offlinePrompt": "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。"
+    "offlinePrompt": "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。",
+    "answeredFromSignals": "综合 {count} 个信号得出",
+    "composerNote": "每个回答都会标注其来源工作区。",
+    "composerNoteDemo": "每个回答都会标注其来源工作区。演示模式使用示例数据。"
   }
 }

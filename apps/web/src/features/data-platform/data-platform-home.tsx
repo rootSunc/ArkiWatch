@@ -1122,6 +1122,7 @@ export function DataPlatformHome({
               onOpenAssistant={requestAssistant}
               onSelectNav={selectNav}
               restoreSideNavButton={restoreSideNavButton}
+              selectedNavKey={selectedNavKey}
               workspaceMode={workspaceMode}
             />
           ) : null}
@@ -1165,6 +1166,10 @@ export function DataPlatformHome({
                     </time>
                   ) : null}
                 </span>
+                <a className="demo-mode-banner-link" href="/about">
+                  {tKey("shell.connectApi")}
+                  <span aria-hidden="true"> →</span>
+                </a>
               </div>
             ) : null}
             {isScopePending ? (
@@ -1386,7 +1391,6 @@ export function DataPlatformHome({
             openQuestion={assistantOpenQuestion}
             scopePending={isScopePending}
             onOpenView={openAssistantView}
-            showLauncher={workspaceMode === "today" && !isDetailPage}
             userId={defaultUserId ?? resolvedUserId}
           />
         </div>
