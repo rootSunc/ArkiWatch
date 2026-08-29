@@ -80,6 +80,7 @@
     "staticDemoStationNote": "静态演示数据；并非实时站点读数。",
     "normalizedStationReadings": "标准化站点读数",
     "hsySourceLabel": "HSY 空气质量",
-    "hsyWfsSourceLabel": "HSY 空气质量 WFS"
+    "hsyWfsSourceLabel": "HSY 空气质量 WFS",
+    "airQualityWorkspace": "空气质量工作区"
   }
 }

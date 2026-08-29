@@ -502,6 +502,7 @@ export function AirQualityWorkspace({
     <section className="air-detail-page" aria-label={tKey("airQuality.airQualityDetail")}>
       <WorkspaceEvidenceHeader
         className="air-detail-header"
+        eyebrow={tKey("airQuality.airQualityWorkspace")}
         fallbackKey="airQuality.notObserved"
         language={language}
         observedAt={airQuality.observed_at}

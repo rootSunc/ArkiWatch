@@ -1823,146 +1823,10 @@
 }
 
 /* ==========================================================================
-   9b. Detail workspaces — shared evidence header + Weather (README §3, the
-   canonical reference the other workspaces reuse)
+   9b. Detail workspaces — the design's hairline grammar (README §3–8). The
+   shared evidence header + empty state live in workspace-ui.css (later in the
+   barrel); this section owns each workspace's own panel/grid classes.
    ========================================================================== */
-
-/* --- Shared evidence header --- */
-.workspace-evidence-header,
-.dashboard-content :where(
-  .weather-detail-header,
-  .air-detail-header,
-  .energy-detail-header,
-  .transit-detail-header,
-  .road-rail-detail-header,
-  .water-detail-header,
-  .city-detail-header,
-  .linked-events-header
-) {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 40px;
-  flex-wrap: wrap;
-  margin: 0 0 56px;
-  padding: 0 0 24px;
-  border-bottom: 1px solid var(--line);
-}
-
-.workspace-evidence-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
-.workspace-evidence-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--blue);
-  margin-bottom: 16px;
-}
-
-.workspace-evidence-heading h2,
-.dashboard-content :where(
-  .weather-detail-header,
-  .air-detail-header,
-  .energy-detail-header,
-  .transit-detail-header,
-  .road-rail-detail-header,
-  .water-detail-header,
-  .city-detail-header,
-  .linked-events-header
-) h2 {
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.08;
-  color: var(--ink);
-  margin: 0 0 10px;
-}
-
-.workspace-evidence-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 13.5px;
-  font-weight: 400;
-  color: var(--muted-3);
-}
-
-.workspace-evidence-status > span {
-  width: 6px;
-  height: 6px;
-  border-radius: 4px;
-}
-
-.workspace-evidence-status strong {
-  font-weight: 400;
-  color: inherit;
-}
-
-.workspace-evidence-status-good > span,
-.workspace-evidence-status-ready > span { background: var(--green); }
-.workspace-evidence-status-warn > span,
-.workspace-evidence-status-stale > span { background: var(--amber); }
-.workspace-evidence-status-bad > span,
-.workspace-evidence-status-failed > span { background: var(--red); }
-.workspace-evidence-status-neutral > span,
-.workspace-evidence-status-empty > span { background: var(--icon-idle); }
-
-.workspace-evidence-meta,
-.dashboard-content :where(
-  .weather-detail-header,
-  .air-detail-header,
-  .energy-detail-header,
-  .transit-detail-header,
-  .road-rail-detail-header,
-  .water-detail-header,
-  .city-detail-header,
-  .linked-events-header
-) > div:last-child {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0;
-  max-width: none;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  line-height: 1.9;
-  color: var(--muted-2);
-  text-align: right;
-  white-space: normal;
-}
-
-.workspace-evidence-source {
-  max-width: none;
-  overflow: visible;
-  font-weight: 400;
-  white-space: normal;
-  text-transform: uppercase;
-}
-
-.workspace-evidence-separator {
-  display: none;
-}
-
-.workspace-evidence-meta time {
-  color: var(--muted-2);
-  text-transform: uppercase;
-}
-
-.workspace-evidence-extra {
-  font-size: 11.5px;
-}
-
-.workspace-evidence-extra summary {
-  color: var(--blue);
-  font-weight: 400;
-}
 
 /* --- Kill decorative meters / progress bars under metric values (README §3) --- */
 .weather-progress,
@@ -1970,6 +1834,7 @@
 .weather-quality-meter,
 .weather-pipeline-meter,
 .weather-metric-box em,
+.air-quality-meter,
 .energy-signal-meter,
 .energy-volume-meter,
 .transit-quality-meter,
@@ -2363,6 +2228,244 @@
   .weather-lower-grid,
   .weather-ops-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+/* --- Air quality workspace (README §4) --- */
+.air-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.air-detail-header {
+  margin-bottom: 0;
+}
+
+.air-card-kicker span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.air-card-kicker time {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+.air-glass-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px;
+}
+
+/* City-score card — mono readout, not a ring (README §4) */
+.air-current-score {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin: 22px 0 0;
+}
+
+.air-score-ring {
+  display: block;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.air-score-ring::before,
+.air-score-ring::after {
+  content: none;
+}
+
+.air-score-ring strong {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.air-score-ring span {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 500;
+  color: var(--quiet-value);
+}
+
+.air-hero-warn .air-score-ring,
+.air-hero-bad .air-score-ring {
+  background: none;
+}
+
+.air-current-score > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+
+.air-current-score > div:last-child strong {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--green);
+}
+
+.air-hero-warn .air-current-score > div:last-child strong { color: var(--amber); }
+.air-hero-bad .air-current-score > div:last-child strong { color: var(--red); }
+
+.air-current-score p {
+  font-size: 12.5px;
+  color: var(--muted-3);
+}
+
+.air-hero-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  gap: 24px;
+}
+
+.air-hero-footer span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--muted-2);
+}
+
+.air-hero-footer strong {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Summary strip + score bars -> hairline */
+.air-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+}
+
+.air-summary-strip article {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.air-summary-strip article span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.air-summary-strip article strong {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.air-index-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+}
+
+.air-index-track span {
+  background: var(--green);
+}
+
+.air-station-warn .air-index-track span { background: var(--amber); }
+.air-station-bad .air-index-track span { background: var(--red); }
+
+.air-station {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+
+/* Collection pipeline (README §4) */
+.air-stage,
+.air-request {
+  border: 0;
+  border-top: 2px solid var(--green);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0 0;
+}
+
+.air-stage-warn,
+.air-stage-empty,
+.air-stage-missing,
+.air-request-warn,
+.air-request-empty {
+  border-top-color: var(--amber);
+}
+
+.air-stage-bad,
+.air-stage-failed,
+.air-request-bad,
+.air-request-failed {
+  border-top-color: var(--red);
+}
+
+.air-provider-status {
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 16px 0 0;
+}
+
+.air-detail-freshness {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+  text-transform: none;
+}
+
+@media (min-width: 768px) {
+  .air-main-grid > *,
+  .air-side-grid {
+    grid-column: auto;
+  }
+
+  .air-main-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
   }
 }
 

@@ -80,6 +80,7 @@
     "staticDemoStationNote": "Static demo fixture; not a live station reading.",
     "normalizedStationReadings": "Normalized station readings",
     "hsySourceLabel": "HSY air quality",
-    "hsyWfsSourceLabel": "HSY Air Quality WFS"
+    "hsyWfsSourceLabel": "HSY Air Quality WFS",
+    "airQualityWorkspace": "Air quality workspace"
   }
 }
