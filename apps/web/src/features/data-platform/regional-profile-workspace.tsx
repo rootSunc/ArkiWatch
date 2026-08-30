@@ -1,5 +1,6 @@
 "use client";
 
+import { CITY_OPTIONS, cityLabel } from "./city-scope";
 import { categoryKeyDataItems } from "./category-metadata";
 import { DataHelpIcon, DataLabelWithHelp, dataHelpText } from "./data-help";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -205,20 +206,75 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
   const cityComparisonRows: CityIndicatorRow[] = [];
 
   return (
-    <section className="water-detail-page" aria-label={tKey("regionalProfile.detailAria")}>
+    <section className="water-detail-page regional-profile-detail-page" aria-label={tKey("regionalProfile.detailAria")}>
       <WorkspaceEvidenceHeader
         className="water-detail-header catalog-detail-header"
         eyebrow={tKey("shell.dataCatalog")}
         fallbackKey="regionalProfile.notObserved"
         language={language}
-        observedAt={historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt}
-        sourceLabel={category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("regionalProfile.catalog")}
-        status={historicalEvidence ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        observedAt={historicalEvidence ? scopedReferenceTime(timeScope) : sourceUpdatedAt ?? scopedReferenceTime(timeScope)}
+        sourceLabel={category.source_codes.length > 0 ? category.source_codes.join(" + ").toUpperCase() : tKey("regionalProfile.nationalIndicators")}
+        status={
+          historicalEvidence
+            ? tKey("shell.historicalEvidence")
+            : tKey("regionalProfile.slowMoving")
+        }
         statusTone={activeTone}
         tKey={tKey}
-        timeScope={historicalEvidence ? timeScope : null}
+        timeScope={timeScope}
         title={tKey("regionalProfile.dashboardTitle")}
       />
+
+      <section className="regional-summary-strip" aria-label={tKey("regionalProfile.summaryMetrics")}>
+        {([
+          { key: "population", labelKey: "population", emptyDetailKey: "populationEmpty" },
+          { key: "median_income", labelKey: "medianIncome", emptyDetailKey: "incomeEmpty" },
+          { key: "employment_rate", labelKey: "employmentRate", emptyDetailKey: "employmentEmpty" },
+          { key: "health_index", labelKey: "healthIndex", emptyDetailKey: "healthEmpty" },
+        ] as const).map((tile) => {
+          const metric = metricByKey(category, tile.key);
+          const hasValue = Boolean(metric?.value);
+
+          return (
+            <article className={`regional-glass-panel${hasValue ? "" : " geo-tile-text"}`} key={tile.key}>
+              <span>{tKey(`regionalProfile.${tile.labelKey}`)}</span>
+              <strong>{hasValue ? formatMetricValue(metric, tKey, dataLabel) : tKey("regionalProfile.noValue")}</strong>
+              <small>{hasValue && metric?.detail ? metric.detail : tKey(`regionalProfile.${tile.emptyDetailKey}`)}</small>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="regional-indicators" aria-label={tKey("regionalProfile.cityIndicators")}>
+        <h2>{tKey("regionalProfile.cityIndicators")}</h2>
+        <div className="regional-table-wrapper">
+          <table className="regional-table">
+            <thead>
+              <tr>
+                <th>{tKey("regionalProfile.city")}</th>
+                <th>{tKey("regionalProfile.population")}</th>
+                <th>{tKey("regionalProfile.growth")}</th>
+                <th>{tKey("regionalProfile.medianIncome")}</th>
+                <th>{tKey("regionalProfile.employment")}</th>
+                <th>{tKey("regionalProfile.healthIndex")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CITY_OPTIONS.map((option) => (
+                <tr key={option.value}>
+                  <td>{cityLabel(option.value)}</td>
+                  <td className="is-empty">{tKey("regionalProfile.noValue")}</td>
+                  <td className="is-empty">{tKey("regionalProfile.noValue")}</td>
+                  <td className="is-empty">{tKey("regionalProfile.noValue")}</td>
+                  <td className="is-empty">{tKey("regionalProfile.noValue")}</td>
+                  <td className="is-empty">{tKey("regionalProfile.noValue")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="geo-catalog-note">{tKey("regionalProfile.indicatorsEmpty")}</p>
+      </section>
 
       <section className="water-bento-grid" aria-label={tKey("regionalProfile.operatingCondition")}>
         <article className={`water-glass-panel water-hero water-hero-${activeTone}`}>

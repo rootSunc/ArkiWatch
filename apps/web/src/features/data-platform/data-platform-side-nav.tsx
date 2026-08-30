@@ -4,25 +4,23 @@ import type { ReactNode, RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { PROJECT_GITHUB_ISSUES_URL } from "@/features/shared/project-links";
 import { MaterialIcon } from "@/features/shared/material-icon";
-
-import { appEnv } from "@/lib/env";
 
 import {
   CATALOG_NAV_ITEMS,
   PRIMARY_NAV_ITEMS,
+  ThemeToggleButton,
   type NavItem,
   type ThemeMode,
 } from "./data-platform-shell";
 import {
   BRAND_LOGO_SRC,
   FALLBACK_NAV_KEY,
+  TODAY_NAV_KEY,
   navItemAvailable,
 } from "./data-platform-nav-utils";
-import { useI18n } from "./i18n";
+import { LanguageSwitchButton, type LanguageMode, useI18n } from "./i18n";
 import type { PlatformCategory } from "./types";
-import { viewerStateLabel } from "./viewer-state";
 
 type DataPlatformSideNavProps = {
   categories: PlatformCategory[];
@@ -39,6 +37,8 @@ type DataPlatformSideNavProps = {
   selectedNavKey: string;
   themeMode: ThemeMode;
   onToggleTheme: () => void;
+  language?: LanguageMode;
+  onLanguageChange?: (language: LanguageMode) => void;
 };
 
 function navRowLabelKey(item: NavItem): string {
@@ -51,7 +51,6 @@ function navRowLabelKey(item: NavItem): string {
 export function DataPlatformSideNav({
   categories,
   className,
-  currentUserLabel,
   isAuthenticated,
   isMobileMenuOpen,
   navBadges,
@@ -63,13 +62,10 @@ export function DataPlatformSideNav({
   selectedNavKey,
   themeMode,
   onToggleTheme,
+  language,
+  onLanguageChange,
 }: DataPlatformSideNavProps) {
-  const { language, tKey } = useI18n();
-  const themeActionLabel = tKey(
-    themeMode === "light" ? "shell.switchToNightTheme" : "shell.switchToDayTheme",
-  );
-  const userStateLabel = viewerStateLabel(isAuthenticated, appEnv.demoMode, language);
-  const displayUserLabel = isAuthenticated ? currentUserLabel : userStateLabel;
+  const { tKey } = useI18n();
   const navigationActionLabel = tKey(
     isMobileMenuOpen ? "shell.closeNavigation" : "shell.hideNavigation",
   );
@@ -107,6 +103,17 @@ export function DataPlatformSideNav({
   const workspaceItems = PRIMARY_NAV_ITEMS.filter((item) =>
     navItemAvailable(item, categories),
   );
+  const orderedWorkspaceItems = isMobileMenuOpen
+    ? [...workspaceItems].sort((left, right) => {
+        if (left.key === TODAY_NAV_KEY) {
+          return -1;
+        }
+        if (right.key === TODAY_NAV_KEY) {
+          return 1;
+        }
+        return 0;
+      })
+    : workspaceItems;
   const catalogItems = CATALOG_NAV_ITEMS.filter((item) =>
     navItemAvailable(item, categories),
   );
@@ -132,7 +139,14 @@ export function DataPlatformSideNav({
           />
         </div>
         <div className="brand-copy">
-          <h1 className="brand-title-main">ArkiWatch</h1>
+          <h1 className="brand-title-main">
+            <span aria-hidden={isMobileMenuOpen || undefined} className="brand-title-desktop">
+              ArkiWatch
+            </span>
+            <span aria-hidden={!isMobileMenuOpen || undefined} className="brand-title-mobile-nav">
+              {tKey("shell.navigation")}
+            </span>
+          </h1>
           <p className="brand-title-subtitle">{tKey("shell.publicData")}</p>
         </div>
         <button
@@ -150,7 +164,7 @@ export function DataPlatformSideNav({
 
       <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
         <span className="side-nav-group-label">{tKey("shell.workspaceMode")}</span>
-        {workspaceItems.map(renderNavRow)}
+        {orderedWorkspaceItems.map(renderNavRow)}
       </nav>
 
       {catalogItems.length > 0 ? (
@@ -162,24 +176,17 @@ export function DataPlatformSideNav({
 
       <nav className="side-nav-footer" aria-label={tKey("shell.systemControls")}>
         <div className="side-nav-utility-group">
-          <button
+          <Link
+            aria-label={tKey("shell.aboutArkiWatch")}
             className="nav-row side-nav-utility-row"
-            aria-label={themeActionLabel}
-            onClick={onToggleTheme}
-            title={themeActionLabel}
-            type="button"
+            href="/about"
+            title={tKey("shell.aboutArkiWatch")}
           >
-            <MaterialIcon name={themeMode === "light" ? "dark_mode" : "light_mode"} />
-            <span>{tKey("shell.themeMode")}</span>
-          </button>
-          <div
-            className="nav-row side-nav-utility-row side-nav-user-row"
-            aria-label={userStateLabel}
-            title={displayUserLabel}
-          >
-            <MaterialIcon name={isAuthenticated ? "manage_accounts" : "visibility"} />
-            <span>{displayUserLabel}</span>
-          </div>
+            <span className="material-symbols-outlined" aria-hidden="true">
+              info
+            </span>
+            <span>{tKey("shell.aboutArkiWatch")}</span>
+          </Link>
           {isAuthenticated ? (
             <Link
               aria-label={tKey("shell.personalSettingsTitle")}
@@ -193,32 +200,14 @@ export function DataPlatformSideNav({
               <span>{tKey("shell.personalSettingsTitle")}</span>
             </Link>
           ) : null}
-          <Link
-            aria-label={tKey("shell.aboutArkiWatch")}
-            className="nav-row side-nav-utility-row"
-            href="/about"
-            title={tKey("shell.aboutArkiWatch")}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              info
-            </span>
-            <span>{tKey("shell.aboutArkiWatch")}</span>
-          </Link>
-          <a
-            aria-label={tKey("shell.reportDataIssue")}
-            className="nav-row side-nav-utility-row"
-            href={PROJECT_GITHUB_ISSUES_URL}
-            rel="noreferrer"
-            target="_blank"
-            title={tKey("shell.reportDataIssue")}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              public
-            </span>
-            <span>{tKey("shell.reportDataIssue")}</span>
-          </a>
           {renderAuthActionButton("nav-row side-nav-utility-row", true)}
         </div>
+        {isMobileMenuOpen && language && onLanguageChange ? (
+          <div className="side-nav-mobile-preferences">
+            <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
+            <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />
+          </div>
+        ) : null}
       </nav>
     </aside>
   );

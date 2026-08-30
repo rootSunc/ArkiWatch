@@ -57,8 +57,8 @@ describe("TodayActionCard", () => {
       </I18nProvider>,
     );
 
-    screen.getByRole("button", { name: /Commute.*No current recommendation/ }).click();
-    screen.getByRole("button", { name: "Ask assistant about Commute" }).click();
+    screen.getByRole("button", { name: "Commute. Keep a little buffer" }).click();
+    screen.getByRole("button", { name: "Ask about Commute" }).click();
 
     expect(onOpen).toHaveBeenCalledOnce();
     expect(onAskAssistant).toHaveBeenCalledWith("Analyze Commute data");

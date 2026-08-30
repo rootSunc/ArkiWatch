@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, ReactNode, RefObject } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import {
   CityScopeSelector,
@@ -147,7 +148,6 @@ export function DataPlatformMobileHeader({
   showExport,
   themeMode,
   userStateLabel,
-  workspaceMode,
 }: DataPlatformMobileHeaderProps) {
   const { tKey } = useI18n();
 
@@ -176,68 +176,70 @@ export function DataPlatformMobileHeader({
             width={96}
           />
         </span>
-        <span className="mobile-brand-copy">
-          <strong>ArkiWatch</strong>
-          <small>
-            {tKey(
-              workspaceMode === "today"
-                ? "shell.lifeAssistant"
-                : "shell.dataPlatformMode",
-            )}
-          </small>
-        </span>
+        <strong>ArkiWatch</strong>
+        <NotificationButton
+          count={notificationCount}
+          isActive={isEventsExpanded && !isDetailPage}
+          language={language}
+          onClick={onNotificationsClick}
+          tone={notificationTone}
+        />
       </div>
-      <div className="top-actions">
-        <div className="mobile-scope-switchers">
-          <CityScopeSelector
-            city={city}
-            isPending={isCityPending}
-            language={language}
-            onCityChange={onCityChange}
-          />
-          <DateScopeSelector
-            availability={availability}
-            date={date}
-            isDemo={isDemo}
-            isPending={isDatePending}
-            language={language}
-            onCalendarOpen={onCalendarOpen}
-            onDateChange={onDateChange}
-          />
-        </div>
-        <div className="mobile-utility-actions">
-          <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
-          <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />
-          {isAuthenticated && !isDetailPage && !isHistorical ? (
-            <RefreshDataButton
-              isRefreshing={isRefreshing}
-              language={language}
-              onRefresh={onRefresh}
-            />
-          ) : null}
-          {showExport ? (
-            <ExportSnapshotButton city={city} date={date} language={language} />
-          ) : null}
-          <ShareViewLinkButton
-            language={language}
-            scopeKey={`${city}:${date ?? "live"}`}
-          />
-          <NotificationButton
-            count={notificationCount}
-            isActive={isEventsExpanded && !isDetailPage}
-            language={language}
-            onClick={onNotificationsClick}
-            tone={notificationTone}
-          />
-          <span
-            className="profile-avatar mobile-overflow-action"
-            aria-label={userStateLabel}
-            title={currentUserLabel}
-          >
-            {currentUserInitials}
+      <div className="mobile-context-row">
+        <CityScopeSelector
+          city={city}
+          isPending={isCityPending}
+          language={language}
+          onCityChange={onCityChange}
+        />
+        <span className="mobile-context-sep" aria-hidden="true">
+          ·
+        </span>
+        <DateScopeSelector
+          availability={availability}
+          date={date}
+          isDemo={isDemo}
+          isPending={isDatePending}
+          language={language}
+          onCalendarOpen={onCalendarOpen}
+          onDateChange={onDateChange}
+        />
+        <Link
+          aria-label={tKey("shell.personalSettingsTitle")}
+          className="icon-button mobile-context-settings"
+          href="/settings"
+          title={tKey("shell.personalSettingsTitle")}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            settings
           </span>
-          {renderAuthActionButton("icon-button mobile-overflow-action")}
-        </div>
+        </Link>
+      </div>
+      <div className="mobile-header-secondary">
+        <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
+        <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />
+        {isAuthenticated && !isDetailPage && !isHistorical ? (
+          <RefreshDataButton
+            isRefreshing={isRefreshing}
+            language={language}
+            onRefresh={onRefresh}
+          />
+        ) : null}
+        {showExport ? (
+          <ExportSnapshotButton city={city} date={date} language={language} />
+        ) : null}
+        <ShareViewLinkButton
+          language={language}
+          scopeKey={`${city}:${date ?? "live"}`}
+        />
+        <span
+          className="profile-avatar mobile-overflow-action"
+          aria-label={userStateLabel}
+          title={currentUserLabel}
+        >
+          {currentUserInitials}
+        </span>
+        {renderAuthActionButton("icon-button mobile-overflow-action")}
       </div>
     </header>
   );

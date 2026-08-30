@@ -33,7 +33,7 @@ describe("PersonalSettingsPage", () => {
 
     render(<PersonalSettingsPage user={user} />);
 
-    expect(await screen.findByRole("heading", { name: "Personal setup" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Personal context" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Set default location/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Define preferences/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Add commute profile/ })).toBeInTheDocument();
@@ -282,7 +282,7 @@ describe("PersonalSettingsPage", () => {
 
     render(<PersonalSettingsPage user={user} />);
 
-    await screen.findByRole("heading", { name: "Personal setup" });
+    await screen.findByRole("heading", { name: "Personal context" });
     fireEvent.click(screen.getByRole("button", { name: /^Add commute profile/ }));
     const activeToggle = screen.getByLabelText("Use this commute profile for daily guidance");
     expect(activeToggle).toBeChecked();
@@ -327,7 +327,7 @@ describe("PersonalSettingsPage", () => {
 
     render(<PersonalSettingsPage user={user} />);
 
-    await screen.findByRole("heading", { name: "Personal setup" });
+    await screen.findByRole("heading", { name: "Personal context" });
     fireEvent.click(screen.getByRole("button", { name: /^Connect Telegram/ }));
     const activeToggle = screen.getByLabelText("Enable Telegram delivery");
     expect(activeToggle).toBeChecked();

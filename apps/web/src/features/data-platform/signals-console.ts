@@ -77,7 +77,7 @@ export function buildSignalSystemTiles({
         severeEvents > 0
           ? `${severeEvents} ${translateMessageKey(language, "shell.highSeverity")}`
           : translateMessageKey(language, "shell.normalizedEventStream"),
-      tone: severeEvents > 0 ? "bad" : recentEvents.length > 0 ? "warn" : "good",
+        tone: severeEvents > 0 ? "warn" : recentEvents.length > 0 ? "warn" : "good",
       icon: "notifications",
       valueStyle: "emphasis",
     },

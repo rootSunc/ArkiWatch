@@ -31,7 +31,7 @@ describe("MobileBottomNav", () => {
       "page",
     );
     expect(screen.getAllByRole("button")).toHaveLength(5);
-    expect(screen.getByRole("button", { name: "Assistant" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Ask" })).toBeEnabled();
   });
 
   it("keeps assistant unavailable while the scope is updating", () => {
@@ -50,7 +50,7 @@ describe("MobileBottomNav", () => {
       </I18nProvider>,
     );
 
-    const assistant = screen.getByRole("button", { name: "Assistant" });
+    const assistant = screen.getByRole("button", { name: "Ask" });
     expect(assistant).toBeDisabled();
     fireEvent.click(assistant);
     expect(onOpenAssistant).not.toHaveBeenCalled();

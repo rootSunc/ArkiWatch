@@ -2,9 +2,12 @@
 
 import { RoadRailWorkspace } from "./road-rail-workspace";
 import { TransitWorkspace } from "./transit-workspace";
+import { resolveDataTimezone } from "./data-timezone";
+import { scopedStatusLabel } from "./data-time-scope";
 import { useI18n } from "./i18n";
-import { isEmptyStatus } from "./platform-status";
+import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { handleTabListKeyDown } from "./tab-navigation";
+import { WorkspaceEvidenceHeader } from "./workspace-ui";
 import type {
   PlatformCategory,
   PlatformHistoricalSnapshot,
@@ -61,12 +64,47 @@ export function MobilityWorkspace({
   transitCategory,
   transitHistory,
 }: MobilityWorkspaceProps) {
-  const { tKey } = useI18n();
+  const { language, tKey } = useI18n();
   const mobilityTabIdPrefix = "mobility-workspace-tab";
   const mobilityPanelId = "mobility-workspace-panel";
+  const evidence = transit && !isEmptyStatus(transit.status) ? transit : roadRail;
+  const sourceLabel = [transit?.source_code, roadRail?.source_code]
+    .filter((code): code is string => Boolean(code))
+    .map((code) => code.toUpperCase())
+    .join(" · ");
+  const alertCount = transit && !isEmptyStatus(transit.status)
+    ? (transit.quality.active_alert_count ?? 0)
+    : 0;
+  const mobilityStatus = alertCount > 0
+    ? `${tKey("mobility.watch")} · ${alertCount} ${tKey("mobility.activeNotices")}`
+    : evidence
+      ? scopedStatusLabel(
+          evidence.status,
+          evidence.time_scope,
+          tKey,
+          "transit.hslFeedActive",
+          "transit.feedDelayed",
+        )
+      : undefined;
 
   return (
     <section className="mobility-detail-page" aria-label={tKey("mobility.mobilityDetail")}>
+      <WorkspaceEvidenceHeader
+        className="mobility-detail-header"
+        eyebrow={tKey("mobility.mobilityWorkspace")}
+        fallbackKey="transit.notObserved"
+        language={language}
+        observedAt={evidence?.observed_at ?? evidence?.checked_at ?? null}
+        sourceLabel={sourceLabel || null}
+        status={mobilityStatus}
+        statusTone={alertCount > 0 ? "warn" : evidence ? liveStatusTone(evidence.status) : "neutral"}
+        tKey={tKey}
+        timeScope={evidence?.time_scope}
+        title={tKey("mobility.transitAndRoadSignals")}
+        timezone={resolveDataTimezone(evidence?.time_scope?.timezone)}
+      >
+        <p>{tKey("mobility.activeNotices")}</p>
+      </WorkspaceEvidenceHeader>
       <nav className="mobility-tab-list" aria-label={tKey("mobility.mobilityWorkspaceTabs")} role="tablist">
         {MOBILITY_TABS.map((tab) => {
           const count = mobilityTabCount(tab.key, transit, roadRail);

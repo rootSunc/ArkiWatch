@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import { ReactNode } from "react";
 
 import { appEnv } from "@/lib/env";
@@ -8,16 +8,10 @@ import "./globals.css";
 import "./material-symbols.css";
 import "./minimal-global.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "600", "700", "800", "900"]
-});
-
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
-  weight: ["500", "700"]
+  weight: ["400", "500", "700"]
 });
 
 export const metadata: Metadata = {
@@ -83,7 +77,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className={`${inter.variable} ${jetBrainsMono.variable}`}>{children}</body>
+      <body className={jetBrainsMono.variable}>{children}</body>
     </html>
   );
 }

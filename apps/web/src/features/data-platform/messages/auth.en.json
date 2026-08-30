@@ -5,7 +5,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "signingIn": "Signing in",
-    "continueAsDemo": "Continue as demo",
+    "continueAsDemo": "Back to public data",
+    "adminBoundary": "Admin access only controls source configuration. All public readings stay public.",
     "sessionExpired": "Session expired. Please sign in again.",
     "loginFailed": "Login failed."
   }

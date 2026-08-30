@@ -1096,6 +1096,8 @@ export function DataPlatformHome({
           selectedNavKey={selectedNavKey}
           themeMode={themeMode}
           onToggleTheme={toggleThemeMode}
+          language={languageMode}
+          onLanguageChange={selectLanguageMode}
         />
         {isMobileMenuOpen ? (
           <DataPlatformSideNavBackdrop onClose={() => setIsMobileMenuOpen(false)} />
@@ -1149,7 +1151,7 @@ export function DataPlatformHome({
                 timeScope={activeTimeScope}
               />
             ) : null}
-            {appEnv.demoMode ? (
+            {appEnv.demoMode && !isDetailPage ? (
               <div className="demo-mode-banner" role="status">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   database
@@ -1305,8 +1307,12 @@ export function DataPlatformHome({
                   searchValue={searchValue}
                   signalSystemTiles={signalSystemTiles}
                   todayBrief={todayBrief}
+                  sourceHealth={
+                    !isHistorical ? (
+                      <SourceHealthStrip overview={visibleOverview} />
+                    ) : null
+                  }
                   secondaryContent={
-                    <>
                     <RecentEventsPanel
                       categories={categories}
                       checkedAt={visibleOverview.checked_at}
@@ -1337,9 +1343,6 @@ export function DataPlatformHome({
                         title: overallNotificationTitle,
                       }}
                     />
-
-                    {!isHistorical ? <SourceHealthStrip overview={visibleOverview} /> : null}
-                    </>
                   }
                 />
               )

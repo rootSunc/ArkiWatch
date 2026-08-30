@@ -16,9 +16,9 @@ import {
   PlatformTone
 } from "./types";
 import type { PlatformTimeScope } from "./types";
+import { isEmptyStatus } from "./platform-status";
 import { eventAnchorId } from "./recent-events";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
-import { isEmptyStatus } from "./platform-status";
 import { hasObservedSourceRecords } from "./catalog-workspace-state";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
@@ -221,7 +221,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
   const timezone = resolveDataTimezone(requestedTimezone);
   const isHistorical = isHistoricalTimeScope(timeScope);
 
-  if (!category || isEmptyStatus(category.status)) {
+  if (!category) {
     return (
       <WorkspaceEmptyState
         className="city-detail-empty"
@@ -269,13 +269,41 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
         language={language}
         observedAt={isHistorical ? scopedReferenceTime(timeScope) : latestRun ?? latest?.starts_at}
         sourceLabel={category.source_codes.join(", ").toUpperCase()}
-        status={isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        status={
+          isHistorical
+            ? tKey("shell.historicalEvidence")
+            : isEmptyStatus(category.status)
+              ? tKey("cityServices.providerCoverage")
+              : translateEnumLabel(language, category.status)
+        }
         statusTone={cityTone}
         tKey={tKey}
         timeScope={timeScope}
         title={tKey("cityServices.dashboardTitle")}
         timezone={timezone}
       />
+
+      <section className="city-summary-strip" aria-label={tKey("cityServices.summaryMetrics")}>
+        {summaryMetrics.map((metric) => (
+          <article className={`city-glass-panel city-summary-${metricTone(metric)}`} key={metric.key}>
+            <DataLabelWithHelp
+              helpText={dataHelpText({
+                key: metric.key,
+                label: metric.label,
+                detail: metric.detail,
+                language,
+              })}
+            >
+              {metricLabel(metric)}
+            </DataLabelWithHelp>
+            <strong>
+              {metric.key === "records_ingested" && !hasObservedRecords
+                ? tKey("cityServices.notCollected")
+                : formatMetricValue(metric, tKey, dataLabel)}
+            </strong>
+          </article>
+        ))}
+      </section>
 
       <section className="city-bento-grid" aria-label={tKey("cityServices.operatingCondition")}>
         <article className={`city-glass-panel city-hero city-hero-${cityTone}`}>
@@ -351,36 +379,20 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
             <strong>{fieldCount}</strong>
           </header>
           <div className="city-field-grid">
+            <div className="city-field-head">
+              <span>{tKey("cityServices.fieldColumn")}</span>
+              <span>{tKey("cityServices.ownerColumn")}</span>
+              <span>{tKey("cityServices.coversColumn")}</span>
+            </div>
             {CITY_SERVICE_FIELDS.map((field) => (
               <article key={field.key}>
                 <span>{tKey(`cityServices.${field.labelKey}`)}</span>
-                <strong>{fieldStatus(category, field, language)}</strong>
+                <strong>{tKey(`cityServices.${field.ownerKey}`)}</strong>
+                <p>{tKey(`cityServices.${field.detailKey}`)}</p>
               </article>
             ))}
           </div>
         </article>
-      </section>
-
-      <section className="city-summary-strip" aria-label={tKey("cityServices.summaryMetrics")}>
-        {summaryMetrics.map((metric) => (
-          <article className={`city-glass-panel city-summary-${metricTone(metric)}`} key={metric.key}>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: metric.key,
-                label: metric.label,
-                detail: metric.detail,
-                language,
-              })}
-            >
-              {metricLabel(metric)}
-            </DataLabelWithHelp>
-            <strong>
-              {metric.key === "records_ingested" && !hasObservedRecords
-                ? tKey("cityServices.notCollected")
-                : formatMetricValue(metric, tKey, dataLabel)}
-            </strong>
-          </article>
-        ))}
       </section>
 
       <section className="city-main-grid" aria-label={tKey("cityServices.analytics")}>

@@ -358,12 +358,19 @@
 
 .about-workspace-card h3 {
   max-width: none;
-  margin: 20px 0 12px;
+  margin: 20px 0 10px;
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--ink);
+}
+
+.about-workspace-card > p {
+  margin: 0 0 24px;
+  color: var(--muted-3);
+  font-size: 14.5px;
+  line-height: 1.6;
 }
 
 .about-workspace-card ul {

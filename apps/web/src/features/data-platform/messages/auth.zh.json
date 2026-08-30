@@ -5,7 +5,8 @@
     "password": "密码",
     "signIn": "登录",
     "signingIn": "正在登录",
-    "continueAsDemo": "以演示模式继续",
+    "continueAsDemo": "返回公共数据",
+    "adminBoundary": "管理员权限仅用于配置数据源，所有公共读数保持公开。",
     "sessionExpired": "会话已过期，请重新登录。",
     "loginFailed": "登录失败。"
   }

@@ -36,6 +36,8 @@
 .dashboard-shell {
   display: flex;
   min-height: 100vh;
+  height: auto;
+  overflow: visible;
 }
 
 .dashboard-shell-mode-today .dashboard-app,
@@ -48,6 +50,8 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
+  height: auto;
+  overflow: visible;
 }
 
 /* No shadows anywhere in the shell (the assistant panel is the only exception,
@@ -87,6 +91,7 @@
   overflow: auto;
   border-right: 1px solid var(--line);
   background: var(--canvas);
+  color: var(--ink);
   padding: 28px 20px 24px;
   scrollbar-width: thin;
 }
@@ -143,11 +148,10 @@
   color: var(--muted-2);
 }
 
-/* The sidebar's own collapse control is kept for the desktop hide-nav feature
- * but stays visually quiet. */
+/* The HTML desktop shell has no collapse control on the brand row. Keep the
+ * control as the mobile drawer close button. */
 .side-nav-collapse-button {
-  margin-left: auto;
-  color: var(--icon-idle);
+  display: none;
 }
 
 .side-nav-list,
@@ -389,13 +393,87 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+.detail-topbar-actions,
+.detail-topbar-actions > *,
+.detail-topbar-actions .scope-control-cluster {
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .detail-topbar-actions {
   margin-left: 0;
-  flex: 0 0 auto;
   justify-content: flex-end;
+}
+
+/* Compact hairline city/date — icon + visible value, no stacked label,
+ * no extra chevron. Matches the HTML 34px selects. */
+.detail-topbar .city-scope-control,
+.detail-topbar .date-scope-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 7px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 112px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+  box-shadow: none;
+}
+
+.detail-topbar .city-scope-copy {
+  display: none;
+}
+
+.detail-topbar .city-scope-chevron,
+.detail-topbar .date-scope-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: static;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-left: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted-2);
+  pointer-events: none;
+}
+
+.detail-topbar .city-scope-control select {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  width: max-content;
+  min-width: 5.5rem;
+  height: auto;
+  opacity: 1;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  appearance: none;
+  padding-right: 2px;
+}
+
+.detail-topbar .date-scope-picker {
+  display: block;
+  width: auto;
+  max-width: none;
+}
+
+.detail-topbar .date-scope-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
 }
 
 .scope-control-divider {
@@ -605,6 +683,7 @@
   margin: 0 auto;
   padding: 56px 40px 96px;
   background: var(--canvas);
+  overflow: visible;
 }
 
 .dashboard-scope-content {
@@ -639,7 +718,7 @@
   background: transparent;
   box-shadow: none;
   padding: 0 0 18px;
-  margin: 0 0 40px;
+  margin: 0 0 56px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--muted-3);
@@ -1004,6 +1083,11 @@
   line-height: 1.3;
 }
 
+.quiet-value {
+  color: var(--quiet-value);
+  font-weight: 500;
+}
+
 /* --- Core signals --- */
 .overview-core-section {
   min-width: 0;
@@ -1070,25 +1154,35 @@
 .overview-catalog {
   border: 0;
   border-top: 1px solid var(--line-soft);
+  margin: 0;
+}
+
+.overview-catalog:not(:has(+ .overview-sources)) {
   border-bottom: 1px solid var(--line-soft);
-  margin: 0 0 8px;
 }
 
 .overview-catalog + .overview-secondary-content {
   border-top: 0;
 }
 
-.overview-catalog > summary {
+.overview-catalog > summary,
+.overview-disclosure {
   display: flex;
   align-items: center;
   gap: 16px;
+  width: 100%;
   min-height: 0;
   padding: 22px 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
   list-style: none;
+  text-align: left;
 }
 
-.overview-catalog > summary:hover {
+.overview-catalog > summary:hover,
+.overview-disclosure:hover {
   background: var(--row-hover);
 }
 
@@ -1150,6 +1244,80 @@
   flex-direction: column;
   gap: 0;
   margin: 0;
+}
+
+.overview-sources {
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.source-health-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 4px 8px;
+}
+
+.source-health-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-top: 1px solid var(--line-softest);
+  background: transparent;
+}
+
+.source-health-row-code {
+  flex: 0 0 7.5rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.source-health-row strong {
+  flex: 0 0 auto;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.source-health-row-healthy strong { color: var(--green); }
+.source-health-row-watch strong { color: var(--amber); }
+.source-health-row-failing strong { color: var(--red); }
+.source-health-row-unknown strong { color: var(--muted-2); }
+
+.source-health-row small {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-3);
+}
+
+.source-health-row-doc {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--blue);
+}
+
+.source-health-row-error {
+  flex: 1 1 100%;
+  color: var(--red);
+}
+
+/* Kill the pre-refactor tinted chip strip if any leftover class remains. */
+.dashboard-content .source-health-panel,
+.dashboard-content .source-health-summary,
+.dashboard-content .source-health-strip,
+.dashboard-content .source-chip {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  max-height: none;
 }
 
 /* ==========================================================================
@@ -1723,8 +1891,17 @@
   color: var(--ink);
 }
 
-.day-plan-timeline-top .status-badge {
+.day-plan-timeline-top .status-badge,
+.dashboard-content .day-plan-timeline-top .status-badge {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-mono);
   font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
 }
 
 .day-plan-timeline-detail {
@@ -1776,13 +1953,12 @@
   color: var(--ink);
 }
 
+.today-decisions-summary {
+  cursor: default;
+}
+
 .today-decisions-summary-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted-2);
+  display: none;
 }
 
 .today-action-grid {
@@ -1804,11 +1980,107 @@
 }
 
 .today-action-card,
-.personal-today-card {
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--canvas);
+.personal-today-card,
+.dashboard-content .today-action-card,
+.dashboard-content .today-action-card:hover {
+  position: relative;
+  display: block;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
+  padding: 16px 0;
+  transform: none;
+}
+
+.today-action-card:last-child {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.today-action-card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.today-action-card-dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 3px;
+  background: var(--blue);
+}
+
+.today-action-card-warn .today-action-card-dot {
+  background: var(--amber);
+}
+
+.today-action-card-bad .today-action-card-dot {
+  background: var(--amber);
+}
+
+.today-action-card-neutral .today-action-card-dot,
+.today-action-card-good .today-action-card-dot {
+  background: var(--blue);
+}
+
+.today-action-card-neutral .today-action-card-dot {
+  background: var(--quiet-value);
+}
+
+.today-action-card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.today-action-card-neutral .today-action-card-title {
+  color: var(--muted-3);
+}
+
+.today-action-card-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+.today-action-card-icon,
+.today-action-card-content,
+.today-action-card-arrow {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.today-action-card-assistant,
+.today-action-card .today-action-card-ask,
+.today-action-card .today-assistant-action {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .today-overview-empty {
@@ -2200,12 +2472,16 @@
   font-size: 13.5px;
 }
 
-/* The remaining lower panels keep their data but take the calm hairline frame. */
+/* HTML Weather is header + current/metrics + history. Extra forecast/ops chrome stays out. */
+.weather-summary-strip,
 .weather-lower-grid,
-.weather-ops-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+.weather-ops-grid,
+.weather-detail-page .workspace-evidence-coordinates,
+.weather-provider-status,
+.weather-detail-freshness,
+.weather-detail-page .trend-chart-stats,
+.weather-detail-page .trend-chart-empty {
+  display: none;
 }
 
 .weather-glass-panel {
@@ -2279,15 +2555,6 @@
 }
 
 /* --- Air quality workspace (README §4) --- */
-.air-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: 80px;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-}
-
 .air-detail-header {
   margin-bottom: 0;
 }
@@ -2316,10 +2583,57 @@
 }
 
 /* City-score card — mono readout, not a ring (README §4) */
+.air-detail-page {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 2fr);
+  column-gap: 48px;
+  row-gap: 80px;
+  align-items: start;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.air-detail-header,
+.air-main-grid,
+.air-detail-page > .trend-panel,
+.air-provider-status,
+.air-detail-freshness {
+  grid-column: 1 / -1;
+}
+
+.air-bento-grid {
+  display: contents;
+}
+
+.air-hero {
+  grid-column: 1;
+}
+
+.air-summary-strip {
+  grid-column: 2;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.air-distribution-panel,
+.air-field-panel,
+.air-detail-page > .trend-panel,
+.air-detail-page > .air-glass-panel,
+.air-detail-page .trend-chart-empty,
+.air-pollutant-panel,
+.air-map-panel,
+.air-quality-panel,
+.air-source-panel,
+.air-provider-status,
+.air-detail-freshness {
+  display: none;
+}
+
 .air-current-score {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
+  gap: 10px;
   margin: 22px 0 0;
 }
 
@@ -2361,24 +2675,53 @@
   background: none;
 }
 
-.air-current-score > div:last-child {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 6px;
-}
-
-.air-current-score > div:last-child strong {
+.air-score-word {
+  display: block;
+  margin: 0 0 28px;
   font-size: 16px;
   font-weight: 400;
   color: var(--green);
 }
 
-.air-hero-warn .air-current-score > div:last-child strong { color: var(--amber); }
-.air-hero-bad .air-current-score > div:last-child strong { color: var(--red); }
+.air-hero-warn .air-score-word { color: var(--amber); }
+.air-hero-bad .air-score-word { color: var(--red); }
 
-.air-current-score p {
+.air-score-scale {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.air-score-scale span {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+}
+
+.air-score-scale span.is-on {
+  background: var(--green);
+}
+
+.air-hero-warn .air-score-scale span.is-on { background: var(--amber); }
+.air-hero-bad .air-score-scale span.is-on { background: var(--red); }
+
+.air-score-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-3);
+}
+
+.air-score-note {
+  margin: 26px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
   font-size: 12.5px;
+  line-height: 1.65;
   color: var(--muted-3);
 }
 
@@ -2456,12 +2799,272 @@
 .air-station-warn .air-index-track span { background: var(--amber); }
 .air-station-bad .air-index-track span { background: var(--red); }
 
+.air-summary-strip article small {
+  margin-left: 3px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-2);
+}
+
+.air-metric-detail {
+  font-family: var(--font-ui) !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--green) !important;
+}
+
+.air-metric-detail-warn { color: var(--amber) !important; }
+.air-metric-detail-bad { color: var(--red) !important; }
+.air-metric-detail-neutral { color: var(--muted-3) !important; }
+
+.air-main-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.air-station-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.air-station-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.air-station-panel .air-station-heading span,
+.air-station-heading span {
+  font-size: 14px;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  color: var(--muted-3);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.air-station-table {
+  display: flex;
+  flex-direction: column;
+}
+
 .air-station {
+  display: grid;
+  grid-template-columns: 1.6fr 1.2fr 0.8fr 0.8fr;
+  gap: 16px;
+  align-items: center;
   border: 0;
-  border-top: 1px solid var(--line-soft);
+  border-top: 1px solid var(--line-softest);
   border-radius: 0;
   background: transparent;
   padding: 16px 0;
+  font-size: 13.5px;
+}
+
+.air-station-head {
+  padding-top: 0;
+  padding-bottom: 14px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  font-weight: 400;
+}
+
+.air-station-score {
+  font-family: var(--font-mono);
+  color: var(--green);
+}
+
+.air-station-city,
+.air-station-updated {
+  font-family: var(--font-mono);
+  color: var(--muted-3);
+}
+
+.air-station-updated {
+  color: var(--muted-2);
+}
+
+.air-station-warn .air-station-score { color: var(--amber); }
+.air-station-bad .air-station-score { color: var(--red); }
+.air-station-neutral .air-station-score { color: var(--muted-2); }
+
+.air-side-grid {
+  display: contents;
+}
+
+.air-pipeline-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 28px;
+}
+
+.air-pipeline-panel header {
+  display: block;
+  margin-bottom: 22px;
+}
+
+.air-pipeline-panel header span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.air-pipeline-panel > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.air-stage {
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 2px solid var(--green);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.air-stage-warn {
+  border-top-color: var(--amber);
+}
+
+.air-stage-bad {
+  border-top-color: var(--red);
+}
+
+.air-stage strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.air-stage span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--green);
+}
+
+.air-stage-warn span {
+  color: var(--amber);
+}
+
+.air-stage-bad span {
+  color: var(--red);
+}
+
+.air-stage p {
+  display: none;
+}
+
+.energy-command-panel,
+.energy-side-grid,
+.energy-signal-list,
+.energy-chart-context,
+.energy-price-chart-head,
+.energy-signal-panel > header,
+.energy-insight-grid,
+.energy-provider-status,
+.energy-detail-freshness,
+.energy-workspace-panel > .trend-panel,
+.energy-detail-page .trend-chart-empty,
+.mobility-detail-page .trend-panel,
+.mobility-detail-page .trend-chart-empty,
+.transit-detail-page .trend-panel,
+.transit-detail-page .trend-chart-empty,
+.road-rail-detail-page .trend-panel,
+.road-rail-detail-page .trend-chart-empty,
+.transit-alert-context,
+.transit-side-grid,
+.road-rail-side-grid,
+.city-side-grid,
+.linked-events-side-grid,
+.linked-events-inspector,
+.linked-events-map-panel,
+.linked-events-hero,
+.linked-events-venue-panel,
+.linked-events-keyword-cloud-panel,
+.linked-events-timeline-panel > header,
+.linked-events-filter-panel > header,
+.linked-events-category-panel > header,
+.mobility-detail-page .transit-detail-header,
+.mobility-detail-page .road-rail-detail-header,
+.transit-command-panel,
+.road-rail-command-panel,
+.water-command-panel,
+.transit-insight-grid,
+.transit-alert-inspector,
+.transit-alert-toolbar,
+.transit-timeband-panel,
+.transit-diagnostics-panel,
+.transit-provider-status,
+.transit-detail-freshness,
+.transit-detail-page > .trend-panel,
+.road-rail-insight-grid,
+.road-rail-incident-inspector,
+.road-rail-incident-toolbar,
+.road-rail-timeband-panel,
+.road-rail-diagnostics-panel,
+.road-rail-provider-status,
+.road-rail-detail-freshness,
+.road-rail-detail-page > .trend-panel,
+.incident-timeline-pager,
+.water-snow-page .water-field-panel,
+.water-snow-page .water-signal-panel,
+.water-snow-page .water-source-panel,
+.water-snow-page .water-volume-panel,
+.water-snow-page .water-severity-bars,
+.water-snow-page .water-provider-status,
+.water-snow-page .water-detail-freshness,
+.water-timeband-panel,
+.geospatial-detail-page .water-hero,
+.geospatial-detail-page .water-coverage-panel,
+.geospatial-detail-page .water-bento-grid > .water-glass-panel,
+.geospatial-detail-page .water-field-panel,
+.geospatial-detail-page .water-schema-grid,
+.geospatial-detail-page .water-schema-shape-bars,
+.geospatial-detail-page .water-signal-list,
+.geospatial-detail-page .water-side-grid,
+.geospatial-detail-page .water-provider-status,
+.geospatial-detail-page .water-field-lattice,
+.geospatial-detail-page .water-signal-panel,
+.geospatial-detail-page .water-summary-strip,
+.city-service-panel,
+.regional-profile-detail-page .water-bento-grid,
+.regional-profile-detail-page .water-signal-list,
+.regional-profile-detail-page .water-side-grid,
+.regional-profile-detail-page .water-provider-status,
+.regional-profile-detail-page .water-summary-strip,
+.regional-profile-detail-page .water-signal-panel,
+.city-hero,
+.city-readiness-panel,
+.city-visual-grid,
+.city-provider-status,
+.city-detail-freshness,
+.city-service-panel > header,
+.city-source-panel,
+.city-coverage-panel,
+.city-event-model-panel {
+  display: none;
 }
 
 /* Collection pipeline (README §4) */
@@ -2505,14 +3108,14 @@
   text-transform: none;
 }
 
-@media (min-width: 768px) {
-  .air-main-grid > *,
-  .air-side-grid {
-    grid-column: auto;
+@media (max-width: 900px) {
+  .air-detail-page {
+    grid-template-columns: 1fr;
   }
 
-  .air-main-grid {
-    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  .air-hero,
+  .air-summary-strip {
+    grid-column: 1;
   }
 }
 
@@ -2588,7 +3191,8 @@
   margin: 0;
 }
 
-.energy-detail-header {
+.energy-detail-header,
+.mobility-detail-header {
   border-bottom: 0;
   margin-bottom: 32px;
   padding-bottom: 0;
@@ -2602,10 +3206,18 @@
 
 .energy-summary-strip,
 .transit-summary-strip,
-.road-rail-summary-strip,
-.water-summary-strip {
+.road-rail-summary-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+.water-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0;
   border-top: 1px solid var(--line-soft);
   border-left: 1px solid var(--line-soft);
@@ -2628,6 +3240,18 @@
   gap: 9px;
 }
 
+.water-summary-strip > .water-glass-panel {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  padding: 22px 24px;
+}
+
+.water-summary-strip > article strong {
+  font-size: 28px;
+}
+
 .energy-summary-strip article span,
 .transit-summary-strip article span,
 .road-rail-summary-strip article span,
@@ -2640,6 +3264,96 @@
   color: var(--muted-2);
 }
 
+.energy-summary-strip article small {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted-3);
+}
+
+.energy-summary-strip article strong {
+  white-space: pre-line;
+}
+
+.energy-summary-good strong {
+  color: var(--green);
+}
+
+.energy-summary-compact strong {
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.energy-chart-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.energy-chart-heading span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-bottom: 8px;
+}
+
+.energy-chart-heading h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.energy-chart-heading em {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--muted-2);
+}
+
+.energy-chart-hours {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-3);
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.energy-price-row-good strong {
+  color: var(--green);
+}
+
+.energy-price-row-warn strong {
+  color: var(--amber);
+}
+
+.energy-price-row small {
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--muted-3);
+}
+
+.energy-main-grid {
+  display: block;
+}
+
+.energy-detail-page .energy-price-axis-text,
+.energy-detail-page .energy-price-axis-tick,
+.energy-detail-page .energy-price-axis-line {
+  display: none;
+}
+
 .energy-summary-strip article strong,
 .transit-summary-strip article strong,
 .road-rail-summary-strip article strong,
@@ -2650,6 +3364,54 @@
   letter-spacing: -0.02em;
   line-height: 1;
   color: var(--ink);
+}
+
+.energy-summary-strip article.energy-summary-compact strong {
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.energy-summary-strip article.energy-summary-good strong {
+  color: var(--green);
+}
+
+.energy-summary-strip article.energy-summary-warn strong {
+  color: var(--amber);
+}
+
+.transit-summary-strip article small,
+.road-rail-summary-strip article small,
+.water-summary-strip article small {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--muted-3);
+}
+
+.transit-summary-strip article strong.is-watch,
+.road-rail-summary-strip article strong.is-watch,
+.road-rail-summary-strip article small.is-watch {
+  color: var(--amber);
+}
+
+.road-rail-scope-tile strong {
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.transit-alert-context {
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+}
+
+.transit-alert-severity-bad,
+.transit-alert-severity-warn {
+  color: var(--amber);
+  border-color: var(--amber-line);
 }
 
 .energy-glass-panel,
@@ -2770,7 +3532,8 @@
   }
 
   .energy-main-grid {
-    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    display: block;
+    grid-template-columns: none;
   }
 }
 
@@ -2957,12 +3720,111 @@
 }
 
 .water-coverage-row,
-.water-coverage-list > div {
+.water-coverage-list > div,
+.water-observation-row {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 18px 0;
   border-top: 1px solid var(--line-soft);
+}
+
+.water-coverage-row > span:first-child {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.water-coverage-row i {
+  display: block;
+  width: 120px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line-soft);
+}
+
+.water-coverage-row i span {
+  display: block;
+  height: 5px;
+  background: var(--green);
+}
+
+.water-coverage-row-empty i span {
+  background: var(--amber);
+}
+
+.water-coverage-row em {
+  width: 56px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--muted-3);
+}
+
+.water-coverage-row-empty em {
+  color: var(--amber);
+}
+
+.water-observation-panel,
+.water-coverage-panel,
+.water-insight-grid .water-observation-panel,
+.water-insight-grid .water-coverage-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.water-coverage-panel header span,
+.water-observation-panel header span {
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.water-observation-panel header,
+.water-coverage-panel header {
+  margin-bottom: 24px;
+}
+
+.water-observation-panel header strong,
+.water-coverage-panel header strong {
+  display: none;
+}
+
+.water-observation-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 20px;
+}
+
+.water-observation-row span {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-2);
+}
+
+.water-observation-row p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--amber);
+}
+
+.water-empty-note {
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted-3);
+}
+
+.water-snow-page .water-event-panel,
+.water-snow-page .water-main-grid {
+  display: none;
 }
 
 .water-field-lattice-row,
@@ -3227,6 +4089,115 @@
   color: var(--ink);
 }
 
+.geo-summary-strip article small,
+.regional-summary-strip article small {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--muted-3);
+}
+
+.geo-summary-strip article.geo-tile-text strong,
+.regional-summary-strip article.geo-tile-text strong {
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.geo-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 56px;
+  align-items: start;
+}
+
+.geo-catalog-grid h2,
+.regional-indicators h2 {
+  margin: 0 0 24px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.geo-shape-row,
+.geo-resolved-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.geo-shape-list > :last-child,
+.geo-resolved-list > :last-child {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.geo-shape-row span:first-child,
+.geo-resolved-label {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.geo-shape-bar {
+  display: block;
+  width: 110px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.geo-shape-bar > span {
+  display: block;
+  height: 5px;
+  background: var(--blue);
+}
+
+.geo-shape-bar.is-empty > span {
+  width: 0;
+  background: var(--muted-2);
+}
+
+.geo-shape-count {
+  width: 56px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted-3);
+}
+
+.geo-resolved-row .material-symbols-outlined,
+.geo-resolved-row .material-icon {
+  font-size: 19px;
+  color: var(--muted-2);
+}
+
+.geo-resolved-kind {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+}
+
+.geo-catalog-note {
+  margin: 24px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted-3);
+}
+
+.regional-indicators {
+  display: flex;
+  flex-direction: column;
+}
+
+.regional-table .is-empty {
+  color: var(--muted-2);
+  font-weight: 400;
+}
+
 .city-glass-panel,
 .geo-glass-panel,
 .regional-glass-panel {
@@ -3235,6 +4206,16 @@
   background: var(--canvas);
   box-shadow: none;
   padding: 28px;
+}
+
+.geo-summary-strip > .geo-glass-panel,
+.regional-summary-strip > .regional-glass-panel {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 24px 26px;
 }
 
 .city-service-list {
@@ -3364,10 +4345,10 @@
     gap: 32px;
   }
 
-  .workspace-evidence-heading h2,
+  .workspace-evidence-heading h1,
   .dashboard-content :where(.weather-detail-header, .air-detail-header, .energy-detail-header,
     .transit-detail-header, .road-rail-detail-header, .water-detail-header,
-    .city-detail-header, .linked-events-header) h2 {
+    .city-detail-header, .linked-events-header) h1 {
     font-size: 32px;
   }
 }
@@ -3384,7 +4365,18 @@
 }
 
 @media (max-width: 1023px) {
+  .side-nav-collapse-button {
+    display: inline-flex;
+  }
+
+  .dashboard-shell,
+  .dashboard-app {
+    height: 100vh;
+    overflow: hidden;
+  }
+
   .dashboard-content {
+    overflow-y: auto;
     padding: 40px 24px calc(80px + env(safe-area-inset-bottom));
   }
 
@@ -3513,6 +4505,486 @@
   }
 }
 
+/* --- Hairline restyles for remaining workspace chrome --- */
+.energy-signal-panel,
+.energy-main-grid {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.energy-price-chart {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 28px 28px 20px;
+  margin-bottom: 56px;
+}
+
+.transit-main-grid,
+.road-rail-main-grid,
+.transit-alert-panel,
+.road-rail-incident-panel,
+.transit-alert-layout,
+.road-rail-incident-layout,
+.transit-alert-list-column,
+.road-rail-incident-list-column {
+  display: contents;
+}
+
+.transit-alert-panel > header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.road-rail-incident-panel > header {
+  display: none;
+}
+
+.transit-alert-panel > header span,
+.road-rail-incident-panel > header span {
+  display: none;
+}
+
+.transit-alert-panel > header h3,
+.road-rail-incident-panel > header h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.transit-alert-panel > header strong,
+.road-rail-incident-panel > header strong {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted-3);
+}
+
+.transit-alert-list,
+.road-rail-incident-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.transit-alert,
+.road-rail-incident {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  text-align: left;
+  box-shadow: none;
+}
+
+.road-rail-incident {
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+}
+
+.transit-alert-dot,
+.road-rail-incident-dot,
+.transit-alert-window,
+.road-rail-incident-window,
+.transit-alert em,
+.road-rail-incident em,
+.transit-alert-scope-preview,
+.road-rail-incident-scope-preview {
+  display: none;
+}
+
+.transit-alert-main,
+.road-rail-incident-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.transit-alert-main strong,
+.road-rail-incident-main strong {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.transit-alert-main p,
+.road-rail-incident-main p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted-3);
+}
+
+.transit-alert-severity,
+.road-rail-incident-kind {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  color: var(--muted-3);
+}
+
+.transit-alert-severity-warn {
+  color: var(--amber);
+  border-color: var(--amber-line);
+}
+
+.transit-alert-main small,
+.road-rail-incident-main small {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-3);
+}
+
+.transit-alert-when,
+.road-rail-incident-when {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+.transit-alert-time-row > :not(:last-child),
+.road-rail-incident-time-row > :not(:last-child),
+.transit-alert-meta span:not(:last-child),
+.road-rail-incident-meta span:not(:last-child) {
+  display: none;
+}
+
+.transit-alert-time-row > :last-child,
+.road-rail-incident-time-row > :last-child {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  text-align: center;
+}
+
+.linked-events-command,
+.linked-events-main-grid,
+.linked-events-timeline-panel {
+  display: contents;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.linked-events-filter-panel,
+.linked-events-panel.linked-events-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.linked-events-filter,
+.linked-events-filter-chip {
+  border: 1px solid var(--line);
+  border-radius: var(--r-filter);
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  box-shadow: none;
+}
+
+.linked-events-filter-active,
+.linked-events-filter-chip-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+
+.linked-events-filter strong {
+  display: none;
+}
+
+.linked-events-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 260px;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  padding: 0 2px 8px;
+  background: transparent;
+}
+
+.linked-events-search input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+}
+
+.linked-events-category-grid {
+  margin-bottom: 48px;
+}
+
+.linked-events-category-chip.active {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.linked-events-category-chip .material-symbols-outlined,
+.linked-events-category-chip strong {
+  display: none;
+}
+
+.linked-events-category-chip[data-category="other"],
+.linked-events-category-grid > button:last-child {
+  display: none;
+}
+
+.linked-events-empty-state {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 26px 0;
+  color: var(--muted-2);
+  font-size: 14px;
+}
+
+.linked-events-timeline-list,
+.linked-events-list {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.linked-events-scope-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-2);
+}
+
+.linked-events-category-panel,
+.linked-events-panel.linked-events-category-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 20px 0 0;
+  margin-bottom: 48px;
+}
+
+.linked-events-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+  padding: 26px 0;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.water-snow-page,
+.geospatial-detail-page,
+.city-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.water-snow-page .water-insight-grid,
+.water-snow-page .water-main-grid,
+.water-snow-page .water-side-grid,
+.geospatial-detail-page .water-bento-grid,
+.geospatial-detail-page .water-main-grid,
+.city-bento-grid,
+.city-main-grid,
+.city-side-grid,
+.regional-profile-detail-page .water-main-grid {
+  display: contents;
+}
+
+.water-snow-page .water-coverage-panel,
+.water-snow-page .water-event-panel,
+.geospatial-detail-page .water-coverage-panel,
+.geospatial-detail-page .water-event-panel,
+.city-field-panel,
+.city-service-panel,
+.regional-profile-detail-page .water-signal-panel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.water-coverage-panel header,
+.water-event-panel header,
+.city-field-panel header,
+.city-service-panel header,
+.geospatial-detail-page .water-signal-panel header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.water-coverage-panel header strong,
+.water-event-panel header strong,
+.city-field-panel header strong {
+  display: none;
+}
+
+.water-coverage-row i,
+.water-coverage-row span {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-3);
+}
+
+.water-coverage-row i {
+  width: 120px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.water-coverage-row i span {
+  display: block;
+  height: 5px;
+  background: var(--green);
+}
+
+.water-event,
+.water-event-list > article {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line-soft);
+  background: transparent;
+}
+
+.water-event-dot {
+  display: none;
+}
+
+.city-field-panel header span,
+.city-field-panel header .data-help-label {
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.city-field-panel header strong {
+  display: none;
+}
+
+.city-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
+}
+
+.city-summary-strip > article,
+.city-summary-strip > .city-glass-panel {
+  border: 0;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--canvas);
+  box-shadow: none;
+  padding: 24px 26px;
+}
+
+.city-field-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.city-field-head,
+.city-field-grid > article {
+  display: grid;
+  grid-template-columns: 1fr 160px minmax(0, 2fr);
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: transparent;
+}
+
+.city-field-head {
+  border-bottom-color: var(--line-strong);
+}
+
+.city-field-head span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+.city-field-grid > article {
+  border-top: 0;
+  border-bottom: 1px solid var(--line-softest);
+}
+
+.city-field-grid > article span {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.city-field-grid > article strong,
+.city-field-grid > article p {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--muted-3);
+}
+
+.regional-cell-progress-track,
+.regional-cell-trend {
+  display: none;
+}
+
 /* ==========================================================================
    11. Chinese typography — relax display tracking / line-height, step sizes
    down one notch (README §Chinese typography)
@@ -3539,6 +5011,20 @@
   letter-spacing: -0.005em;
 }
 
+:root[data-language="zh"] .workspace-evidence-title,
+:root[data-language="zh"] .about-hero h1,
+:root[data-language="zh"] .login-brand h1 {
+  font-size: 36px;
+  letter-spacing: -0.005em;
+  line-height: 1.32;
+}
+
+:root[data-language="zh"] .login-brand h1 {
+  font-size: 21px;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
 /* ==========================================================================
    12. Reduced motion
    ========================================================================== */
@@ -3549,5 +5035,324 @@
   .today-glance-item,
   .metric-tile {
     transition: none;
+  }
+}
+
+.brand-title-mobile-nav {
+  display: none;
+}
+
+.mobile-header-secondary {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .mobile-dashboard-header {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+    background: var(--canvas);
+    border-bottom: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .mobile-brand-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+
+  .mobile-brand strong {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .mobile-brand > .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mobile-brand .notification-button,
+  .mobile-brand .icon-button:last-child {
+    margin-left: auto;
+  }
+
+  .mobile-context-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--line-soft);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .mobile-context-row .city-scope-control,
+  .mobile-context-row .date-scope-control {
+    min-height: 0;
+    height: auto;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mobile-context-row .city-scope-label,
+  .mobile-context-row .city-scope-chevron,
+  .mobile-context-row .date-scope-icon,
+  .mobile-context-row .date-scope-chevron,
+  .mobile-context-row .date-scope-status {
+    display: none;
+  }
+
+  .mobile-context-row .city-scope-copy,
+  .mobile-context-row .date-scope-picker {
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-context-row .city-scope-control > .material-symbols-outlined:first-child {
+    display: inline-flex;
+    font-size: 15px;
+    color: var(--muted-2);
+  }
+
+  .mobile-context-row .city-scope-value,
+  .mobile-context-row .date-scope-value-short {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: transparent;
+  }
+
+  .mobile-context-row .date-scope-value-full {
+    display: none !important;
+  }
+
+  .mobile-context-row .date-scope-value-short {
+    display: block !important;
+  }
+
+  .mobile-context-row .date-scope-control {
+    min-width: 0;
+    width: auto;
+  }
+
+  .mobile-context-sep {
+    color: var(--divider-fill);
+  }
+
+  .mobile-context-settings {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    color: var(--muted-2);
+  }
+
+  .mobile-header-secondary {
+    display: none !important;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .brand-icon,
+  .dashboard-side-nav.mobile-side-nav-open .brand-title-desktop,
+  .dashboard-side-nav.mobile-side-nav-open .brand-title-subtitle {
+    display: none;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .brand-title-mobile-nav {
+    display: inline;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .dashboard-side-nav.mobile-side-nav-open .brand-panel {
+    height: 52px;
+    align-items: center;
+    padding: 0 16px 0 8px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .side-nav-mobile-preferences {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px 12px 0;
+  }
+
+  .dashboard-shell-mode-today .demo-mode-banner,
+  .dashboard-shell-mode-today .today-assistant-action,
+  .dashboard-shell-mode-today .today-provenance,
+  .dashboard-shell-mode-today .today-glance-title,
+  .dashboard-shell-mode-today .today-scope-note,
+  .dashboard-shell-mode-today .today-decisions,
+  .dashboard-shell-mode-today .day-plan-timeline-header h3,
+  .dashboard-shell-mode-today .day-plan-timeline-detail,
+  .dashboard-shell-mode-today .day-plan-timeline-top .material-symbols-outlined {
+    display: none;
+  }
+
+  .dashboard-shell-mode-today .today-command,
+  .dashboard-shell-mode-today .today-content-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .dashboard-shell-mode-today .today-content-grid {
+    margin-top: 24px;
+  }
+
+  .dashboard-shell-mode-today .today-focus h1,
+  .dashboard-shell-mode-today .today-focus h2 {
+    font-size: 28px;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    margin-bottom: 12px;
+  }
+
+  .dashboard-shell-mode-today .today-focus > p {
+    font-size: 14.5px;
+    line-height: 1.55;
+    margin-bottom: 22px;
+  }
+
+  .dashboard-shell-mode-today .today-eyebrow {
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+
+  .dashboard-shell-mode-today .today-primary-action {
+    width: 100%;
+    height: 48px;
+    justify-content: center;
+    font-size: 15px;
+    margin-bottom: 0;
+  }
+
+  .dashboard-shell-mode-today .today-primary-action .material-symbols-outlined {
+    display: none;
+  }
+
+  .dashboard-shell-mode-today .today-glance {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .dashboard-shell-mode-today .today-glance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--line-soft);
+    border-left: 1px solid var(--line-soft);
+  }
+
+  .dashboard-shell-mode-today .today-glance-item,
+  .dashboard-shell-mode-today .today-glance-item:last-child {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 0;
+    padding: 14px;
+    border: 0;
+    border-right: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .dashboard-shell-mode-today .today-glance-item > .material-symbols-outlined {
+    display: none;
+  }
+
+  .dashboard-shell-mode-today .today-glance-item > span:last-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .dashboard-shell-mode-today .today-glance-item small {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+  }
+
+  .dashboard-shell-mode-today .today-glance-item strong {
+    font-size: 19px;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-header {
+    margin-bottom: 14px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-button {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 0;
+    align-items: start;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-top {
+    min-width: 0;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-top strong {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-button time {
+    grid-row: 1;
+    font-size: 11px;
+    padding-top: 0;
+    height: 1.2em;
+    overflow: hidden;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-top .status-badge {
+    display: none;
+  }
+
+  .energy-summary-strip,
+  .transit-summary-strip,
+  .road-rail-summary-strip,
+  .water-summary-strip,
+  .weather-detail-metrics,
+  .air-summary-strip {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    overflow: visible;
+    margin-inline: 0;
+    padding: 0;
+  }
+
+  .energy-summary-strip article strong,
+  .transit-summary-strip article strong,
+  .road-rail-summary-strip article strong {
+    overflow-wrap: anywhere;
   }
 }

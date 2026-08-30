@@ -118,6 +118,43 @@ function formatCompactTime(
     .toUpperCase();
 }
 
+function formatClockTime(
+  value: string | null | undefined,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  if (!value) {
+    return tKey("roadRail.notObserved");
+  }
+
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return tKey("roadRail.notObserved");
+  }
+
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: resolveDataTimezone(timeZone),
+  }).format(parsedDate);
+}
+
+function formatIncidentWindow(
+  incident: RoadRailIncident,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  return `${formatClockTime(incident.starts_at, language, tKey, timeZone)} – ${formatClockTime(incident.ends_at, language, tKey, timeZone)}`;
+}
+
+function uniqueJoined(values: string[]): string {
+  const unique = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+  return unique.length > 0 ? unique.slice(0, 4).join(" · ") : UNAVAILABLE_DATA_VALUE;
+}
+
 function formatTimelineBoundary(value: number, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsedDate = parseValidDate(value);
   if (!parsedDate) {
@@ -864,14 +901,17 @@ export function RoadRailWorkspace({
   const readyPipelineCount = roadRail.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = roadRail.source_requests.filter((request) => request.status === "fetched").length;
   const focusCorridor = topCorridors[0]?.label ?? tKey("roadRail.noCorridorFocus");
-  const roadRailSummaryMetrics = [
-    ["raw_messages", "rawMessagesSummary"],
-    ["active_events", isHistorical ? "activeAtSnapshotSummary" : "activeNowSummary"],
-    ["road_disruptions", "roadEventsSummary"],
-    ["road_weather", "weatherRiskSummary"],
-    ["corridors", "corridors"],
-    ["rail_events", "railEventsSummary"]
-  ];
+  const corridorPreview = uniqueJoined(roadRail.corridors.map((corridor) => corridor.label));
+  const roadworkIncidents = roadRail.incidents.filter((incident) =>
+    /roadwork|construction|resurfac|maintenance/i.test(
+      `${incident.event_type} ${incident.situation_type ?? ""} ${incident.message_type ?? ""} ${incident.title}`,
+    ),
+  );
+  const railPreview = uniqueJoined(
+    roadRail.incidents
+      .filter((incident) => /rail/i.test(`${incident.event_type} ${incident.situation_type ?? ""} ${incident.title}`))
+      .map((incident) => incident.location_description || incident.location_ref),
+  );
   const liveTone = liveStatusTone(roadRail.status);
 
   return (
@@ -936,20 +976,60 @@ export function RoadRailWorkspace({
       </section>
 
       <section className="road-rail-summary-strip" aria-label={tKey("roadRail.roadAndRailSummaryMetrics")}>
-        {roadRailSummaryMetrics.map(([key, labelKey]) => (
-          <article className="road-rail-glass-panel" key={key}>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key,
-                label: tKey(`roadRail.${labelKey}`),
-                language,
-              })}
-            >
-              {tKey(`roadRail.${labelKey}`)}
-            </DataLabelWithHelp>
-            <strong>{metricValue(roadRail, key)}</strong>
-          </article>
-        ))}
+        <article className="road-rail-glass-panel">
+          <DataLabelWithHelp
+            helpText={dataHelpText({
+              key: "active_events",
+              label: tKey("roadRail.activeEventsTitle"),
+              language,
+            })}
+          >
+            {tKey("roadRail.activeEventsTitle")}
+          </DataLabelWithHelp>
+          <strong className={roadRail.quality.active_event_count > 0 ? "is-watch" : undefined}>
+            {roadRail.quality.active_event_count}
+          </strong>
+          <small>{tKey("roadRail.providerDefinedScope")}</small>
+        </article>
+        <article className="road-rail-glass-panel">
+          <DataLabelWithHelp
+            helpText={dataHelpText({
+              key: "road_disruptions",
+              label: tKey("roadRail.roadworks"),
+              language,
+            })}
+          >
+            {tKey("roadRail.roadworks")}
+          </DataLabelWithHelp>
+          <strong>{roadworkIncidents.length}</strong>
+          <small>{corridorPreview}</small>
+        </article>
+        <article className="road-rail-glass-panel">
+          <DataLabelWithHelp
+            helpText={dataHelpText({
+              key: "rail_events",
+              label: tKey("roadRail.railNotices"),
+              language,
+            })}
+          >
+            {tKey("roadRail.railNotices")}
+          </DataLabelWithHelp>
+          <strong>{roadRail.quality.rail_event_count}</strong>
+          <small>{railPreview}</small>
+        </article>
+        <article className="road-rail-glass-panel road-rail-scope-tile">
+          <DataLabelWithHelp
+            helpText={dataHelpText({
+              key: "network_scope",
+              label: tKey("roadRail.scopeTitle"),
+              language,
+            })}
+          >
+            {tKey("roadRail.scopeTitle")}
+          </DataLabelWithHelp>
+          <strong>{tKey("roadRail.nationalScope")}</strong>
+          <small className="is-watch">{tKey("roadRail.cityDoesNotNarrow")}</small>
+        </article>
       </section>
 
       <section className="road-rail-main-grid" aria-label={tKey("roadRail.roadAndRailAnalytics")}>
@@ -1033,27 +1113,26 @@ export function RoadRailWorkspace({
                       onClick={() => setSelectedIncidentId(incident.id)}
                       type="button"
                     >
-                      <span className="road-rail-incident-dot" aria-hidden="true" />
-                      <div className="road-rail-incident-main">
-                        <div>
-                          <div className="road-rail-incident-time-row">
-                            <RoadRailIncidentStatusBadge incident={incident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
-                            <span>{enumLabel(incident.severity)}</span>
-                          </div>
-                            <strong>{localizedPlatformCopy(incident.title, language) ?? incident.title}</strong>
-                            <p>{localizedPlatformCopy(incident.description, language) ?? incident.description}</p>
-                          <small className="road-rail-incident-scope-preview">{scopePreview(incident, tKey)}</small>
-                        </div>
-                        <em>{eventTypeLabel(incident.event_type, language)}</em>
-                      </div>
-                      <span className="road-rail-incident-window" aria-hidden="true">
-                        <span style={{ width: `${incidentWindowProgress(incident, nowTimestamp)}%` }} />
+                      <span className="road-rail-incident-kind">
+                        {eventTypeLabel(incident.event_type, language)}
                       </span>
-                      <div className="road-rail-incident-meta">
-                        <span>{messageTypeLabel(incident.message_type, language, tKey)}</span>
-                        <span>{locationLabel(incident, tKey)}</span>
-                        <span>{tKey("roadRail.until")} {formatCompactTime(incident.ends_at, language, tKey, dataTimezone)}</span>
+                      <div className="road-rail-incident-main">
+                        <strong>{localizedPlatformCopy(incident.title, language) ?? incident.title}</strong>
+                        <p>{localizedPlatformCopy(incident.description, language) ?? incident.description}</p>
+                        <small>
+                          {roadRail.source_code.toUpperCase()} · {formatClockTime(incident.starts_at, language, tKey, dataTimezone)}
+                        </small>
+                        <div className="sr-only">
+                          <RoadRailIncidentStatusBadge incident={incident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <span>{enumLabel(incident.severity)}</span>
+                          <small className="road-rail-incident-scope-preview">{scopePreview(incident, tKey)}</small>
+                          <span>{messageTypeLabel(incident.message_type, language, tKey)}</span>
+                          <span>{locationLabel(incident, tKey)}</span>
+                        </div>
                       </div>
+                      <span className="road-rail-incident-when">
+                        {formatIncidentWindow(incident, language, tKey, dataTimezone)}
+                      </span>
                     </button>
                   ))
                 ) : (

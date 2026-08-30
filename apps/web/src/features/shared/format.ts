@@ -11,7 +11,7 @@ export function parseValidDate(
 
 export function formatTimestamp(
   value: string | null,
-  mode: "dateTime" | "date" = "dateTime",
+  mode: "dateTime" | "date" | "time" = "dateTime",
   language: "en" | "zh" = "en",
   timeZone?: string,
 ): string {
@@ -24,17 +24,24 @@ export function formatTimestamp(
     return language === "zh" ? "暂无数据" : "Not available";
   }
 
-  const options: Intl.DateTimeFormatOptions = {
-    day: "2-digit",
-    month: "short",
-    ...(mode === "dateTime"
+  const options: Intl.DateTimeFormatOptions =
+    mode === "time"
       ? {
           hour: "2-digit",
-          minute: "2-digit"
+          minute: "2-digit",
+          ...(timeZone ? { timeZone } : {}),
         }
-      : {}),
-    ...(timeZone ? { timeZone } : {}),
-  };
+      : {
+          day: "2-digit",
+          month: "short",
+          ...(mode === "dateTime"
+            ? {
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            : {}),
+          ...(timeZone ? { timeZone } : {}),
+        };
 
   try {
     return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", options).format(

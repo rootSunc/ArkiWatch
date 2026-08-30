@@ -7,6 +7,17 @@ import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 import type { NavItem } from "./data-platform-shell";
 import { useI18n } from "./i18n";
 
+const MOBILE_ITEM_LABEL_KEYS: Record<string, string> = {
+  today: "shell.navToday",
+  overview: "shell.navSignalsShort",
+  weather: "shell.navWeather",
+  mobility: "shell.navMobilityShort",
+};
+
+function mobileItemLabelKey(itemKey: string, fallbackLabelKey: string): string {
+  return MOBILE_ITEM_LABEL_KEYS[itemKey] ?? `shell.${fallbackLabelKey}`;
+}
+
 type MobileBottomNavProps = {
   assistantButtonRef: Ref<HTMLButtonElement>;
   isScopePending: boolean;
@@ -58,7 +69,7 @@ export function MobileBottomNav({
               <span className="material-symbols-outlined" aria-hidden="true">
                 {item.icon}
               </span>
-              <span>{tKey(`shell.${item.labelKey}`)}</span>
+              <span>{tKey(mobileItemLabelKey(item.key, item.labelKey))}</span>
             </button>
           );
         })}
@@ -76,7 +87,7 @@ export function MobileBottomNav({
           type="button"
         >
           <AssistantGlyph />
-          <span>{tKey("shell.assistant")}</span>
+          <span>{tKey("shell.ask")}</span>
         </button>
       </nav>
     </footer>

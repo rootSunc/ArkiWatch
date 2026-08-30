@@ -265,11 +265,7 @@ export function WeatherDetailView({
       <TrendChart
         className="weather-glass-panel"
         emptyMessage={tKey("weather.noDailyWeatherHistoryIsAvailable")}
-        eyebrow={
-          historyPoints.length > 0
-            ? `${historyPoints.length}D ${tKey("weather.history")}`
-            : tKey("weather.history")
-        }
+        eyebrow={tKey("weather.history")}
         maximumFractionDigits={1}
         points={historyPoints}
         title={tKey("weather.dailyAverageTemperature")}

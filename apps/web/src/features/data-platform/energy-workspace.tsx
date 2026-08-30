@@ -26,22 +26,24 @@ import {
   chartX,
   chartY,
   resolveMetricLabel,
+  energyHighlightRows,
   energyHistoryPoints,
   energyMetricTone,
   energyTimelineItems,
   formatCompactTime,
+  formatPriceNumber,
   formatEnergyPointValue,
   formatEnergyRange,
   formatEnergySpread,
   formatEstimatedCost,
   formatMetricValue,
+  householdChromeTiles,
   isNoActiveWindowLabel,
   isWindowPoint,
   latestEnergyEvent,
   metricByKey,
   metricProgress,
   metricTone,
-  orderedEnergyMetrics,
   pointValueRange,
   pollIntervalLabel,
   priceAreaPath,
@@ -53,6 +55,7 @@ import {
   sourceStatusLabel,
   sourceStatusMetric,
   sourceVolumePoints,
+  systemChromeTiles,
   toneFromSeverity,
   toneFromStatus,
 } from "./energy-workspace-utils";
@@ -168,17 +171,6 @@ export function EnergyWorkspace({
       ? formatCompactTime(latestEvent.ends_at, language, tKey, dataTimezone)
       : tKey("energy.waitingForEvent");
   const householdWindowUsage = isPricePanel && window?.usage_kwh != null ? window.usage_kwh : null;
-  const householdUsageMetric = householdWindowUsage !== null
-    ? {
-      key: "window_usage",
-      label: tKey("energy.windowUsage"),
-      value: `${householdWindowUsage.toFixed(2)}`,
-      unit: "kWh",
-      tone: "neutral",
-      detail: null,
-      updated_at: window?.starts_at ?? null
-    }
-    : null;
   const windowAveragePoint = window
     ? {
       starts_at: window.starts_at,
@@ -214,9 +206,11 @@ export function EnergyWorkspace({
       : tKey("energy.fingridDataHasNotProducedALowValueEnergyWindowForTheCurrentPlatformView"));
   const points = activeEnergy?.points ?? [];
   const sourceChartPoints = points.slice(0, 96);
-  const chartPointPairs = chartDisplayPoints(sourceChartPoints, isPricePanel, activeEnergy?.unit, householdWindowUsage);
+  const chartPointPairs = isPricePanel
+    ? sourceChartPoints.map((point) => ({ raw: point, display: point }))
+    : chartDisplayPoints(sourceChartPoints, false, activeEnergy?.unit, householdWindowUsage);
   const chartPoints = chartPointPairs.map((point) => point.display);
-  const chartUnit = isPricePanel ? "EUR" : activeEnergy?.unit;
+  const chartUnit = activeEnergy?.unit;
   const chartRange = chartPoints.length > 0 ? pointValueRange(chartPoints) : null;
   const chartVisualScale = chartPoints.length > 0 ? chartScale(chartPoints, isPricePanel) : null;
   const xTicks = chartPoints.length > 0 ? (() => {
@@ -239,19 +233,12 @@ export function EnergyWorkspace({
   const activeObservedAt = isHistorical
     ? activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? latestEvent?.starts_at ?? scopedReferenceTime(activeEnergy?.time_scope)
     : activeEnergy?.observed_at ?? lowWindowMetric?.updated_at ?? activeSource?.last_run_finished_at ?? null;
-  const activeTitle = isPricePanel ? `${priceProviderName} ${tKey("energy.householdEnergyPrice")}` : tKey("energy.fingridEnergySignals");
   const activeDataFeedName = activeSource?.source_name ?? (isPricePanel ? "Porssisahko.net" : "Fingrid");
   const activeSourceName = isPricePanel ? priceProviderName : activeDataFeedName;
   const sourceDisclosureName = isPricePanel ? activeDataFeedName : activeSourceName;
   const activeUnitLabel = isPricePanel ? "EUR" : activeEnergy?.unit ?? tKey(`energy.${activeProfile.noUnitLabelKey}`);
   const datasetCount = activeSource?.datasets?.length ?? 0;
   const datasetCountLabel = datasetCount > 0 ? String(datasetCount) : tKey("energy.notObserved");
-  const baseSummaryMetrics: PanelMetric[] = activeEnergy?.metrics.length
-    ? orderedEnergyMetrics(activeEnergy.metrics, isPricePanel).slice(0, 5)
-    : [lowWindowMetric, recordsMetric, sourceStateMetric, householdUsageMetric].filter((metric): metric is PanelMetric => metric !== null);
-  const displaySummaryMetrics = householdUsageMetric
-    ? [...baseSummaryMetrics, householdUsageMetric]
-    : baseSummaryMetrics;
   const activeVolumePoints = activeSourcePoints.length > 0 ? activeSourcePoints : [{
     label: activePanel,
     value: activeSource?.records_ingested ?? 0,
@@ -262,6 +249,47 @@ export function EnergyWorkspace({
     metric?.key === "records_ingested" && !hasObservedRecords
       ? tKey("energy.notObserved")
       : formatMetricValue(metric, tKey);
+  const chromeReference = scopedReferenceTime(activeEnergy?.time_scope, activeObservedAt);
+  const chromeTiles = isPricePanel
+    ? householdChromeTiles({
+        energy: activeEnergy,
+        fallbackProvider: DEFAULT_HOUSEHOLD_PRICE_PROVIDER,
+        noValue: tKey("energy.noValue"),
+        referenceTime: chromeReference,
+        tKey,
+        timeZone: dataTimezone,
+      })
+    : systemChromeTiles({
+        energy: activeEnergy,
+        noValue: tKey("energy.noValue"),
+        pollLabel: pollIntervalLabel(activeSource?.poll_interval_seconds, tKey),
+        tKey,
+      });
+  const highlightRows = isPricePanel
+    ? energyHighlightRows({
+        energy: activeEnergy,
+        noValue: tKey("energy.noValue"),
+        referenceTime: chromeReference,
+        tKey,
+        timeZone: dataTimezone,
+      })
+    : [];
+  const chartDate = chromeReference
+    ? new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+        day: "2-digit",
+        month: "short",
+        timeZone: dataTimezone,
+      }).format(new Date(chromeReference))
+    : "";
+  const chartTitle = isPricePanel
+    ? tKey("energy.estimatedHouseholdCostOn").replace("{date}", chartDate)
+    : tKey("energy.nationalGridLoad24h");
+  const chartRangeLabel = chartRange
+    ? `${formatPriceNumber(chartRange.min)} – ${formatPriceNumber(chartRange.max)} ${chartUnit ?? ""}`.trim()
+    : isPricePanel
+      ? tKey("energy.ckwhUnit")
+      : (activeEnergy?.unit ?? "MW");
+  const hourFooter = ["00", "06", "12", "18", "23"];
 
   return (
     <section className={`energy-detail-page ${activeProfile.pageClassName}`} aria-label={tKey("energy.energyDetail")}>
@@ -271,19 +299,20 @@ export function EnergyWorkspace({
         fallbackKey="energy.notObserved"
         language={language}
         observedAt={activeObservedAt}
-        sourceLabel={activeSourceName}
-        status={activeSourceLabel}
+        sourceLabel={tKey("energy.sourcePair")}
+        status={tKey("energy.householdAndGridAreSeparate")}
         statusTone={activeTone}
         tKey={tKey}
         timeScope={activeEnergy?.time_scope}
-        title={activeTitle}
+        title={tKey("energy.householdPriceAndGridLoad")}
         timezone={dataTimezone}
-      />
+      >
+        <p>{sourceDisclosureName} · {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
+      </WorkspaceEvidenceHeader>
 
       <nav className="energy-tab-list" aria-label={tKey("energy.energyWorkspaceTabs")} role="tablist">
         {ENERGY_PANEL_TABS.map((tab) => {
-          const tabLabel =
-            tab.key === "porssisahko" ? `${priceProviderName} ${tKey("energy.prices")}` : tKey(`energy.${tab.labelKey}`);
+          const tabLabel = tKey(`energy.${tab.labelKey}`);
 
           return (
             <button
@@ -373,19 +402,14 @@ export function EnergyWorkspace({
       </section>
 
       <section className="energy-summary-strip" aria-label={tKey("energy.energySummaryMetrics")}>
-        {displaySummaryMetrics.map((metric) => (
-          <article className={`energy-glass-panel energy-summary-${metricTone(metric)}`} key={metric.key}>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: metric.key,
-                label: resolveMetricLabel(metric, tKey, language),
-                detail: "detail" in metric ? metric.detail : null,
-                language,
-              })}
-            >
-              {resolveMetricLabel(metric, tKey, language)}
-            </DataLabelWithHelp>
-            <strong>{formatDisplayedMetric(metric)}</strong>
+        {chromeTiles.map((tile) => (
+          <article
+            className={`energy-glass-panel energy-summary-${tile.tone ?? "neutral"}${tile.compact ? " energy-summary-compact" : ""}`}
+            key={tile.key}
+          >
+            <span>{tile.label}</span>
+            <strong>{tile.value}</strong>
+            <small>{tile.caption}</small>
           </article>
         ))}
       </section>
@@ -411,6 +435,13 @@ export function EnergyWorkspace({
           </header>
           {chartPoints.length > 0 && chartRange && chartVisualScale ? (
             <div className="energy-price-chart" aria-label={isPricePanel ? tKey("energy.householdElectricityPriceForecast") : tKey("energy.fingridElectricitySystemTimeseries")}>
+              <div className="energy-chart-heading">
+                <div>
+                  <span>{tKey(`energy.${activeProfile.chartKindLabelKey}`)}</span>
+                  <h2>{chartTitle}</h2>
+                </div>
+                <em>{chartRangeLabel}</em>
+              </div>
               <div className="energy-chart-context" aria-label={tKey("energy.energyChartContext")}>
                 <article>
                   <span>{tKey(`energy.${activeProfile.rangeLabelKey}`)}</span>
@@ -671,23 +702,31 @@ export function EnergyWorkspace({
                   </div>
                 </div>
               )}
+              <div className="energy-chart-hours" aria-hidden="true">
+                {hourFooter.map((hour) => (
+                  <span key={hour}>{hour}</span>
+                ))}
+              </div>
+              {isPricePanel ? (
               <div className="energy-price-list">
                 <article className="energy-price-row energy-price-row-heading" aria-hidden="true">
-                  <span>{tKey("energy.starts")}</span>
-                  <strong>{tKey(`energy.${activeProfile.valueColumnLabelKey}`)}</strong>
-                  <em>{tKey(`energy.${activeProfile.detailColumnLabelKey}`)}</em>
+                  <span>{tKey("energy.windowColumn")}</span>
+                  <strong>{tKey("energy.estimatedCost")}</strong>
+                  <em>{tKey("energy.spotPrice")}</em>
+                  <small>{tKey("energy.noteColumn")}</small>
                 </article>
-                {chartPointPairs.slice(0, 12).map(({ raw, display }) => {
-                  const inWindow = isWindowPoint(display, window?.starts_at, window?.ends_at);
-                  return (
-                    <article className={inWindow ? "energy-price-row energy-price-row-window" : "energy-price-row"} key={display.starts_at}>
-                      <span>{formatCompactTime(display.starts_at, language, tKey, dataTimezone)}</span>
-                      <strong>{formatEnergyPointValue(display, chartUnit)}</strong>
-                      <em>{isPricePanel ? formatEnergyPointValue(raw, activeEnergy?.unit) : formatCompactTime(display.ends_at, language, tKey, dataTimezone)}</em>
-                    </article>
-                  );
-                })}
+                {highlightRows.map((row) => (
+                  <article className={`energy-price-row energy-price-row-${row.tone ?? "neutral"}`} key={row.key}>
+                    <span>{row.window}</span>
+                    <strong>{row.cost}</strong>
+                    <em>{row.spot}</em>
+                    <small>{row.note}</small>
+                  </article>
+                ))}
               </div>
+              ) : (
+                <p className="energy-disclaimer">{tKey("energy.gridLoadIsNational")}</p>
+              )}
             </div>
           ) : null}
           <div className="energy-signal-list">

@@ -23,7 +23,13 @@ import type {
   PlatformVisualizationTimelineItem,
 } from "./types";
 import type { EnergyPanelKey } from "./workspace-query-params";
-import type { EnergyDisplayPoint, EnergyTone, PanelMetric } from "./energy-workspace-types";
+import type {
+  EnergyChromeTile,
+  EnergyDisplayPoint,
+  EnergyHighlightRow,
+  EnergyTone,
+  PanelMetric,
+} from "./energy-workspace-types";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 
 export function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string): string {
@@ -518,6 +524,259 @@ export function energyHistoryPoints(
           : rangeDetail
       }
     ];
+  });
+}
+
+export function formatClockTime(
+  value: string | null | undefined,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsedDate = parseValidDate(value);
+  if (!parsedDate) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: resolveDataTimezone(timeZone),
+  }).format(parsedDate);
+}
+
+export function formatClockRange(
+  startsAt: string | null | undefined,
+  endsAt: string | null | undefined,
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
+  const start = formatClockTime(startsAt, timeZone);
+  const end = formatClockTime(endsAt, timeZone);
+  if (start && end) {
+    return `${start} – ${end}`;
+  }
+
+  return start ?? end ?? "";
+}
+
+export function formatGroupedInt(value: number): string {
+  return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+export function formatPriceNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+export function formatSpreadNumber(value: number): string {
+  return value.toFixed(1);
+}
+
+export function pointAtReference(
+  points: EnergyPoint[],
+  reference: string | null | undefined,
+): EnergyPoint | null {
+  if (points.length === 0) {
+    return null;
+  }
+
+  const referenceTime = parseValidDate(reference ?? "")?.getTime();
+  if (referenceTime == null) {
+    return points[0] ?? null;
+  }
+
+  return (
+    points.find((point) => {
+      const start = parseValidDate(point.starts_at)?.getTime();
+      const end = parseValidDate(point.ends_at)?.getTime();
+      if (start == null) {
+        return false;
+      }
+
+      return referenceTime >= start && (end == null || referenceTime < end);
+    }) ??
+    points[0] ??
+    null
+  );
+}
+
+function displayUnit(unit: string | null | undefined, fallback: string): string {
+  const trimmed = unit?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
+}
+
+export function householdChromeTiles(options: {
+  energy: EnergyCurrentResponse;
+  fallbackProvider: string;
+  noValue: string;
+  referenceTime: string | null;
+  tKey: (key: string) => string;
+  timeZone?: string;
+}): EnergyChromeTile[] {
+  const { energy, fallbackProvider, noValue, referenceTime, tKey } = options;
+  const timeZone = options.timeZone ?? DEFAULT_DATA_TIME_ZONE;
+  const points = energy.points ?? [];
+  const window = energy.current_window;
+  const unit = displayUnit(window?.unit ?? energy.unit ?? points[0]?.unit, tKey("energy.ckwhUnit"));
+  const minPoint = points.reduce<EnergyPoint | null>(
+    (lowest, point) => (lowest == null || point.value < lowest.value ? point : lowest),
+    null,
+  );
+  const maxPoint = points.reduce<EnergyPoint | null>(
+    (highest, point) => (highest == null || point.value > highest.value ? point : highest),
+    null,
+  );
+  const currentPoint = pointAtReference(points, referenceTime);
+  const bestValue = window?.average_value ?? minPoint?.value ?? null;
+  const bestRange = formatClockRange(
+    window?.starts_at ?? minPoint?.starts_at,
+    window?.ends_at ?? minPoint?.ends_at,
+    timeZone,
+  );
+  const currentRange = formatClockRange(currentPoint?.starts_at, currentPoint?.ends_at, timeZone);
+  const spread =
+    window != null
+      ? window.maximum_value - window.minimum_value
+      : minPoint != null && maxPoint != null
+        ? maxPoint.value - minPoint.value
+        : null;
+  const provider = energy.provider_name?.trim() || fallbackProvider;
+  const vatCaption = unit.toLowerCase().includes("kwh")
+    ? tKey("energy.displayedUnitVat")
+    : `${tKey("energy.displayedUnit")} ${unit}`;
+
+  return [
+    {
+      key: "best_price_today",
+      label: tKey("energy.bestPriceToday"),
+      value: bestValue == null ? noValue : formatPriceNumber(bestValue),
+      caption: bestValue == null ? unit : `${unit} · ${bestRange}`,
+      tone: "good",
+    },
+    {
+      key: "current_hour",
+      label: tKey("energy.currentHour"),
+      value: currentPoint == null ? noValue : formatPriceNumber(currentPoint.value),
+      caption: currentPoint == null ? unit : `${unit} · ${currentRange}`,
+    },
+    {
+      key: "cost_spread",
+      label: tKey("energy.costSpread"),
+      value: spread == null ? noValue : formatSpreadNumber(spread),
+      caption: tKey("energy.costSpreadCaption").replace("{unit}", unit),
+    },
+    {
+      key: "provider",
+      label: tKey("energy.provider"),
+      value: provider,
+      caption: vatCaption,
+      compact: true,
+    },
+  ];
+}
+
+export function systemChromeTiles(options: {
+  energy: EnergyCurrentResponse;
+  noValue: string;
+  pollLabel: string;
+  tKey: (key: string) => string;
+}): EnergyChromeTile[] {
+  const { energy, noValue, pollLabel, tKey } = options;
+  const points = energy.points ?? [];
+  const latest = points[points.length - 1] ?? null;
+  const range = points.length > 0 ? pointValueRange(points) : null;
+  const current = latest?.value ?? energy.quality.average_value;
+  const spread = range != null ? range.max - range.min : null;
+  const unit = displayUnit(energy.unit ?? latest?.unit, "MW");
+
+  return [
+    {
+      key: "current_grid_load",
+      label: tKey("energy.currentGridLoad"),
+      value: current == null ? noValue : formatGroupedInt(current),
+      caption: tKey("energy.mwSystemOnly").replace("{unit}", unit),
+    },
+    {
+      key: "system_value_range",
+      label: tKey("energy.systemValueRange"),
+      value: range == null ? noValue : `${formatGroupedInt(range.min)}\n${formatGroupedInt(range.max)}`,
+      caption: tKey("energy.mwOver24h").replace("{unit}", unit),
+      compact: true,
+    },
+    {
+      key: "system_spread",
+      label: tKey("energy.systemSpread"),
+      value: spread == null ? noValue : formatGroupedInt(spread),
+      caption: unit,
+    },
+    {
+      key: "poll_interval",
+      label: tKey("energy.pollInterval"),
+      value: pollLabel,
+      caption: tKey("energy.fingridOpenData"),
+      compact: true,
+    },
+  ];
+}
+
+export function energyHighlightRows(options: {
+  energy: EnergyCurrentResponse;
+  noValue: string;
+  referenceTime: string | null;
+  tKey: (key: string) => string;
+  timeZone?: string;
+}): EnergyHighlightRow[] {
+  const { energy, noValue, referenceTime, tKey } = options;
+  const timeZone = options.timeZone ?? DEFAULT_DATA_TIME_ZONE;
+  const points = energy.points ?? [];
+  if (points.length === 0) {
+    return [];
+  }
+
+  const unit = displayUnit(energy.unit ?? points[0]?.unit, tKey("energy.ckwhUnit"));
+  const window = energy.current_window;
+  const minPoint = points.reduce((lowest, point) => (point.value < lowest.value ? point : lowest));
+  const maxPoint = points.reduce((highest, point) => (point.value > highest.value ? point : highest));
+  const currentPoint = pointAtReference(points, referenceTime) ?? points[0];
+  const lowStart = window?.starts_at ?? minPoint.starts_at;
+  const lowEnd = window?.ends_at ?? minPoint.ends_at;
+  const lowValue = window?.average_value ?? minPoint.value;
+
+  const candidates: EnergyHighlightRow[] = [
+    {
+      key: `${lowStart}-low`,
+      window: formatClockRange(lowStart, lowEnd, timeZone),
+      cost: `${formatPriceNumber(lowValue)} ${unit}`,
+      spot: noValue,
+      note: tKey("energy.lowestFlexibleWindow"),
+      tone: "good",
+    },
+    {
+      key: `${currentPoint.starts_at}-current`,
+      window: formatClockRange(currentPoint.starts_at, currentPoint.ends_at, timeZone),
+      cost: `${formatPriceNumber(currentPoint.value)} ${unit}`,
+      spot: noValue,
+      note: tKey("energy.currentHourNote"),
+    },
+    {
+      key: `${maxPoint.starts_at}-peak`,
+      window: formatClockRange(maxPoint.starts_at, maxPoint.ends_at, timeZone),
+      cost: `${formatPriceNumber(maxPoint.value)} ${unit}`,
+      spot: noValue,
+      note: tKey("energy.eveningPeakNote"),
+      tone: "warn",
+    },
+  ];
+
+  const seen = new Set<string>();
+  return candidates.filter((row) => {
+    if (seen.has(row.window)) {
+      return false;
+    }
+    seen.add(row.window);
+    return true;
   });
 }
 

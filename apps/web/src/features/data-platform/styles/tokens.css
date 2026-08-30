@@ -67,6 +67,7 @@
 
   /* --- Type families --- */
   --font-ui: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-inter: var(--font-ui);
   --font-ui-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Helvetica Neue", Helvetica, Arial, sans-serif;
   /* The inline var() fallback matters: --font-jetbrains-mono is set by next/font

@@ -2,9 +2,12 @@
   "mobility": {
     "mobilityDetail": "Mobility detail",
     "mobilityWorkspaceTabs": "Mobility workspace tabs",
-    "roadRail": "Road & Rail",
+    "roadRail": "Road and rail",
     "transit": "Transit",
     "active": "active",
-    "mobilityWorkspace": "Mobility workspace"
+    "mobilityWorkspace": "Mobility workspace",
+    "transitAndRoadSignals": "Transit and road signals",
+    "watch": "Watch",
+    "activeNotices": "active notices in the selected scope"
   }
 }

@@ -6,7 +6,7 @@ import { PersonalSettingsPage } from "@/features/data-platform/personal-settings
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Personal setup | ArkiWatch",
+  title: "Personal context | ArkiWatch",
 };
 
 export default async function SettingsPage() {

@@ -36,6 +36,24 @@ export type EnergyDisplayPoint = {
   display: EnergyPoint;
 };
 
+export type EnergyChromeTile = {
+  key: string;
+  label: string;
+  value: string;
+  caption: string;
+  tone?: EnergyTone;
+  compact?: boolean;
+};
+
+export type EnergyHighlightRow = {
+  key: string;
+  window: string;
+  cost: string;
+  spot: string;
+  note: string;
+  tone?: EnergyTone;
+};
+
 export type EnergyPanelProfile = {
   chartKind: "area-line" | "hourly-bars";
   chartKindLabelKey: string;

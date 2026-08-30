@@ -239,10 +239,10 @@ export function navItemAvailable(item: NavItem, categories: PlatformCategory[]):
  * side drawer and is still driven by PRIMARY_NAV_ITEMS.
  */
 export function mobileNavigationItems(categories: PlatformCategory[]): NavItem[] {
-  const mobilePriority = new Set([TODAY_NAV_KEY, FALLBACK_NAV_KEY, "weather", MOBILITY_NAV_KEY]);
-  return PRIMARY_NAV_ITEMS.filter(
-    (item) => mobilePriority.has(item.key) && navItemAvailable(item, categories),
-  );
+  const mobileOrder = [TODAY_NAV_KEY, FALLBACK_NAV_KEY, "weather", MOBILITY_NAV_KEY];
+  return mobileOrder
+    .map((key) => PRIMARY_NAV_ITEMS.find((item) => item.key === key))
+    .filter((item): item is NavItem => item != null && navItemAvailable(item, categories));
 }
 
 export function resolveNavKey(

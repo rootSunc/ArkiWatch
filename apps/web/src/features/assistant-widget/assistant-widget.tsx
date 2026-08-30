@@ -101,7 +101,7 @@ export function AssistantWidget({
   const assistantScopeDate = date
     ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
     : isDemoScope
-      ? tKey("shell.staticDemoFixture")
+      ? tKey("assistant.demoFixture")
       : tKey("assistant.scopeLive");
   const assistantCoverageArea = overview?.coverage_area?.trim() || cityLabel(city);
   const assistantName = tKey(
@@ -583,6 +583,25 @@ export function AssistantWidget({
               </span>
             </span>
             <button
+              className="assistant-new-thread"
+              onClick={() => {
+                activeRequestRef.current?.abort();
+                activeRequestRef.current = null;
+                setIsLoading(false);
+                setInputValue("");
+                setMessages([
+                  {
+                    id: "welcome",
+                    role: "assistant",
+                    text: tKey("assistant.welcome"),
+                  },
+                ]);
+              }}
+              type="button"
+            >
+              {tKey("assistant.newThread")}
+            </button>
+            <button
               aria-label={tKey("assistant.close")}
               className="assistant-close"
               onClick={closeAssistant}
@@ -681,6 +700,9 @@ export function AssistantWidget({
                       />
                       <footer className="assistant-basis">
                         <span className="assistant-basis-label">{tKey("assistant.basis")}</span>
+                        {isDemoScope ? (
+                          <span className="assistant-basis-chip">{tKey("assistant.demoFixture")}</span>
+                        ) : null}
                         {message.answerMode === "fallback" ? (
                           <span className="assistant-basis-chip">{tKey("assistant.fallback")}</span>
                         ) : null}
@@ -703,6 +725,9 @@ export function AssistantWidget({
                             {tKey("assistant.checkedAt").replace("{time}", checkedAt)}
                           </time>
                         ) : null}
+                        <button className="assistant-helpful" type="button">
+                          {tKey("assistant.helpful")}
+                        </button>
                       </footer>
                       {(() => {
                         const followUps = Array.from(
@@ -715,7 +740,7 @@ export function AssistantWidget({
 
                         return followUps.length > 0 ? (
                           <div className="assistant-followups">
-                            <span>{tKey("assistant.nextSteps")}</span>
+                            <span>{tKey("assistant.followUp")}</span>
                             <div>
                               {followUps.map((question) => (
                                 <button

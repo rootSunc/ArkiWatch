@@ -1,5 +1,8 @@
 "use client";
 
+import { formatTimestamp } from "@/features/shared/format";
+
+import { localizedContent } from "../content-localization";
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
 import type { ScenarioLiveSignals } from "../scenario-live-hints";
@@ -39,11 +42,7 @@ export function TodayActionCard({
     timezone,
     now,
   );
-  const localizedTitle = ["good", "good window", "needs attention", "watch"].includes(
-    view.title.trim().toLowerCase(),
-  )
-    ? enumLabel(view.title)
-    : view.title;
+  const rowTitle = localizedContent(language, section.title, section.title_zh);
   const assistantQuestion = tKey("assistant.analyzeCategory").replace(
     "{category}",
     enumLabel(section.key),
@@ -54,11 +53,17 @@ export function TodayActionCard({
       className={`today-action-card today-action-card-${view.tone}`}
     >
       <button
+        aria-label={`${enumLabel(section.key)}. ${rowTitle}`}
         className="today-action-card-main"
         disabled={disabled}
         onClick={onOpen}
         type="button"
       >
+        <span className="today-action-card-dot" aria-hidden="true" />
+        <span className="today-action-card-title">{rowTitle}</span>
+        <time className="today-action-card-time" dateTime={section.valid_from}>
+          {formatTimestamp(section.valid_from, "time", language, timezone)}
+        </time>
         <span className="today-action-card-icon material-symbols-outlined" aria-hidden="true">
           {view.icon}
         </span>
@@ -69,7 +74,7 @@ export function TodayActionCard({
               <span className="today-action-card-live">{view.signalLabel}</span>
             ) : null}
           </span>
-          <strong>{localizedTitle}</strong>
+          <strong>{rowTitle}</strong>
           <span className="today-action-card-body">{view.body}</span>
           {view.dataPoints.length > 0 ? (
             <span className="today-action-card-data" aria-label={tKey("shell.todaySSnapshot")}>

@@ -8,7 +8,7 @@
 }
 
 .shell {
-  width: min(900px, 100%);
+  width: min(760px, 100%);
   margin: 0 auto;
 }
 
@@ -36,15 +36,7 @@
 }
 
 .brandMark {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: var(--r-control);
-  background: transparent;
-  color: var(--blue);
-  font-size: 20px;
-  overflow: hidden;
+  display: none;
 }
 
 .eyebrow,
@@ -87,9 +79,7 @@
 }
 
 .headerActions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+  display: none;
 }
 
 .quietButton,
@@ -144,20 +134,20 @@
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  align-items: start;
-  gap: 40px;
-  margin-top: 40px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
 .nav {
-  position: sticky;
-  top: 18px;
-  display: grid;
-  gap: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
   padding: 0;
   border: 0;
+  border-bottom: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -173,17 +163,16 @@
 }
 
 .navItem {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: 12px;
+  display: flex;
   align-items: center;
-  width: 100%;
-  min-height: 38px;
-  padding: 0 8px;
+  width: auto;
+  min-height: auto;
+  padding: 0 0 8px;
   border: 0;
-  border-radius: var(--r-control);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--muted-3);
   font-size: 13.5px;
   text-align: left;
 }
@@ -194,18 +183,19 @@
 }
 
 .navItemActive {
-  border: 0;
-  background: var(--nav-active);
+  border-bottom-color: var(--ink);
+  background: transparent;
   color: var(--ink);
   font-weight: 600;
 }
 
-.navItemComplete .navIcon {
-  color: var(--green);
+.navIcon,
+.navStatus {
+  display: none;
 }
 
 .navIcon {
-  display: grid;
+  display: none;
   width: 20px;
   height: 20px;
   place-items: center;
@@ -227,27 +217,58 @@
 
 .navTitle {
   overflow: hidden;
-  font-size: 0.78rem;
-  font-weight: 750;
+  font-size: 13.5px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.navIcon,
 .navStatus {
-  font-size: 0.68rem;
+  display: none;
+}
+
+.segmented {
+  display: flex;
+  width: fit-content;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.segmented button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmentedActive {
+  background: var(--ink);
+  color: #ffffff;
 }
 
 .content {
   min-width: 0;
 }
 
+.contextList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 40px;
+}
+
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: center;
-  padding: 22px;
-  border-radius: var(--r-card);
+  display: none;
 }
 
 .hero h2 {
@@ -319,9 +340,11 @@
 }
 
 .card {
-  margin-top: 24px;
-  padding: 28px;
-  border-radius: var(--r-card);
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .sectionHeader {
@@ -367,6 +390,39 @@
 
 .fieldWide {
   align-items: start;
+}
+
+.select,
+.timeInput {
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+.timeInput {
+  width: 100px;
+  font-family: var(--font-mono);
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeRow > span {
+  color: var(--muted-2);
+}
+
+.contextActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 40px;
 }
 
 .label {

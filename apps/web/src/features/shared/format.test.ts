@@ -34,6 +34,12 @@ describe("formatTimestamp", () => {
     expect(formatTimestamp("not-a-timestamp", "dateTime", "en")).toBe("Not available");
     expect(formatTimestamp("not-a-timestamp", "dateTime", "zh")).toBe("暂无数据");
   });
+
+  it("can render a clock-only time in the platform timezone", () => {
+    expect(formatTimestamp("2026-08-09T12:00:00Z", "time", "en", "Europe/Helsinki")).toBe(
+      "15:00",
+    );
+  });
 });
 
 describe("formatRelativeAge", () => {

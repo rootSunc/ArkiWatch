@@ -138,6 +138,43 @@ body:has(.assistant-widget-open) .dashboard-content {
   text-overflow: ellipsis;
 }
 
+.assistant-new-thread {
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.assistant-new-thread:hover {
+  border-color: var(--blue);
+}
+
+.assistant-helpful {
+  height: 26px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--canvas);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-3);
+  cursor: pointer;
+}
+
+.assistant-helpful:hover {
+  border-color: var(--green);
+}
+
 .assistant-close {
   display: flex;
   flex: 0 0 34px;

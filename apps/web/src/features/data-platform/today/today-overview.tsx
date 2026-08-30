@@ -122,7 +122,7 @@ export function TodayOverview({
               {tKey("shell.publicRecommendationsScope")} {todayBrief.recommendationCoverageArea}
             </p>
           ) : null}
-          <h2>{todayBrief.headline}</h2>
+          <h1>{todayBrief.headline}</h1>
           <p>
             {focusAction
               ? localizedContent(language, focusAction.body, focusAction.body_zh)
@@ -308,11 +308,11 @@ export function TodayOverview({
         />
 
         {todayBrief.scenarioSections.length > 0 ? (
-          <details
+          <section
             className="today-decisions"
             aria-label={tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
           >
-            <summary className="today-decisions-summary">
+            <div className="today-decisions-summary">
               <span className="today-decisions-summary-copy">
                 <span className="today-section-kicker">
                   {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
@@ -323,13 +323,7 @@ export function TodayOverview({
                     : tKey("shell.dailyDecisionsLead")}
                 </span>
               </span>
-              <span className="today-decisions-summary-meta">
-                <span>{todayBrief.scenarioSections.length}</span>
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  expand_more
-                </span>
-              </span>
-            </summary>
+            </div>
             <div className="today-action-grid">
               {todayBrief.scenarioSections.map((section) => (
                 <TodayActionCard
@@ -346,7 +340,7 @@ export function TodayOverview({
                 />
               ))}
             </div>
-          </details>
+          </section>
         ) : null}
       </div>
     </section>

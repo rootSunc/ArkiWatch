@@ -28,6 +28,7 @@ import {
   useI18n,
 } from "./i18n";
 import { useClientPreferences } from "./hooks/use-client-preferences";
+import { CITY_COORDINATES, CITY_OPTIONS } from "./city-scope";
 import styles from "./personal-settings.module.css";
 
 type SetupSection = "location" | "preferences" | "commute" | "telegram";
@@ -174,6 +175,8 @@ function PersonalSettingsContent({
   const [commuteForm, setCommuteForm] = useState<PersonalCommuteInput>(DEFAULT_COMMUTE);
   const [telegramId, setTelegramId] = useState("");
   const [telegramActive, setTelegramActive] = useState(false);
+  const [commuteArrival, setCommuteArrival] = useState("");
+  const [outdoorLevel, setOutdoorLevel] = useState<"low" | "medium" | "high">("medium");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -227,6 +230,7 @@ function PersonalSettingsContent({
         quiet_hours_end: nextContext.preferences.quiet_hours_end,
         max_notifications_per_day: nextContext.preferences.max_notifications_per_day,
       });
+      setOutdoorLevel(nextContext.preferences.allergy_sensitive ? "high" : "medium");
     }
     if (nextContext.locations.length >= 2) {
       const savedCommute =
@@ -435,7 +439,7 @@ function PersonalSettingsContent({
           <div className={styles.brandRow}>
             <MaterialIcon name="sparkles" className={styles.brandMark} />
             <div>
-              <span className={styles.eyebrow}>ArkiWatch · {user.name ?? user.email ?? user.id}</span>
+              <span className={styles.eyebrow}>{tKey("shell.personalSettingsAccount")}</span>
               <h1 className={styles.title}>{tKey("shell.personalSettingsTitle")}</h1>
               <p className={styles.subtitle}>{tKey("shell.personalSettingsSubtitle")}</p>
             </div>
@@ -444,14 +448,149 @@ function PersonalSettingsContent({
             <button className={styles.quietButton} onClick={onLanguageChange.bind(null, language === "en" ? "zh" : "en")} type="button">
               {tKey("shell.personalSettingsLanguage")}: {language === "en" ? "中文" : "EN"}
             </button>
-            <button className={styles.quietButton} onClick={onThemeToggle} type="button">
-              {tKey("shell.personalSettingsTheme")}: {themeMode === "light" ? "☼" : "◐"}
-            </button>
             <Link className={styles.quietButton} href="/">
               {tKey("shell.personalSettingsBack")}
             </Link>
           </div>
         </header>
+
+        <div className={styles.contextList}>
+          <div className={styles.field}>
+            <span className={styles.label}>{tKey("shell.personalSettingsHomeCity")}</span>
+            <select
+              className={styles.select}
+              onChange={(event) => {
+                const option = CITY_OPTIONS.find((city) => city.value === event.target.value);
+                if (!option) {
+                  return;
+                }
+                const coordinates = CITY_COORDINATES[option.value];
+                setLocationForm((current) => ({
+                  ...current,
+                  city: option.label,
+                  lat: coordinates ? String(coordinates.latitude) : current.lat,
+                  lon: coordinates ? String(coordinates.longitude) : current.lon,
+                }));
+              }}
+              value={
+                CITY_OPTIONS.find((city) => city.label === locationForm.city)?.value ??
+                CITY_OPTIONS[0]?.value ??
+                "helsinki"
+              }
+            >
+              {CITY_OPTIONS.map((city) => (
+                <option key={city.value} value={city.value}>
+                  {city.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>{tKey("shell.personalSettingsCommuteWindow")}</span>
+            <div className={styles.timeRow}>
+              <input
+                className={styles.timeInput}
+                onChange={(event) => {
+                  setCommuteForm((current) => ({
+                    ...current,
+                    departure_time_local: event.target.value,
+                  }));
+                }}
+                type="time"
+                value={commuteForm.departure_time_local}
+              />
+              <span aria-hidden="true">→</span>
+              <input
+                className={styles.timeInput}
+                onChange={(event) => setCommuteArrival(event.target.value)}
+                type="time"
+                value={commuteArrival}
+              />
+            </div>
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>{tKey("shell.personalSettingsOutdoorSensitivity")}</span>
+            <div className={styles.segmented}>
+              {(["low", "medium", "high"] as const).map((level) => (
+                <button
+                  className={outdoorLevel === level ? styles.segmentedActive : undefined}
+                  key={level}
+                  onClick={() => {
+                    setOutdoorLevel(level);
+                    setPreferenceForm((current) => ({
+                      ...current,
+                      allergy_sensitive: level === "high",
+                    }));
+                  }}
+                  type="button"
+                >
+                  {tKey(
+                    level === "low"
+                      ? "shell.personalSettingsSensitivityLow"
+                      : level === "medium"
+                        ? "shell.personalSettingsSensitivityMedium"
+                        : "shell.personalSettingsSensitivityHigh",
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>{tKey("shell.personalSettingsTheme")}</span>
+            <div className={styles.segmented}>
+              <button
+                className={themeMode === "light" ? styles.segmentedActive : undefined}
+                onClick={() => {
+                  if (themeMode !== "light") {
+                    onThemeToggle();
+                  }
+                }}
+                type="button"
+              >
+                {tKey("shell.personalSettingsThemeLight")}
+              </button>
+              <button
+                className={themeMode === "dark" ? styles.segmentedActive : undefined}
+                onClick={() => {
+                  if (themeMode !== "dark") {
+                    onThemeToggle();
+                  }
+                }}
+                type="button"
+              >
+                {tKey("shell.personalSettingsThemeDark")}
+              </button>
+            </div>
+          </div>
+          <div className={`${styles.field} ${styles.fieldWide}`}>
+            <span className={styles.label}>{tKey("shell.personalSettingsDataBoundary")}</span>
+            <p className={styles.hint}>{tKey("shell.personalSettingsDataBoundaryCopy")}</p>
+          </div>
+        </div>
+        <div className={styles.contextActions}>
+          <button
+            className={styles.primaryButton}
+            disabled={isSaving}
+            onClick={() => {
+              void saveLocation();
+              void savePreferences();
+              void saveCommute();
+            }}
+            type="button"
+          >
+            {tKey("shell.personalSettingsSaveContext")}
+          </button>
+          <button
+            className={styles.quietButton}
+            onClick={() => {
+              void refreshContext();
+              setCommuteArrival("");
+            }}
+            type="button"
+          >
+            {tKey("shell.personalSettingsReset")}
+          </button>
+        </div>
 
         <div className={styles.layout}>
           <nav className={styles.nav} aria-label={tKey("shell.personalSettingsTitle")}>

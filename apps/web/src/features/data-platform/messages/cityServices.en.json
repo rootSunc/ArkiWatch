@@ -9,14 +9,14 @@
     "signalsUnavailable": "City service signals are not available yet",
     "metadataMissing": "Service Map and HRI metadata are not present in this platform view.",
     "detailAria": "City services detail",
-    "dashboardTitle": "City Services Dashboard",
+    "dashboardTitle": "City services",
     "operatingCondition": "City service operating condition",
     "serviceCoverage": "Service Coverage",
     "stagedContext": "Service Map and HRI are staged for public-service context.",
     "datasets": "Datasets",
     "keyFields": "Key fields",
     "sourceReadiness": "Source Readiness",
-    "serviceModel": "Service Model",
+    "serviceModel": "Fields provided by the source",
     "summaryMetrics": "City service summary metrics",
     "analytics": "City service analytics",
     "serviceOperations": "Service Operations",
@@ -46,6 +46,10 @@
     "openingHoursDetail": "Daily availability and exception schedules",
     "temporaryClosuresDetail": "Closure windows and facility availability",
     "accessibilityDetail": "Access attributes for service-unit matching",
-    "categoryDescription": "Public service locations and opening information."
+    "categoryDescription": "Public service locations and opening information.",
+    "providerCoverage": "Provider-led Helsinki coverage · reference dataset, not a live signal",
+    "fieldColumn": "Field",
+    "ownerColumn": "Owner",
+    "coversColumn": "What it covers"
   }
 }

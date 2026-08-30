@@ -115,15 +115,13 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
           ) : null}
 
           <button className="login-submit" disabled={isSubmitting} type="submit">
-            <span className="material-symbols-outlined" aria-hidden="true">
-              login
-            </span>
             <span>{isSubmitting ? tKey("auth.signingIn") : tKey("auth.signIn")}</span>
           </button>
           <Link className="login-secondary" href="/">
             {tKey("auth.continueAsDemo")}
           </Link>
         </form>
+        <p className="login-note">{tKey("auth.adminBoundary")}</p>
       </section>
     </main>
   );

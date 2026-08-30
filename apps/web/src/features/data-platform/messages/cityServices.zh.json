@@ -9,14 +9,14 @@
     "signalsUnavailable": "城市服务信号暂不可用",
     "metadataMissing": "当前平台视图中没有服务地图与 HRI 元数据。",
     "detailAria": "城市服务详情",
-    "dashboardTitle": "城市服务仪表盘",
+    "dashboardTitle": "城市服务",
     "operatingCondition": "城市服务运行状况",
     "serviceCoverage": "服务覆盖率",
     "stagedContext": "服务地图与 HRI 数据已就绪，提供公共服务内容。",
     "datasets": "数据集",
     "keyFields": "关键字段",
     "sourceReadiness": "数据源就绪度",
-    "serviceModel": "服务数据模型",
+    "serviceModel": "数据源提供的字段",
     "summaryMetrics": "城市服务摘要指标",
     "analytics": "城市服务分析",
     "serviceOperations": "城市服务运营",
@@ -46,6 +46,10 @@
     "openingHoursDetail": "每日可用时段及例外安排",
     "temporaryClosuresDetail": "关闭时段及设施可用性",
     "accessibilityDetail": "用于服务单位匹配的无障碍属性",
-    "categoryDescription": "公共服务地点与开放信息。"
+    "categoryDescription": "公共服务地点与开放信息。",
+    "providerCoverage": "赫尔辛基数据源覆盖 · 参考数据集，不是实时信号",
+    "fieldColumn": "字段",
+    "ownerColumn": "来源",
+    "coversColumn": "覆盖内容"
   }
 }

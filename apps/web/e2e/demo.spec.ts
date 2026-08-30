@@ -78,5 +78,5 @@ test("keeps the admin entry point usable without credentials", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Admin sign in" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Username" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Password" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Continue as demo" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Back to public data" })).toHaveAttribute("href", "/");
 });

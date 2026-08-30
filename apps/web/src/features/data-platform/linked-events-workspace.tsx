@@ -6,7 +6,6 @@ import { severityTone } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
-import { displayTitle } from "./data-platform-view-model";
 import { useEventDescriptionTranslation } from "./queries/translate-queries";
 import {
   PlatformCategory,
@@ -16,9 +15,9 @@ import {
 } from "./types";
 import { eventAnchorId } from "./recent-events";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
-import { isEmptyStatus } from "./platform-status";
 import { isHistoricalTimeScope, scopedReferenceTime } from "./data-time-scope";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { isEmptyStatus } from "./platform-status";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 const LinkedEventsCoordinateMap = dynamic(
@@ -729,7 +728,7 @@ export function LinkedEventsWorkspace({
     setSelectedEventId(eventId);
   }, []);
 
-  if (!category || isEmptyStatus(category.status)) {
+  if (!category) {
     return (
       <WorkspaceEmptyState
         className="linked-events-empty"
@@ -845,11 +844,17 @@ export function LinkedEventsWorkspace({
         language={language}
         observedAt={sourceRun}
         sourceLabel={source?.source_code.toUpperCase() ?? "LINKEDEVENTS"}
-        status={isHistorical ? tKey("shell.historicalEvidence") : translateEnumLabel(language, category.status)}
+        status={
+          isHistorical
+            ? tKey("shell.historicalEvidence")
+            : isEmptyStatus(category.status)
+              ? tKey("linkedEvents.providerCoverage")
+              : translateEnumLabel(language, category.status)
+        }
         statusTone={selectedTone}
         tKey={tKey}
         timeScope={timeScope}
-        title={category.title ? displayTitle(category, language) : tKey("linkedEvents.linkedEvents")}
+        title={tKey("linkedEvents.publicEventsNearYou")}
         timezone={dataTimezone}
       />
 
@@ -1014,6 +1019,11 @@ export function LinkedEventsWorkspace({
             ) : (
               <div className="linked-events-empty-state">{tKey("linkedEvents.noActivitiesMatchTheCurrentFilters")}</div>
             )}
+          </div>
+          <div className="linked-events-scope-note">
+            <span>{tKey("linkedEvents.eventsInScope").replace("{shown}", String(filteredEvents.length)).replace("{total}", String(sortedEvents.length))}</span>
+            <span aria-hidden="true">·</span>
+            <span>{tKey("linkedEvents.coverageCities")}</span>
           </div>
         </article>
 

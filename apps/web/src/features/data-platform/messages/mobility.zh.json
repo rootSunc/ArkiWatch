@@ -5,6 +5,9 @@
     "roadRail": "道路与铁路状况",
     "transit": "公共交通",
     "active": "活跃",
-    "mobilityWorkspace": "交通出行工作区"
+    "mobilityWorkspace": "交通出行工作区",
+    "transitAndRoadSignals": "公交与道路信号",
+    "watch": "关注",
+    "activeNotices": "条所选范围内的有效通知"
   }
 }

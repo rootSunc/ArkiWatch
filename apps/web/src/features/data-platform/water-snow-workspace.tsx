@@ -19,8 +19,8 @@ import {
 } from "./types";
 import { eventAnchorId } from "./recent-events";
 import { localizedPlatformCopy } from "./platform-copy";
-import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isEmptyStatus } from "./platform-status";
+import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { hasObservedSourceRecords, isConnectedWorkspaceSource } from "./catalog-workspace-state";
 import type { PlatformTimeScope } from "./types";
@@ -89,6 +89,22 @@ const FIELD_SIGNAL_COLUMNS: Array<{ key: WaterFieldSignalKey; labelKey: string }
   { key: "ground", labelKey: "ground" },
   { key: "snow", labelKey: "snow" },
   { key: "risk", labelKey: "risk" }
+];
+
+const HYDROLOGY_TILES: Array<{ key: string; labelKey: string; emptyDetailKey: string }> = [
+  { key: "water_level", labelKey: "waterLevel", emptyDetailKey: "sourceReturnedEmpty" },
+  { key: "discharge", labelKey: "flow", emptyDetailKey: "sourceReturnedEmpty" },
+  { key: "groundwater", labelKey: "groundwater", emptyDetailKey: "sourceReturnedEmpty" },
+  { key: "snow_water_equivalent", labelKey: "snowDepth", emptyDetailKey: "sourceReturnedEmpty" },
+  { key: "flood_warning", labelKey: "floodRisk", emptyDetailKey: "noActiveWarning" },
+  { key: "stations_configured", labelKey: "stationsConfigured", emptyDetailKey: "regionalNotCity" },
+];
+
+const FIELD_COVERAGE_ROWS: Array<{ key: string; labelKey: string }> = [
+  { key: "water_level", labelKey: "levelObservations" },
+  { key: "discharge", labelKey: "flowObservations" },
+  { key: "groundwater", labelKey: "groundwater" },
+  { key: "snow_water_equivalent", labelKey: "snowDepth" },
 ];
 
 const GUIDANCE_TYPES = [
@@ -410,7 +426,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
   const { language, tKey, dataLabel, dataItemLabel, metricLabel } = useI18n();
   const isHistorical = isHistoricalTimeScope(timeScope);
 
-  if (!category || isEmptyStatus(category.status)) {
+  if (!category) {
     return (
       <WorkspaceEmptyState
         className="water-detail-empty"
@@ -427,7 +443,6 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
   const recordsMetric = metricByKey(category, "records_ingested");
   const activeEventsMetric = metricByKey(category, "active_events");
   const catalogStageMetric = metricByKey(category, "catalog_stage");
-  const summaryMetrics = visibleSummaryMetrics(category);
   const keyDataItems = categoryKeyDataItems(category);
   const datasets = source?.data_structures ?? [];
   const eventSchemas = source?.normalized_event_structures ?? [];
@@ -437,7 +452,6 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
   const sourceConnected = source ? isConnectedWorkspaceSource(source) : false;
   const sourcePoints = sourceVolumePoints(category);
   const severityRows = severityPoints(category);
-  const coverageRows = catalogCoveragePoints(category);
   const shapeRows = schemaShapeRows(datasets, language);
   const waterTimelineBounds = timelineBounds(timeline);
   const waterGuidanceRows = guidanceRows(eventSchemas, tKey);
@@ -477,16 +491,9 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
     recordsMetric,
     catalogStageMetric
   ].filter(isPlatformMetric);
-  const displayedCoverageRows: PlatformVisualizationPoint[] = coverageRows.length > 0
-    ? coverageRows
-    : [
-        { label: "Sources", value: category.source_codes.length, tone: "neutral" },
-        { label: "Datasets", value: datasetCount, tone: "neutral" },
-        { label: "Key fields", value: keyDataItems.length, tone: "neutral" },
-      ];
 
   return (
-    <section className="water-detail-page" aria-label={tKey("waterSnow.detailAria")}>
+    <section className="water-detail-page water-snow-page" aria-label={tKey("waterSnow.detailAria")}>
       <WorkspaceEvidenceHeader
         className="water-detail-header"
         eyebrow={tKey("waterSnow.workspace")}
@@ -494,8 +501,14 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
         language={language}
         observedAt={isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt}
         sourceLabel={category.source_codes.join(", ").toUpperCase()}
-        status={isHistorical ? tKey("shell.historicalEvidence") : sourceStatusLabel(category, language)}
-        statusTone={activeTone}
+        status={
+          isHistorical
+            ? tKey("shell.historicalEvidence")
+            : isEmptyStatus(category.status)
+              ? tKey("waterSnow.providerCoverage")
+              : sourceStatusLabel(category, language)
+        }
+        statusTone={isEmptyStatus(category.status) ? "warn" : activeTone}
         tKey={tKey}
         timeScope={timeScope}
         title={tKey("waterSnow.hydrologyTitle")}
@@ -540,25 +553,34 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
       </section>
 
       <section className="water-summary-strip" aria-label={tKey("waterSnow.summaryMetrics")}>
-        {summaryMetrics.map((metric) => (
-          <article className={`water-glass-panel water-summary-${metricTone(metric)}`} key={metric.key}>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: metric.key,
-                label: metric.label,
-                detail: metric.detail,
-                language,
-              })}
-            >
-              {metricLabel(metric)}
-            </DataLabelWithHelp>
-            <strong>
-              {metric.key === "records_ingested" && !hasObservedRecords
-                ? tKey("waterSnow.notObserved")
-                : formatMetricValue(metric, tKey, dataLabel)}
-            </strong>
-          </article>
-        ))}
+        {HYDROLOGY_TILES.map((tile) => {
+          const metric = tile.key === "stations_configured"
+            ? null
+            : metricByKey(category, tile.key);
+          const hasValue = Boolean(metric?.value) && !isEmptyStatus(category.status);
+          const value = tile.key === "stations_configured"
+            ? String(category.sources.length)
+            : hasValue
+              ? formatMetricValue(metric, tKey, dataLabel)
+              : tKey("waterSnow.noValue");
+
+          return (
+            <article className={`water-glass-panel water-summary-${hasValue ? metricTone(metric) : "neutral"}`} key={tile.key}>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: tile.key,
+                  label: tKey(`waterSnow.${tile.labelKey}`),
+                  detail: metric?.detail,
+                  language,
+                })}
+              >
+                {tKey(`waterSnow.${tile.labelKey}`)}
+              </DataLabelWithHelp>
+              <strong>{value}</strong>
+              <small>{hasValue && metric?.detail ? metric.detail : tKey(`waterSnow.${tile.emptyDetailKey}`)}</small>
+            </article>
+          );
+        })}
       </section>
 
       <section className="water-insight-grid" aria-label={tKey("waterSnow.operatingCondition")}>
@@ -573,21 +595,36 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
             >
               {tKey("waterSnow.catalogCoverage")}
             </DataLabelWithHelp>
-            <strong>{displayedCoverageRows.length}</strong>
           </header>
           <div className="water-coverage-list">
-            {displayedCoverageRows.map((point) => (
-              <article className={`water-coverage-row water-coverage-row-${point.tone ?? "neutral"}`} key={point.label}>
-                <div>
-                  <strong>{dataLabel(point.label)}</strong>
-                  <span>{point.value} {tKey("waterSnow.items")}</span>
-                </div>
-                <i aria-hidden="true">
-                  <span style={{ width: `${pointWidth(point, displayedCoverageRows)}%` }} />
-                </i>
-              </article>
-            ))}
+            {FIELD_COVERAGE_ROWS.map((row) => {
+              const metric = metricByKey(category, row.key);
+              const count = numericValue(metric?.value) ?? (hasObservedRecords && metric ? 1 : 0);
+
+              return (
+                <article className={`water-coverage-row${count === 0 ? " water-coverage-row-empty" : ""}`} key={row.key}>
+                  <span>{tKey(`waterSnow.${row.labelKey}`)}</span>
+                  <i aria-hidden="true">
+                    <span style={{ width: `${count === 0 ? 0 : Math.max(12, Math.min(100, count))}%` }} />
+                  </i>
+                  <em>{count}</em>
+                </article>
+              );
+            })}
           </div>
+        </article>
+
+        <article className="water-glass-panel water-observation-panel">
+          <header>
+            <h2>{tKey("waterSnow.eventReadiness")}</h2>
+          </header>
+          <div className="water-observation-list">
+            <div className="water-observation-row">
+              <span>{UNAVAILABLE_DATA_VALUE}</span>
+              <p>{tKey("waterSnow.sourceReturnedEmpty")}</p>
+            </div>
+          </div>
+          <p className="water-empty-note">{tKey("waterSnow.emptyMeans")}</p>
         </article>
 
         <article className="water-glass-panel water-field-panel">

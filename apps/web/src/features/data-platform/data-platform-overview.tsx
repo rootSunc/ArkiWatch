@@ -46,6 +46,7 @@ type DataPlatformOverviewProps = {
   searchValue: string;
   signalSystemTiles: SignalSystemTile[];
   todayBrief: TodayBrief | null;
+  sourceHealth: ReactNode;
   secondaryContent: ReactNode;
 };
 
@@ -118,7 +119,18 @@ function OverviewStatusBar({
             </span>
             <div>
               <span>{tile.label}</span>
-              <strong>{tile.value}</strong>
+              <strong>
+                {tile.value.includes("/") ? (
+                  <>
+                    {tile.value.slice(0, tile.value.indexOf("/"))}
+                    <span className="quiet-value">
+                      {tile.value.slice(tile.value.indexOf("/"))}
+                    </span>
+                  </>
+                ) : (
+                  tile.value
+                )}
+              </strong>
               <small>{tile.detail}</small>
             </div>
           </article>
@@ -162,6 +174,7 @@ export function DataPlatformOverview({
   searchValue,
   signalSystemTiles,
   todayBrief,
+  sourceHealth,
   secondaryContent,
 }: DataPlatformOverviewProps) {
   const { language, tKey } = useI18n();
@@ -264,6 +277,8 @@ export function DataPlatformOverview({
           </div>
         </details>
       ) : null}
+
+      {sourceHealth}
 
       <div className="overview-secondary-content">{secondaryContent}</div>
     </div>

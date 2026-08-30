@@ -29,7 +29,7 @@ describe("DataPlatformSideNav", () => {
   it("keeps personal setup reachable from the authenticated utility area", () => {
     renderNavigation(true);
 
-    expect(screen.getByRole("link", { name: "Personal setup" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Personal context" })).toHaveAttribute(
       "href",
       "/settings",
     );
@@ -38,6 +38,6 @@ describe("DataPlatformSideNav", () => {
   it("does not expose private setup controls in the public view", () => {
     renderNavigation(false);
 
-    expect(screen.queryByRole("link", { name: "Personal setup" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Personal context" })).not.toBeInTheDocument();
   });
 });

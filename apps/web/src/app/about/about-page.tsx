@@ -201,23 +201,7 @@ export default function AboutPage() {
                 <span className="material-symbols-outlined" aria-hidden="true">open_in_new</span>
               </a>
             </div>
-            <p className="about-hero-note"><span className="material-symbols-outlined" aria-hidden="true">info</span>{copy.heroNote}</p>
-          </div>
-          <div className="about-hero-art" aria-label="ArkiWatch workspaces preview">
-            <div className="about-art-orbit about-art-orbit-one" />
-            <div className="about-art-orbit about-art-orbit-two" />
-            <div className="about-art-panel about-art-panel-main">
-              <span className="about-art-kicker">TODAY / HELSINKI</span>
-              <strong>{language === "zh" ? "适合出门" : "Good window to go out"}</strong>
-              <span className="about-art-reading"><b>14°</b><small>· 42% rain</small></span>
-              <span className="about-art-line"><i style={{ width: "78%" }} /></span>
-              <span className="about-art-foot">{language === "zh" ? "天气 · 空气 · 出行" : "Weather · air · mobility"}</span>
-            </div>
-            <div className="about-art-panel about-art-panel-source">
-              <span className="material-symbols-outlined" aria-hidden="true">check</span>
-              <span><strong>{language === "zh" ? "来源已核验" : "Source checked"}</strong><small>FMI · 08:10 EET</small></span>
-            </div>
-            <div className="about-art-chip"><span className="material-symbols-outlined" aria-hidden="true">info</span>{language === "zh" ? "询问助手" : "Ask the assistant"}</div>
+            <p className="about-hero-note">{copy.heroNote}</p>
           </div>
         </section>
 
@@ -234,16 +218,16 @@ export default function AboutPage() {
           <div className="about-workspace-grid">
             <article className="about-workspace-card about-workspace-card-today">
               <div className="about-card-icon"><span className="material-symbols-outlined" aria-hidden="true">calendar_today</span></div>
-              <span className="about-card-label">01 / {copy.todayTitle}</span>
-              <h3>{copy.todayLead}</h3>
-              <ul>{copy.todayPoints.map((point) => <li key={point}><span className="material-symbols-outlined" aria-hidden="true">check</span>{point}</li>)}</ul>
+              <h3>{copy.todayTitle}</h3>
+              <p>{copy.todayLead}</p>
+              <ul>{copy.todayPoints.map((point) => <li key={point}>{point}</li>)}</ul>
               <Link href="/?city=helsinki" className="about-card-link">{copy.todayCta}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link>
             </article>
             <article className="about-workspace-card about-workspace-card-data">
               <div className="about-card-icon"><span className="material-symbols-outlined" aria-hidden="true">monitoring</span></div>
-              <span className="about-card-label">02 / {copy.dataTitle}</span>
-              <h3>{copy.dataLead}</h3>
-              <ul>{copy.dataPoints.map((point) => <li key={point}><span className="material-symbols-outlined" aria-hidden="true">check</span>{point}</li>)}</ul>
+              <h3>{copy.dataTitle}</h3>
+              <p>{copy.dataLead}</p>
+              <ul>{copy.dataPoints.map((point) => <li key={point}>{point}</li>)}</ul>
               <Link href="/?view=overview&city=helsinki" className="about-card-link">{copy.dataCta}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link>
             </article>
           </div>

@@ -150,7 +150,17 @@
 }
 
 .login-submit .material-symbols-outlined {
-  font-size: 18px;
+  display: none;
+}
+
+.login-note {
+  margin: 28px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted-2);
 }
 
 .login-secondary {
@@ -172,6 +182,17 @@
   border-color: var(--ink);
   background: var(--canvas);
   outline: none;
+}
+
+@media (max-width: 640px) {
+  .login-shell {
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .login-panel {
+    max-width: none;
+  }
 }
 
 .skip-link {

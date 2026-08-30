@@ -20,7 +20,7 @@ import { localizedPlatformCopy } from "./platform-copy";
 import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
-import { scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
+import { scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 const AirQualityStationMap = dynamic(
@@ -63,14 +63,12 @@ type PollutantProfile = {
 
 const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
 const SCORE_BUCKETS = [1, 2, 3, 4, 5];
-const SCORE_FIELD_KEYS: Array<keyof AirQualityStation> = ["score", "label"];
 const POLLUTANT_PROFILES: PollutantProfile[] = [
   { key: "european_aqi", labelKey: "europeanAqi", unit: "", cautionValue: 50, severeValue: 75 },
   { key: "pm2_5", labelKey: "pm25", unit: "ug/m3", cautionValue: 10, severeValue: 25 },
   { key: "pm10", labelKey: "pm10", unit: "ug/m3", cautionValue: 20, severeValue: 50 },
   { key: "no2", labelKey: "no2", unit: "ug/m3", cautionValue: 40, severeValue: 100 }
 ];
-const POLLUTANT_FIELD_KEYS: PollutantKey[] = POLLUTANT_PROFILES.map((profile) => profile.key);
 
 function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -85,8 +83,25 @@ function formatPercent(value: number | null | undefined, tKey: (key: string) => 
   return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
 }
 
-function formatScore(value: number | null | undefined, tKey: (key: string) => string): string {
-  return hasNumber(value) ? `${formatNumber(value, 0)}/5` : tKey("airQuality.na");
+function averageStationField(stations: AirQualityStation[], key: PollutantKey): number | null {
+  const values = stations.map((station) => station[key]).filter(hasNumber);
+  if (values.length === 0) {
+    return null;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function cautionDetail(
+  value: number | null,
+  cautionValue: number,
+  tKey: (key: string) => string,
+): string {
+  if (!hasNumber(value)) {
+    return tKey("airQuality.noValue");
+  }
+  return value < cautionValue
+    ? `${tKey("airQuality.belowCaution")} (${cautionValue})`
+    : `${tKey("airQuality.aboveCaution")} (${cautionValue})`;
 }
 
 function scoreLabel(
@@ -262,10 +277,6 @@ function scorePercent(score: number | null | undefined): number {
   return Math.max(6, Math.min(100, ((score ?? 0) / 5) * 100));
 }
 
-function indexPercent(value: number | null): number {
-  return Math.max(6, Math.min(100, value ?? 0));
-}
-
 function pollutantProfile(key: PollutantKey): PollutantProfile {
   return POLLUTANT_PROFILES.find((profile) => profile.key === key) ?? POLLUTANT_PROFILES[0];
 }
@@ -312,7 +323,23 @@ function averagePollutantValue(stations: AirQualityStation[], key: PollutantKey)
 }
 
 function stationDisplayName(station: AirQualityStation): string {
-  return station.station || station.label || UNAVAILABLE_DATA_VALUE;
+  return station.label || station.station || UNAVAILABLE_DATA_VALUE;
+}
+
+function formatStationClock(value: string | null, timeZone: string): string | null {
+  if (!value) {
+    return null;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone,
+  }).format(parsed);
 }
 
 function sourceRequestCount(airQuality: AirQualityCurrentResponse): string {
@@ -482,11 +509,6 @@ export function AirQualityWorkspace({
   const currentScore = airQuality.worst_score;
   const dataTimezone = resolveDataTimezone(airQuality.time_scope?.timezone);
   const currentTone = scoreTone(currentScore);
-  const indexValues = stations.map(stationIndex).filter(hasNumber);
-  const peakIndex = indexValues.length > 0 ? Math.max(...indexValues) : null;
-  const lowIndex = indexValues.length > 0 ? Math.min(...indexValues) : null;
-  const pollutantFieldsReady = POLLUTANT_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
-  const scoreFieldsReady = SCORE_FIELD_KEYS.filter((field) => fieldCoverage(stations, field) > 0).length;
   const historyPoints = airHistoryPoints(history, tKey, dataTimezone);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
   const highlightedCategoryEvent =
@@ -507,17 +529,17 @@ export function AirQualityWorkspace({
         language={language}
         observedAt={airQuality.observed_at}
         sourceLabel={airQuality.source_code.toUpperCase()}
-        status={scopedStatusLabel(
-          airQuality.status,
-          airQuality.time_scope,
-          tKey,
-          "airQuality.hsySyncActive",
-          "airQuality.syncDelayed",
-        )}
+        status={tKey("airQuality.stationCoverageStatus")}
         statusTone={liveTone}
         tKey={tKey}
         timeScope={airQuality.time_scope}
-        title={airQuality.location ? `${airQuality.location} ${tKey("airQuality.airQualityNetwork")}` : tKey("airQuality.airQualityNetwork")}
+        title={
+          airQuality.location?.toLowerCase() === "helsinki"
+            ? tKey("airQuality.helsinkiMetropolitanAir")
+            : airQuality.location
+              ? `${airQuality.location} ${tKey("airQuality.metropolitanAir")}`
+              : tKey("airQuality.metropolitanAir")
+        }
         timezone={dataTimezone}
       >
         <span className="workspace-evidence-observation">
@@ -543,25 +565,25 @@ export function AirQualityWorkspace({
               <strong>{hasNumber(currentScore) ? formatNumber(currentScore, 0) : tKey("airQuality.na")}</strong>
               <span>/5</span>
             </div>
-            <div>
-              <strong>{scoreLabel(currentScore, airQuality.worst_label, language, tKey, dataLabel)}</strong>
-              <p>{airQuality.worst_station ?? tKey("airQuality.worstStationUnavailable")}</p>
-            </div>
+            <strong className="air-score-word">
+              {scoreLabel(currentScore, airQuality.worst_label, language, tKey, dataLabel)}
+            </strong>
           </div>
-          <div className="air-hero-footer">
-            <div>
-              <span>{tKey("airQuality.reporting")}</span>
-              <strong>{airQuality.quality.reporting_station_count}/{airQuality.quality.station_count} {tKey("airQuality.stations")}</strong>
-            </div>
-            <div>
-              <span>{tKey("airQuality.indexRange")}</span>
-              <strong>
-                {hasNumber(lowIndex) && hasNumber(peakIndex)
-                  ? `${formatNumber(lowIndex, 0)}-${formatNumber(peakIndex, 0)}`
-                  : tKey("airQuality.indexMissing")}
-              </strong>
-            </div>
+          <div className="air-score-scale" aria-hidden="true">
+            {SCORE_BUCKETS.map((bucket) => (
+              <span
+                className={hasNumber(currentScore) && bucket <= Math.round(currentScore) ? "is-on" : ""}
+                key={bucket}
+              />
+            ))}
           </div>
+          <div className="air-score-scale-labels">
+            <span>{tKey("airQuality.good")}</span>
+            <span>{tKey("airQuality.veryPoor")}</span>
+          </div>
+          <p className="air-score-note">
+            {tKey("airQuality.cityScoreNote")}
+          </p>
         </article>
 
         <article className="air-glass-panel air-distribution-panel">
@@ -616,65 +638,47 @@ export function AirQualityWorkspace({
       </section>
 
       <section className="air-summary-strip" aria-label={tKey("airQuality.airQualitySummaryMetrics")}>
+        {POLLUTANT_PROFILES.map((profile) => {
+          const value = averageStationField(stations, profile.key);
+          return (
+            <article className="air-glass-panel" key={profile.key}>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: profile.key,
+                  label: tKey(`airQuality.${profile.labelKey}`),
+                  language,
+                })}
+              >
+                {tKey(`airQuality.${profile.labelKey}`)}
+              </DataLabelWithHelp>
+              <strong>
+                {hasNumber(value) ? formatNumber(value, profile.key === "european_aqi" ? 0 : 1) : tKey("airQuality.noValue")}
+                {hasNumber(value) && profile.unit ? <small>{profile.unit}</small> : null}
+              </strong>
+              <span className={`air-metric-detail air-metric-detail-${scoreTone(value == null ? null : value >= profile.severeValue ? 4 : value >= profile.cautionValue ? 3 : 1)}`}>
+                {cautionDetail(value, profile.cautionValue, tKey)}
+              </span>
+            </article>
+          );
+        })}
         <article className="air-glass-panel">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: "worst_score",
-              label: tKey("airQuality.worstScore"),
-              language,
-            })}
-          >
-            {tKey("airQuality.worstScore")}
-          </DataLabelWithHelp>
-          <strong>{formatScore(currentScore, tKey)}</strong>
+          <span>{tKey("airQuality.stationsReporting")}</span>
+          <strong>
+            {airQuality.quality.reporting_station_count}
+            <small className="quiet-value">/{airQuality.quality.station_count}</small>
+          </strong>
+          <span className="air-metric-detail">
+            {airQuality.quality.station_count - airQuality.quality.reporting_station_count > 0
+              ? `${airQuality.quality.station_count - airQuality.quality.reporting_station_count} ${tKey("airQuality.stationReturnedNoValue")}`
+              : tKey("airQuality.normalizedStationReadings")}
+          </span>
         </article>
         <article className="air-glass-panel">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: "peak_index",
-              label: tKey("airQuality.peakIndex"),
-              language,
-            })}
-          >
-            {tKey("airQuality.peakIndex")}
-          </DataLabelWithHelp>
-          <strong>{hasNumber(peakIndex) ? formatNumber(peakIndex, 0) : tKey("airQuality.missing")}</strong>
-        </article>
-        <article className="air-glass-panel">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: "field_coverage",
-              label: tKey("airQuality.fieldCoverage"),
-              language,
-            })}
-          >
-            {tKey("airQuality.fieldCoverage")}
-          </DataLabelWithHelp>
-          <strong>{formatPercent(airQuality.quality.field_coverage_pct, tKey)}</strong>
-        </article>
-        <article className="air-glass-panel">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: "pollutant_fields",
-              label: tKey("airQuality.pollutantFields"),
-              language,
-            })}
-          >
-            {tKey("airQuality.pollutantFields")}
-          </DataLabelWithHelp>
-          <strong>{pollutantFieldsReady}/{POLLUTANT_FIELD_KEYS.length}</strong>
-        </article>
-        <article className="air-glass-panel">
-          <DataLabelWithHelp
-            helpText={dataHelpText({
-              key: "score_fields",
-              label: tKey("airQuality.scoreFields"),
-              language,
-            })}
-          >
-            {tKey("airQuality.scoreFields")}
-          </DataLabelWithHelp>
-          <strong>{scoreFieldsReady}/2</strong>
+          <span>{tKey("airQuality.dataAge")}</span>
+          <strong>{tKey("airQuality.snapshotAge")}</strong>
+          <span className="air-metric-detail">
+            {tKey("airQuality.absoluteDemoTimestamp")}
+          </span>
         </article>
       </section>
 
@@ -722,38 +726,37 @@ export function AirQualityWorkspace({
           {renderPollutantChart(activePollutantProfile, stations, language, tKey, dataLabel)}
         </article>
 
-        <article className="air-glass-panel air-station-panel">
-          <header>
-            <div>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "station_ranking",
-                  label: tKey("airQuality.stationRanking"),
-                  language,
-                })}
-              >
-                {tKey("airQuality.stationRanking")}
-              </DataLabelWithHelp>
-              <h3>{tKey("airQuality.highestHsyIndexValues")}</h3>
-            </div>
-            <strong>{topStations.length} {tKey("airQuality.rows")}</strong>
+        <article className="air-station-panel">
+          <header className="air-station-heading">
+            <h2>{tKey("airQuality.stationsTitle")}</h2>
+            <span>{tKey("airQuality.stationsLead")}</span>
           </header>
-          <div className="air-station-list">
+          <div className="air-station-table" role="table" aria-label={tKey("airQuality.stationsTitle")}>
+            <div className="air-station air-station-head" role="row">
+              <span role="columnheader">{tKey("airQuality.station")}</span>
+              <span role="columnheader">{tKey("airQuality.score")}</span>
+              <span role="columnheader">{tKey("airQuality.pm25")}</span>
+              <span role="columnheader">{tKey("airQuality.updated")}</span>
+            </div>
             {topStations.length > 0 ? (
               topStations.map((station) => {
-                const index = stationIndex(station);
                 const tone = scoreTone(station.score);
+                const updatedClock = hasNumber(station.score) || hasNumber(station.pm2_5)
+                  ? formatStationClock(airQuality.observed_at, dataTimezone)
+                  : null;
                 return (
-                  <article className={`air-station air-station-${tone}`} key={station.station}>
-                    <div className="air-station-main">
-                      <div>
-                        <strong>{station.station}</strong>
-                        <span>{scoreLabel(station.score, station.label, language, tKey, dataLabel)} · {tKey("airQuality.score")} {formatNumber(station.score, 0)}/5</span>
-                      </div>
-                      <em>{hasNumber(index) ? formatNumber(index, 0) : tKey("airQuality.indexMissing")}</em>
-                    </div>
-                    <span className="air-index-track" aria-hidden="true">
-                      <span style={{ width: `${indexPercent(index)}%` }} />
+                  <article className={`air-station air-station-${tone}`} key={station.station} role="row">
+                    <strong role="cell">{stationDisplayName(station)}</strong>
+                    <span className="air-station-score" role="cell">
+                      {hasNumber(station.score)
+                        ? `${formatNumber(station.score, 0)}/5 ${scoreLabel(station.score, station.label, language, tKey, dataLabel)}`
+                        : tKey("airQuality.noValue")}
+                    </span>
+                    <span role="cell">
+                      {hasNumber(station.pm2_5) ? formatNumber(station.pm2_5, 1) : "—"}
+                    </span>
+                    <span className="air-station-updated" role="cell">
+                      {updatedClock ?? tKey("airQuality.empty")}
                     </span>
                   </article>
                 );
@@ -814,31 +817,16 @@ export function AirQualityWorkspace({
 
           <article className="air-glass-panel air-pipeline-panel">
             <header>
-              <DataLabelWithHelp
-                helpText={dataHelpText({
-                  key: "pipeline",
-                  label: tKey("airQuality.pipeline"),
-                  language,
-                })}
-              >
-                {tKey("airQuality.pipeline")}
-              </DataLabelWithHelp>
-              <strong>
-                {airQuality.data_pipeline.filter((stage) => stage.status === "ready").length}/
-                {airQuality.data_pipeline.length}
-              </strong>
+              <span>{tKey("airQuality.collectionPipeline")}</span>
             </header>
             <div>
               {airQuality.data_pipeline.map((stage) => (
                 <article className={`air-stage air-stage-${stageTone(stage)}`} key={stage.key}>
-                  <div>
-                    <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
-                    <span>{enumLabel(stage.status)}</span>
-                  </div>
-                  <p>
-                    {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
+                  <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
+                  <span>
+                    {enumLabel(stage.status).toUpperCase()}
                     {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("airQuality.records")}` : ""}
-                  </p>
+                  </span>
                 </article>
               ))}
             </div>

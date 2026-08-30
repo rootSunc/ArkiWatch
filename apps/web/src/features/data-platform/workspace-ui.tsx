@@ -68,7 +68,7 @@ export function WorkspaceEvidenceHeader({
         {eyebrow ? (
           <span className="workspace-evidence-eyebrow">{eyebrow}</span>
         ) : null}
-        <h2>{title}</h2>
+        <h1>{title}</h1>
         {status ? (
           <div className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}>
             <span aria-hidden="true" />
