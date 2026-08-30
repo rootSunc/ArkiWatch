@@ -19,20 +19,20 @@
 :root[data-theme="light"] {
   /* --- Surfaces --- */
   --canvas: #ffffff;
-  --surface-soft: #f7f9fa;
-  --nav-active: #f0f4f6;
-  --nav-hover: #f4f7f8;
-  --row-hover: #fafcfc;
+  --surface-soft: #f3f6f7;
+  --nav-active: #e5ecef;
+  --nav-hover: #edf2f4;
+  --row-hover: #f4f7f8;
 
   /* --- Ink & type --- */
   --ink: #17242b;
   --ink-hover: #0e1a20;
-  --ink-soft: #40505a;
-  --body: #5b6870;
-  --muted: #6b7a83;
-  --muted-2: #8b989f;
-  --muted-3: #6b7a83; /* same value as --muted by design; distinguished by size + mono tracking only */
-  --icon-idle: #98a5ac;
+  --ink-soft: #344650;
+  --body: #4e5d66;
+  --muted: #586972;
+  --muted-2: #657680;
+  --muted-3: #586972; /* same value as --muted by design; distinguished by size + mono tracking only */
+  --icon-idle: #63757f;
 
   /* --- Primary button (ink fill in light; a light-blue fill in dark) --- */
   --btn-fill: #17242b;
@@ -40,24 +40,24 @@
   --btn-label: #ffffff;
 
   /* --- Hairlines --- */
-  --line: #e4eaed;
-  --line-strong: #dbe4e8;
-  --line-soft: #eef2f4;
-  --line-softest: #f2f5f6;
-  --divider-fill: #cfd8dc;
-  --quiet-value: #c3d0d6;
+  --line: #cfd9de;
+  --line-strong: #b9c7ce;
+  --line-soft: #e1e7ea;
+  --line-softest: #e9edef;
+  --divider-fill: #aab9c0;
+  --quiet-value: #63757f;
 
   /* --- Accents --- */
-  --blue: #126c88;
-  --blue-soft: #cfe4ea;
-  --blue-fill: #cfe0e6;
-  --amber: #8d5800;
+  --blue: #075f7c;
+  --blue-soft: #c4dfe7;
+  --blue-fill: #bfd9e2;
+  --amber: #795000;
   --amber-soft: #fdf6e9;
   --amber-tint: #fdfaf3;
   --amber-line: #f0dcc4;
-  --green: #0f766e;
-  --red: #b42318;
-  --selection: #d7e9ef;
+  --green: #0a6b63;
+  --red: #a61b12;
+  --selection: #c7e1e9;
 
   /* --- Chrome --- */
   --topbar-scrim: rgba(255, 255, 255, 0.92);
@@ -195,21 +195,21 @@
 
 :root[data-theme="dark"] {
   /* --- Surfaces --- */
-  --canvas: #182126;
-  --surface-soft: #202b31;
-  --nav-active: #202b31;
-  --nav-hover: #1e282e;
-  --row-hover: #1e282e;
+  --canvas: #151e23;
+  --surface-soft: #202d34;
+  --nav-active: #263740;
+  --nav-hover: #223039;
+  --row-hover: #1f2c33;
 
   /* --- Ink & type --- */
-  --ink: #e9f0f3;
+  --ink: #f1f6f8;
   --ink-hover: #a5d9ec;
-  --ink-soft: #bccad2;
-  --body: #9eafb8;
-  --muted: #93a4ad;
-  --muted-2: #7e8f98;
-  --muted-3: #93a4ad;
-  --icon-idle: #8598a2;
+  --ink-soft: #d3dde2;
+  --body: #bdcbd2;
+  --muted: #aab9c1;
+  --muted-2: #9caeb7;
+  --muted-3: #aab9c1;
+  --icon-idle: #9fb2bc;
 
   /* --- Primary button --- */
   --btn-fill: #7bc9e5;
@@ -217,27 +217,27 @@
   --btn-label: #11181d;
 
   /* --- Hairlines --- */
-  --line: #314049;
-  --line-strong: #3a4a54;
-  --line-soft: #263238;
-  --line-softest: #222c32;
-  --divider-fill: #45555e;
-  --quiet-value: #4a5a63;
+  --line: #43555f;
+  --line-strong: #576b76;
+  --line-soft: #304049;
+  --line-softest: #26343b;
+  --divider-fill: #647984;
+  --quiet-value: #a0b1ba;
 
   /* --- Accents --- */
-  --blue: #7bc9e5;
-  --blue-soft: #2b515e;
-  --blue-fill: #2b515e;
-  --amber: #f1b45b;
+  --blue: #8ad8f2;
+  --blue-soft: #2c5362;
+  --blue-fill: #2c5362;
+  --amber: #ffc66d;
   --amber-soft: #3b2d1d;
   --amber-tint: #2c2418;
   --amber-line: #5c4626;
-  --green: #5eead4;
-  --red: #ff8e83;
-  --selection: #274652;
+  --green: #6ef2de;
+  --red: #ff9e95;
+  --selection: #315461;
 
   /* --- Chrome --- */
-  --topbar-scrim: rgba(24, 33, 38, 0.92);
+  --topbar-scrim: rgba(21, 30, 35, 0.94);
   --assistant-scrim: rgba(9, 14, 17, 0.42);
   --assistant-panel-shadow: -32px 0 64px rgba(0, 0, 0, 0.34);
   --focus-ring: color-mix(in srgb, var(--blue) 34%, transparent);
