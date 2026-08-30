@@ -10,6 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const session = await requireSession();
-  return <PersonalSettingsPage user={session.user} />;
+  await requireSession();
+  return <PersonalSettingsPage />;
 }

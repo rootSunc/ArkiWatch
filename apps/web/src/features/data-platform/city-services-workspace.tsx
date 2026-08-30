@@ -4,7 +4,6 @@ import type { CSSProperties } from "react";
 
 import { parseValidDate, severityTone } from "@/features/shared/format";
 
-import { categoryKeyDataItemKeys } from "./category-metadata";
 import { localizedContent } from "./content-localization";
 import { localizedPlatformCopy } from "./platform-copy";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
@@ -190,18 +189,6 @@ function latestSourceRun(category: PlatformCategory): string | null {
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime());
 
   return sourceRuns[0] ?? null;
-}
-
-function fieldStatus(category: PlatformCategory, field: ServiceField, language: LanguageMode): string {
-  if (!categoryKeyDataItemKeys(category).includes(field.key)) {
-    return translateEnumLabel(language, "Planned");
-  }
-
-  if (category.events.some((event) => event.body.toLowerCase().includes(field.key.replaceAll("_", " ")))) {
-    return translateEnumLabel(language, "Live");
-  }
-
-  return translateEnumLabel(language, "Mapped");
 }
 
 function sourceDatasetLabel(datasets: string[] | undefined, tKey: (key: string) => string): string {

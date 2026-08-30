@@ -315,11 +315,6 @@ function messageTypeLabel(value: string | null, language: LanguageMode, tKey: (k
   return value ? translateEnumLabel(language, value) : tKey("roadRail.messageTypeUnavailable");
 }
 
-function metricValue(roadRail: RoadRailCurrentResponse, key: string): string {
-  const metric = roadRail.metrics.find((item) => item.key === key);
-  return metric ? `${metric.value}${metric.unit ? ` ${metric.unit}` : ""}` : "0";
-}
-
 function localizedRoadRailSummary(
   roadRail: RoadRailCurrentResponse,
   historical: boolean,

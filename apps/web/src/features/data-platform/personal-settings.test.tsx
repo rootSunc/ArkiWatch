@@ -2,18 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SessionUser } from "@/features/auth/config";
-
 import { PersonalSettingsPage } from "./personal-settings";
-
-const user: SessionUser = {
-  id: "user-1",
-  email: "user@example.com",
-  name: "Test User",
-  locale: "en-US",
-  timezone: "Europe/Helsinki",
-  status: "ACTIVE",
-};
 
 describe("PersonalSettingsPage", () => {
   afterEach(() => {
@@ -31,7 +20,7 @@ describe("PersonalSettingsPage", () => {
       ),
     );
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     expect(await screen.findByRole("heading", { name: "Personal context" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Set default location/ })).toBeInTheDocument();
@@ -57,7 +46,7 @@ describe("PersonalSettingsPage", () => {
       ),
     );
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     const notice = await screen.findByRole("status");
     expect(notice).toHaveTextContent(
@@ -82,7 +71,7 @@ describe("PersonalSettingsPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     await screen.findByLabelText("City");
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
@@ -135,7 +124,7 @@ describe("PersonalSettingsPage", () => {
 
     render(
       <StrictMode>
-        <PersonalSettingsPage user={user} />
+        <PersonalSettingsPage />
       </StrictMode>,
     );
 
@@ -161,7 +150,7 @@ describe("PersonalSettingsPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const { unmount } = render(<PersonalSettingsPage user={user} />);
+    const { unmount } = render(<PersonalSettingsPage />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
     unmount();
@@ -209,7 +198,7 @@ describe("PersonalSettingsPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     const cityInput = await screen.findByLabelText("City");
     expect(screen.getByRole("button", { name: "Add another location" })).toBeInTheDocument();
@@ -280,7 +269,7 @@ describe("PersonalSettingsPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     await screen.findByRole("heading", { name: "Personal context" });
     fireEvent.click(screen.getByRole("button", { name: /^Add commute profile/ }));
@@ -325,7 +314,7 @@ describe("PersonalSettingsPage", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<PersonalSettingsPage user={user} />);
+    render(<PersonalSettingsPage />);
 
     await screen.findByRole("heading", { name: "Personal context" });
     fireEvent.click(screen.getByRole("button", { name: /^Connect Telegram/ }));

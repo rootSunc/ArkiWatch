@@ -11,7 +11,6 @@ import {
   type ReactNode,
 } from "react";
 
-import type { SessionUser } from "@/features/auth/config";
 import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
@@ -138,7 +137,7 @@ function channelForTelegram(channels: PersonalChannel[]): PersonalChannel | null
   return channels.find((channel) => channel.channel_type === "TELEGRAM") ?? null;
 }
 
-export function PersonalSettingsPage({ user }: { user: SessionUser }) {
+export function PersonalSettingsPage() {
   const { languageMode, selectLanguageMode, themeMode, toggleThemeMode } = useClientPreferences();
 
   return (
@@ -148,7 +147,6 @@ export function PersonalSettingsPage({ user }: { user: SessionUser }) {
         onLanguageChange={selectLanguageMode}
         onThemeToggle={toggleThemeMode}
         themeMode={themeMode}
-        user={user}
       />
     </I18nProvider>
   );
@@ -159,13 +157,11 @@ function PersonalSettingsContent({
   onLanguageChange,
   onThemeToggle,
   themeMode,
-  user,
 }: {
   language: "en" | "zh";
   onLanguageChange: (language: "en" | "zh") => void;
   onThemeToggle: () => void;
   themeMode: "light" | "dark";
-  user: SessionUser;
 }) {
   const { tKey } = useI18n();
   const [context, setContext] = useState<PersonalContextRead | null>(null);

@@ -6,52 +6,57 @@
 
 <p align="center">
   <strong>Public data. Practical decisions.</strong><br>
-  A calm, open-source daily assistant for weather, air, mobility, energy, and city signals.
+  An open-source daily workspace for Finnish weather, air, mobility, energy, and city signals — with the evidence kept visible.
 </p>
 
 <p align="center">
   <a href="https://github.com/rootSunc/ArkiWatch/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/rootSunc/ArkiWatch/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: AGPL-3.0-only" src="https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg"></a>
-  <img alt="Status: active development" src="https://img.shields.io/badge/status-active%20development-2ea44f">
-  <img alt="Demo: zero credentials" src="https://img.shields.io/badge/demo-zero%20credentials-7c3aed">
+  <img alt="Status: pre-release" src="https://img.shields.io/badge/status-pre--release-yellow">
+  <img alt="UI: English and 中文" src="https://img.shields.io/badge/UI-EN%20%2F%20中文-111111">
 </p>
 
 <p align="center">
-  <a href="#try-the-demo">Try the demo</a> ·
-  <a href="#see-the-product">See the product</a> ·
-  <a href="#run-the-live-stack">Run locally</a>
+  <a href="#try-it">Try the demo</a> ·
+  <a href="#run-the-live-stack">Run locally</a> ·
+  <a href="docs/data-sources.md">Data sources</a> ·
+  <a href="#contributing">Contributing</a>
 </p>
 
-> ArkiWatch brings scattered public signals into one practical daily workspace — while keeping scope, freshness, provenance, and evidence visible.
+<p align="center">
+  <a href="apps/web/public/screenshots/today-workspace-en.jpg">
+    <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="ArkiWatch Today workspace: one daily recommendation, glance metrics, and a short plan for Helsinki" width="100%">
+  </a>
+</p>
 
-## Contents
+<p align="center"><sub>Helsinki demo snapshot · English UI. The same product is available in 中文.</sub></p>
 
-- [Why ArkiWatch](#why-arkiwatch)
-- [Try the demo](#try-the-demo)
-- [See the product](#see-the-product)
-- [Data you can inspect](#data-you-can-inspect)
-- [Architecture](#architecture)
-- [Run the live stack](#run-the-live-stack)
-- [Repository map](#repository-map)
-- [Development](#development)
-- [Project status](#project-status)
-- [Privacy and license](#privacy-and-license)
+## Why
 
-## Why ArkiWatch
+Everyday decisions in a Finnish city are split across weather pages, transit alerts, air-quality maps, energy prices, and municipal sites. ArkiWatch pulls those public signals into two workspaces:
 
-Everyday decisions are often spread across weather pages, transit alerts, air-quality maps, energy prices, and municipal websites. ArkiWatch connects those signals and makes the resulting guidance explainable.
+- **Today** — one useful next step, a short plan, and the context that matters for the next few hours.
+- **Signal observatory** — the same data as inspectable evidence: scope, freshness, source health, and links back to the provider.
 
-| For | What ArkiWatch provides |
-| --- | --- |
-| **People** | A short daily brief, plan-aware context, commute and outdoor signals, energy timing, and an assistant-style explainer. |
-| **Curious citizens** | Source health, timestamps, coverage boundaries, events, metrics, and evidence links instead of a black box. |
-| **Builders** | Isolated collectors, normalized records, recommendation rules, city packs, tests, and stable API contracts. |
+Recommendations keep their source, fetch time, validity, and coverage boundary visible. The deterministic demo is labelled as a snapshot and is never presented as a live observation.
 
-The project is currently focused on Finland, with Helsinki and nearby city packs as the most complete product context. It is pre-release software under active development.
+Finland is the current product context. Helsinki is the most complete city pack; other packs are honest about what is live, regional, or still planned.
 
-## Try the demo
+## Features
 
-The deterministic demo is the fastest way to understand the product. It needs no PostgreSQL, API keys, or external services.
+- **Decision-first Today** — a lead recommendation, glance metrics, and a compact day plan.
+- **Inspectable observatory** — weather, air, energy, mobility, water/snow, events, and three catalog workspaces.
+- **Provenance in the UI** — source health, timestamps, city/date scope, and evidence before interpretation.
+- **Grounded assistant** — answers cite the workspace they came from and can open that evidence.
+- **Honest city packs** — Helsinki, Espoo, Vantaa, Tampere, Turku, and Oulu, each with a visible capability map.
+- **Historical dates** — browse a past day without treating it as live advice.
+- **English and 中文** — the product UI is bilingual.
+- **Optional personal context** — saved places, commute profile, and Telegram delivery when you self-host.
+- **Zero-credential demo** — no PostgreSQL, API keys, or provider accounts required to evaluate the product.
+
+## Try it
+
+The fastest path is the deterministic Helsinki / Uusimaa demo.
 
 ```bash
 corepack enable
@@ -59,120 +64,105 @@ pnpm install
 pnpm demo
 ```
 
-Open [http://localhost:3000](http://localhost:3000), then explore:
+Open [http://localhost:3000](http://localhost:3000).
 
-1. **Today** — see the most useful decision first.
-2. **Data** — inspect the source, scope, freshness, and evidence behind it.
-3. **Assistant** — ask a practical question and follow the answer back to the relevant workspace.
-4. **About** — open [/about](http://localhost:3000/about) for the product story and city coverage matrix.
+1. **Today** — start from the recommendation, then open the plan and glance metrics.
+2. **Signal observatory** — check source health, coverage, and evidence.
+3. **Assistant** — ask a practical question and follow the citation back to a workspace.
+4. **About** — [http://localhost:3000/about](http://localhost:3000/about) has the product story and city matrix.
 
-The demo is a reproducible Helsinki / Uusimaa snapshot. It is clearly labelled as fixture data and never presented as a live observation. Connect the API to use live public feeds.
+Connect the API when you want live public feeds. The demo will not pretend fixture data is current.
 
 ## See the product
-
-ArkiWatch has two complementary workspaces: one helps people decide, and the other helps them verify.
-
-| Workspace | Designed for | What stays visible |
-| --- | --- | --- |
-| **Today / life assistant** | Deciding what to do next | One lead recommendation, a compact plan, relevant context, and assistant access. |
-| **Data / public observatory** | Checking whether a decision is justified | Signal summary, source health, city/date scope, events, metrics, and evidence. |
-
-The interface starts quiet and opens detail on demand. That separation is deliberate: guidance should be useful in seconds, while public data remains inspectable in full.
 
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
-      <a href="apps/web/public/screenshots/today-workspace-en.jpg">
-        <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="ArkiWatch Today workspace in English showing a daily recommendation, timeline, and signal summary" width="100%">
-      </a><br>
-      <strong>Today</strong><br>
-      <sub>The decision-first daily workspace.</sub>
-    </td>
-    <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/data-platform-overview-en.jpg">
-        <img src="apps/web/public/screenshots/data-platform-overview-en.jpg" alt="ArkiWatch Data workspace in English showing signal categories, events, source health, and evidence cards" width="100%">
+        <img src="apps/web/public/screenshots/data-platform-overview-en.jpg" alt="Signal observatory with source health, core signals, and today's recommendation" width="100%">
       </a><br>
-      <strong>Data observatory</strong><br>
-      <sub>Source health, scope, and evidence at a glance.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center" valign="top">
-      <a href="apps/web/public/screenshots/assistant-chat-en.jpg">
-        <img src="apps/web/public/screenshots/assistant-chat-en.jpg" alt="ArkiWatch English assistant explaining a daily decision with citations" width="100%">
-      </a><br>
-      <strong>Assistant</strong><br>
-      <sub>Grounded explanations linked back to the data.</sub>
+      <strong>Signal observatory</strong><br>
+      <sub>Scope, freshness, and evidence at a glance.</sub>
     </td>
     <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/weather-workspace-en.jpg">
-        <img src="apps/web/public/screenshots/weather-workspace-en.jpg" alt="ArkiWatch English weather workspace with current conditions and evidence cards" width="100%">
+        <img src="apps/web/public/screenshots/weather-workspace-en.jpg" alt="Weather workspace for the Helsinki meteorological region with current conditions and evidence header" width="100%">
       </a><br>
       <strong>Signal workspaces</strong><br>
-      <sub>Detailed weather and category-level context.</sub>
+      <sub>Category detail with source and timestamp on the page.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" valign="top">
+      <a href="apps/web/public/screenshots/assistant-chat-en.jpg">
+        <img src="apps/web/public/screenshots/assistant-chat-en.jpg" alt="ArkiWatch assistant open beside Today, with suggested questions and citation note" width="72%">
+      </a><br>
+      <strong>Assistant</strong><br>
+      <sub>Grounded explanations that stay attached to the current snapshot.</sub>
     </td>
   </tr>
 </table>
 
-<p align="center"><em>All screenshots are from the English deterministic Helsinki demo snapshot.</em></p>
-
 ## Data you can inspect
 
-ArkiWatch currently connects public signals from FMI, HSY, Open-Meteo, Digitransit / HSL, Digitraffic, Fingrid, SYKE, Helsinki Service Map, Helsinki Linked Events, and electricity-price APIs. See the [data-source and provenance notes](docs/data-sources.md) for provider boundaries and operational assumptions.
+ArkiWatch is a provider adapter and decision layer, not the authoritative source for any feed. Configured providers include FMI, HSY, Open-Meteo, Digitransit / HSL, Digitraffic, Fingrid, SYKE, Helsinki Service Map, Helsinki Linked Events, and electricity-price APIs. See [docs/data-sources.md](docs/data-sources.md) for boundaries and operational assumptions.
 
-The product keeps several distinctions explicit:
+The product keeps these distinctions explicit:
 
-- **Scope:** city, regional, national, and provider-defined observations stay labelled.
-- **Freshness:** healthy, stale, empty, failing, inactive, and pending sources are separate states.
-- **Provenance:** recommendations retain source, fetch time, validity, and evidence where available.
-- **Demo semantics:** deterministic fixtures are labelled as snapshots, never as live data.
+- **Scope** — city, regional, national, and provider-defined observations stay labelled.
+- **Freshness** — healthy, stale, empty, failing, inactive, and pending are separate states.
+- **Provenance** — recommendations retain source, fetch time, validity, and evidence where available.
+- **Demo semantics** — fixtures are labelled as snapshots, never as live data.
 
-### Current city-pack coverage
+### City-pack coverage
 
-| Signal | Current scope | Boundary |
-| --- | --- | --- |
-| Weather | Helsinki, Espoo, Vantaa, Tampere, Turku, Oulu | FMI forecasts and weather-risk signals follow the selected city. |
-| Air quality | All six city choices | Open-Meteo provides city readings; HSY station coverage is Helsinki, Espoo, and Vantaa. |
-| Transit | HSL / Digitransit focus | Service-alert context, not a nationwide routing guarantee. |
-| Water and hydrology | Provider-defined regional coverage | Availability follows configured SYKE station and observation windows. |
-| City services | Helsinki Service Map | Provider-led Helsinki coverage. |
-| Public events | Helsinki and Espoo | Linked Events endpoints are configured independently by city. |
-| Energy and road / rail | National or provider-defined regions | Selecting a city does not imply city-specific observations. |
+`live` means the feed is configured for that city. `regional` follows the provider, not the city picker. `planned` is visible but not claimed as live.
 
-The machine-readable coverage contract is available at `GET /api/platform/coverage`. The data-quality probe is available at `GET /api/health/data-quality`.
+| City | Weather | Air | Transit | Water | City services | Events |
+| --- | --- | --- | --- | --- | --- | --- |
+| Helsinki | live | live | live | live | live | live |
+| Espoo | live | live | live | live | planned | live |
+| Vantaa | live | live | live | live | planned | planned |
+| Tampere | live | live | planned | live | planned | planned |
+| Turku | live | live | planned | live | planned | planned |
+| Oulu | live | live | planned | live | planned | planned |
 
-## Architecture
+Energy and road/rail are national or provider-defined. Selecting a city does not imply a city-specific observation. Tampere, Turku, and Oulu recommendations stay regional-only.
 
-The data path is intentionally explicit: provider adapters isolate external APIs, raw records preserve fetch metadata, and normalized products feed both guidance and inspectable workspaces.
+Machine-readable contracts: `GET /api/platform/coverage` and `GET /api/health/data-quality`.
 
-<p align="center">
-  <img src="docs/architecture-overview.jpg" alt="ArkiWatch system architecture: public providers, collector adapters, raw records, normalized events, rules, Go serving layer, Today and Data workspaces, optional Telegram and assistant channels" width="100%">
-</p>
+## How it works
 
+```mermaid
+flowchart LR
+  P[Public providers] --> C[Go collectors]
+  C --> R[(Raw records)]
+  R --> N[Normalizer]
+  N --> E[(Events and snapshots)]
+  E --> U[Recommendation rules]
+  U --> A[Go HTTP API]
+  A --> T[Today]
+  A --> D[Observatory]
+  A --> S[Assistant]
+  A -.-> G[Optional Telegram]
+```
 
-### Main technologies
+Collector adapters isolate each external API. Raw records keep fetch metadata. Normalized products feed both guidance and the inspectable workspaces. The static API contract lives in [`contracts/openapi.json`](contracts/openapi.json) and generates the frontend types.
 
-| Layer | Technology |
+| Layer | Stack |
 | --- | --- |
 | Web | Next.js App Router, React, TypeScript, `next-intl` |
-| API | Go, `pgx`, explicit PostgreSQL repositories |
-| Data | PostgreSQL, Go-owned schema lifecycle, normalized events and snapshots |
-| Jobs | Collectors, normalization pipeline, rules, scheduler, backfill, and dispatch runners |
+| API | Go 1.25, `pgx`, explicit PostgreSQL repositories |
+| Data | PostgreSQL, Go-owned idempotent schema lifecycle |
+| Jobs | Collectors, normalizer, rules, scheduler, backfill, dispatch |
 | Quality | `go vet`, `go test`, Vitest, Playwright, accessibility smoke tests |
-| Operations | Docker, health checks, structured logs, request IDs, metrics, and optional OpenTelemetry |
+| Operations | Docker, health checks, structured logs, request IDs, optional OpenTelemetry |
 
 ## Run the live stack
 
-Use this path when you want real provider data and the full backend.
+Use this path for real provider data and the full backend.
 
-### Requirements
-
-- Node.js 20+
-- Corepack with pnpm
-- Go 1.25+
-- PostgreSQL
-
-### Setup
+**Requirements:** Node.js 20+, Corepack / pnpm, Go 1.25+, PostgreSQL.
 
 ```bash
 corepack enable
@@ -182,64 +172,48 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 
 createdb arkiwatch
-# Go commands load apps/api/.env automatically when run from the repository root.
 pnpm run migrate:api
 pnpm run bootstrap:api
 pnpm dev
 ```
 
-Local surfaces:
-
 | Surface | URL |
 | --- | --- |
-| Web app | [http://localhost:3000](http://localhost:3000) |
-| Product overview | [http://localhost:3000/about](http://localhost:3000/about) |
-| API root | [http://localhost:8000/api](http://localhost:8000/api) |
+| Web | [http://localhost:3000](http://localhost:3000) |
+| About | [http://localhost:3000/about](http://localhost:3000/about) |
+| API | [http://localhost:8000/api](http://localhost:8000/api) |
 | Health | [http://localhost:8000/api/health](http://localhost:8000/api/health) |
 
+Go commands load `apps/api/.env` when run from the repository root. Do not commit `.env` files, tokens, or personal data. Full local notes: [docs/development.md](docs/development.md). An optional single-VPS recipe lives in [`deploy/`](deploy/README.md).
 
-Start from the two `.env.example` files. Do not commit `.env` files, tokens, provider credentials, production data, or personal information. The full local-stack notes are in [docs/development.md](docs/development.md).
-
-## Repository map
+## Repository
 
 ```text
 .
-├── apps/api
-│   ├── cmd               # Go API, bootstrap, collector, normalizer, scheduler
-│   ├── internal           # HTTP handlers, repositories, collectors, pipeline, rules, dispatch
-│   ├── .env.example       # Local Go API configuration template
-│   └── go.mod
-├── contracts
-│   └── openapi.json        # Static API contract used to generate frontend types
-├── apps/web
-│   ├── src               # Next.js App Router, workspaces, assistant, API client
-│   ├── public             # Brand assets, product screenshots, and web metadata
-│   └── package.json
-├── docs                  # Development, data-source, and UI system notes
-├── deploy                # Docker, VPS deployment, operations scripts, and runbooks
-├── .github               # CI workflow, issue templates, and PR template
-└── package.json          # Workspace commands
+├── apps/api            # Go API, collectors, normalizer, scheduler, schema
+├── apps/web            # Next.js App Router, workspaces, assistant
+├── contracts           # Static OpenAPI contract
+├── docs                # Development, data-source, and UI notes
+├── deploy              # Optional Docker / VPS recipe
+├── .github             # CI, issue templates, pull-request template
+└── package.json        # Workspace commands
 ```
 
 ## Development
 
-Common commands from the repository root:
-
 | Command | Purpose |
 | --- | --- |
-| `pnpm demo` | Start the zero-credential deterministic product tour. |
-| `pnpm dev` | Start the Go API and Next.js together. |
-| `pnpm run dev:api` | Start the Go API only. |
-| `pnpm run migrate:api` | Apply the Go-owned, idempotent PostgreSQL schema lifecycle. |
-| `pnpm run bootstrap:api` | Ensure Go schema, admin, source, rule, and scheduler metadata is present. |
-| `pnpm run build:web` | Build the Next.js app. |
-| `pnpm run contracts:check` | Check OpenAPI and generated frontend types for drift. |
-| `pnpm run contracts:check:live` | Boot the Go API and recursively verify live responses against the OpenAPI contract. |
-| `pnpm run audit:api` | Run `govulncheck` against the Go module graph. |
-| `pnpm check` | Run the main backend and frontend quality gates. |
-| `pnpm run test:e2e` | Run browser and accessibility smoke tests against the demo. |
+| `pnpm demo` | Zero-credential deterministic product tour |
+| `pnpm dev` | Go API and Next.js together |
+| `pnpm run migrate:api` | Idempotent PostgreSQL schema lifecycle |
+| `pnpm run bootstrap:api` | Admin, source, rule, and scheduler metadata |
+| `pnpm check` | Backend and frontend quality gates |
+| `pnpm run test:e2e` | Browser and accessibility smoke tests against the demo |
+| `pnpm run contracts:check` | OpenAPI vs generated frontend types |
+| `pnpm run contracts:check:live` | Live API responses vs the OpenAPI contract |
+| `pnpm run audit:api` | `govulncheck` on the Go module graph |
 
-The one-shot live pipeline is explicit:
+One-shot live pipeline:
 
 ```bash
 pnpm run dev:collector -- all
@@ -247,26 +221,38 @@ pnpm run dev:normalize -- -hours 24
 pnpm run dev:scheduler -- --once
 ```
 
-For focused work, use `pnpm run test:api`, `pnpm run test:web`, `pnpm run lint:api`, `pnpm run lint:web`, or `pnpm run typecheck:web`. Database and API contract changes must update the Go schema reconciler, OpenAPI contract, generated frontend types, and focused tests.
+Focused checks: `pnpm run test:api`, `pnpm run test:web`, `pnpm run lint:api`, `pnpm run lint:web`, `pnpm run typecheck:web`. Schema or contract changes must update the Go reconciler, `contracts/openapi.json`, generated frontend types, and tests together.
 
-The production backend and schema lifecycle are owned by `apps/api`. The production image contains only Go API/worker/migration binaries plus the minimal runtime image. The static API contract lives in `contracts/openapi.json`.
+## Contributing
+
+The useful contributions are small and concrete.
+
+- **Use the demo** and [open an issue](https://github.com/rootSunc/ArkiWatch/issues/new/choose) if something is unclear, wrong, or over-claimed.
+- **Propose a Finnish public source** with the [data-source template](https://github.com/rootSunc/ArkiWatch/issues/new?template=data_source.yml): license, rate limits, coverage, and the daily decision it would improve.
+- **Keep EN and 中文 in sync** for any user-facing copy.
+- **Add a collector only with fixtures and tests.** External providers are not part of the test contract.
+- **Do not claim nationwide or live coverage** that the city pack and `/api/platform/coverage` do not support.
+
+A typical change should pass `pnpm check` and, when the API contract moves, `pnpm run contracts:check`. UI changes should include a screenshot or a short recording.
 
 ## Project status
 
-ArkiWatch is pre-release software under active development. The main product paths and engineering foundations are in place, but provider availability, geographic coverage, external API limits, and UI details can change.
+ArkiWatch is pre-release software. The main product paths and engineering foundations are in place; provider availability, geographic coverage, external API limits, and UI details can change.
 
-The project is currently focused on:
+Current focus:
 
-- strengthening provider-backed coverage for the six existing city packs;
+- strengthening the six existing city packs without overstating coverage;
+- keeping demo, historical, and live semantics visibly separate;
 - improving grounded recommendations and evidence presentation;
-- expanding Finnish city coverage and community-contributed collectors;
-- keeping demo, historical, and live data semantics visibly separate.
+- accepting community collectors that meet the provenance bar.
 
-The optional self-hosting recipe in [`deploy/`](deploy/README.md) is not required for the demo or normal development.
+## Acknowledgements
 
-## Privacy and license
+Public data comes from the providers above. They remain the authoritative sources; ArkiWatch only adapts, timestamps, and explains what it fetched. Confirm each provider's current terms, attribution rules, and rate limits before deploying a city pack.
 
-- Read [PRIVACY.md](PRIVACY.md) for the project’s data boundary and handling notes.
-- ArkiWatch is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+## License and privacy
 
-If the project is useful to you, a [GitHub star](https://github.com/rootSunc/ArkiWatch) helps other builders discover it.
+- Licensed under the [GNU Affero General Public License v3.0](LICENSE).
+- [PRIVACY.md](PRIVACY.md) describes the data boundary for demo, accounts, and self-hosted deployments.
+
+If the project is useful, a [GitHub star](https://github.com/rootSunc/ArkiWatch) helps other people find it.

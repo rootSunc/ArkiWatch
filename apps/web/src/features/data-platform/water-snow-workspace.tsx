@@ -68,13 +68,6 @@ type WaterTimelineBounds = {
   endsAt: number;
 };
 
-const SUMMARY_KEYS = [
-  "catalog_stage",
-  "source_status",
-  "active_events",
-  "records_ingested"
-];
-
 const FIELD_ICONS: Record<string, string> = {
   discharge: "waves",
   flood_warning: "flood",
@@ -283,11 +276,6 @@ function sourceVolumePoints(category: PlatformCategory): PlatformVisualizationPo
   return volume?.data.points ?? [];
 }
 
-function catalogCoveragePoints(category: PlatformCategory): PlatformVisualizationPoint[] {
-  const coverage = category.visualizations.find((item) => item.id === "water-catalog-coverage");
-  return coverage?.data.points ?? [];
-}
-
 function schemaShapeTone(shape: string): WaterTone {
   if (shape === "timeseries") {
     return "good";
@@ -403,13 +391,6 @@ function sourceStageLabel(category: PlatformCategory, language: LanguageMode): s
     language,
     isConnectedWorkspaceSource(source) ? source.stage : source.operational_status,
   );
-}
-
-function visibleSummaryMetrics(category: PlatformCategory): PanelMetric[] {
-  const preferred = SUMMARY_KEYS.map((key) => metricByKey(category, key)).filter(isPlatformMetric);
-  const fallback = category.summary_metrics.filter((metric) => !SUMMARY_KEYS.includes(metric.key));
-
-  return [...preferred, ...fallback].slice(0, 5);
 }
 
 function fieldStateLabel(category: PlatformCategory, language: LanguageMode): string {
