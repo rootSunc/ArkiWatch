@@ -173,6 +173,68 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+   8. Sidebar plane
+   The rail used to be the same white as the content with a hairline between
+   them, so the shell read as one flat sheet and the selected row was a grey
+   block sitting on it. Now the rail carries its own tone and the active row
+   is the canvas colour, which makes the selection read as the content pane
+   reaching into the navigation rather than a highlight painted over it.
+
+   No new hues, no shadow, and the radius is unchanged: the tones are steps in
+   the palette's existing cool neutral axis.
+   -------------------------------------------------------------------------- */
+
+.dashboard-side-nav {
+  background: var(--sidenav-ground);
+  border-right-color: var(--sidenav-edge);
+}
+
+.nav-row:hover {
+  background: var(--sidenav-row-hover);
+}
+
+.nav-row-active,
+.nav-row-active:hover {
+  background: var(--sidenav-row-active);
+  border: 1px solid var(--sidenav-row-active-edge);
+  /* border-box keeps the row 38px tall; trim the inline padding by the border
+   * so the icon column stays on the same axis as every idle row above it. */
+  padding: 0 7px;
+}
+
+/* The rail's own dividers were tuned against white. On the tinted ground they
+ * read heavier than intended. */
+.dashboard-side-nav .side-nav-utility-group,
+.dashboard-side-nav .side-nav-footer {
+  border-top-color: var(--sidenav-edge);
+}
+
+/* --muted-2 clears AA on white by a hair (4.54) and drops under it on the
+ * tinted ground (4.42). The rail's mono eyebrows step to --muted, an existing
+ * token at 5.36 against the ground. This follows the handoff's own rule that
+ * tier-3 text recedes by size and mono tracking, never by going lighter. */
+.dashboard-side-nav .brand-panel p,
+.dashboard-side-nav .brand-title-subtitle,
+.dashboard-side-nav .side-nav-group-label,
+.dashboard-side-nav .side-nav-catalog-label {
+  color: var(--muted);
+}
+
+/* The drawer is the same rail, temporarily lifted over the content, so it
+ * keeps the rail's tone; otherwise the active row (which is canvas-coloured)
+ * would vanish into a canvas-coloured drawer. The lift is carried by a shadow
+ * tinted to the palette's ink rather than the pure-black 0.4 it inherited,
+ * which is the only shadow the design system allows and the assistant panel
+ * already sets the convention for. */
+@media (max-width: 1023px) {
+  .dashboard-side-nav.mobile-side-nav-open {
+    background: var(--sidenav-ground);
+    border-right-color: var(--sidenav-edge);
+    box-shadow: 32px 0 64px rgba(23, 36, 43, 0.18);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-shell :where(button, a, [role="button"], summary) {
     transition: none;

@@ -47,7 +47,10 @@ export function MobileBottomNav({
       className="mobile-dashboard-footer"
       aria-label={tKey("shell.mobileNavigation")}
     >
-      <nav className="mobile-bottom-nav" aria-label={tKey("shell.signalNavigation")}>
+      {/* Distinct from the sidebar nav, which carries the same label on desktop.
+        Two landmarks sharing one accessible name is ambiguous for screen-reader
+        landmark lists. */}
+      <nav className="mobile-bottom-nav" aria-label={tKey("shell.signalShortcuts")}>
         {items.map((item) => {
           const isActive =
             selectedNavKey === item.key ||

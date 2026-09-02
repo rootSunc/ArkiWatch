@@ -59,6 +59,17 @@
   --red: #a61b12;
   --selection: #c7e1e9;
 
+  /* --- Sidebar plane ---
+   * The navigation sits on its own tone so the shell reads as chrome + paper
+   * instead of one flat sheet, and the active row takes the canvas colour of
+   * the pane it opens. That is the whole idea: the selected row is a piece of
+   * the content plane reaching into the rail, not a grey highlight on it. */
+  --sidenav-ground: #f6f8f9;
+  --sidenav-edge: #dfe6e9;
+  --sidenav-row-hover: #eaf0f2;
+  --sidenav-row-active: var(--canvas);
+  --sidenav-row-active-edge: #dbe3e7;
+
   /* --- Chrome --- */
   --topbar-scrim: rgba(255, 255, 255, 0.92);
   --assistant-scrim: rgba(23, 36, 43, 0.14);
@@ -240,6 +251,15 @@
   --green: #6ef2de;
   --red: #ff9e95;
   --selection: #315461;
+
+  /* --- Sidebar plane (dark) ---
+   * Same rule, inverted: the rail recedes below the canvas and the active row
+   * rises back to it. */
+  --sidenav-ground: #111a1f;
+  --sidenav-edge: #26343b;
+  --sidenav-row-hover: #1a252b;
+  --sidenav-row-active: var(--canvas);
+  --sidenav-row-active-edge: #33454e;
 
   /* --- Chrome --- */
   --topbar-scrim: rgba(21, 30, 35, 0.94);

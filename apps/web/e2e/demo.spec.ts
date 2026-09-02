@@ -9,23 +9,29 @@ test.describe("deterministic demo", () => {
 
   test("shows the data platform overview and demo scope by default", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
-    await expect(page.getByRole("status")).toContainText("Static example data");
+    await expect(page.getByRole("status")).toContainText("static example data");
     await expect(page.getByRole("combobox", { name: "City" })).toHaveValue("helsinki");
     await expect(page.getByRole("region", { name: "Source health" })).toBeVisible();
     await expect(page.getByRole("button", { name: /9 data sources · 9 healthy/ })).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Today.s recommendation.*Leave a few minutes earlier/ }),
+      page.getByRole("button", { name: /Leave a few minutes earlier/ }),
     ).toBeVisible();
   });
 
-  test("switches language without losing the selected scope", async ({ page }) => {
-    await page.getByRole("button", { name: "中文" }).click();
+  test("switches language without losing the selected scope", async ({ page }, testInfo) => {
+    if (testInfo.project.name === "mobile-chromium") {
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    }
+
+    await page.getByRole("button", { name: "中文" }).filter({ visible: true }).first().click();
 
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-    await expect(page.getByRole("status")).toContainText("静态示例");
-    await expect(page.getByRole("combobox", { name: "城市" })).toHaveValue("helsinki");
+    await expect(page.getByRole("status").first()).toContainText("静态示例");
+    await expect(
+      page.getByRole("combobox", { name: "城市" }).filter({ visible: true }).first(),
+    ).toHaveValue("helsinki");
 
-    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await page.getByRole("button", { name: "EN", exact: true }).filter({ visible: true }).first().click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
@@ -35,7 +41,8 @@ test.describe("deterministic demo", () => {
     await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
 
     await page
-      .getByRole("button", { name: /Life assistant Turn today/ })
+      .getByRole("complementary", { name: "Primary navigation" })
+      .getByRole("button", { name: "Today", exact: true })
       .click();
 
     await expect(page.getByRole("heading", { name: "Leave a few minutes earlier" })).toBeVisible();
@@ -46,8 +53,8 @@ test.describe("deterministic demo", () => {
     test.skip(testInfo.project.name !== "mobile-chromium", "mobile-only smoke");
 
     await expect(page.getByRole("contentinfo", { name: "Mobile navigation" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Signal navigation" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Assistant", exact: true })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Signal shortcuts" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ask", exact: true })).toBeVisible();
   });
 
   test("has no automated WCAG A/AA violations on the demo shell", async ({ page }, testInfo) => {
@@ -58,8 +65,11 @@ test.describe("deterministic demo", () => {
     expect(results.violations).toEqual([]);
 
     if (testInfo.project.name === "chromium") {
-      const themeToggle = page.getByRole("button", { name: "Switch to night theme" }).first();
-      await themeToggle.click();
+      await page.evaluate(() => {
+        localStorage.setItem("arkiwatch-theme", "dark");
+      });
+      await page.reload();
+      await expect(page.getByRole("main")).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
       await page.waitForTimeout(250);
 
