@@ -3,16 +3,25 @@
 import { useEffect } from "react";
 
 /**
- * Retitles the document when the language changes without a navigation.
+ * Holds the document title to the current language.
  *
- * The server already renders the right title from the language cookie, so this
- * only covers an in-page switch; there is no race with streamed metadata to
- * fight.
+ * The server renders the title from the language cookie, so normally there is
+ * nothing to correct. Two cases still need this: an in-page language switch,
+ * and a visitor whose language is in localStorage but not yet in a cookie,
+ * whose streamed metadata can arrive after the first client render. Rather
+ * than guess at a delay, watch the head and re-assert until unmount.
  */
 export function useDocumentTitle(title: string): void {
   useEffect(() => {
-    if (document.title !== title) {
-      document.title = title;
-    }
+    const apply = () => {
+      if (document.title !== title) {
+        document.title = title;
+      }
+    };
+
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
   }, [title]);
 }

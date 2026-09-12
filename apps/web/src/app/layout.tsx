@@ -96,6 +96,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                     : 'en';
                   document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
                   document.documentElement.setAttribute('data-language', language);
+                  // Seeds the cookie for a visitor who predates it, so the next
+                  // server render already knows the language.
+                  document.cookie = 'arkiwatch-language=' + language + ';path=/;max-age=31536000;samesite=lax';
 
                 } catch (e) {}
               })();

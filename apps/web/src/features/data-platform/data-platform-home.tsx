@@ -64,6 +64,7 @@ import {
   pathWithParams,
   resolveNavKey,
 } from "./data-platform-nav-utils";
+import { useShellFocus } from "./hooks/use-shell-focus";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
 import type { PlatformCategory, PlatformEvent } from "./types";
 import {
@@ -164,28 +165,11 @@ export function DataPlatformHome({
   );
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
   const [assistantOpenQuestion, setAssistantOpenQuestion] = useState<string | null>(null);
-  const assistantTopbarButtonRef = useRef<HTMLButtonElement>(null);
-  const assistantNavButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileNavigationButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileNavigationRef = useRef<HTMLElement>(null);
-  const dashboardAppRef = useRef<HTMLDivElement>(null);
-  const mobileMenuWasOpenRef = useRef(false);
-  const restoreDateFocusRef = useRef(false);
   const hasRenderedPlatformStateRef = useRef(false);
-  const retryFocusRef = useRef(false);
-  const scopeContentRef = useRef<HTMLDivElement>(null);
-  const eventDetailCloseRef = useRef<HTMLButtonElement>(null);
-  const eventDetailTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const assistantFocusReturnRefs = useMemo(
-    () => [assistantTopbarButtonRef, assistantNavButtonRef],
-    [],
-  );
   const [selectedNavKey, setSelectedNavKey] = useState(() =>
     resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), []),
   );
-  const mainContentRef = useRef<HTMLElement>(null);
-  const previousNavKeyRef = useRef(selectedNavKey);
-  const [needsHistoryAvailability, setNeedsHistoryAvailability] = useState(
+    const [needsHistoryAvailability, setNeedsHistoryAvailability] = useState(
     () => Boolean(initialDate),
   );
   const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
@@ -248,9 +232,38 @@ export function DataPlatformHome({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isCityRefreshPending, startCityRefresh] = useTransition();
   const [isDateRefreshPending, startDateRefresh] = useTransition();
+
+  const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
   const isScopePending =
     isCityRefreshPending || isDateRefreshPending || isPreviousScope;
   const tKey = (key: string) => translateMessageKey(languageMode, key);
+
+  const {
+    mainContentRef,
+    dashboardAppRef,
+    scopeContentRef,
+    mobileNavigationRef,
+    mobileNavigationButtonRef,
+    eventDetailCloseRef,
+    eventDetailTriggerRef,
+    assistantTopbarButtonRef,
+    assistantNavButtonRef,
+    assistantFocusReturnRefs,
+    requestDateFocusRestore,
+    requestRetryFocus,
+    restoreEventDetailTriggerFocus,
+  } = useShellFocus({
+    isMobileMenuOpen,
+    onCloseMobileMenu: closeMobileMenu,
+    isAssistantOpen,
+    isScopePending,
+    isPending,
+    isLoadingView,
+    selectedNavKey,
+    selectedDate,
+    selectedEventId,
+    overviewRevision: overview,
+  });
   useDocumentTitle(tKey("shell.documentTitle"));
 
   useEffect(() => {
@@ -258,28 +271,6 @@ export function DataPlatformHome({
       hasRenderedPlatformStateRef.current = true;
     }
   }, [isPending]);
-
-  useEffect(() => {
-    if (!retryFocusRef.current || isPending || isLoadingView) {
-      return;
-    }
-
-    retryFocusRef.current = false;
-    const frame = window.requestAnimationFrame(() => {
-      const retryButton = document.querySelector<HTMLButtonElement>(
-        ".platform-error-retry, .platform-inline-warning-action",
-      );
-
-      if (retryButton && !retryButton.disabled) {
-        retryButton.focus();
-        return;
-      }
-
-      mainContentRef.current?.focus();
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [isLoadingView, isPending, overview]);
 
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
@@ -344,7 +335,7 @@ export function DataPlatformHome({
   }
 
   function retryPlatformData(): void {
-    retryFocusRef.current = true;
+    requestRetryFocus();
     void retry().catch((retryError) => {
       console.error("Error retrying platform queries:", retryError);
     });
@@ -500,9 +491,9 @@ export function DataPlatformHome({
       }
       setSelectedNavKey(resolvedNavKey);
       updateNavQuery(resolvedNavKey, { mobilityTab, energyTab });
-      setIsMobileMenuOpen(false);
+      closeMobileMenu();
     },
-    [categories, selectedEnergyTab, selectedMobilityTab, updateNavQuery],
+    [categories, closeMobileMenu, selectedEnergyTab, selectedMobilityTab, updateNavQuery],
   );
 
   const openAssistantView = useCallback(
@@ -718,7 +709,7 @@ export function DataPlatformHome({
 
   function selectNavItem(item: NavItem): void {
     selectNav(item.categoryKey ?? item.key);
-    setIsMobileMenuOpen(false);
+    closeMobileMenu();
   }
 
   function prefetchNavItem(item: NavItem): void {
@@ -757,7 +748,7 @@ export function DataPlatformHome({
 
   function closeEventDetail(): void {
     setSelectedEventId(null);
-    window.requestAnimationFrame(() => eventDetailTriggerRef.current?.focus());
+    restoreEventDetailTriggerFocus();
   }
 
   function selectRecentEvent(event: PlatformEvent, trigger: HTMLButtonElement): void {
@@ -842,43 +833,6 @@ export function DataPlatformHome({
   }, [initialDate]);
 
   useEffect(() => {
-    // Stale scope controls leave the tab order while the requested scope loads.
-    const scopeContent = scopeContentRef.current;
-    if (scopeContent) {
-      scopeContent.inert = isScopePending;
-    }
-
-    return () => {
-      if (scopeContent) {
-        scopeContent.inert = false;
-      }
-    };
-  }, [isScopePending]);
-
-  useEffect(() => {
-    // The mobile navigation is a modal drawer. Keep the app behind it out of
-    // the accessibility tree and sequential focus order while it is open.
-    const dashboardApp = dashboardAppRef.current;
-    if (dashboardApp) {
-      dashboardApp.inert = isMobileMenuOpen || isAssistantOpen;
-    }
-
-    const sideNavigation = mobileNavigationRef.current;
-    if (sideNavigation) {
-      sideNavigation.inert = isAssistantOpen;
-    }
-
-    return () => {
-      if (dashboardApp) {
-        dashboardApp.inert = false;
-      }
-      if (sideNavigation) {
-        sideNavigation.inert = false;
-      }
-    };
-  }, [isAssistantOpen, isMobileMenuOpen]);
-
-  useEffect(() => {
     const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
     const nextMobilityTab = resolveMobilityTabParam(
       searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
@@ -895,136 +849,6 @@ export function DataPlatformHome({
       currentNavKey === nextNavKey ? currentNavKey : nextNavKey,
     );
   }, [categories, searchParams]);
-
-  useEffect(() => {
-    if (previousNavKeyRef.current === selectedNavKey) {
-      return;
-    }
-
-    previousNavKeyRef.current = selectedNavKey;
-    const frame = window.requestAnimationFrame(() => {
-      const mainContent = mainContentRef.current;
-      if (!mainContent) {
-        return;
-      }
-
-      mainContent.scrollTo({ top: 0, left: 0, behavior: "auto" });
-      mainContent.focus();
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [selectedNavKey]);
-
-  useEffect(() => {
-    const desktopNavQuery = window.matchMedia("(min-width: 1024px)");
-
-    function closeMobileMenuOnDesktop(): void {
-      if (desktopNavQuery.matches) {
-        setIsMobileMenuOpen(false);
-      }
-    }
-
-    closeMobileMenuOnDesktop();
-    desktopNavQuery.addEventListener("change", closeMobileMenuOnDesktop);
-
-    return () => {
-      desktopNavQuery.removeEventListener("change", closeMobileMenuOnDesktop);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      if (
-        mobileMenuWasOpenRef.current &&
-        window.matchMedia("(max-width: 1023px)").matches
-      ) {
-        mobileNavigationButtonRef.current?.focus();
-      }
-      mobileMenuWasOpenRef.current = false;
-      return;
-    }
-
-    mobileMenuWasOpenRef.current = true;
-    const navigation = mobileNavigationRef.current;
-    if (!navigation) {
-      return;
-    }
-
-    const focusableSelector =
-      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    const getFocusableElements = (): HTMLElement[] =>
-      Array.from(navigation.querySelectorAll<HTMLElement>(focusableSelector)).filter(
-        (element) => element.getClientRects().length > 0,
-      );
-
-    getFocusableElements()[0]?.focus();
-
-    function handleMobileNavigationKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setIsMobileMenuOpen(false);
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const focusableElements = getFocusableElements();
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleMobileNavigationKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleMobileNavigationKeyDown);
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (
-      !restoreDateFocusRef.current ||
-      isPending ||
-      isScopePending ||
-      isLoadingView
-    ) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      const dateTrigger = Array.from(
-        document.querySelectorAll<HTMLElement>(".date-scope-trigger"),
-      ).find((element) => element.getClientRects().length > 0);
-      if (!dateTrigger) {
-        return;
-      }
-
-      restoreDateFocusRef.current = false;
-      dateTrigger.focus();
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [isLoadingView, isPending, isScopePending, selectedDate]);
-
-  useEffect(() => {
-    if (!selectedEventId) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => eventDetailCloseRef.current?.focus());
-    return () => window.cancelAnimationFrame(frame);
-  }, [selectedEventId]);
 
   useEffect(() => {
     if (searchParams.has("date") && selectedDate === null) {
@@ -1102,7 +926,7 @@ export function DataPlatformHome({
   }
 
   function selectDate(nextDate: string | null): void {
-    restoreDateFocusRef.current = true;
+    requestDateFocusRestore();
     setSelectedEventId(null);
     if (nextDate !== null) {
       setNeedsHistoryAvailability(true);
@@ -1215,7 +1039,7 @@ export function DataPlatformHome({
           navigationRef={mobileNavigationRef}
           onHide={() => {
             if (isMobileMenuOpen) {
-              setIsMobileMenuOpen(false);
+              closeMobileMenu();
             } else {
               setIsSideNavHidden(true);
             }
@@ -1232,7 +1056,7 @@ export function DataPlatformHome({
           onLanguageChange={selectLanguageMode}
         />
         {isMobileMenuOpen ? (
-          <DataPlatformSideNavBackdrop onClose={() => setIsMobileMenuOpen(false)} />
+          <DataPlatformSideNavBackdrop onClose={() => closeMobileMenu()} />
         ) : null}
 
         <div
