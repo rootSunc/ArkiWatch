@@ -1,7 +1,7 @@
 import { MOBILITY_NAV_KEY } from "../data-platform-view-model";
 import { FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "../data-platform-nav-utils";
 
-/** Keep live platform cards responsive to the scheduler's five-minute cadence. */
+/** Matches the scheduler's five-minute cadence, so live cards track it. */
 export const PLATFORM_QUERY_STALE_TIME_MS = 2 * 60 * 1000;
 export const PLATFORM_QUERY_REFETCH_INTERVAL_MS = 5 * 60 * 1000;
 

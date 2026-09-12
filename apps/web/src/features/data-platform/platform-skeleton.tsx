@@ -62,10 +62,9 @@ export function PlatformSkeleton({
           <span className="platform-skeleton-block platform-skeleton-mobile-context-action" />
         </div>
 
-        {/* Keep the loading placeholder out of the live main-content anchor.
-            The interactive shell can mount alongside this placeholder during
-            a streamed transition, so reusing that id creates duplicate
-            landmarks and breaks skip-link targeting. */}
+        {/* No main-content id here. The interactive shell can mount alongside
+            this placeholder mid-stream, and two elements sharing that id
+            would duplicate the landmark and break the skip link. */}
         <main className="dashboard-content" tabIndex={-1} aria-hidden="true">
           <div className="platform-skeleton-tiles">
             {Array.from({ length: SUMMARY_TILE_COUNT }, (_, index) => (

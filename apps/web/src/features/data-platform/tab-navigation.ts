@@ -5,8 +5,8 @@ export type TabNavigationItem<Key extends string> = {
 };
 
 /**
- * Keep manually activated tabs usable with the keyboard while preserving the
- * URL/state update owned by the workspace that renders them.
+ * Arrow-key navigation for manually activated tabs. The URL and state update
+ * stay owned by the workspace that renders them.
  */
 export function handleTabListKeyDown<Key extends string>(
   event: KeyboardEvent<HTMLButtonElement>,

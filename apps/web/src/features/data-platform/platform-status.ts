@@ -48,8 +48,8 @@ export function isEmptyStatus(status: string | null | undefined): boolean {
 }
 
 /**
- * Keep the positive and delayed labels domain-specific while making empty,
- * failed, and unknown source states explicit and consistently localized.
+ * Positive and delayed labels stay domain-specific; empty, failed and unknown
+ * states get explicit, consistently localized wording.
  */
 export function liveStatusLabel(
   status: string | null | undefined,

@@ -30,7 +30,7 @@ export type TodayBrief = {
 };
 
 /**
- * Keep the reproducible demo snapshot useful after the calendar moves on.
+ * The reproducible demo snapshot stays useful after the calendar moves on.
  * Live production data is evaluated against the browser clock, while demo
  * data is evaluated against its own checked-at instant and remains explicitly
  * labelled as static by the surrounding shell.

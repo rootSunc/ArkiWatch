@@ -1,9 +1,9 @@
 export const DEFAULT_DATA_TIME_ZONE = "Europe/Helsinki";
 
 /**
- * Keep all public-data surfaces on the timezone declared by the payload.
- * Invalid deployment values fall back to Finland's default instead of
- * allowing a direct Intl.DateTimeFormat call to break a workspace.
+ * Every public-data surface reads the timezone the payload declares.
+ * An invalid deployment value falls back to Finland's default rather than
+ * letting a raw Intl.DateTimeFormat call throw inside a workspace.
  */
 export function resolveDataTimezone(timezone?: string | null): string {
   const candidate = timezone?.trim();

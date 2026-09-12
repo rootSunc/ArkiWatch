@@ -141,8 +141,8 @@ export function ExportSnapshotButton({
         />
         {variant === "nav" ? <span>{label}</span> : null}
       </button>
-      {/* The live region has to already be in the DOM when its text changes.
-          Mounting it together with the message is not reliably announced. */}
+      {/* Present before its text changes; a region mounted with its message
+          is not reliably announced. */}
       <span aria-atomic="true" aria-live="polite" className="sr-only" role="status">
         {state === "idle" ? "" : label}
       </span>

@@ -674,9 +674,8 @@ export function LinkedEventsWorkspace({
     setSelectedEventId(highlighted.id);
   }, [highlightedEventId, sortedEvents]);
 
-  // Keep the inspector inside the active result set. Falling back to the first
-  // unfiltered event made a zero-result filter look as if it had not applied:
-  // the list was empty while the hero and inspector still showed an old event.
+  // The inspector stays inside the active result set: with no matches it shows
+  // nothing rather than an event the current filter excludes.
   const selectedEvent =
     filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? null;
   const selectedDescriptionSource = useMemo(
@@ -754,9 +753,7 @@ export function LinkedEventsWorkspace({
   const selectedDescription = selectedEvent
     ? truncateDescription(translatedSelectedDescription ?? selectedDescriptionSource.text)
     : tKey("linkedEvents.noActivitiesAreAvailableForTheSelectedCityYetTheCitySpecificFeedMayNeedAFreshCollection");
-  // The list is empty for exactly one of three reasons, and each needs its own
-  // headline and its own detail line. Reusing one sentence for both printed the
-  // same text twice, which read as a rendering fault rather than an empty state.
+  // Three distinct empty states, each with its own headline and detail line.
   const hasActiveFilters =
     filter !== "all" ||
     categoryFilter !== "all" ||

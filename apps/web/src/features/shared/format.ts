@@ -48,7 +48,7 @@ export function formatTimestamp(
       parsedDate,
     );
   } catch {
-    // Keep a malformed deployment timezone from breaking a data surface.
+    // A malformed deployment timezone must not take a data surface down.
     const safeOptions = { ...options };
     delete safeOptions.timeZone;
     return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", safeOptions).format(

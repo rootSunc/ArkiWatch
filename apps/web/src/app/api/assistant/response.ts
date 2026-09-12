@@ -14,7 +14,7 @@ function safeErrorDetail(status: number, fallback: string): string {
   return fallback;
 }
 
-/** Keep actionable backend headers when the browser calls the same-origin proxy. */
+/** Actionable backend headers survive the same-origin proxy hop. */
 export function assistantJsonResponse(
   response: Response,
   body: unknown,

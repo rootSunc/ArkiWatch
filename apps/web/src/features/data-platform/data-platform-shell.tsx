@@ -530,13 +530,9 @@ export function DateScopeSelector({
         return;
       }
 
-      // Only pull focus in when it is not already inside the calendar. A month
-      // change re-runs this effect, and unconditionally focusing a day cell
-      // would take focus off the previous/next month button the user just
-      // pressed, so they could never page through two months in a row. The
-      // effect still recovers focus when a month switch unmounts the cell that
-      // had it, which is what happens when availability moves the visible month
-      // right after the calendar opens.
+      // Focus enters the calendar only from outside it. That leaves the month
+      // buttons focused while paging, and still recovers focus when a month
+      // change unmounts the cell that held it.
       if (calendar.contains(document.activeElement)) {
         return;
       }

@@ -137,7 +137,7 @@ export function AssistantWidget({
     return documentation;
   }, [overview]);
   // A background data refresh changes checked_at but not the user's scope.
-  // Keep the conversation intact until city, date, workspace, or identity changes.
+  // The conversation survives until city, date, workspace, or identity changes.
   const assistantScopeKey = [
     mode,
     scopeKey,

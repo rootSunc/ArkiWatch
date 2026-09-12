@@ -66,8 +66,8 @@ export function buildNavigationQueryParams(
   return nextParams;
 }
 
-// Keep this allowlist in the view-model layer so server evaluation never needs
-// to call methods on values exported by the client-only shell module.
+// Lives in the view-model layer: server evaluation must not reach into values
+// exported by the client-only shell module.
 const CATALOG_CATEGORY_KEYS = new Set([
   "city_services",
   "geospatial",
@@ -222,9 +222,9 @@ export function navItemAvailable(item: NavItem, categories: PlatformCategory[]):
 }
 
 /**
- * Keep the mobile shell focused on the few destinations that work as a
- * persistent thumb-friendly task switcher. The full navigation remains in the
- * side drawer and is still driven by PRIMARY_NAV_ITEMS.
+ * The few destinations that work as a persistent, thumb-reachable task
+ * switcher. The full navigation stays in the side drawer, driven by
+ * PRIMARY_NAV_ITEMS.
  */
 export function mobileNavigationItems(categories: PlatformCategory[]): NavItem[] {
   const mobileOrder = [TODAY_NAV_KEY, FALLBACK_NAV_KEY, "weather", MOBILITY_NAV_KEY];
@@ -260,9 +260,8 @@ export function resolveNavKey(
   }
 
   if (categories.length === 0 && isCatalogCategoryKey(normalized)) {
-    // The server shell can render before the overview categories hydrate. Keep
-    // a known catalog deep link stable during that loading window instead of
-    // flashing the Today workspace and then replacing it after hydration.
+    // The shell can render before the categories hydrate. A known catalog deep
+    // link holds its destination through that window.
     return normalized;
   }
 
