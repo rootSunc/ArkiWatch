@@ -13,15 +13,11 @@
 @import "./styles/source-health.css";
 @import "./styles/scenario-overview.css";
 @import "./styles/cross-domain-timeline.css";
-@import "./styles/overview-polish.css";
 @import "./styles/motion.css";
 @import "./styles/skeleton.css";
 @import "./styles/responsive.css";
 @import "./styles/ui-system.css";
-@import "./styles/design-refresh.css";
-@import "./styles/workspace-ui.css";
-@import "./styles/text-layout.css";
-@import "./styles/taste-pass.css";
+@import "./styles/components.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {

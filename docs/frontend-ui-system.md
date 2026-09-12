@@ -51,10 +51,10 @@ The current implementation follows a deliberately small visual grammar:
   in the observatory header. Cross-signal history is collapsed by default so
   the latest evidence remains the first read.
 - The shell uses a white/neutral surface, 16px content cards, 10–12px controls,
-  and one-pixel borders instead of gradients or heavy shadows. Most of that
-  cascade lives in `styles/design-refresh.css`, with `styles/text-layout.css`
-  and `styles/taste-pass.css` layered after it; those two are being folded back
-  into the files they override.
+  and one-pixel borders instead of gradients or heavy shadows. That cascade
+  lives in `styles/components.css`, whose internal order is load-bearing: its
+  sections restyle the same selectors in both directions, so they cannot be
+  reordered or split apart without deciding, per declaration, which one wins.
 - Detail workspaces share `WorkspaceEvidenceHeader` and `WorkspaceEmptyState`.
   The header keeps the status, source, and scoped timestamp together; the
   empty state explains missing data without implying that a source is healthy.
