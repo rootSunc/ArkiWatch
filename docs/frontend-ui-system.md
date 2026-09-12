@@ -61,6 +61,18 @@ The current implementation follows a deliberately small visual grammar:
   Shared primitives live in `apps/web/src/features/data-platform/workspace-ui.tsx`
   and their visual tokens live in `app/tokens.css`.
 
+### About the `!important` declarations
+
+There are 89, and they are not decoration. `styles/responsive.css` loads before
+the layers that would otherwise override it, so its breakpoint rules need the
+flag to win. `e2e/tools/important-audit.mjs` replays the cascade for every
+element with and without the flag and reports which ones decide a winner: 46 do,
+and removing the rest was measured at 3,000+ rendering differences because the
+audit cannot see states that are absent from a captured page (`.active`, hover).
+
+They go away with the same work that would let the cascade be reordered — see
+the note at the top of `styles/components.css` — not before.
+
 ### Verifying a stylesheet change
 
 Moving a rule between files changes the cascade, and the cascade here is load
