@@ -35,6 +35,7 @@ describe("LoginForm", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Login failed.");
     expect(alert).not.toHaveTextContent("legacy-secret");
+    expect(alert).toHaveFocus();
     await waitFor(() => expect(screen.getByRole("button", { name: "Sign in" })).not.toBeDisabled());
     expect(replace).not.toHaveBeenCalled();
   });

@@ -10,6 +10,7 @@
 .login-shell {
   display: grid;
   min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
   place-items: center;
   background: var(--surface-soft);
   padding: 48px 40px;
@@ -59,6 +60,62 @@
 .login-brand > div {
   display: grid;
   gap: 4px;
+}
+
+.login-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.login-language,
+.not-found-language {
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  overflow: hidden;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+}
+
+.login-language button,
+.not-found-language button {
+  min-width: 38px;
+  height: 32px;
+  border: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 10px;
+  /* Keep foreground/background changes atomic so the two language states
+     never pass through a low-contrast intermediate frame. */
+  transition: none;
+}
+
+.login-language button:hover,
+.not-found-language button:hover {
+  background: var(--nav-hover);
+  color: var(--ink);
+}
+
+.login-language button:focus-visible,
+.not-found-language button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.login-language button.is-active,
+.login-language button.is-active:hover,
+.login-language button.is-active:focus-visible,
+.not-found-language button.is-active,
+.not-found-language button.is-active:hover,
+.not-found-language button.is-active:focus-visible {
+  background: var(--btn-fill);
+  color: var(--btn-label);
 }
 
 .login-brand span {
@@ -114,6 +171,11 @@
   box-shadow: none;
 }
 
+.login-form input:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
 .login-error {
   border: 1px solid var(--amber-line);
   border-radius: var(--r-card);
@@ -122,6 +184,11 @@
   font-size: 13px;
   line-height: 1.4;
   padding: 10px 12px;
+}
+
+.login-error:focus {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
 }
 
 .login-submit {
@@ -177,21 +244,61 @@
   text-decoration: none;
 }
 
-.login-secondary:hover,
+.login-secondary:hover {
+  border-color: var(--ink);
+  background: var(--canvas);
+}
+
 .login-secondary:focus-visible {
   border-color: var(--ink);
   background: var(--canvas);
-  outline: none;
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
   .login-shell {
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 24px 16px;
   }
 
   .login-panel {
     max-width: none;
+  }
+
+  .login-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .login-language {
+    align-self: flex-start;
+  }
+
+}
+
+@media (max-width: 320px) {
+  /* Keep the compact admin brand from wrapping its short title into a
+   * detached second line on the narrowest supported phone width. The smaller
+   * inset also gives the form controls a more usable measure at 280px. */
+  .login-panel {
+    padding: 24px;
+  }
+
+  .login-brand {
+    gap: 10px;
+  }
+
+  .login-brand > div {
+    min-width: 0;
+  }
+
+  .login-brand h1 {
+    font-size: 20px;
+    line-height: 24px;
+    white-space: nowrap;
   }
 }
 
@@ -201,4 +308,120 @@
   background: var(--canvas);
   box-shadow: none;
   color: var(--ink);
+}
+
+/* --- Branded not-found state --- */
+.not-found-shell {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  background: var(--surface-soft);
+  padding: 40px;
+}
+
+.not-found-panel {
+  width: min(100%, 720px);
+  border: 1px solid var(--line);
+  background: var(--canvas);
+  padding: clamp(32px, 7vw, 72px);
+}
+
+.not-found-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.not-found-code {
+  margin: 0;
+  color: var(--muted-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.not-found-panel h1 {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: clamp(36px, 7vw, 64px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.not-found-copy {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+.not-found-action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: 10px 16px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.not-found-action-primary {
+  border-color: var(--btn-fill);
+  background: var(--btn-fill);
+  color: var(--btn-label);
+}
+
+.not-found-action-primary:hover {
+  border-color: var(--btn-fill-hover);
+  background: var(--btn-fill-hover);
+}
+
+.not-found-action-secondary:hover {
+  border-color: var(--ink);
+}
+
+.not-found-action:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .not-found-shell {
+    padding: 24px 16px;
+  }
+
+  .not-found-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .not-found-language {
+    align-self: flex-start;
+  }
+
+  .not-found-actions,
+  .not-found-action {
+    width: 100%;
+  }
 }

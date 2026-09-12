@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Practical daily guidance for life in Finland, grounded in transparent public data.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f7f8fc",
-    theme_color: "#3657d6",
+    background_color: "#ffffff",
+    theme_color: "#075f7c",
     icons: [
       {
         src: "/brand/logo-mark.png",

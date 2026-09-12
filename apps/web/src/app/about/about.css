@@ -6,6 +6,7 @@
 
 .about-page {
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: auto;
   background: var(--canvas);
   color: var(--ink);
@@ -33,6 +34,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
+  min-height: 32px;
   color: var(--ink);
   text-decoration: none;
 }
@@ -70,6 +72,9 @@
 }
 
 .about-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 400;
@@ -84,6 +89,7 @@
 
 .about-language {
   display: inline-flex;
+  flex: 0 0 auto;
   height: 34px;
   border: 1px solid var(--line);
   border-radius: var(--r-control);
@@ -91,17 +97,21 @@
 }
 
 .about-language button {
+  flex: 0 0 auto;
+  min-width: 32px;
+  min-height: 32px;
   border: 0;
   background: transparent;
   color: var(--ink-soft);
   font-size: 12.5px;
   font-weight: 500;
   padding: 0 12px;
+  white-space: nowrap;
 }
 
 .about-language button.is-active {
-  background: var(--ink);
-  color: #ffffff;
+  background: var(--btn-fill);
+  color: var(--btn-label);
 }
 
 .about-nav-cta {
@@ -315,6 +325,10 @@
   text-wrap: pretty;
 }
 
+.about-coverage-scroll-hint {
+  display: none;
+}
+
 /* --- Two workspaces (hairline grid) --- */
 .about-workspace-grid {
   display: grid;
@@ -405,7 +419,9 @@
   align-items: center;
   gap: 7px;
   width: fit-content;
+  min-height: 40px;
   margin-top: 24px;
+  padding-block: 10px;
   color: var(--blue);
   font-size: 14px;
   font-weight: 500;
@@ -423,6 +439,11 @@
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+
+.about-coverage-scroll:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .about-coverage-table {
@@ -582,6 +603,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 32px;
+  padding-block: 8px;
   color: var(--muted-2);
   font-weight: 400;
   text-decoration: none;
@@ -591,9 +614,23 @@
   color: var(--ink);
 }
 
+.about-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 @media (max-width: 900px) {
   .about-shell {
     width: min(100% - 32px, 640px);
+  }
+
+  .about-coverage-scroll-hint {
+    display: block;
+    margin: 18px 0 -18px;
+    color: var(--muted-3);
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .about-hero {
@@ -611,6 +648,38 @@
 }
 
 @media (max-width: 640px) {
+  .about-nav {
+    gap: 8px;
+  }
+
+  .about-nav-actions {
+    gap: 8px;
+  }
+
+  .about-nav-cta {
+    gap: 4px;
+    padding-inline: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .about-nav-cta .material-symbols-outlined {
+    font-size: 14px;
+  }
+
+  .about-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .about-flow-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .about-workspace-card {
+    min-width: 0;
+    padding: 24px;
+  }
+
   .about-nav-link {
     display: none;
   }
@@ -630,6 +699,74 @@
   }
 }
 
+@media (max-width: 480px) {
+  .about-nav {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .about-nav-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .about-nav {
+    gap: 4px;
+  }
+
+  .about-brand {
+    gap: 7px;
+  }
+
+  .about-brand img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .about-brand strong {
+    font-size: 14px;
+  }
+
+  .about-brand small {
+    display: none;
+  }
+
+  .about-nav-actions {
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .about-language button {
+    padding-inline: 6px;
+  }
+
+  .about-nav-cta {
+    gap: 2px;
+    min-width: 0;
+    padding-inline: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .about-nav-cta .material-symbols-outlined {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 300px) {
+  .about-nav {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .about-nav-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
 :root[data-language="zh"] .about-hero h1 {
   font-size: 46px;
   letter-spacing: -0.005em;
@@ -644,6 +781,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .about-page *,
+  .about-page *::before,
+  .about-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
   .about-nav-cta,
   .about-button,
   .about-card-link {

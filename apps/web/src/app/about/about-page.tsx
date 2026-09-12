@@ -9,6 +9,7 @@ import {
   preferredLanguageMode,
   saveLanguageMode,
   storedLanguageMode,
+  useIsomorphicLayoutEffect,
   type LanguageMode,
 } from "@/features/data-platform/i18n";
 import { CITY_PACKS, type CitySignalKey, type CitySignalAvailability } from "@/features/data-platform/city-coverage";
@@ -22,19 +23,25 @@ import "./about.css";
 
 const COPY = {
   en: {
+    documentTitle: "About ArkiWatch | Public data. Practical decisions.",
+    homeLabel: "ArkiWatch home",
+    brandDescriptor: "FINLAND / PUBLIC DATA",
+    navLabel: "About navigation",
+    proofLabel: "ArkiWatch at a glance",
     language: "Language",
     navData: "Open data platform",
-    navDemo: "Try live demo",
+    navDemo: "Open the demo",
     eyebrow: "Open-source public data for Finland",
     heroTitle: "Make everyday decisions with better evidence.",
     heroLead:
       "ArkiWatch turns weather, air, mobility, energy, and city signals into a calm daily brief, then lets you inspect every source behind it.",
-    heroPrimary: "Try the Helsinki demo",
+    heroPrimary: "Open the demo",
     heroSecondary: "View on GitHub",
     heroNote: "Demo data is clearly labelled. Connect the API for live public feeds.",
     proofCities: "cities mapped",
-    proofLive: "source packs live",
+    proofLive: "live signal capabilities",
     proofWorkspaces: "focused workspaces",
+    coverageCity: "City",
     workspaceTitle: "Start with a decision. Keep the evidence.",
     workspaceLead:
       "The interface stays quiet until you need detail. Today helps you decide; Data helps you verify.",
@@ -48,6 +55,7 @@ const COPY = {
     dataCta: "Explore the data",
     coverageTitle: "Every city has an honest capability map.",
     coverageLead: "Live means the feed is configured; planned means the city is visible but that source pack is not claimed as live yet.",
+    coverageScrollHint: "Swipe horizontally to view all columns.",
     coverageRecommendation: "Recommendations",
     coverageColumns: ["Weather", "Air", "Transit", "Water", "City services", "Events"],
     coverageLive: "Live",
@@ -65,22 +73,29 @@ const COPY = {
     ctaDemo: "Open the demo",
     ctaGithub: "Star on GitHub",
     ctaIssue: "Report a data issue",
+    privacyLabel: "Privacy",
     footer: "ArkiWatch · Finnish public data, made practical.",
   },
   zh: {
+    documentTitle: "关于 ArkiWatch | 公开数据，服务日常决策",
+    homeLabel: "ArkiWatch 主页",
+    brandDescriptor: "芬兰 / 公共数据",
+    navLabel: "关于 ArkiWatch 的导航",
+    proofLabel: "ArkiWatch 概览",
     language: "语言",
     navData: "打开数据平台",
-    navDemo: "体验演示",
+    navDemo: "打开演示",
     eyebrow: "面向芬兰的开源公共数据",
     heroTitle: "用更可靠的证据，做日常决定。",
     heroLead:
       "ArkiWatch 把天气、空气、出行、能源和城市信号整理成安静清晰的每日简报，也让你随时查看每条结论背后的数据来源。",
-    heroPrimary: "体验赫尔辛基演示",
+    heroPrimary: "打开演示",
     heroSecondary: "在 GitHub 查看",
     heroNote: "演示数据会明确标注；连接 API 后即可使用实时公共数据。",
     proofCities: "座城市已覆盖",
-    proofLive: "个数据源已接入",
+    proofLive: "项信号能力已接入",
     proofWorkspaces: "个专注工作区",
+    coverageCity: "城市",
     workspaceTitle: "从一个决定开始，把证据留在手边。",
     workspaceLead: "界面只在需要时展开细节：Today 帮你决定，Data 帮你核验。",
     todayTitle: "Today / 生活助手",
@@ -92,7 +107,8 @@ const COPY = {
     dataPoints: ["清晰的来源健康度", "城市与日期范围", "先看证据，再看解释"],
     dataCta: "探索数据",
     coverageTitle: "每座城市都有诚实的能力地图。",
-    coverageLead: "Live 表示已配置数据流；Planned 表示城市可选择，但该数据源还没有被标记为实时覆盖。",
+    coverageLead: "实时表示已配置数据流；规划中表示城市可选择，但该数据源还没有被标记为实时覆盖。",
+    coverageScrollHint: "在表格内横向滑动，以查看全部列。",
     coverageRecommendation: "建议范围",
     coverageColumns: ["天气", "空气", "出行", "水文", "城市服务", "活动"],
     coverageLive: "实时",
@@ -110,6 +126,7 @@ const COPY = {
     ctaDemo: "打开演示",
     ctaGithub: "在 GitHub 点 Star",
     ctaIssue: "报告数据问题",
+    privacyLabel: "隐私说明",
     footer: "ArkiWatch · 让芬兰公共数据真正服务日常。",
   },
 } as const;
@@ -123,8 +140,8 @@ function coverageStateLabel(
   return state === "live" ? copy.coverageLive : state === "regional" ? copy.coverageRegional : copy.coveragePlanned;
 }
 
-const totalPackCount = CITY_PACKS.length * COVERAGE_KEYS.length;
-const livePackCount = CITY_PACKS.reduce(
+const totalSignalCapabilityCount = CITY_PACKS.length * COVERAGE_KEYS.length;
+const liveSignalCapabilityCount = CITY_PACKS.reduce(
   (total, pack) =>
     total + COVERAGE_KEYS.filter((key) => pack.signals[key] === "live").length,
   0,
@@ -134,11 +151,15 @@ export default function AboutPage() {
   const [language, setLanguage] = useState<LanguageMode>("en");
   const copy = COPY[language];
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
     setLanguage(nextLanguage);
     applyLanguageMode(nextLanguage);
   }, []);
+
+  useEffect(() => {
+    document.title = copy.documentTitle;
+  }, [copy.documentTitle]);
 
   function changeLanguage(nextLanguage: LanguageMode): void {
     setLanguage(nextLanguage);
@@ -150,14 +171,14 @@ export default function AboutPage() {
     <main className="about-page">
       <div className="about-shell">
         <header className="about-nav">
-          <Link className="about-brand" href="/" aria-label="ArkiWatch home">
+          <Link className="about-brand" href="/" aria-label={copy.homeLabel}>
             <Image src="/brand/logo-mark.png" alt="" width={34} height={34} priority />
             <span>
               <strong>ArkiWatch</strong>
-              <small>FINLAND / PUBLIC DATA</small>
+              <small>{copy.brandDescriptor}</small>
             </span>
           </Link>
-          <nav className="about-nav-actions" aria-label="About navigation">
+          <nav className="about-nav-actions" aria-label={copy.navLabel}>
             <Link className="about-nav-link" href="/?view=overview&city=helsinki">
               {copy.navData}
             </Link>
@@ -199,11 +220,11 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="about-proof" aria-label="ArkiWatch at a glance">
+        <section className="about-proof" aria-label={copy.proofLabel}>
           <div><strong>{CITY_PACKS.length}</strong><span>{copy.proofCities}</span></div>
           <div>
             <strong>
-              {livePackCount} / {totalPackCount}
+              {liveSignalCapabilityCount} / {totalSignalCapabilityCount}
             </strong>
             <span>{copy.proofLive}</span>
           </div>
@@ -239,10 +260,17 @@ export default function AboutPage() {
             <h2>{copy.coverageTitle}</h2>
             <p>{copy.coverageLead}</p>
           </div>
-          <div className="about-coverage-scroll">
+          <p className="about-coverage-scroll-hint" id="about-coverage-scroll-hint">{copy.coverageScrollHint}</p>
+          <div
+            aria-label={copy.coverageTitle}
+            aria-describedby="about-coverage-scroll-hint"
+            className="about-coverage-scroll"
+            role="region"
+            tabIndex={0}
+          >
             <div className="about-coverage-table" role="table" aria-label={copy.coverageTitle}>
               <div className="about-coverage-row about-coverage-header" role="row">
-                <span role="columnheader">City</span>
+                <span role="columnheader">{copy.coverageCity}</span>
                 {copy.coverageColumns.map((column) => <span key={column} role="columnheader">{column}</span>)}
                 <span role="columnheader">{copy.coverageRecommendation}</span>
               </div>
@@ -279,7 +307,13 @@ export default function AboutPage() {
           <div className="about-cta-actions"><Link className="about-button about-button-primary" href="/?city=helsinki">{copy.ctaDemo}<span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></Link><a className="about-button about-button-secondary" href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">{copy.ctaGithub}<span className="material-symbols-outlined" aria-hidden="true">open_in_new</span></a><a className="about-button about-button-quiet" href={PROJECT_GITHUB_ISSUES_URL} rel="noreferrer" target="_blank">{copy.ctaIssue}<span className="material-symbols-outlined" aria-hidden="true">info</span></a></div>
         </section>
 
-        <footer className="about-footer"><span>{copy.footer}</span><a href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">GitHub <MaterialIcon name="arrow_outward" /></a></footer>
+        <footer className="about-footer">
+          <span>{copy.footer}</span>
+          <div className="about-footer-links">
+            <Link href="/privacy">{copy.privacyLabel}</Link>
+            <a href={PROJECT_GITHUB_URL} rel="noreferrer" target="_blank">GitHub <MaterialIcon name="arrow_outward" /></a>
+          </div>
+        </footer>
       </div>
     </main>
   );

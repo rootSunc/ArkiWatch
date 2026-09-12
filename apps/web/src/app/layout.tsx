@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import { ReactNode } from "react";
 
@@ -40,6 +40,12 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  initialScale: 1,
+  viewportFit: "cover",
+  width: "device-width",
+};
+
 export const dynamic = "force-dynamic";
 
 function runtimeConfigScript(): string {
@@ -78,6 +84,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     : 'en';
                   document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
                   document.documentElement.setAttribute('data-language', language);
+
+                  if (window.location.pathname === '/login') {
+                    var loginTitle = language === 'zh'
+                      ? '管理员登录 | ArkiWatch'
+                      : 'Admin sign in | ArkiWatch';
+                    var applyLoginTitle = function() {
+                      if (window.location.pathname === '/login' && document.title !== loginTitle) {
+                        document.title = loginTitle;
+                      }
+                    };
+                    applyLoginTitle();
+                    window.addEventListener('load', applyLoginTitle, { once: true });
+                    window.setTimeout(applyLoginTitle, 0);
+                    window.setTimeout(applyLoginTitle, 250);
+                    window.setTimeout(applyLoginTitle, 1000);
+                  }
                 } catch (e) {}
               })();
             `
