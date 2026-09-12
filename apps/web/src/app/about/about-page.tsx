@@ -2,17 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 import { useDocumentTitle } from "@/features/shared/use-document-title";
-import {
-  applyLanguageMode,
-  preferredLanguageMode,
-  saveLanguageMode,
-  storedLanguageMode,
-  useIsomorphicLayoutEffect,
-  type LanguageMode,
-} from "@/features/data-platform/i18n";
+import { PageLanguageToggle, usePageLanguage } from "@/features/shared/page-language";
 import { CITY_PACKS, type CitySignalKey, type CitySignalAvailability } from "@/features/data-platform/city-coverage";
 import {
   PROJECT_GITHUB_ISSUES_URL,
@@ -149,22 +141,12 @@ const liveSignalCapabilityCount = CITY_PACKS.reduce(
 );
 
 export default function AboutPage() {
-  const [language, setLanguage] = useState<LanguageMode>("en");
+  const [language, changeLanguage] = usePageLanguage();
   const copy = COPY[language];
 
-  useIsomorphicLayoutEffect(() => {
-    const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
-    setLanguage(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }, []);
 
   useDocumentTitle(copy.documentTitle);
 
-  function changeLanguage(nextLanguage: LanguageMode): void {
-    setLanguage(nextLanguage);
-    saveLanguageMode(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }
 
   return (
     <main className="about-page">
@@ -181,19 +163,12 @@ export default function AboutPage() {
             <Link className="about-nav-link" href="/?view=overview&city=helsinki">
               {copy.navData}
             </Link>
-            <div className="about-language" aria-label={copy.language} role="group">
-              {(["en", "zh"] as const).map((option) => (
-                <button
-                  aria-pressed={language === option}
-                  className={language === option ? "is-active" : ""}
-                  key={option}
-                  onClick={() => changeLanguage(option)}
-                  type="button"
-                >
-                  {option === "en" ? "EN" : "中文"}
-                </button>
-              ))}
-            </div>
+            <PageLanguageToggle
+              className="about-language"
+              label={copy.language}
+              language={language}
+              onChange={changeLanguage}
+            />
             <Link className="about-nav-cta" href="/?city=helsinki">
               {copy.navDemo}
               <span className="material-symbols-outlined" aria-hidden="true">chevron_right</span>

@@ -1,17 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
 import { useDocumentTitle } from "@/features/shared/use-document-title";
-import {
-  applyLanguageMode,
-  preferredLanguageMode,
-  saveLanguageMode,
-  storedLanguageMode,
-  useIsomorphicLayoutEffect,
-  type LanguageMode,
-} from "@/features/data-platform/i18n";
+import { PageLanguageToggle, usePageLanguage } from "@/features/shared/page-language";
 
 const COPY = {
   en: {
@@ -37,41 +29,24 @@ const COPY = {
 } as const;
 
 export default function NotFound() {
-  const [language, setLanguage] = useState<LanguageMode>("en");
+  const [language, changeLanguage] = usePageLanguage();
   const copy = COPY[language];
 
-  useIsomorphicLayoutEffect(() => {
-    const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
-    setLanguage(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }, []);
 
   useDocumentTitle(copy.documentTitle);
 
-  function changeLanguage(nextLanguage: LanguageMode): void {
-    setLanguage(nextLanguage);
-    saveLanguageMode(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }
 
   return (
     <main aria-labelledby="not-found-title" className="not-found-shell">
       <section className="not-found-panel">
         <header className="not-found-header">
           <p className="not-found-code">{copy.code}</p>
-          <div className="not-found-language" aria-label={copy.language} role="group">
-            {(["en", "zh"] as const).map((option) => (
-              <button
-                aria-pressed={language === option}
-                className={language === option ? "is-active" : ""}
-                key={option}
-                onClick={() => changeLanguage(option)}
-                type="button"
-              >
-                {option === "en" ? "EN" : "中文"}
-              </button>
-            ))}
-          </div>
+          <PageLanguageToggle
+            className="not-found-language"
+            label={copy.language}
+            language={language}
+            onChange={changeLanguage}
+          />
         </header>
         <h1 id="not-found-title">{copy.title}</h1>
         <p className="not-found-copy">{copy.description}</p>

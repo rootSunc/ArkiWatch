@@ -1,17 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
 import { useDocumentTitle } from "@/features/shared/use-document-title";
-import {
-  applyLanguageMode,
-  preferredLanguageMode,
-  saveLanguageMode,
-  storedLanguageMode,
-  useIsomorphicLayoutEffect,
-  type LanguageMode,
-} from "@/features/data-platform/i18n";
+import { PageLanguageToggle, usePageLanguage } from "@/features/shared/page-language";
 
 import "./privacy.css";
 
@@ -83,22 +75,12 @@ const COPY = {
 } as const;
 
 export default function PrivacyPage() {
-  const [language, setLanguage] = useState<LanguageMode>("en");
+  const [language, changeLanguage] = usePageLanguage();
   const copy = COPY[language];
 
-  useIsomorphicLayoutEffect(() => {
-    const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
-    setLanguage(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }, []);
 
   useDocumentTitle(copy.documentTitle);
 
-  function changeLanguage(nextLanguage: LanguageMode): void {
-    setLanguage(nextLanguage);
-    saveLanguageMode(nextLanguage);
-    applyLanguageMode(nextLanguage);
-  }
 
   return (
     <main className="privacy-page">
@@ -109,19 +91,12 @@ export default function PrivacyPage() {
             <span>{copy.brandDescriptor}</span>
           </Link>
           <div className="privacy-nav-actions">
-            <div className="privacy-language" aria-label={copy.language} role="group">
-              {(["en", "zh"] as const).map((option) => (
-                <button
-                  aria-pressed={language === option}
-                  className={language === option ? "is-active" : ""}
-                  key={option}
-                  onClick={() => changeLanguage(option)}
-                  type="button"
-                >
-                  {option === "en" ? "EN" : "中文"}
-                </button>
-              ))}
-            </div>
+            <PageLanguageToggle
+              className="privacy-language"
+              label={copy.language}
+              language={language}
+              onChange={changeLanguage}
+            />
             <Link className="privacy-back-link" href="/about">
               {copy.about} <span aria-hidden="true">→</span>
             </Link>

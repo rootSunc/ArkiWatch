@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
+import { PageLanguageToggle } from "@/features/shared/page-language";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
   applyLanguageMode,
@@ -102,19 +103,12 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
               <h1 id="login-title">{tKey("auth.adminSignIn")}</h1>
             </div>
           </div>
-          <div className="login-language" aria-label={tKey("shell.displayLanguage")} role="group">
-            {(["en", "zh"] as const).map((option) => (
-              <button
-                aria-pressed={language === option}
-                className={language === option ? "is-active" : ""}
-                key={option}
-                onClick={() => changeLanguage(option)}
-                type="button"
-              >
-                {option === "en" ? "EN" : "中文"}
-              </button>
-            ))}
-          </div>
+          <PageLanguageToggle
+            className="login-language"
+            label={tKey("shell.displayLanguage")}
+            language={language}
+            onChange={changeLanguage}
+          />
         </header>
 
         <form className="login-form" onSubmit={submitLogin}>
