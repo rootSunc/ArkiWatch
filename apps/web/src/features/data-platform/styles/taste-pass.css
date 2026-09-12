@@ -1,0 +1,185 @@
+/*
+ * Taste pass — interaction feedback, numeric alignment, and the few places
+ * where the hairline grammar drifted out of rhythm.
+ *
+ * Loads last in data-platform.css so it can settle rules that design-refresh.css
+ * establishes, without editing that file's 5k lines. Everything here is either
+ * a state the system never defined (there was no :active anywhere in the app)
+ * or a correction to a measured misalignment. No new colours, no new radii:
+ * the tokens in tokens.css remain the single source of truth.
+ */
+
+:root {
+  /* 4px base scale, matching the design handoff's spacing ladder. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  /* Motion is feedback only in this product: it confirms a press or a hover
+   * and never animates content into view. A data tool should not make someone
+   * wait on an entrance to read a number. */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   1. Numeric alignment
+   Sans-serif digits in this UI sit in running text next to mono readouts
+   ("4 Active · 2 Empty · 3 Catalog", table cells, counts). Proportional
+   figures make those columns ripple; tabular figures hold the column.
+   -------------------------------------------------------------------------- */
+
+.dashboard-shell :where(td, th, small, .overview-status-item, .signal-readout, time),
+.dashboard-shell :where([class*="-summary-strip"], [class*="-stat"], [class*="-metric"]) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   2. Pressed state
+   The system had hover and focus-visible throughout and no :active anywhere,
+   so every control felt inert at the moment of the click. 1px of travel is
+   enough at this density; a scale() on a 260px card reads as a jump.
+   -------------------------------------------------------------------------- */
+
+.dashboard-shell :where(button, a, [role="button"], summary):not(:disabled) {
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.dashboard-shell
+  :where(button, a, [role="button"], summary):not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Controls that are already a fixed slot in the chrome should not travel:
+   moving a sticky top-bar control drags the eye across the whole header. */
+.dashboard-shell
+  :where(.side-nav-collapse-button, .side-nav-restore-button, .theme-toggle-button):active {
+  transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. Signal card footer
+   Measured at 1440: "Regional scope" needs 84px and was rendering in 27px
+   ("Re…") because the provider list ("DIGITRANSIT · DIGITRAFFIC", 150px) sits
+   in the same 222px row. The scope is the meaningful half, so it keeps its
+   width and the provider wraps beneath it. Grid stretch keeps the four cards
+   the same height, so the row still reads as one band.
+   -------------------------------------------------------------------------- */
+
+.signal-card-footer {
+  flex-wrap: wrap;
+  row-gap: var(--space-1);
+}
+
+.signal-card-scope {
+  flex: 0 0 auto;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.signal-card-footer-spacer {
+  display: none;
+}
+
+.signal-card-provider {
+  flex: 0 1 auto;
+  margin-left: auto;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+/* --------------------------------------------------------------------------
+   4. Summary strip baseline
+   With the snapshot clock now on one line (see data-platform-overview.tsx),
+   every cell in the strip carries the same 34px readout and the four detail
+   lines land on a shared baseline.
+   -------------------------------------------------------------------------- */
+
+.overview-status-item-snapshot strong {
+  font-size: 34px;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   5. Cross-column rhythm on Today
+   Both columns of .today-content-grid start at the same y, but the right
+   column's header kept `padding: 18px` from the boxed panel it used to live
+   in (scenario-overview.css). design-refresh.css flattened the panel and
+   cleared the padding on the wrapper but not on the header, so the right
+   eyebrow sat 18px below the left one and every heading under it inherited
+   the offset. The panel is gone; so is its inset.
+   -------------------------------------------------------------------------- */
+
+.today-decisions-summary {
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   6. Observatory heading redundancy
+   The kicker above the h1 prints "Data platform", which is already the root
+   of the breadcrumb 40px above it in the top bar. Two identical labels in one
+   eyeline is noise, and the breadcrumb is the one that navigates.
+   The Today kicker is not touched: it carries scope ("Today · Helsinki /
+   Uusimaa") that the breadcrumb does not.
+   -------------------------------------------------------------------------- */
+
+.overview-hero-kicker {
+  display: none;
+}
+
+/* The section count belonged to the heading, not to the far right margin.
+   Floating a small label into the top-right corner of a section header reads
+   as a stray fragment; sitting after the description, it reads as part of the
+   sentence it qualifies. */
+.overview-section-count {
+  margin-left: 0;
+}
+
+.overview-section-heading > div {
+  flex: 0 1 auto;
+}
+
+/* --------------------------------------------------------------------------
+   7. Today strip on phones
+   The strip is one line at desktop, so clipping the detail with an ellipsis is
+   the right call there. Once it stacks on a phone it has the full column width
+   and vertical room, and clipping the headline mid-word ("Leave a few minutes
+   e...") hides the recommendation this product exists to deliver. Let both
+   lines wrap below the phone breakpoint.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .today-digest-strip-copy strong,
+  .today-digest-strip-detail {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell :where(button, a, [role="button"], summary) {
+    transition: none;
+  }
+
+  .dashboard-shell
+    :where(button, a, [role="button"], summary):not(:disabled):active {
+    transform: none;
+  }
+}

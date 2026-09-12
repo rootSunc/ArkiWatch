@@ -1,3 +1,4 @@
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { categorySignalAttribution } from "./signal-attribution";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { categorySupportsCityScope, cityLabel } from "./city-scope";
@@ -66,6 +67,10 @@ export function SignalCard({
     roadRail,
     transit,
   ).sources;
+  // A card with no provider codes shows the scope alone. Printing the
+  // unavailable placeholder here would put a bare glyph in the footer without
+  // saying anything the empty slot does not already say.
+  const hasProvider = Boolean(provider) && provider !== UNAVAILABLE_DATA_VALUE;
   const followsSelectedCity = categorySupportsCityScope(category.key);
 
   return (
@@ -105,9 +110,11 @@ export function SignalCard({
           {followsSelectedCity ? cityLabel(selectedCity) : regionalScopeLabel}
         </span>
         <span className="signal-card-footer-spacer" />
-        <span className="signal-card-provider" title={provider}>
-          {provider}
-        </span>
+        {hasProvider ? (
+          <span className="signal-card-provider" title={provider}>
+            {provider}
+          </span>
+        ) : null}
       </span>
     </button>
   );

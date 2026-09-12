@@ -8,7 +8,7 @@ import { appEnv } from "@/lib/env";
 // this launches into.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${appEnv.appName} — Public data. Practical decisions.`,
+    name: `${appEnv.appName}. Public data. Practical decisions.`,
     short_name: appEnv.appName,
     description:
       "Practical daily guidance for life in Finland, grounded in transparent public data.",

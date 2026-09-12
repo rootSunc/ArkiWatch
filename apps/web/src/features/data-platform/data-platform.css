@@ -23,6 +23,7 @@
 @import "./styles/workspace-ui.css";
 @import "./styles/minimal-overhaul.css";
 @import "./styles/text-layout.css";
+@import "./styles/taste-pass.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import { ReactNode } from "react";
 
 import { appEnv } from "@/lib/env";
@@ -7,6 +7,13 @@ import { appEnv } from "@/lib/env";
 import "./globals.css";
 import "./material-symbols.css";
 import "./minimal-global.css";
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+  weight: ["400", "500", "600", "700"],
+  display: "swap"
+});
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -77,7 +84,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className={jetBrainsMono.variable}>{children}</body>
+      <body className={`${geist.variable} ${jetBrainsMono.variable}`}>{children}</body>
     </html>
   );
 }

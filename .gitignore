@@ -51,3 +51,5 @@ logs/
 
 # Local AI tooling
 .claude/
+.agents/
+skills-lock.json

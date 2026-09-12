@@ -65,11 +65,16 @@
   --assistant-panel-shadow: -32px 0 64px rgba(23, 36, 43, 0.1);
   --focus-ring: color-mix(in srgb, var(--blue) 30%, transparent);
 
-  /* --- Type families --- */
-  --font-ui: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* --- Type families ---
+   * Geist leads the UI stack; Helvetica Neue stays as the fallback the design
+   * handoff specified, so the grammar is unchanged where the webfont has not
+   * loaded (or is blocked). Same inline var() fallback rule as --font-mono
+   * below: --font-geist is set by next/font on <body>, not :root. */
+  --font-ui: var(--font-geist, "Geist"), "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
   --font-inter: var(--font-ui);
-  --font-ui-cjk: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui-cjk: var(--font-geist, "Geist"), "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
   /* The inline var() fallback matters: --font-jetbrains-mono is set by next/font
    * on <body>, not :root, so this custom property must stay valid when resolved
    * at :root (otherwise it computes to invalid and inherits as empty). */

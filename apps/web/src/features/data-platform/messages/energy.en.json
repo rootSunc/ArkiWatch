@@ -116,7 +116,7 @@
     "noteColumn": "Note",
     "lowestFlexibleWindow": "Lowest flexible-use window",
     "currentHourNote": "Current hour",
-    "eveningPeakNote": "Evening peak — avoid if flexible",
+    "eveningPeakNote": "Evening peak. Avoid if flexible",
     "currentGridLoad": "Current grid load",
     "mwSystemOnly": "{unit} · system-only value",
     "mwOver24h": "{unit} over 24 h",

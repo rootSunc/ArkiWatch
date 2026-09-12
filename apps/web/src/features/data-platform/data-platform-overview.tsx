@@ -141,16 +141,14 @@ function OverviewStatusBar({
           </span>
           <div>
             <span>{tKey("shell.snapshotChecked")}</span>
-            <strong>
-              {snapshotDate}
-              {snapshotTime ? (
-                <>
-                  <br />
-                  {snapshotTime}
-                </>
-              ) : null}
-            </strong>
-            <small>{platformTimezone}</small>
+            {/* The clock is the value people scan this cell for, so it carries
+              * the readout weight on a single line and the date drops to the
+              * detail row. A two-line value here broke the summary strip's
+              * shared baseline against the three cells beside it. */}
+            <strong>{snapshotTime || snapshotDate}</strong>
+            <small>
+              {snapshotTime ? `${snapshotDate} · ${platformTimezone}` : platformTimezone}
+            </small>
           </div>
         </article>
       </div>

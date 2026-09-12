@@ -48,7 +48,9 @@ await page.addStyleTag({ content: hideChrome });
 await waitForWorkspace(page, "Leave a few minutes earlier");
 await shot(page, "today-workspace-en.jpg");
 
-const launcher = page.locator(".assistant-launcher");
+// The launcher moved into the top bar during the minimal refactor; the old
+// .assistant-launcher class no longer exists.
+const launcher = page.locator(".topbar-assistant");
 await launcher.click();
 const suggested = page.getByRole("button", { name: "What should I pay attention to today?" });
 await suggested.waitFor({ timeout: 10_000 });

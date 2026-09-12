@@ -229,6 +229,7 @@
   color: var(--ink);
 }
 
+.about-proof-note,
 .about-hero-note {
   display: flex;
   align-items: center;
@@ -241,6 +242,10 @@
 
 .about-hero-note .material-symbols-outlined {
   display: none;
+}
+
+.about-proof-note {
+  padding: 16px 0 0;
 }
 
 /* --- Proof band --- */
@@ -507,17 +512,8 @@
 
 .about-flow-grid article {
   border: 0;
-  padding: 0;
-}
-
-.about-flow-grid article > span {
-  display: block;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line-strong);
-  color: var(--blue);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  border-top: 1px solid var(--line-strong);
+  padding: 20px 0 0;
 }
 
 .about-flow-grid h3 {
