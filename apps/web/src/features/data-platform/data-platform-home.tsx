@@ -64,6 +64,7 @@ import {
   pathWithParams,
   resolveNavKey,
 } from "./data-platform-nav-utils";
+import { useEventAnchorScroll } from "./hooks/use-event-anchor-scroll";
 import { useShellFocus } from "./hooks/use-shell-focus";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
 import type { PlatformCategory, PlatformEvent } from "./types";
@@ -71,7 +72,6 @@ import {
   buildAirQualityRecentEvents,
   buildWeatherRecentEvents,
   curatedRecentEvents,
-  eventAnchorId,
   eventNavigationId,
   eventTarget,
   RECENT_EVENT_LIMIT,
@@ -698,6 +698,8 @@ export function DataPlatformHome({
     tKey("shell.recentEventsRemainAvailableBelowForSourceLevelInspection");
   const workspaceRoute = workspaceRouteForCategory(selectedCategory?.key);
   const isDetailPage = workspaceRoute !== null;
+
+  useEventAnchorScroll(highlightedEventId, isDetailPage);
   const showsWorkspaceTopbar =
     isDetailPage ||
     selectedNavKey === FALLBACK_NAV_KEY ||
@@ -868,54 +870,6 @@ export function DataPlatformHome({
       replaceCityParam(storedCity);
     }
   }, [replaceCityParam, searchParams, selectedCity]);
-
-  useEffect(() => {
-    if (!highlightedEventId || !isDetailPage) {
-      return;
-    }
-
-    let attempts = 0;
-    let retryTimeout: number | null = null;
-    let activeClassTimeout: number | null = null;
-    let cancelled = false;
-
-    const scrollToEvent = () => {
-      if (cancelled) {
-        return;
-      }
-
-      const element = document.getElementById(eventAnchorId(highlightedEventId));
-      if (!element) {
-        attempts += 1;
-        if (attempts < 60) {
-          retryTimeout = window.setTimeout(scrollToEvent, 50);
-        }
-        return;
-      }
-
-      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth";
-      element.scrollIntoView({ behavior, block: "center" });
-      element.classList.add("event-anchor-active");
-      activeClassTimeout = window.setTimeout(() => {
-        element.classList.remove("event-anchor-active");
-      }, 1800);
-    };
-
-    const timeout = window.setTimeout(scrollToEvent, 180);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-      if (retryTimeout !== null) {
-        window.clearTimeout(retryTimeout);
-      }
-      if (activeClassTimeout !== null) {
-        window.clearTimeout(activeClassTimeout);
-      }
-    };
-  }, [highlightedEventId, isDetailPage, selectedMobilityTab, selectedNavKey]);
 
   function selectCity(nextCityValue: string): void {
     const nextCity = normalizeCityValue(nextCityValue);
