@@ -103,6 +103,7 @@ import { platformErrorMessage } from "./platform-error";
 import { isEmptyStatus } from "./platform-status";
 import { scopedReferenceTime } from "./data-time-scope";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
+import { useDocumentTitle } from "@/features/shared/use-document-title";
 import { buildUserSummaryTiles } from "./user-summary-stats";
 import {
   ENERGY_TAB_QUERY_KEY,
@@ -250,32 +251,7 @@ export function DataPlatformHome({
   const isScopePending =
     isCityRefreshPending || isDateRefreshPending || isPreviousScope;
   const tKey = (key: string) => translateMessageKey(languageMode, key);
-
-  useEffect(() => {
-    const title = translateMessageKey(languageMode, "shell.documentTitle");
-    const applyTitle = () => {
-      if (document.title !== title) {
-        document.title = title;
-      }
-    };
-
-    applyTitle();
-
-    // Next's metadata reconciliation can run after a client-side language
-    // switch. Re-apply the localized title during that bounded window so the
-    // document title cannot drift back to the server's default language.
-    const titleSyncs = [0, 50, 250, 1000].map((delay) =>
-      window.setTimeout(applyTitle, delay),
-    );
-    window.addEventListener("load", applyTitle, { once: true });
-
-    return () => {
-      for (const titleSync of titleSyncs) {
-        window.clearTimeout(titleSync);
-      }
-      window.removeEventListener("load", applyTitle);
-    };
-  }, [languageMode]);
+  useDocumentTitle(tKey("shell.documentTitle"));
 
   useEffect(() => {
     if (!isPending) {
@@ -866,7 +842,7 @@ export function DataPlatformHome({
   }, [initialDate]);
 
   useEffect(() => {
-    // Keep stale scope controls out of the tab order while the requested scope loads.
+    // Stale scope controls leave the tab order while the requested scope loads.
     const scopeContent = scopeContentRef.current;
     if (scopeContent) {
       scopeContent.inert = isScopePending;
@@ -1200,12 +1176,10 @@ export function DataPlatformHome({
   };
   const mobileNavItems = useMemo(() => mobileNavigationItems(categories), [categories]);
 
-  // Streamed first paint: the overview arrives after the shell, and without the
-  // overview the nav and workspaces would render as empty states rather than as
-  // "still loading". Placed after every hook so hook order stays stable.
-  // Keep the first-load skeleton, but do not unmount an already-visible error
-  // shell during a retry. Unmounting the retry button drops keyboard focus to
-  // the document body and leaves a failed retry without a recovery target.
+  // The overview streams in after the shell, so the first paint shows a
+  // skeleton rather than empty workspaces. Only the first paint: once anything
+  // has rendered it stays mounted, which keeps a failed retry's own retry
+  // button on screen and focused. Sits after every hook to fix hook order.
   if (isPending && !hasRenderedPlatformStateRef.current) {
     return (
       <I18nProvider language={languageMode}>

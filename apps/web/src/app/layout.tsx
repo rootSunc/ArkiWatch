@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import { ReactNode } from "react";
 
+import { documentLanguageTag } from "@/features/data-platform/language";
+import { metadataText } from "@/features/data-platform/server-metadata";
+import { requestLanguage } from "@/features/data-platform/server-language";
 import { appEnv } from "@/lib/env";
 
 import "./tokens.css";
@@ -22,24 +25,24 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["400", "500", "700"]
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(appEnv.appOrigin),
-  title: `${appEnv.appName} | Public data. Practical decisions.`,
-  description:
-    "Practical daily guidance for life in Finland, grounded in transparent public data.",
-  openGraph: {
-    type: "website",
-    title: `${appEnv.appName} | Public data. Practical decisions.`,
-    description: "Practical daily guidance for life in Finland, grounded in transparent public data.",
-    images: [{ url: "/og.png", width: 1731, height: 909, alt: "ArkiWatch public-data life assistant" }]
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${appEnv.appName} | Public data. Practical decisions.`,
-    description: "Practical daily guidance for life in Finland, grounded in transparent public data.",
-    images: ["/og.png"]
-  }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const language = await requestLanguage();
+  const title = metadataText(language, "documentTitle");
+  const description = metadataText(language, "documentDescription");
+
+  return {
+    metadataBase: new URL(appEnv.appOrigin),
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      images: [{ url: "/og.png", width: 1731, height: 909, alt: "ArkiWatch public-data life assistant" }]
+    },
+    twitter: { card: "summary_large_image", title, description, images: ["/og.png"] }
+  };
+}
 
 export const viewport: Viewport = {
   initialScale: 1,
@@ -55,9 +58,17 @@ function runtimeConfigScript(): string {
   return `window.__ARKIWATCH_RUNTIME_CONFIG__=${JSON.stringify({ apiBaseUrl }).replace(/</g, "\\u003c")};`;
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const language = await requestLanguage();
+
   return (
-    <html suppressHydrationWarning className="light" data-theme="light" lang="en">
+    <html
+      suppressHydrationWarning
+      className="light"
+      data-theme="light"
+      data-language={language}
+      lang={documentLanguageTag(language)}
+    >
       <head>
         <script
           id="arkiwatch-runtime-config"
@@ -86,21 +97,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
                   document.documentElement.setAttribute('data-language', language);
 
-                  if (window.location.pathname === '/login') {
-                    var loginTitle = language === 'zh'
-                      ? '管理员登录 | ArkiWatch'
-                      : 'Admin sign in | ArkiWatch';
-                    var applyLoginTitle = function() {
-                      if (window.location.pathname === '/login' && document.title !== loginTitle) {
-                        document.title = loginTitle;
-                      }
-                    };
-                    applyLoginTitle();
-                    window.addEventListener('load', applyLoginTitle, { once: true });
-                    window.setTimeout(applyLoginTitle, 0);
-                    window.setTimeout(applyLoginTitle, 250);
-                    window.setTimeout(applyLoginTitle, 1000);
-                  }
                 } catch (e) {}
               })();
             `

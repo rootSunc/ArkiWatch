@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
   applyLanguageMode,
   preferredLanguageMode,
@@ -157,9 +158,7 @@ export default function AboutPage() {
     applyLanguageMode(nextLanguage);
   }, []);
 
-  useEffect(() => {
-    document.title = copy.documentTitle;
-  }, [copy.documentTitle]);
+  useDocumentTitle(copy.documentTitle);
 
   function changeLanguage(nextLanguage: LanguageMode): void {
     setLanguage(nextLanguage);

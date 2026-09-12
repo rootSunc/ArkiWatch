@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
+import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
   applyLanguageMode,
   preferredLanguageMode,
@@ -24,9 +25,8 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
   const router = useRouter();
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
-  // Keep the first render deterministic for SSR, then apply the saved/browser
-  // preference after hydration. Reading navigator/localStorage during render
-  // caused the login page to hydrate with different copy in different locales.
+  // The first render is deterministic for SSR; the saved preference applies
+  // after hydration, since navigator and localStorage are client-only.
   const [language, setLanguage] = useState<LanguageMode>("en");
   const tKey = (key: string) => translateMessageKey(language, key);
   const [error, setError] = useState<string | null>(
@@ -34,6 +34,8 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useDocumentTitle(translateMessageKey(language, "shell.loginDocumentTitle"));
 
   useIsomorphicLayoutEffect(() => {
     const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
@@ -43,32 +45,6 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
       setError(translateMessageKey(nextLanguage, "auth.sessionExpired"));
     }
   }, [sessionExpired]);
-
-  useEffect(() => {
-    const title = `${translateMessageKey(language, "auth.adminSignIn")} | ArkiWatch`;
-    const applyTitle = () => {
-      if (document.title !== title) {
-        document.title = title;
-      }
-    };
-
-    applyTitle();
-
-    // Next's metadata reconciliation can run after this client effect during
-    // navigation. Keep a short bounded sync window so a streamed metadata
-    // title cannot replace the localized login title after hydration.
-    const titleSyncs = [0, 50, 250, 1000].map((delay) =>
-      window.setTimeout(applyTitle, delay),
-    );
-    window.addEventListener("load", applyTitle, { once: true });
-
-    return () => {
-      for (const titleSync of titleSyncs) {
-        window.clearTimeout(titleSync);
-      }
-      window.removeEventListener("load", applyTitle);
-    };
-  }, [language]);
 
   useEffect(() => {
     if (error) {

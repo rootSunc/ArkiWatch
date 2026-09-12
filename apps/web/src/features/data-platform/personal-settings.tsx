@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { useDocumentTitle } from "@/features/shared/use-document-title";
 import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
@@ -194,28 +195,7 @@ function PersonalSettingsContent({
   const contextControllerRef = useRef<AbortController | null>(null);
   const saveControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const title = `${tKey("shell.personalSettingsTitle")} | ArkiWatch`;
-    const applyTitle = () => {
-      if (document.title !== title) {
-        document.title = title;
-      }
-    };
-
-    applyTitle();
-
-    // Keep a client-side language change from being overwritten by streamed
-    // metadata reconciliation during navigation or hydration.
-    const titleSyncs = [0, 50, 250, 1000].map((delay) =>
-      window.setTimeout(applyTitle, delay),
-    );
-
-    return () => {
-      for (const titleSync of titleSyncs) {
-        window.clearTimeout(titleSync);
-      }
-    };
-  }, [tKey]);
+  useDocumentTitle(`${tKey("shell.personalSettingsTitle")} | ArkiWatch`);
 
   const completion = completionState(context);
   const completedCount = Object.values(completion).filter(Boolean).length;

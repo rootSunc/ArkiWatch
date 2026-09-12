@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  documentLanguageTag,
+  isLanguageMode,
+  LANGUAGE_COOKIE,
+  LANGUAGE_STORAGE_KEY,
+  type LanguageMode,
+} from "./language";
 import { NextIntlClientProvider } from "next-intl";
 import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useMemo } from "react";
 
@@ -38,9 +45,7 @@ import weatherEnMessages from "./messages/weather.en.json";
 import weatherZhMessages from "./messages/weather.zh.json";
 import zhMessages from "./messages/zh.json";
 
-export type LanguageMode = "en" | "zh";
-
-const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
+export type { LanguageMode } from "./language";
 export const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 type StructuredMessages = {
@@ -294,10 +299,6 @@ export function translateMessageKey(language: LanguageMode, key: string): string
   return englishFallback ?? key;
 }
 
-function isLanguageMode(value: string | null): value is LanguageMode {
-  return value === "en" || value === "zh";
-}
-
 export function preferredLanguageMode(): LanguageMode {
   if (typeof navigator === "undefined") {
     return "en";
@@ -332,8 +333,10 @@ export function applyLanguageMode(language: LanguageMode): void {
     return;
   }
 
-  document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+  document.documentElement.lang = documentLanguageTag(language);
   document.documentElement.dataset.language = language;
+  // Mirrored to a cookie so the next server render emits the right metadata.
+  document.cookie = `${LANGUAGE_COOKIE}=${language};path=/;max-age=31536000;samesite=lax`;
 }
 
 function translateText(language: LanguageMode, value: string): string {
