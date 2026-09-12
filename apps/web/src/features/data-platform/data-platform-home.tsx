@@ -6,7 +6,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useTransition,
 } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -26,8 +25,6 @@ import { localizedContent } from "./content-localization";
 import {
   HistoricalWarningBanner,
   RefreshErrorBanner,
-  saveCityValue,
-  storedCityValue,
 } from "./data-platform-shell";
 import type { NavItem, WorkspaceMode } from "./data-platform-shell";
 import {
@@ -57,13 +54,12 @@ import {
   TODAY_NAV_KEY,
   buildNavigationQueryParams,
   categoryByKey,
-  currentSearchParams,
   isCatalogCategoryKey,
   mobileNavigationItems,
-  pathWithParams,
   resolveNavKey,
 } from "./data-platform-nav-utils";
 import { useEventAnchorScroll } from "./hooks/use-event-anchor-scroll";
+import { useScopeRouting } from "./hooks/use-scope-routing";
 import { useShellFocus } from "./hooks/use-shell-focus";
 import { useVisibleOverview } from "./hooks/use-visible-overview";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
@@ -151,32 +147,45 @@ export function DataPlatformHome({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedCity, setSelectedCity] = useState(() =>
-    normalizeCityValue(initialCity),
-  );
+
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  // useShellFocus is declared below because it needs the scope this hook
+  // produces, so the date handler reaches it through a stable indirection.
+  const restoreDateFocus = useRef<() => void>(() => {});
+  const requestDateFocus = useCallback(() => restoreDateFocus.current(), []);
+
+  const clearInspectedEvent = useCallback(() => setSelectedEventId(null), []);
+
+  const {
+    selectedCity,
+    selectedDate,
+    selectedNavKey,
+    selectedMobilityTab,
+    selectedEnergyTab,
+    needsHistoryAvailability,
+    isScopeTransitionPending,
+    selectCity,
+    selectDate,
+    requestHistoryAvailability,
+    updateNavQuery,
+    setSelectedNavKey,
+    setSelectedMobilityTab,
+    setSelectedEnergyTab,
+    selectMobilityTab,
+    selectEnergyTab,
+  } = useScopeRouting({
+    initialCity,
+    initialDate,
+    initialView,
+    onScopeChange: clearInspectedEvent,
+    onDateChosen: requestDateFocus,
+  });
+
   const demoCitySupported = normalizeCityValue(selectedCity) === DEMO_CITY;
-  const [selectedDate, setSelectedDate] = useState<string | null>(
-    initialDate ?? null,
-  );
+
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
   const [assistantOpenQuestion, setAssistantOpenQuestion] = useState<string | null>(null);
   const hasRenderedPlatformStateRef = useRef(false);
-  const [selectedNavKey, setSelectedNavKey] = useState(() =>
-    resolveNavKey(initialView ?? searchParams.get(NAV_QUERY_KEY), []),
-  );
-    const [needsHistoryAvailability, setNeedsHistoryAvailability] = useState(
-    () => Boolean(initialDate),
-  );
-  const [selectedMobilityTab, setSelectedMobilityTab] = useState<MobilityTabKey>(
-    () =>
-      resolveMobilityTabParam(
-        searchParams.get(MOBILITY_TAB_QUERY_KEY) ??
-          searchParams.get(NAV_QUERY_KEY),
-      ),
-  );
-  const [selectedEnergyTab, setSelectedEnergyTab] = useState<EnergyPanelKey>(() =>
-    resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY)),
-  );
   const {
     airQuality,
     apiBaseUrl,
@@ -223,14 +232,10 @@ export function DataPlatformHome({
   const [isCatalogExpanded, setIsCatalogExpanded] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSideNavHidden, setIsSideNavHidden] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [isCityRefreshPending, startCityRefresh] = useTransition();
-  const [isDateRefreshPending, startDateRefresh] = useTransition();
-
   const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
-  const isScopePending =
-    isCityRefreshPending || isDateRefreshPending || isPreviousScope;
+  const [isSideNavHidden, setIsSideNavHidden] = useState(false);
+
+  const isScopePending = isScopeTransitionPending || isPreviousScope;
   const tKey = (key: string) => translateMessageKey(languageMode, key);
 
   const {
@@ -259,6 +264,10 @@ export function DataPlatformHome({
     selectedEventId,
     overviewRevision: overview,
   });
+
+  useEffect(() => {
+    restoreDateFocus.current = requestDateFocusRestore;
+  }, [requestDateFocusRestore]);
   useDocumentTitle(tKey("shell.documentTitle"));
 
   useEffect(() => {
@@ -382,53 +391,8 @@ export function DataPlatformHome({
     activeTimeScope,
   });
 
-  const updateNavQuery = useCallback(
-    (
-      nextNavKey: string,
-      options: {
-        mobilityTab?: MobilityTabKey;
-        energyTab?: EnergyPanelKey;
-        eventId?: string;
-      } = {},
-    ): void => {
-      const nextParams = buildNavigationQueryParams(
-        new URLSearchParams(searchParams.toString()),
-        nextNavKey,
-        options,
-        { mobilityTab: selectedMobilityTab, energyTab: selectedEnergyTab },
-      );
-
-      const nextPath = nextParams.toString();
-      const currentPath = searchParams.toString()
-        ? `${pathname}?${searchParams.toString()}`
-        : pathname;
-      const destinationPath = nextPath ? `${pathname}?${nextPath}` : pathname;
-      if (destinationPath === currentPath) {
-        return;
-      }
-
-      router.push(destinationPath);
-    },
-    [pathname, router, searchParams, selectedEnergyTab, selectedMobilityTab],
-  );
-  const scenarioLiveSignals = useMemo<ScenarioLiveSignals>(
-    () => ({
-      weather,
-      airQuality,
-      transit,
-      roadRail,
-      householdEnergy,
-      systemEnergy: energy,
-    }),
-    [airQuality, energy, householdEnergy, roadRail, transit, weather],
-  );
-
   const openNavigationTarget = useCallback(
-    (target: {
-      navKey: string;
-      mobilityTab?: MobilityTabKey;
-      energyTab?: EnergyPanelKey;
-    }): void => {
+    (target: { navKey: string; mobilityTab?: MobilityTabKey; energyTab?: EnergyPanelKey }): void => {
       const mobilityTab =
         target.mobilityTab ??
         (isMobilityCategoryKey(target.navKey) ? target.navKey : selectedMobilityTab);
@@ -444,7 +408,47 @@ export function DataPlatformHome({
       updateNavQuery(resolvedNavKey, { mobilityTab, energyTab });
       closeMobileMenu();
     },
-    [categories, closeMobileMenu, selectedEnergyTab, selectedMobilityTab, updateNavQuery],
+    [
+      categories,
+      closeMobileMenu,
+      selectedEnergyTab,
+      selectedMobilityTab,
+      setSelectedEnergyTab,
+      setSelectedMobilityTab,
+      setSelectedNavKey,
+      updateNavQuery,
+    ],
+  );
+
+  // The URL is authoritative for the workspace, so the back button and deep
+  // links move the interface. Resolving the request needs the categories that
+  // arrived with the data above.
+  useEffect(() => {
+    const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
+    const nextMobilityTab = resolveMobilityTabParam(
+      searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
+    );
+    const nextEnergyTab = resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY));
+    const nextNavKey = resolveNavKey(nextRequestedKey, categories);
+    if (nextNavKey === MOBILITY_NAV_KEY) {
+      setSelectedMobilityTab(nextMobilityTab);
+    }
+    if (nextNavKey === "energy") {
+      setSelectedEnergyTab(nextEnergyTab);
+    }
+    setSelectedNavKey((current) => (current === nextNavKey ? current : nextNavKey));
+  }, [categories, searchParams, setSelectedEnergyTab, setSelectedMobilityTab, setSelectedNavKey]);
+
+  const scenarioLiveSignals = useMemo<ScenarioLiveSignals>(
+    () => ({
+      weather,
+      airQuality,
+      transit,
+      roadRail,
+      householdEnergy,
+      systemEnergy: energy,
+    }),
+    [airQuality, energy, householdEnergy, roadRail, transit, weather],
   );
 
   const openAssistantView = useCallback(
@@ -488,23 +492,6 @@ export function DataPlatformHome({
     [openNavigationTarget, scenarioLiveSignals],
   );
 
-  const selectMobilityTab = useCallback(
-    (nextMobilityTab: MobilityTabKey): void => {
-      setSelectedMobilityTab(nextMobilityTab);
-      setSelectedNavKey(MOBILITY_NAV_KEY);
-      updateNavQuery(MOBILITY_NAV_KEY, { mobilityTab: nextMobilityTab });
-    },
-    [updateNavQuery],
-  );
-
-  const selectEnergyTab = useCallback(
-    (nextEnergyTab: EnergyPanelKey): void => {
-      setSelectedEnergyTab(nextEnergyTab);
-      setSelectedNavKey("energy");
-      updateNavQuery("energy", { energyTab: nextEnergyTab });
-    },
-    [updateNavQuery],
-  );
   const selectedCategory =
     selectedNavKey === FALLBACK_NAV_KEY || selectedNavKey === TODAY_NAV_KEY
       ? null
@@ -747,101 +734,6 @@ export function DataPlatformHome({
     }
 
     router.push(destinationPath);
-  }
-
-  const replaceCityParam = useCallback(
-    (nextCity: string): void => {
-      const nextParams = currentSearchParams(searchParams);
-      nextParams.set("city", nextCity);
-      nextParams.delete(EVENT_QUERY_KEY);
-      startCityRefresh(() => {
-        router.replace(pathWithParams(pathname, nextParams));
-      });
-    },
-    [pathname, router, searchParams, startCityRefresh],
-  );
-
-  const replaceDateParam = useCallback(
-    (nextDate: string | null): void => {
-      const nextParams = currentSearchParams(searchParams);
-      if (nextDate) {
-        nextParams.set("date", nextDate);
-      } else {
-        nextParams.delete("date");
-      }
-      nextParams.delete(EVENT_QUERY_KEY);
-      startDateRefresh(() => {
-        router.replace(pathWithParams(pathname, nextParams));
-      });
-    },
-    [pathname, router, searchParams, startDateRefresh],
-  );
-
-  useEffect(() => {
-    setSelectedCity(normalizeCityValue(initialCity));
-  }, [initialCity]);
-
-  useEffect(() => {
-    setSelectedDate(initialDate ?? null);
-  }, [initialDate]);
-
-  useEffect(() => {
-    const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
-    const nextMobilityTab = resolveMobilityTabParam(
-      searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
-    );
-    const nextEnergyTab = resolveEnergyTabParam(searchParams.get(ENERGY_TAB_QUERY_KEY));
-    const nextNavKey = resolveNavKey(nextRequestedKey, categories);
-    if (nextNavKey === MOBILITY_NAV_KEY) {
-      setSelectedMobilityTab(nextMobilityTab);
-    }
-    if (nextNavKey === "energy") {
-      setSelectedEnergyTab(nextEnergyTab);
-    }
-    setSelectedNavKey((currentNavKey) =>
-      currentNavKey === nextNavKey ? currentNavKey : nextNavKey,
-    );
-  }, [categories, searchParams]);
-
-  useEffect(() => {
-    if (searchParams.has("date") && selectedDate === null) {
-      replaceDateParam(null);
-    }
-  }, [replaceDateParam, searchParams, selectedDate]);
-
-  useEffect(() => {
-    if (searchParams.has("city")) {
-      saveCityValue(selectedCity);
-      return;
-    }
-
-    const storedCity = storedCityValue();
-    if (storedCity && storedCity !== selectedCity) {
-      setSelectedCity(storedCity);
-      replaceCityParam(storedCity);
-    }
-  }, [replaceCityParam, searchParams, selectedCity]);
-
-  function selectCity(nextCityValue: string): void {
-    const nextCity = normalizeCityValue(nextCityValue);
-    setSelectedEventId(null);
-    setSelectedCity(nextCity);
-    saveCityValue(nextCity);
-    replaceCityParam(nextCity);
-  }
-
-  function selectDate(nextDate: string | null): void {
-    requestDateFocusRestore();
-    setSelectedEventId(null);
-    if (nextDate !== null) {
-      setNeedsHistoryAvailability(true);
-    }
-    setSelectedDate(nextDate);
-    replaceDateParam(nextDate);
-  }
-
-  function requestHistoryAvailability(): void {
-    setNeedsHistoryAvailability(true);
   }
 
   function renderSignalCard(category: PlatformCategory) {
