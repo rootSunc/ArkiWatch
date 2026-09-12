@@ -21,7 +21,6 @@ import {
   cityLabel,
   normalizeCityValue,
 } from "./city-scope";
-import { localizedContent } from "./content-localization";
 import {
   HistoricalWarningBanner,
   RefreshErrorBanner,
@@ -54,7 +53,6 @@ import {
   TODAY_NAV_KEY,
   buildNavigationQueryParams,
   categoryByKey,
-  isCatalogCategoryKey,
   mobileNavigationItems,
   resolveNavKey,
 } from "./data-platform-nav-utils";
@@ -68,7 +66,6 @@ import {
   curatedRecentEvents,
   eventNavigationId,
   eventTarget,
-  RECENT_EVENT_LIMIT,
 } from "./recent-events";
 import type { MobilityTabKey } from "./mobility-workspace";
 import {
@@ -95,7 +92,7 @@ import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
 import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
-import { isEmptyStatus } from "./platform-status";
+import { buildSignalView } from "./signal-view";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import { buildUserSummaryTiles } from "./user-summary-stats";
@@ -108,15 +105,7 @@ import {
 } from "./workspace-query-params";
 import {
   MOBILITY_NAV_KEY,
-  recentEventLabel,
-  displayTitle,
-  eventCategoryLabel,
-  eventMatchesSearch,
   isMobilityCategoryKey,
-  isNotificationEvent,
-  matchesSearch,
-  notificationToneForEvents,
-  pickPriorityEvent,
 } from "./data-platform-view-model";
 // Floating overlay, never part of the first paint: keep it out of the route bundle.
 const AssistantWidget = dynamic(
@@ -564,39 +553,32 @@ export function DataPlatformHome({
       }),
     [displayCategories, languageMode, recentEvents, sources, visibleOverview],
   );
-  const selectedCategories = selectedCategory ? [selectedCategory] : displayCategories;
-  const visibleCategories = selectedCategories.filter((category) =>
-    matchesSearch(category, searchValue, languageMode),
-  );
-  const primaryVisibleCategories = visibleCategories.filter(
-    (category) =>
-      !isCatalogCategoryKey(category.key) && !isEmptyStatus(category.status),
-  );
-  const catalogVisibleCategories = visibleCategories.filter((category) =>
-    isCatalogCategoryKey(category.key),
-  );
-  const visibleEvents = (
-    selectedCategory
-      ? curatedRecentEvents(selectedCategory.events, RECENT_EVENT_LIMIT, {
-          city: selectedCity,
-          referenceAt: eventReferenceAt,
-        })
-      : recentEvents
-  ).filter((event) => eventMatchesSearch(event, searchValue, languageMode));
-  const unreadVisibleEvents = visibleEvents.filter(
-    (event) => !readRecentEventIds.has(event.id),
-  );
-  const latestVisibleEvent = visibleEvents[0] ?? null;
-  const latestUnreadEvent = unreadVisibleEvents[0] ?? latestVisibleEvent;
-  const visibleNotificationEvents = visibleEvents.filter(isNotificationEvent);
-  const latestEventTone = notificationToneForEvents(
-    unreadVisibleEvents.length > 0 ? unreadVisibleEvents : visibleNotificationEvents,
-  );
-  const unreadRecentEvents = recentEvents.filter(
-    (event) => !readRecentEventIds.has(event.id),
-  );
-  const recentNotificationCount = unreadRecentEvents.length;
-  const recentNotificationTone = notificationToneForEvents(unreadRecentEvents);
+  const {
+    primaryVisibleCategories,
+    catalogVisibleCategories,
+    visibleEvents,
+    unreadVisibleEvents,
+    visibleNotificationEvents,
+    latestUnreadEvent,
+    latestEventTone,
+    recentNotificationCount,
+    recentNotificationTone,
+    overallNotificationTitle,
+    overallNotificationBody,
+    overallNotificationDetail,
+  } = buildSignalView({
+    selectedCategory,
+    displayCategories,
+    categories,
+    recentEvents,
+    searchValue,
+    language: languageMode,
+    readRecentEventIds,
+    selectedCity,
+    eventReferenceAt,
+    tKey,
+  });
+
   const eventById = useMemo(() => {
     const events = [
       ...recentEvents,
@@ -604,36 +586,8 @@ export function DataPlatformHome({
     ];
     return new Map(events.map((event) => [event.id, event]));
   }, [displayCategories, recentEvents]);
-  const selectedEvent = selectedEventId
-    ? (eventById.get(selectedEventId) ?? null)
-    : null;
-  const priorityVisibleEvent = pickPriorityEvent(visibleNotificationEvents);
-  const overallScopeLabel = selectedCategory
-    ? displayTitle(selectedCategory, languageMode)
-    : tKey("shell.overall");
-  const overallNotificationTitle =
-    visibleNotificationEvents.length > 0
-      ? `${overallScopeLabel} · ${recentEventLabel(
-          visibleNotificationEvents.length,
-          languageMode,
-        )}`
-      : `${overallScopeLabel} · ${tKey("shell.noActiveNotifications")}`;
-  const overallNotificationBody = priorityVisibleEvent
-    ? `${eventCategoryLabel(categories, priorityVisibleEvent, languageMode)} · ${localizedContent(
-        languageMode,
-        priorityVisibleEvent.title,
-        priorityVisibleEvent.title_zh,
-      )}`
-    : tKey("shell.noActiveCrossSignalNotificationsInThisView");
-  const overallNotificationDetail =
-    (priorityVisibleEvent
-      ? localizedContent(
-          languageMode,
-          priorityVisibleEvent.body,
-          priorityVisibleEvent.body_zh,
-        )
-      : null) ??
-    tKey("shell.recentEventsRemainAvailableBelowForSourceLevelInspection");
+  const selectedEvent = selectedEventId ? (eventById.get(selectedEventId) ?? null) : null;
+
   const workspaceRoute = workspaceRouteForCategory(selectedCategory?.key);
   const isDetailPage = workspaceRoute !== null;
 
