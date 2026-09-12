@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { formatCompactDateTime } from "./workspace-datetime";
 
 import { parseValidDate, severityTone } from "@/features/shared/format";
 
@@ -193,33 +194,6 @@ function clampPercent(value: number): number {
   }
 
   return Math.min(100, Math.max(0, value));
-}
-
-function formatCompactTime(
-  value: string | null | undefined,
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (!value) {
-    return tKey("waterSnow.notScheduled");
-  }
-
-  const parsedDate = parseValidDate(value);
-  if (!parsedDate) {
-    return tKey("waterSnow.notScheduled");
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsedDate)
-    .toUpperCase();
 }
 
 function formatTimelineBoundary(value: number, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
@@ -854,7 +828,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
 
                         return (
                           <article className={`water-timeband-row water-timeband-row-${eventTone(item)}`} key={item.id}>
-                            <span>{formatCompactTime(item.starts_at, language, tKey, timezone)}</span>
+                            <span>{formatCompactDateTime(item.starts_at, language, tKey("waterSnow.notScheduled"), timezone)}</span>
                             <i aria-hidden="true">
                               <span style={bandStyle} />
                             </i>
@@ -874,7 +848,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
 	                    >
                       <span className="water-event-dot" aria-hidden="true" />
                       <div>
-                        <time>{formatCompactTime(item.starts_at, language, tKey, timezone)}</time>
+                        <time>{formatCompactDateTime(item.starts_at, language, tKey("waterSnow.notScheduled"), timezone)}</time>
                         <strong>{item.label}</strong>
                         <p>{item.detail}</p>
                       </div>

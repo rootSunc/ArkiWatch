@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatCompactDateTime } from "./workspace-datetime";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { translateEnumLabel, useI18n } from "./i18n";
@@ -30,7 +31,6 @@ import {
   energyHistoryPoints,
   energyMetricTone,
   energyTimelineItems,
-  formatCompactTime,
   formatPriceNumber,
   formatEnergyPointValue,
   formatEnergyRange,
@@ -163,14 +163,14 @@ export function EnergyWorkspace({
     timelineItems.some((item) => !isNoActiveWindowLabel(item.label)) ||
     (latestEvent !== null && !isNoActiveWindowLabel(latestEvent.title));
   const startLabel = window
-    ? formatCompactTime(window.starts_at, language, tKey, dataTimezone)
+    ? formatCompactDateTime(window.starts_at, language, tKey("energy.notScheduled"), dataTimezone)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.starts_at, language, tKey, dataTimezone)
+      ? formatCompactDateTime(latestEvent.starts_at, language, tKey("energy.notScheduled"), dataTimezone)
       : tKey("energy.windowPending2");
   const endLabel = window
-    ? formatCompactTime(window.ends_at, language, tKey, dataTimezone)
+    ? formatCompactDateTime(window.ends_at, language, tKey("energy.notScheduled"), dataTimezone)
     : hasActiveWindow && latestEvent
-      ? formatCompactTime(latestEvent.ends_at, language, tKey, dataTimezone)
+      ? formatCompactDateTime(latestEvent.ends_at, language, tKey("energy.notScheduled"), dataTimezone)
       : tKey("energy.waitingForEvent");
   const householdWindowUsage = isPricePanel && window?.usage_kwh != null ? window.usage_kwh : null;
   const windowAveragePoint = window
@@ -697,7 +697,7 @@ export function EnergyWorkspace({
                 >
                   <div className="energy-tooltip-content">
                     <div className="energy-tooltip-time">
-                      {formatCompactTime(hoveredPoint.point.starts_at, language, tKey, dataTimezone)}
+                      {formatCompactDateTime(hoveredPoint.point.starts_at, language, tKey("energy.notScheduled"), dataTimezone)}
                     </div>
                     <div className="energy-tooltip-value">
                       <strong>{formatEnergyPointValue(hoveredPoint.point, chartUnit)}</strong>
@@ -898,7 +898,7 @@ export function EnergyWorkspace({
                 <article className={`energy-window-row energy-window-row-${tone}`} key={item.id}>
                   <div>
                     <strong>{"label" in item ? item.label : item.title}</strong>
-                    <span>{formatCompactTime(item.starts_at, language, tKey, dataTimezone)} - {formatCompactTime(item.ends_at, language, tKey, dataTimezone)}</span>
+                    <span>{formatCompactDateTime(item.starts_at, language, tKey("energy.notScheduled"), dataTimezone)} - {formatCompactDateTime(item.ends_at, language, tKey("energy.notScheduled"), dataTimezone)}</span>
                   </div>
                   <p>{"detail" in item ? item.detail : item.body}</p>
                 </article>

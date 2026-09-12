@@ -1,4 +1,5 @@
 import { localizedContent } from "./content-localization";
+import { formatHistoryDate } from "./workspace-datetime";
 import { localizedPlatformCopy } from "./platform-copy";
 export { liveStatusLabel, liveStatusTone } from "./platform-status";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
@@ -650,23 +651,6 @@ export function currentMetricCards(
         }
       : null
   ].filter((item): item is CurrentMetricCard => item !== null);
-}
-
-export function formatHistoryDate(
-  value: string,
-  language: LanguageMode = "en",
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  const parsed = new Date(`${value}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    timeZone: resolveDataTimezone(timeZone)
-  }).format(parsed);
 }
 
 export function average(values: number[]): number | null {

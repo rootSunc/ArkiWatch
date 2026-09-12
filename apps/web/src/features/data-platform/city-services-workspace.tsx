@@ -1,8 +1,9 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { formatCompactDateTime } from "./workspace-datetime";
 
-import { parseValidDate, severityTone } from "@/features/shared/format";
+import { severityTone } from "@/features/shared/format";
 
 import { localizedContent } from "./content-localization";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -17,7 +18,7 @@ import {
 import type { PlatformTimeScope } from "./types";
 import { isEmptyStatus } from "./platform-status";
 import { eventAnchorId } from "./recent-events";
-import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
+import { resolveDataTimezone } from "./data-timezone";
 import { hasObservedSourceRecords } from "./catalog-workspace-state";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "./data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
@@ -89,33 +90,6 @@ function formatMetricValue(metric: PlatformMetric | null, tKey: (key: string) =>
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-GB").format(value);
-}
-
-function formatCompactTime(
-  value: string | null | undefined,
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (!value) {
-    return tKey("cityServices.notScheduled");
-  }
-
-  const parsedDate = parseValidDate(value);
-  if (!parsedDate) {
-    return tKey("cityServices.notScheduled");
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone
-  })
-    .format(parsedDate)
-    .toUpperCase();
 }
 
 function toneFromStatus(status: string | null | undefined): CityTone {
@@ -408,7 +382,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
                     <span className="city-service-dot" aria-hidden="true" />
                     <div className="city-service-main">
                       <div>
-                        <time>{formatCompactTime(event.starts_at, language, tKey, timezone)}</time>
+                        <time>{formatCompactDateTime(event.starts_at, language, tKey("cityServices.notScheduled"), timezone)}</time>
                         <strong>{localizedContent(language, event.title, event.title_zh)}</strong>
                         <p>{localizedContent(language, event.body, event.body_zh)}</p>
                       </div>
@@ -416,7 +390,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
                     </div>
                     <div className="city-service-meta">
                       <span>{eventTypeLabel(event.category_key, language)}</span>
-                      <span>{tKey("cityServices.until")} {formatCompactTime(event.ends_at, language, tKey, timezone)}</span>
+                      <span>{tKey("cityServices.until")} {formatCompactDateTime(event.ends_at, language, tKey("cityServices.notScheduled"), timezone)}</span>
                     </div>
                   </article>
                 );

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { formatCompactDateTime, formatHistoryDate } from "./workspace-datetime";
 import { useEffect, useMemo, useState } from "react";
 
 import { parseValidDate } from "@/features/shared/format";
@@ -96,33 +97,6 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
 function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
   const formatted = formatNumber(value);
   return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
-}
-
-function formatCompactTime(
-  value: string | null | undefined,
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (!value) {
-    return tKey("transit.notObserved");
-  }
-
-  const parsedDate = parseValidDate(value);
-  if (!parsedDate) {
-    return tKey("transit.notObserved");
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsedDate)
-    .toUpperCase();
 }
 
 function formatClockTime(
@@ -489,7 +463,7 @@ function nextActiveEndLabel(
     (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
   )[0];
 
-  return `${tKey("transit.until")} ${formatCompactTime(nextEndingAlert.ends_at, language, tKey, timeZone)}`;
+  return `${tKey("transit.until")} ${formatCompactDateTime(nextEndingAlert.ends_at, language, tKey("transit.notObserved"), timeZone)}`;
 }
 
 function transitRiskState(
@@ -659,23 +633,6 @@ function timelinePercent(value: number, bounds: { startsAt: number; endsAt: numb
   return Math.max(0, Math.min(100, ((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100));
 }
 
-function formatHistoryDate(
-  value: string,
-  language: LanguageMode = "en",
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  const parsed = new Date(`${value}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    timeZone: resolveDataTimezone(timeZone)
-  }).format(parsed);
-}
-
 function transitHistoryPoints(
   history: PlatformHistoricalSnapshot<TransitCurrentResponse>[],
   tKey: (key: string) => string,
@@ -726,7 +683,7 @@ function TransitAlertStatusBadge({
           ? tKey(historical ? "transit.activeAtSnapshot" : "transit.activeNow")
           : state === "ended"
             ? tKey(historical ? "transit.endedAtSnapshot" : "transit.ended")
-            : formatCompactTime(alert.starts_at, language, tKey, timeZone)}
+            : formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)}
       </span>
     </span>
   );
@@ -769,10 +726,10 @@ function TransitAlertLiveLayer({
           </strong>
           <span>
             {state === "active"
-              ? `${tKey("transit.until")} ${formatCompactTime(alert.ends_at, language, tKey, timeZone)}`
+              ? `${tKey("transit.until")} ${formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}`
               : state === "ended"
-                ? `${tKey("transit.endedAt")} ${formatCompactTime(alert.ends_at, language, tKey, timeZone)}`
-                : `${tKey("transit.starts")} ${formatCompactTime(alert.starts_at, language, tKey, timeZone)}`}
+                ? `${tKey("transit.endedAt")} ${formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}`
+                : `${tKey("transit.starts")} ${formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)}`}
           </span>
         </div>
       </div>
@@ -782,7 +739,7 @@ function TransitAlertLiveLayer({
       <dl className="transit-alert-live-facts">
         <div>
           <dt>{tKey("transit.window")}</dt>
-          <dd>{formatCompactTime(alert.starts_at, language, tKey, timeZone)} - {formatCompactTime(alert.ends_at, language, tKey, timeZone)}</dd>
+          <dd>{formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)} - {formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}</dd>
         </div>
         <div>
           <dt>{tKey("transit.impactScope")}</dt>

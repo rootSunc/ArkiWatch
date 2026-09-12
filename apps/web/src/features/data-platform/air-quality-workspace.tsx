@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { formatHistoryDate } from "./workspace-datetime";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 
@@ -349,23 +350,6 @@ function sourceRequestCount(airQuality: AirQualityCurrentResponse): string {
 
 function readyFieldCount(fields: FieldSignal[]): string {
   return `${fields.filter((field) => field.ready).length}/${fields.length}`;
-}
-
-function formatHistoryDate(
-  value: string,
-  language: LanguageMode = "en",
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  const parsed = new Date(`${value}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    timeZone: resolveDataTimezone(timeZone)
-  }).format(parsed);
 }
 
 function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | null {

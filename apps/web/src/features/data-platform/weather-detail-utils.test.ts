@@ -12,12 +12,12 @@ import {
   forecastWindow,
   formatCompactTime,
   formatDegree,
-  formatHistoryDate,
   formatNumber,
   formatTimeZoneName,
   latestPoint,
   metricValue,
 } from "./weather-detail-utils";
+import { formatHistoryDate } from "./workspace-datetime";
 
 describe("conditionForPoint", () => {
   const tKey = (key: string) => key;

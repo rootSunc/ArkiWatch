@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { formatCompactDateTime, formatHistoryDate } from "./workspace-datetime";
 import { useEffect, useMemo, useState } from "react";
 
 import { parseValidDate } from "@/features/shared/format";
@@ -89,33 +90,6 @@ function formatNumber(value: number | null | undefined, maximumFractionDigits = 
 function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
   const formatted = formatNumber(value);
   return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
-}
-
-function formatCompactTime(
-  value: string | null | undefined,
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (!value) {
-    return tKey("roadRail.notObserved");
-  }
-
-  const parsedDate = parseValidDate(value);
-  if (!parsedDate) {
-    return tKey("roadRail.notObserved");
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsedDate)
-    .toUpperCase();
 }
 
 function formatClockTime(
@@ -419,7 +393,7 @@ function nextActiveEndLabel(
     (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
   )[0];
 
-  return `${tKey("roadRail.until")} ${formatCompactTime(nextEndingIncident.ends_at, language, tKey, timeZone)}`;
+  return `${tKey("roadRail.until")} ${formatCompactDateTime(nextEndingIncident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`;
 }
 
 function roadRailRiskState(
@@ -707,23 +681,6 @@ function renderCorridor(
   );
 }
 
-function formatHistoryDate(
-  value: string,
-  language: LanguageMode = "en",
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  const parsed = new Date(`${value}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    timeZone: resolveDataTimezone(timeZone)
-  }).format(parsed);
-}
-
 function roadRailHistoryPoints(
   history: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[],
   tKey: (key: string) => string,
@@ -772,7 +729,7 @@ function RoadRailIncidentStatusBadge({
           ? tKey(historical ? "roadRail.activeAtSnapshot" : "roadRail.activeNow")
           : state === "ended"
             ? tKey(historical ? "roadRail.endedAtSnapshot" : "roadRail.ended")
-            : formatCompactTime(incident.starts_at, language, tKey, timeZone)}
+            : formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)}
       </span>
     </span>
   );
@@ -815,10 +772,10 @@ function RoadRailIncidentLiveLayer({
           </strong>
           <span>
             {state === "active"
-              ? `${tKey("roadRail.until")} ${formatCompactTime(incident.ends_at, language, tKey, timeZone)}`
+              ? `${tKey("roadRail.until")} ${formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`
               : state === "ended"
-                ? `${tKey("roadRail.endedAt")} ${formatCompactTime(incident.ends_at, language, tKey, timeZone)}`
-                : `${tKey("roadRail.starts")} ${formatCompactTime(incident.starts_at, language, tKey, timeZone)}`}
+                ? `${tKey("roadRail.endedAt")} ${formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`
+                : `${tKey("roadRail.starts")} ${formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)}`}
           </span>
         </div>
       </div>
@@ -828,7 +785,7 @@ function RoadRailIncidentLiveLayer({
       <dl className="road-rail-incident-live-facts">
         <div>
           <dt>{tKey("roadRail.window")}</dt>
-          <dd>{formatCompactTime(incident.starts_at, language, tKey, timeZone)} - {formatCompactTime(incident.ends_at, language, tKey, timeZone)}</dd>
+          <dd>{formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)} - {formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}</dd>
         </div>
         <div>
           <dt>{tKey("roadRail.location")}</dt>

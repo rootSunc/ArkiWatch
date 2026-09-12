@@ -1,4 +1,5 @@
 import { parseValidDate } from "@/features/shared/format";
+import { formatHistoryDate } from "./workspace-datetime";
 
 import { translateEnumLabel, translateMetricLabel, type LanguageMode } from "./i18n";
 import {
@@ -82,33 +83,6 @@ export function resolveMetricLabel(
   }
 
   return metric ? translateMetricLabel(language, metric) : tKey("energy.metricUnavailable");
-}
-
-export function formatCompactTime(
-  value: string | null | undefined,
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (!value) {
-    return tKey("energy.notScheduled");
-  }
-
-  const parsedDate = parseValidDate(value);
-  if (!parsedDate) {
-    return tKey("energy.notScheduled");
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsedDate)
-    .toUpperCase();
 }
 
 export function toneFromStatus(status: string): EnergyTone {
@@ -451,23 +425,6 @@ export function isWindowPoint(point: EnergyPoint, startsAt: string | null | unde
 export function isNoActiveWindowLabel(value: string): boolean {
   const normalizedValue = value.trim().toLowerCase();
   return normalizedValue.startsWith("no active") || normalizedValue.includes("not available yet");
-}
-
-export function formatHistoryDate(
-  value: string,
-  language: LanguageMode = "en",
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  const parsed = new Date(`${value}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: language === "zh" ? "numeric" : "2-digit",
-    month: "short",
-    timeZone: resolveDataTimezone(timeZone)
-  }).format(parsed);
 }
 
 function averagePointValue(points: EnergyPoint[]): number | null {
