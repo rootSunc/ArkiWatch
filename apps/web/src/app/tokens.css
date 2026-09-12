@@ -1,0 +1,370 @@
+/**
+ * Design tokens.
+ *
+ * This is the only place a token is given a value, and it is the first
+ * stylesheet the app loads. Everything downstream reads `var(--token)` and
+ * never redefines one, so the value here is the value that renders.
+ *
+ * `:root` holds what does not change with appearance — the spacing scale,
+ * radii, motion. The themed blocks hold everything that does. The document
+ * always carries a `data-theme` attribute (the server renders one and the boot
+ * script only swaps it), so a themed block always applies.
+ */
+
+/* Theme-independent primitives. */
+:root {
+  color-scheme: dark;
+
+  /* Layout and spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --ui-content-max: 1280px;
+  --ui-sidebar-width: 240px;
+
+  /* Radii */
+  --refresh-radius-md: var(--r-card);
+  --refresh-radius-sm: var(--r-card);
+  --ui-radius-lg: 18px;
+  --ui-radius-md: 14px;
+  --ui-radius-sm: 10px;
+  --ui-radius-xs: 6px;
+  --ui-refresh-radius: var(--r-card);
+  --ui-refresh-radius-lg: var(--r-frame);
+  --ui-refresh-radius-md: var(--r-card);
+  --ui-refresh-radius-sm: var(--r-card);
+
+  /* Motion */
+  --dur: 200ms;
+  --dur-fast: 120ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Typography */
+  --font-inter: var(--font-ui);
+  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: var(--font-geist, "Geist"), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui-cjk: var(--font-geist, "Geist"), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Colour */
+  --r-card: 12px;
+  --r-chip: 999px;
+  --r-control: 9px;
+  --r-filter: 9px;
+  --r-frame: 16px;
+  --r-panel: 12px;
+  --refresh-shadow: none;
+  --refresh-today: var(--amber);
+  --secondary-fixed: var(--ink-soft);
+  --ui-refresh-shadow: none;
+}
+
+/* Light appearance. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Layout and spacing */
+  --ui-content-max: 1180px;
+  --ui-sidebar-width: 252px;
+
+  /* Radii */
+  --refresh-radius-md: var(--r-card);
+  --refresh-radius-sm: var(--r-card);
+  --ui-radius-lg: var(--r-frame);
+  --ui-radius-md: var(--r-card);
+  --ui-radius-sm: var(--r-card);
+  --ui-radius-xs: var(--r-filter);
+  --ui-refresh-radius: var(--r-card);
+  --ui-refresh-radius-lg: var(--r-frame);
+  --ui-refresh-radius-md: var(--r-card);
+  --ui-refresh-radius-sm: var(--r-card);
+
+  /* Typography */
+  --font-inter: var(--font-ui);
+  --font-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: var(--font-geist, "Geist"), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui-cjk: var(--font-geist, "Geist"), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Elevation */
+  --shadow: none;
+
+  /* Colour */
+  --amber: #76520b;
+  --amber-line: #f0dcc4;
+  --amber-soft: #fdf6e9;
+  --amber-tint: #fdfaf3;
+  --assistant-panel-shadow: -32px 0 64px rgba(23, 36, 43, 0.1);
+  --assistant-scrim: rgba(23, 36, 43, 0.14);
+  --background: var(--canvas);
+  --blue: #006b78;
+  --blue-fill: #c0dde0;
+  --blue-soft: #cbe5e7;
+  --body: #50656d;
+  --btn-fill: #143039;
+  --btn-fill-hover: #0b222a;
+  --btn-label: #ffffff;
+  --canvas: #f7f9fa;
+  --card-bg: var(--canvas);
+  --card-border: var(--line);
+  --card-lift-shadow: 0 16px 30px rgba(31, 72, 82, 0.09);
+  --chart-axis-color: var(--muted);
+  --chart-grid-border: var(--line-soft);
+  --detail-panel-bg: var(--canvas);
+  --detail-panel-border: var(--line);
+  --detail-panel-border-medium: var(--line);
+  --detail-panel-border-soft: var(--line-soft);
+  --detail-panel-border-strong: var(--line-strong);
+  --detail-panel-border-stronger: var(--line-strong);
+  --divider-fill: #aab9c0;
+  --elevated-shadow: none;
+  --error: var(--red);
+  --error-container: var(--amber-line);
+  --focus-ring: color-mix(in srgb, var(--blue) 30%, transparent);
+  --green: #08756b;
+  --icon-idle: #52666d;
+  --ink: #13252c;
+  --ink-hover: #0a171c;
+  --ink-soft: #31474f;
+  --line: #ccd8dc;
+  --line-soft: #dce5e8;
+  --line-softest: #e7edef;
+  --line-strong: #aebfc5;
+  --minimal-accent: var(--blue);
+  --minimal-accent-soft: var(--nav-active);
+  --minimal-canvas: var(--surface-soft);
+  --minimal-ink: var(--ink);
+  --minimal-line: var(--line);
+  --minimal-muted: var(--muted);
+  --minimal-shadow: none;
+  --minimal-surface: var(--canvas);
+  --muted: #5c7077;
+  --muted-2: #52666d;
+  --muted-3: #586972;
+  --nav-active: #e2ecef;
+  --nav-hover: #e8eff1;
+  --on-background: var(--ink);
+  --on-error-container: var(--red);
+  --on-primary: #ffffff;
+  --on-primary-container: var(--blue);
+  --on-secondary-container: var(--ink-soft);
+  --on-surface: var(--ink);
+  --on-surface-variant: var(--muted);
+  --on-tertiary-container: var(--btn-label);
+  --outline: var(--muted-2);
+  --outline-variant: var(--line);
+  --primary: var(--blue);
+  --primary-container: var(--blue-soft);
+  --primary-fixed: var(--blue);
+  --primary-fixed-dim: var(--blue);
+  --quiet-value: #63757f;
+  --r-card: 12px;
+  --r-chip: 999px;
+  --r-control: 9px;
+  --r-filter: 9px;
+  --r-frame: 16px;
+  --r-panel: 12px;
+  --red: #a5352c;
+  --refresh-canvas: var(--canvas);
+  --refresh-ink: var(--ink);
+  --refresh-line: var(--line);
+  --refresh-muted: var(--muted);
+  --refresh-shadow: none;
+  --refresh-surface: var(--canvas);
+  --refresh-surface-soft: var(--surface-soft);
+  --refresh-today: var(--amber);
+  --row-hover: #eff4f5;
+  --score-ring-center: var(--canvas);
+  --score-track: var(--line-soft);
+  --secondary-container: var(--nav-active);
+  --secondary-fixed: var(--ink-soft);
+  --selection: #bee1e4;
+  --separator-border: var(--line);
+  --sidenav-edge: #d6e0e3;
+  --sidenav-ground: #eef3f4;
+  --sidenav-row-active: #ffffff;
+  --sidenav-row-active-edge: #d4e0e3;
+  --sidenav-row-hover: rgba(255, 255, 255, 0.7);
+  --status-bad-bg: color-mix(in srgb, var(--red) 9%, transparent);
+  --status-good-bg: color-mix(in srgb, var(--green) 9%, transparent);
+  --status-neutral-bg: var(--line-soft);
+  --status-warn-bg: var(--amber-soft);
+  --success: var(--green);
+  --success-glow: color-mix(in srgb, var(--green) 24%, transparent);
+  --surface: var(--canvas);
+  --surface-bright: var(--canvas);
+  --surface-container: var(--line-soft);
+  --surface-container-high: var(--nav-active);
+  --surface-container-highest: var(--line-strong);
+  --surface-container-low: var(--surface-soft);
+  --surface-container-lowest: var(--canvas);
+  --surface-dim: var(--surface-soft);
+  --surface-soft: #edf2f4;
+  --surface-variant: var(--line-soft);
+  --tertiary: var(--amber);
+  --tertiary-container: var(--amber);
+  --topbar-scrim: rgba(247, 249, 250, 0.86);
+  --ui-border-strong: var(--line);
+  --ui-border-subtle: var(--line-soft);
+  --ui-mode-accent: var(--blue);
+  --ui-mode-accent-border: color-mix(in srgb, var(--blue) 25%, var(--line));
+  --ui-mode-accent-soft: var(--nav-active);
+  --ui-muted-surface: var(--surface-soft);
+  --ui-refresh-blue: var(--blue);
+  --ui-refresh-blue-soft: var(--blue-soft);
+  --ui-refresh-canvas: var(--canvas);
+  --ui-refresh-ink: var(--ink);
+  --ui-refresh-line: var(--line);
+  --ui-refresh-muted: var(--muted);
+  --ui-refresh-shadow: none;
+  --ui-refresh-surface: var(--canvas);
+  --ui-refresh-surface-soft: var(--surface-soft);
+  --ui-refresh-today: var(--amber);
+  --ui-refresh-today-soft: var(--amber-soft);
+  --weather-bg: var(--surface-soft);
+  --workspace-shadow: 0 18px 50px rgba(28, 63, 73, 0.08);
+}
+
+/* Dark appearance. */
+:root[data-theme="dark"] {
+  /* Elevation */
+  --shadow: none;
+
+  /* Colour */
+  --amber: #efc26d;
+  --amber-line: #5c4626;
+  --amber-soft: #3b2d1d;
+  --amber-tint: #2c2418;
+  --assistant-panel-shadow: -32px 0 64px rgba(0, 0, 0, 0.34);
+  --assistant-scrim: rgba(9, 14, 17, 0.42);
+  --background: var(--canvas);
+  --blue: #72d1d8;
+  --blue-fill: #28575d;
+  --blue-soft: #21484d;
+  --body: #b5c7cb;
+  --btn-fill: #8bdbe0;
+  --btn-fill-hover: #a9e6e9;
+  --btn-label: #0b1b20;
+  --canvas: #10191d;
+  --card-bg: var(--canvas);
+  --card-border: var(--line);
+  --card-lift-shadow: 0 18px 34px rgba(0, 0, 0, 0.2);
+  --chart-axis-color: var(--muted);
+  --chart-grid-border: var(--line-soft);
+  --detail-panel-bg: var(--canvas);
+  --detail-panel-border: var(--line);
+  --detail-panel-border-medium: var(--line);
+  --detail-panel-border-soft: var(--line-soft);
+  --detail-panel-border-strong: var(--line-strong);
+  --detail-panel-border-stronger: var(--line-strong);
+  --divider-fill: #647984;
+  --elevated-shadow: none;
+  --error: var(--red);
+  --error-container: var(--amber-line);
+  --focus-ring: color-mix(in srgb, var(--blue) 34%, transparent);
+  --green: #66d9c8;
+  --icon-idle: #9aafb4;
+  --ink: #edf5f6;
+  --ink-hover: #ffffff;
+  --ink-soft: #d0dee1;
+  --line: #354b52;
+  --line-soft: #283b41;
+  --line-softest: #213238;
+  --line-strong: #4b6269;
+  --minimal-accent: var(--blue);
+  --minimal-accent-soft: var(--nav-active);
+  --minimal-canvas: var(--surface-soft);
+  --minimal-ink: var(--ink);
+  --minimal-line: var(--line);
+  --minimal-muted: var(--muted);
+  --minimal-shadow: none;
+  --minimal-surface: var(--canvas);
+  --muted: #a5b8bc;
+  --muted-2: #95a9ae;
+  --muted-3: #aab9c1;
+  --nav-active: #20343a;
+  --nav-hover: #1b2c31;
+  --on-background: var(--ink);
+  --on-error-container: var(--red);
+  --on-primary: var(--btn-label);
+  --on-primary-container: var(--ink);
+  --on-secondary-container: var(--ink-soft);
+  --on-surface: var(--ink);
+  --on-surface-variant: var(--muted);
+  --on-tertiary-container: var(--btn-label);
+  --outline: var(--muted-2);
+  --outline-variant: var(--line);
+  --primary: var(--blue);
+  --primary-container: var(--blue-soft);
+  --primary-fixed: var(--blue);
+  --primary-fixed-dim: var(--blue);
+  --quiet-value: #a0b1ba;
+  --red: #ffaaa2;
+  --refresh-canvas: var(--canvas);
+  --refresh-ink: var(--ink);
+  --refresh-line: var(--line);
+  --refresh-muted: var(--muted);
+  --refresh-surface: var(--canvas);
+  --refresh-surface-soft: var(--surface-soft);
+  --row-hover: #19292e;
+  --score-ring-center: var(--canvas);
+  --score-track: var(--line-soft);
+  --secondary-container: var(--nav-active);
+  --selection: #275158;
+  --separator-border: var(--line);
+  --sidenav-edge: #22343a;
+  --sidenav-ground: #0b1418;
+  --sidenav-row-active: #18282d;
+  --sidenav-row-active-edge: #2d444b;
+  --sidenav-row-hover: #15252a;
+  --status-bad-bg: color-mix(in srgb, var(--red) 16%, transparent);
+  --status-good-bg: color-mix(in srgb, var(--green) 14%, transparent);
+  --status-neutral-bg: var(--line-soft);
+  --status-warn-bg: var(--amber-soft);
+  --success: var(--green);
+  --success-glow: color-mix(in srgb, var(--green) 24%, transparent);
+  --surface: var(--canvas);
+  --surface-bright: var(--canvas);
+  --surface-container: var(--line-soft);
+  --surface-container-high: var(--nav-active);
+  --surface-container-highest: var(--line-strong);
+  --surface-container-low: var(--surface-soft);
+  --surface-container-lowest: var(--canvas);
+  --surface-dim: var(--surface-soft);
+  --surface-soft: #18252a;
+  --surface-variant: var(--line-soft);
+  --tertiary: var(--amber);
+  --tertiary-container: var(--amber);
+  --topbar-scrim: rgba(16, 25, 29, 0.88);
+  --ui-border-strong: var(--line);
+  --ui-border-subtle: var(--line-soft);
+  --ui-mode-accent: var(--blue);
+  --ui-mode-accent-border: color-mix(in srgb, var(--blue) 25%, var(--line));
+  --ui-mode-accent-soft: var(--nav-active);
+  --ui-muted-surface: var(--surface-soft);
+  --ui-refresh-blue: var(--blue);
+  --ui-refresh-blue-soft: var(--blue-soft);
+  --ui-refresh-canvas: var(--canvas);
+  --ui-refresh-ink: var(--ink);
+  --ui-refresh-line: var(--line);
+  --ui-refresh-muted: var(--muted);
+  --ui-refresh-surface: var(--canvas);
+  --ui-refresh-surface-soft: var(--surface-soft);
+  --ui-refresh-today: var(--amber);
+  --ui-refresh-today-soft: var(--amber-soft);
+  --weather-bg: var(--surface-soft);
+  --workspace-shadow: 0 22px 56px rgba(0, 0, 0, 0.22);
+}
+
+/* Chinese needs its own face for CJK coverage. */
+:root[data-language="zh"] {
+  --font-ui: var(--font-ui-cjk);
+}
+

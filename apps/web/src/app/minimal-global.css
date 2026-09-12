@@ -1,11 +1,7 @@
 /*
- * Baseline for the routes that live outside the data-platform shell
- * (/about, /settings, /login). The design token layer only ships with the
- * dashboard bundle, so pull it in here too — this file is imported globally
- * from app/layout.tsx.
+ * Baseline for the routes outside the data-platform shell: /about, /login,
+ * /privacy, /settings and the 404 page.
  */
-@import "../features/data-platform/styles/tokens.css";
-
 /* --- Admin sign in (README §15) --- */
 .login-shell {
   display: grid;

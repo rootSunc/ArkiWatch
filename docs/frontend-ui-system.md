@@ -51,14 +51,31 @@ The current implementation follows a deliberately small visual grammar:
   in the observatory header. Cross-signal history is collapsed by default so
   the latest evidence remains the first read.
 - The shell uses a white/neutral surface, 16px content cards, 10–12px controls,
-  and one-pixel borders instead of gradients or heavy shadows. The final
-  cascade lives in `apps/web/src/features/data-platform/styles/design-refresh.css`
-  so domain workspaces can evolve without duplicating the product rhythm.
+  and one-pixel borders instead of gradients or heavy shadows. Most of that
+  cascade lives in `styles/design-refresh.css`, with `styles/text-layout.css`
+  and `styles/taste-pass.css` layered after it; those two are being folded back
+  into the files they override.
 - Detail workspaces share `WorkspaceEvidenceHeader` and `WorkspaceEmptyState`.
   The header keeps the status, source, and scoped timestamp together; the
   empty state explains missing data without implying that a source is healthy.
   Shared primitives live in `apps/web/src/features/data-platform/workspace-ui.tsx`
-  and their visual tokens live in `styles/tokens.css`.
+  and their visual tokens live in `app/tokens.css`.
+
+### Verifying a stylesheet change
+
+Moving a rule between files changes the cascade, and the cascade here is load
+order. `apps/web/e2e/tools/` records the computed styling of every element on
+every route, in both themes, at two viewports:
+
+```bash
+node e2e/tools/style-snapshot.mjs before.json   # against a running build
+# …make the change, rebuild, restart…
+node e2e/tools/style-snapshot.mjs after.json
+node e2e/tools/style-diff.mjs before.json after.json
+```
+
+A pure reorganisation must diff to zero. Anything else is a rendering change
+you did not intend.
 
 The spacing scale is based on 4px units (`4, 8, 12, 16, 24, 32`). Content is
 limited to a readable 1280px frame. Interactive controls use a minimum 36px

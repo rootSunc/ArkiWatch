@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 
 import { appEnv } from "@/lib/env";
 
+import "./tokens.css";
 import "./globals.css";
 import "./material-symbols.css";
 import "./minimal-global.css";

@@ -1,25 +1,3 @@
-/*
- * ArkiWatch UI system
- *
- * The data workspaces have many domain-specific styles. This layer owns the
- * shared product rhythm: the two workspaces, the shell, and the information
- * hierarchy that should remain stable as new data sources are added.
- */
-:root {
-  --ui-content-max: 1280px;
-  --ui-sidebar-width: 240px;
-  --ui-radius-xs: 6px;
-  --ui-radius-sm: 10px;
-  --ui-radius-md: 14px;
-  --ui-radius-lg: 18px;
-  --ui-border-subtle: color-mix(in srgb, var(--on-surface) 11%, transparent);
-  --ui-border-strong: color-mix(in srgb, var(--on-surface) 19%, transparent);
-  --ui-muted-surface: color-mix(in srgb, var(--surface-container) 72%, transparent);
-  --ui-mode-accent: var(--primary);
-  --ui-mode-accent-soft: color-mix(in srgb, var(--ui-mode-accent) 11%, var(--surface-container-lowest));
-  --ui-mode-accent-border: color-mix(in srgb, var(--ui-mode-accent) 28%, transparent);
-}
-
 .dashboard-shell {
   background: var(--background);
 }
