@@ -18,13 +18,8 @@ import { appEnv } from "@/lib/env";
 import "./data-platform.css";
 
 import {
-  cityLabel,
   normalizeCityValue,
 } from "./city-scope";
-import {
-  HistoricalWarningBanner,
-  RefreshErrorBanner,
-} from "./data-platform-shell";
 import type { NavItem, WorkspaceMode } from "./data-platform-shell";
 import {
   DataPlatformSideNav,
@@ -88,6 +83,11 @@ import { RecentEventsPanel } from "./recent-events-panel";
 import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
 import { platformErrorMessage } from "./platform-error";
+import {
+  PlatformDataWarning,
+  PlatformUnavailable,
+  ShellNotices,
+} from "./shell-notices";
 import { buildSignalView } from "./signal-view";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
@@ -804,64 +804,20 @@ export function DataPlatformHome({
                 : "dashboard-content"
             }
           >
-            {isHistorical && historicalDate ? (
-              <HistoricalWarningBanner
-                date={historicalDate}
-                language={languageMode}
-                onReturnToLive={() => selectDate(null)}
-                timeScope={activeTimeScope}
-              />
-            ) : null}
-            {appEnv.demoMode && !isDetailPage ? (
-              <div className="demo-mode-banner" role="status">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  database
-                </span>
-                <span className="demo-mode-banner-copy">
-                  <span>
-                    {tKey(demoCitySupported ? "shell.demoModeNotice" : "shell.demoModeCityLimited").replace(
-                      "{city}",
-                      cityLabel(selectedCity),
-                    )}
-                  </span>
-                  {demoSnapshotCheckedAt ? (
-                    <time>
-                      {tKey("shell.demoSnapshotCheckedAt").replace(
-                        "{checkedAt}",
-                        demoSnapshotCheckedAt,
-                      )}
-                    </time>
-                  ) : null}
-                </span>
-                <a className="demo-mode-banner-link" href="/about">
-                  {tKey("shell.aboutArkiWatch")}
-                  <span aria-hidden="true"> →</span>
-                </a>
-              </div>
-            ) : null}
-            {isScopePending ? (
-              <div className="scope-pending-banner" role="status" aria-live="polite">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  sync
-                </span>
-                <span className="scope-pending-banner-copy">
-                  <strong>{tKey("shell.scopeUpdating")}</strong>
-                  <span>
-                    {tKey("shell.scopeUpdatingDetail").replace(
-                      "{scope}",
-                      cityLabel(selectedCity),
-                    )}
-                  </span>
-                </span>
-              </div>
-            ) : null}
-            {refreshError ? (
-              <RefreshErrorBanner
-                error={refreshError}
-                language={languageMode}
-                onDismiss={() => refreshMutation.reset()}
-              />
-            ) : null}
+            <ShellNotices
+              historicalDate={isHistorical ? historicalDate : null}
+              timeScope={activeTimeScope}
+              onReturnToLive={() => selectDate(null)}
+              isDemo={appEnv.demoMode}
+              isDetailPage={isDetailPage}
+              demoCitySupported={demoCitySupported}
+              demoSnapshotCheckedAt={demoSnapshotCheckedAt}
+              selectedCity={selectedCity}
+              isScopePending={isScopePending}
+              refreshError={refreshError}
+              onDismissRefreshError={() => refreshMutation.reset()}
+            />
+
             <div
               aria-busy={isScopePending}
               className={`dashboard-scope-content${
@@ -870,30 +826,12 @@ export function DataPlatformHome({
               ref={scopeContentRef}
             >
             {showInlineDataError ? (
-              <div className="platform-inline-warning" role="alert">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  warning
-                </span>
-                <span className="platform-inline-warning-copy">
-                  <strong>
-                    {visibleOverview
-                      ? tKey("shell.partialDataWarning")
-                      : tKey("shell.dataUnavailableWarning")}
-                  </strong>
-                  <span>{localizedPlatformError}</span>
-                </span>
-                <button
-                  className="platform-inline-warning-action"
-                  disabled={isLoadingView}
-                  onClick={retryPlatformData}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" aria-hidden="true">
-                    refresh
-                  </span>
-                  {isLoadingView ? tKey("shell.retrying") : tKey("shell.retryData")}
-                </button>
-              </div>
+              <PlatformDataWarning
+                hasPartialData={Boolean(visibleOverview)}
+                message={localizedPlatformError}
+                isRetrying={isLoadingView}
+                onRetry={retryPlatformData}
+              />
             ) : null}
             {!showsWorkspaceTopbar ? (
               <DataPlatformDesktopHeader
@@ -1011,33 +949,13 @@ export function DataPlatformHome({
                 />
               )
             ) : (
-              <section
-                className="platform-error"
-                aria-label={tKey("shell.platformUnavailable")}
-              >
-                <span>{tKey("shell.platformUnavailable")}</span>
-                <h1>{tKey("shell.dataPlatformCouldNotLoad")}</h1>
-                <p>{localizedPlatformError}</p>
-                <div className="platform-error-actions">
-                  <button
-                    className="platform-error-retry"
-                    disabled={isLoadingView}
-                    onClick={retryPlatformData}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined" aria-hidden="true">
-                      refresh
-                    </span>
-                    {isLoadingView ? tKey("shell.retrying") : tKey("shell.retryData")}
-                  </button>
-                </div>
-                <small>
-                  {tKey("shell.apiEndpoint")}: {apiBaseUrl}
-                  {defaultUserId || resolvedUserId
-                    ? ` · ${tKey("shell.userContext")}: ${defaultUserId ?? resolvedUserId}`
-                    : ""}
-                </small>
-              </section>
+              <PlatformUnavailable
+                message={localizedPlatformError}
+                isRetrying={isLoadingView}
+                onRetry={retryPlatformData}
+                apiBaseUrl={apiBaseUrl}
+                userId={defaultUserId ?? resolvedUserId ?? null}
+              />
             )}
             </div>
           </main>
