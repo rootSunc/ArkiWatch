@@ -588,7 +588,7 @@
 .language-option-active:hover,
 .language-option-active:focus-visible {
   background: var(--ink);
-  color: #ffffff;
+  color: var(--btn-label);
 }
 
 :root[data-theme="dark"] .language-option-active {
@@ -624,7 +624,7 @@
 
 .notification-badge {
   background: var(--red);
-  color: #ffffff;
+  color: var(--btn-label);
   font-family: var(--font-mono);
   font-size: 9.5px;
   min-width: 16px;
@@ -639,7 +639,7 @@
 .notification-button-warn .notification-badge,
 .notification-button-bad .notification-badge {
   background: var(--red);
-  color: #ffffff;
+  color: var(--btn-label);
 }
 
 /* Top-bar Assistant button — ink fill + mascot mark */
@@ -3715,7 +3715,7 @@
 .road-rail-filter-chip-active {
   background: var(--ink);
   border-color: var(--ink);
-  color: #ffffff;
+  color: var(--btn-label);
 }
 
 .transit-network-bar,
@@ -4018,7 +4018,7 @@
 .linked-events-time-filter-active {
   background: var(--ink);
   border-color: var(--ink);
-  color: #ffffff;
+  color: var(--btn-label);
 }
 
 .linked-events-category-grid {
@@ -4863,7 +4863,7 @@
 .linked-events-filter-chip-active {
   background: var(--ink);
   border-color: var(--ink);
-  color: #ffffff;
+  color: var(--btn-label);
 }
 
 .linked-events-filter strong {
