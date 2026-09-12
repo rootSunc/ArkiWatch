@@ -46,7 +46,6 @@ import { usePersonalDashboard } from "./hooks/use-personal-dashboard";
 import { PlatformSkeleton } from "./platform-skeleton";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
-  CROSS_TIMELINE_LIMIT,
   EVENT_QUERY_KEY,
   FALLBACK_NAV_KEY,
   NAV_QUERY_KEY,
@@ -59,11 +58,11 @@ import {
 import { useEventAnchorScroll } from "./hooks/use-event-anchor-scroll";
 import { useScopeRouting } from "./hooks/use-scope-routing";
 import { useShellFocus } from "./hooks/use-shell-focus";
+import { useTodayBrief } from "./hooks/use-today-brief";
 import { useVisibleOverview } from "./hooks/use-visible-overview";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
 import type { PlatformCategory, PlatformEvent } from "./types";
 import {
-  curatedRecentEvents,
   eventNavigationId,
   eventTarget,
 } from "./recent-events";
@@ -72,7 +71,6 @@ import {
   resolveScenarioTarget,
   resolveSummaryTileTarget,
 } from "./scenario-navigation";
-import { buildCrossDomainTimeline } from "./cross-domain-timeline";
 import { TodayOverview } from "./today/today-overview";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import {
@@ -84,18 +82,14 @@ import {
   dashboardShellClassName,
   dashboardSideNavClassName,
 } from "./data-platform-layout";
-import { buildSignalSystemTiles } from "./signals-console";
 import { DataPlatformOverview } from "./data-platform-overview";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { RecentEventsPanel } from "./recent-events-panel";
 import { DEMO_CITY } from "./demo/demo-data";
 import { SourceHealthStrip } from "./source-health-strip";
-import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
 import { buildSignalView } from "./signal-view";
-import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
-import { buildUserSummaryTiles } from "./user-summary-stats";
 import {
   ENERGY_TAB_QUERY_KEY,
   MOBILITY_TAB_QUERY_KEY,
@@ -485,74 +479,35 @@ export function DataPlatformHome({
     selectedNavKey === FALLBACK_NAV_KEY || selectedNavKey === TODAY_NAV_KEY
       ? null
       : categoryByKey(displayCategories, selectedNavKey);
-  const userSummaryTiles = useMemo(
-    () =>
-      buildUserSummaryTiles(
-        {
-          weather,
-          airQuality,
-          transit,
-          roadRail,
-          householdEnergy,
-          systemEnergy: energy,
-        },
-        languageMode,
-      ),
-    [airQuality, energy, householdEnergy, languageMode, roadRail, transit, weather],
-  );
-  const crossDomainTimeline = useMemo(
-    () =>
-      buildCrossDomainTimeline(
-        curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
-          city: selectedCity,
-          referenceAt: eventReferenceAt,
-        }),
-        publicDashboard,
-        CROSS_TIMELINE_LIMIT,
-        eventReferenceAt,
-      ),
-    [eventReferenceAt, publicDashboard, recentEventCandidates, selectedCity],
-  );
   const demoSnapshotCheckedAt = publicDashboard?.checked_at
     ? formatTimestamp(publicDashboard.checked_at, "dateTime", languageMode, platformTimezone)
     : null;
-  const todayEvaluationTime = todayBriefEvaluationTime(appEnv.demoMode, eventReferenceAt);
-  const todayBrief = useMemo(
-    () =>
-      buildTodayBrief({
-        publicDashboard,
-        overviewCoverageArea: visibleOverview?.coverage_area,
-        isHistorical,
-        summaryTiles: userSummaryTiles,
-        timelineItems: crossDomainTimeline,
-        language: languageMode,
-        now: todayEvaluationTime,
-      }),
-    [
-      crossDomainTimeline,
-      isHistorical,
-      languageMode,
-      publicDashboard,
-      todayEvaluationTime,
-      userSummaryTiles,
-      visibleOverview,
-    ],
-  );
-  const todaySourceIssueCount = useMemo(
-    () => sourceIssueCountForScope(visibleOverview?.sources ?? [], isHistorical),
-    [isHistorical, visibleOverview],
-  );
-  const signalSystemTiles = useMemo(
-    () =>
-      buildSignalSystemTiles({
-        overview: visibleOverview,
-        categories: displayCategories,
-        sources,
-        recentEvents,
-        language: languageMode,
-      }),
-    [displayCategories, languageMode, recentEvents, sources, visibleOverview],
-  );
+
+  const {
+    evaluationTime: todayEvaluationTime,
+    todayBrief,
+    todaySourceIssueCount,
+    signalSystemTiles,
+  } = useTodayBrief({
+    publicDashboard,
+    visibleOverview,
+    displayCategories,
+    sources,
+    recentEvents,
+    recentEventCandidates,
+    weather,
+    airQuality,
+    transit,
+    roadRail,
+    householdEnergy,
+    systemEnergy: energy,
+    language: languageMode,
+    selectedCity,
+    eventReferenceAt,
+    isHistorical,
+    isDemo: appEnv.demoMode,
+  });
+
   const {
     primaryVisibleCategories,
     catalogVisibleCategories,
