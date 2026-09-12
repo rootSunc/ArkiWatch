@@ -307,6 +307,24 @@ export function preferredLanguageMode(): LanguageMode {
   return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
 }
 
+/**
+ * The language this document was rendered in, as the server decided it.
+ *
+ * The client must not re-derive the language from scratch and overwrite what
+ * the server already localized — the document, its metadata and its copy would
+ * disagree. The stored preference still wins, since that is the choice the
+ * visitor made most recently.
+ */
+export function resolveClientLanguage(): LanguageMode {
+  const stored = storedLanguageMode();
+  if (stored) {
+    return stored;
+  }
+
+  const rendered = typeof document === "undefined" ? null : document.documentElement.dataset.language;
+  return isLanguageMode(rendered ?? null) ? (rendered as LanguageMode) : preferredLanguageMode();
+}
+
 export function storedLanguageMode(): LanguageMode | null {
   if (typeof window === "undefined") {
     return null;

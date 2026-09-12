@@ -11,9 +11,8 @@ import {
 } from "../data-platform-shell";
 import {
   applyLanguageMode,
-  preferredLanguageMode,
+  resolveClientLanguage,
   saveLanguageMode,
-  storedLanguageMode,
   useIsomorphicLayoutEffect,
   type LanguageMode,
 } from "../i18n";
@@ -35,7 +34,7 @@ export function useClientPreferences() {
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    const nextLanguageMode = storedLanguageMode() ?? preferredLanguageMode();
+    const nextLanguageMode = resolveClientLanguage();
     setLanguageMode(nextLanguageMode);
     applyLanguageMode(nextLanguageMode);
   }, []);

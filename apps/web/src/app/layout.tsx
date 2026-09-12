@@ -88,12 +88,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   document.documentElement.className = theme;
                   document.documentElement.setAttribute('data-theme', theme);
 
+                  // The server already localized this document from the
+                  // language cookie. Only a stored preference may override it;
+                  // the browser's own language is the last resort, for a first
+                  // visit that carries neither.
                   var storedLanguage = localStorage.getItem('arkiwatch-language');
+                  var renderedLanguage = document.documentElement.getAttribute('data-language');
                   var browserLanguage = (navigator.language || '').toLowerCase();
-                  var language = storedLanguage === 'zh' ||
-                    (storedLanguage !== 'en' && browserLanguage.indexOf('zh') === 0)
-                    ? 'zh'
-                    : 'en';
+                  var language = storedLanguage === 'zh' || storedLanguage === 'en'
+                    ? storedLanguage
+                    : (renderedLanguage === 'zh' || renderedLanguage === 'en'
+                      ? renderedLanguage
+                      : (browserLanguage.indexOf('zh') === 0 ? 'zh' : 'en'));
                   document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en';
                   document.documentElement.setAttribute('data-language', language);
                   // Seeds the cookie for a visitor who predates it, so the next

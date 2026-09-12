@@ -301,6 +301,33 @@ test.describe("deterministic demo", () => {
     ).toBeVisible();
   });
 
+  test("keeps filled-control labels readable in the dark theme", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "desktop-only contrast audit");
+
+    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "dark"));
+    await page.reload({ waitUntil: "networkidle" });
+
+    // The badge paints on --red, which is a light pink in the dark theme. A
+    // label hard-coded to white here renders at about 1.8:1.
+    const contrast = await page.locator(".notification-badge").first().evaluate((element) => {
+      const channel = (value: number) => {
+        const scaled = value / 255;
+        return scaled <= 0.03928 ? scaled / 12.92 : ((scaled + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = (colour: string) => {
+        const [r, g, b] = colour.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+      };
+      const style = getComputedStyle(element);
+      const foreground = luminance(style.color);
+      const background = luminance(style.backgroundColor);
+      const [high, low] = foreground > background ? [foreground, background] : [background, foreground];
+      return (high + 0.05) / (low + 0.05);
+    });
+
+    expect(contrast).toBeGreaterThanOrEqual(4.5);
+  });
+
   test("switches the desktop theme through the visible control", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only theme control audit");
 
@@ -2590,12 +2617,29 @@ test("moves focus to the login error after a failed submission", async ({ page }
   await expect(error).toBeFocused();
 });
 
-test("keeps the admin title localized with the saved language", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.setItem("arkiwatch-language", "zh");
-  });
+test("renders the admin title in the language the request carries", async ({ page, context }) => {
+  await context.addCookies([
+    { name: "arkiwatch-language", value: "zh", url: "http://127.0.0.1:3100" },
+  ]);
   await page.goto("/login");
 
   await expect(page).toHaveTitle("管理员登录 | ArkiWatch");
   await expect(page.getByRole("heading", { name: "管理员登录" })).toBeVisible();
+});
+
+test("adopts a language held only in localStorage on the next load", async ({ page, context }) => {
+  // A visitor from before the language cookie existed. The interface is
+  // localized immediately; the title follows once the seeded cookie reaches
+  // the server, because streamed metadata can outrun any client correction.
+  await page.addInitScript(() => {
+    window.localStorage.setItem("arkiwatch-language", "zh");
+  });
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "管理员登录" })).toBeVisible();
+  expect(
+    (await context.cookies()).find((cookie) => cookie.name === "arkiwatch-language")?.value,
+  ).toBe("zh");
+
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page).toHaveTitle("管理员登录 | ArkiWatch");
 });

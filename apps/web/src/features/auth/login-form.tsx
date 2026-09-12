@@ -10,9 +10,8 @@ import { PageLanguageToggle } from "@/features/shared/page-language";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
   applyLanguageMode,
-  preferredLanguageMode,
+  resolveClientLanguage,
   saveLanguageMode,
-  storedLanguageMode,
   translateMessageKey,
   useIsomorphicLayoutEffect,
   type LanguageMode,
@@ -39,7 +38,7 @@ export function LoginForm({ sessionExpired }: LoginFormProps) {
   useDocumentTitle(translateMessageKey(language, "shell.loginDocumentTitle"));
 
   useIsomorphicLayoutEffect(() => {
-    const nextLanguage = storedLanguageMode() ?? preferredLanguageMode();
+    const nextLanguage = resolveClientLanguage();
     setLanguage(nextLanguage);
     applyLanguageMode(nextLanguage);
     if (sessionExpired) {

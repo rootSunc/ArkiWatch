@@ -4,9 +4,8 @@ import { useState } from "react";
 
 import {
   applyLanguageMode,
-  preferredLanguageMode,
+  resolveClientLanguage,
   saveLanguageMode,
-  storedLanguageMode,
   useIsomorphicLayoutEffect,
   type LanguageMode,
 } from "@/features/data-platform/i18n";
@@ -24,7 +23,7 @@ export function usePageLanguage(): [LanguageMode, (next: LanguageMode) => void] 
   const [language, setLanguage] = useState<LanguageMode>("en");
 
   useIsomorphicLayoutEffect(() => {
-    const resolved = storedLanguageMode() ?? preferredLanguageMode();
+    const resolved = resolveClientLanguage();
     setLanguage(resolved);
     applyLanguageMode(resolved);
   }, []);
