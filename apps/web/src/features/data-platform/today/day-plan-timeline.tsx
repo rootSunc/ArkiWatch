@@ -70,7 +70,7 @@ export function DayPlanTimeline({
     <section className="day-plan-timeline" aria-label={title}>
       <header className="day-plan-timeline-header">
         <span className="today-section-kicker">{title}</span>
-        <h3>{lead}</h3>
+        <h2>{lead}</h2>
       </header>
       {items.length > 0 ? (
         <ol className="day-plan-timeline-list">

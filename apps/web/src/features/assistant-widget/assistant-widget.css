@@ -7,11 +7,9 @@
 @keyframes assistantSlideover {
   from {
     transform: translateX(32px);
-    opacity: 0;
   }
   to {
     transform: translateX(0);
-    opacity: 1;
   }
 }
 
@@ -62,7 +60,11 @@
   animation: assistantSlideover 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Keep the page behind the modal inert. */
+/* Keep the scrollable content behind the modal from moving. */
+body:has(.assistant-widget-open) {
+  overflow: hidden;
+}
+
 body:has(.assistant-widget-open) .dashboard-content {
   overflow: hidden;
 }
@@ -139,7 +141,8 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-new-thread {
-  height: 34px;
+  height: 40px;
+  min-height: 40px;
   padding: 0 13px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -157,7 +160,8 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-helpful {
-  height: 26px;
+  height: 40px;
+  min-height: 40px;
   margin-left: auto;
   padding: 0 10px;
   border: 1px solid var(--line);
@@ -175,11 +179,17 @@ body:has(.assistant-widget-open) .dashboard-content {
   border-color: var(--green);
 }
 
+.assistant-helpful-active {
+  border-color: var(--green);
+  background: var(--surface-soft);
+  color: var(--ink);
+}
+
 .assistant-close {
   display: flex;
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
@@ -425,6 +435,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 
 .assistant-followups button,
 .assistant-suggestions button {
+  min-height: 40px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--canvas);
@@ -476,7 +487,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  min-height: 30px;
+  min-height: 40px;
   border: 1px solid var(--line);
   border-radius: var(--r-control);
   background: var(--canvas);
@@ -538,7 +549,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-composer-field input {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  height: 40px;
   border: 0;
   outline: none;
   background: transparent;
@@ -557,9 +568,9 @@ body:has(.assistant-widget-open) .dashboard-content {
 
 .assistant-composer-field button {
   display: flex;
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
   align-items: center;
   justify-content: center;
   border: 0;
@@ -606,9 +617,70 @@ body:has(.assistant-widget-open) .dashboard-content {
   }
 }
 
+/* Give the compact drawer header a second row before the identity becomes
+ * narrower than its title. At 280px the avatar, new-thread action, and close
+ * button otherwise leave only a few characters of usable width, which makes
+ * "Daily assistant" wrap one character at a time. */
+@media (max-width: 360px) {
+  .assistant-panel-header {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 40px;
+    column-gap: 10px;
+    row-gap: 10px;
+    padding: 16px;
+  }
+
+  .assistant-avatar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .assistant-panel-identity {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .assistant-panel-identity h2 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .assistant-new-thread {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .assistant-close {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+/* On very short phones the composer is the primary action. Keep quick-start
+ * prompts available in a compact scroll region so they cannot push the input
+ * below the viewport. */
+@media (max-width: 560px) and (max-height: 520px) {
+  .assistant-suggestions {
+    max-height: 72px;
+    align-content: start;
+    overflow-y: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 560px) and (max-height: 380px) {
+  .assistant-composer-note {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .assistant-scrim,
   .assistant-panel {
-    animation: assistantScrimIn 120ms ease-out;
+    animation: none;
+    transition: none;
   }
 }

@@ -142,6 +142,21 @@ describe("buildTodayBrief", () => {
     expect(brief?.topActions.length).toBeGreaterThan(0);
   });
 
+  it("does not turn an unsupported demo city into a clear-looking brief", () => {
+    const fixture = demoFixtureForScope({ city: "espoo" });
+    const brief = buildTodayBrief({
+      publicDashboard: fixture.publicDashboard,
+      overviewCoverageArea: fixture.overview.coverage_area,
+      summaryTiles: [],
+      timelineItems: [],
+      language: "en",
+    });
+
+    expect(brief?.hasScopedData).toBe(false);
+    expect(brief?.headline).toBe("No signal data is available for this scope.");
+    expect(brief?.topActions).toEqual([]);
+  });
+
   it("uses the fixture clock only in demo mode", () => {
     const referenceAt = "2026-08-09T04:00:00.000Z";
 
@@ -277,6 +292,41 @@ describe("buildTodayBrief", () => {
       publicDashboard: {
         ...dashboard,
         snapshot_available: false,
+        scenario_sections: [
+          {
+            key: "commute",
+            title: "Commute",
+            description: "Alerts for transit and road disruption windows.",
+            status_label: "No active commute recommendation",
+            area_scope: "helsinki_uusimaa",
+            freshness_state: "degraded",
+            valid_from: "2026-08-09T08:00:00Z",
+            valid_to: "2026-08-09T08:00:00Z",
+            evidence: [],
+            source_codes: ["digitransit", "digitraffic"],
+            recommendation: {
+              id: "placeholder-commute",
+              scenario_key: "commute",
+              title: "No active commute recommendation",
+              body: "Data will appear here after the public rule engine emits the first regional recommendation.",
+              severity: "info",
+              area_scope: "helsinki_uusimaa",
+              freshness_state: "degraded",
+              valid_from: "2026-08-09T08:00:00Z",
+              valid_to: "2026-08-09T08:00:00Z",
+              evidence: [],
+            },
+          },
+        ],
+        timeline: [
+          {
+            scenario_key: "commute",
+            label: "No active commute recommendation",
+            severity: "info",
+            starts_at: "2026-08-09T08:00:00Z",
+            ends_at: "2026-08-09T08:00:00Z",
+          },
+        ],
       },
       overviewCoverageArea: "Helsinki/Uusimaa",
       isHistorical: true,
@@ -286,6 +336,8 @@ describe("buildTodayBrief", () => {
     });
 
     expect(brief?.historicalSnapshotAvailable).toBe(false);
+    expect(brief?.hasScopedData).toBe(false);
+    expect(brief?.headline).toBe("No signal data is available for this scope.");
     expect(brief?.checkedAt).toBeNull();
   });
 

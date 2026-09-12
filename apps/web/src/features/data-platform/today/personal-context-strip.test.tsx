@@ -47,4 +47,25 @@ describe("PersonalContextStrip", () => {
     button.click();
     expect(onOpenSettings).toHaveBeenCalledOnce();
   });
+
+  it("opens the assistant without forwarding the click event when setup is complete", () => {
+    const onOpenAssistant = vi.fn();
+
+    render(
+      <I18nProvider language="en">
+        <PersonalContextStrip
+          dashboard={
+            {
+              onboarding_completion_percent: 100,
+              workflow_steps: [],
+            }
+          }
+          onOpenAssistant={onOpenAssistant}
+        />
+      </I18nProvider>,
+    );
+
+    screen.getByRole("button", { name: "Ask assistant" }).click();
+    expect(onOpenAssistant).toHaveBeenCalledWith();
+  });
 });

@@ -16,4 +16,14 @@ describe("MaterialIcon", () => {
 
     expect(container.querySelector(".material-symbols-outlined")).toHaveTextContent("sync");
   });
+
+  it.each([
+    ["event_busy", "event"],
+    ["filter_alt_off", "filter_list"],
+    ["arrow_forward", "chevron_right"],
+  ])("maps %s to the bundled %s glyph", (name, bundledName) => {
+    const { container } = render(<MaterialIcon name={name} />);
+
+    expect(container.querySelector(".material-symbols-outlined")).toHaveTextContent(bundledName);
+  });
 });

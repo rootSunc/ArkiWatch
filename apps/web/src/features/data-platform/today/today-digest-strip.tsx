@@ -18,7 +18,7 @@ type TodayDigestStripProps = {
 export function TodayDigestStrip({ todayBrief, onOpenToday }: TodayDigestStripProps) {
   const { language, tKey } = useI18n();
 
-  if (!todayBrief?.headline) {
+  if (!todayBrief?.headline || !todayBrief.hasScopedData) {
     return null;
   }
 

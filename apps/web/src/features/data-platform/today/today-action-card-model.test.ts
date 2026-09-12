@@ -63,7 +63,7 @@ describe("buildActionDataPoints", () => {
     );
 
     expect(points).toEqual([
-      { label: "Window", value: "15:00–16:00" },
+      { label: "Window", value: "15:00 - 16:00" },
       { label: "Average", value: "9.50 c/kWh" },
     ]);
   });
@@ -129,7 +129,7 @@ describe("buildActionDataPoints", () => {
       "not/a-timezone",
     );
 
-    expect(points).toEqual([{ label: "Window", value: "15:00–16:00" }]);
+    expect(points).toEqual([{ label: "Window", value: "15:00 - 16:00" }]);
   });
 });
 

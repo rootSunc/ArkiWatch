@@ -81,6 +81,12 @@ describe("resolveNavKey", () => {
   it("preserves a mobility deep link while categories are still loading", () => {
     expect(resolveNavKey("mobility", [])).toBe("mobility");
   });
+
+  it("preserves catalog deep links while categories are still loading", () => {
+    expect(resolveNavKey("city_services", [])).toBe("city_services");
+    expect(resolveNavKey("geospatial", [])).toBe("geospatial");
+    expect(resolveNavKey("regional_profile", [])).toBe("regional_profile");
+  });
 });
 
 describe("mobileNavigationItems", () => {

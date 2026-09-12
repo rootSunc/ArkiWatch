@@ -47,13 +47,20 @@ export function TodayActionCard({
     "{category}",
     enumLabel(section.key),
   );
+  const categoryLabel = enumLabel(section.key);
+  const normalizeLabel = (value: string) =>
+    value.trim().replace(/\s+/g, " ").toLocaleLowerCase(language === "zh" ? "zh-CN" : "en-US");
+  const accessibleTitle = normalizeLabel(categoryLabel) === normalizeLabel(rowTitle)
+    ? rowTitle
+    : `${categoryLabel}: ${rowTitle}`;
+  const validFromLabel = formatTimestamp(section.valid_from, "time", language, timezone);
 
   return (
     <article
       className={`today-action-card today-action-card-${view.tone}`}
     >
       <button
-        aria-label={`${enumLabel(section.key)}. ${rowTitle}`}
+        aria-label={`${accessibleTitle}, ${validFromLabel}. ${view.body}`}
         className="today-action-card-main"
         disabled={disabled}
         onClick={onOpen}
@@ -62,7 +69,7 @@ export function TodayActionCard({
         <span className="today-action-card-dot" aria-hidden="true" />
         <span className="today-action-card-title">{rowTitle}</span>
         <time className="today-action-card-time" dateTime={section.valid_from}>
-          {formatTimestamp(section.valid_from, "time", language, timezone)}
+          {validFromLabel}
         </time>
         <span className="today-action-card-icon material-symbols-outlined" aria-hidden="true">
           {view.icon}

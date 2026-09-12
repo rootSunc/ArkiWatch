@@ -13,6 +13,8 @@ const ICON_FALLBACKS: Record<string, string> = {
   cloud_off: "cloud",
   domain: "location_city",
   error: "warning",
+  event_busy: "event",
+  filter_alt_off: "filter_list",
   keyboard_arrow_left: "chevron_left",
   keyboard_arrow_right: "chevron_right",
   lightbulb: "info",

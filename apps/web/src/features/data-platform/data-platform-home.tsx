@@ -62,7 +62,6 @@ import {
   isCatalogCategoryKey,
   mobileNavigationItems,
   pathWithParams,
-  profileInitials,
   resolveNavKey,
 } from "./data-platform-nav-utils";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
@@ -105,7 +104,6 @@ import { isEmptyStatus } from "./platform-status";
 import { scopedReferenceTime } from "./data-time-scope";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { buildUserSummaryTiles } from "./user-summary-stats";
-import { viewerStateLabel } from "./viewer-state";
 import {
   ENERGY_TAB_QUERY_KEY,
   MOBILITY_TAB_QUERY_KEY,
@@ -169,8 +167,11 @@ export function DataPlatformHome({
   const assistantNavButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationButtonRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationRef = useRef<HTMLElement>(null);
+  const dashboardAppRef = useRef<HTMLDivElement>(null);
   const mobileMenuWasOpenRef = useRef(false);
   const restoreDateFocusRef = useRef(false);
+  const hasRenderedPlatformStateRef = useRef(false);
+  const retryFocusRef = useRef(false);
   const scopeContentRef = useRef<HTMLDivElement>(null);
   const eventDetailCloseRef = useRef<HTMLButtonElement>(null);
   const eventDetailTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -240,6 +241,7 @@ export function DataPlatformHome({
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [isCatalogExpanded, setIsCatalogExpanded] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -248,6 +250,61 @@ export function DataPlatformHome({
   const isScopePending =
     isCityRefreshPending || isDateRefreshPending || isPreviousScope;
   const tKey = (key: string) => translateMessageKey(languageMode, key);
+
+  useEffect(() => {
+    const title = translateMessageKey(languageMode, "shell.documentTitle");
+    const applyTitle = () => {
+      if (document.title !== title) {
+        document.title = title;
+      }
+    };
+
+    applyTitle();
+
+    // Next's metadata reconciliation can run after a client-side language
+    // switch. Re-apply the localized title during that bounded window so the
+    // document title cannot drift back to the server's default language.
+    const titleSyncs = [0, 50, 250, 1000].map((delay) =>
+      window.setTimeout(applyTitle, delay),
+    );
+    window.addEventListener("load", applyTitle, { once: true });
+
+    return () => {
+      for (const titleSync of titleSyncs) {
+        window.clearTimeout(titleSync);
+      }
+      window.removeEventListener("load", applyTitle);
+    };
+  }, [languageMode]);
+
+  useEffect(() => {
+    if (!isPending) {
+      hasRenderedPlatformStateRef.current = true;
+    }
+  }, [isPending]);
+
+  useEffect(() => {
+    if (!retryFocusRef.current || isPending || isLoadingView) {
+      return;
+    }
+
+    retryFocusRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      const retryButton = document.querySelector<HTMLButtonElement>(
+        ".platform-error-retry, .platform-inline-warning-action",
+      );
+
+      if (retryButton && !retryButton.disabled) {
+        retryButton.focus();
+        return;
+      }
+
+      mainContentRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isLoadingView, isPending, overview]);
+
   const highlightedEventId = searchParams.get(EVENT_QUERY_KEY);
   const activeTimeScope =
     overview?.time_scope ??
@@ -265,14 +322,8 @@ export function DataPlatformHome({
       ? activeTimeScope.date ?? selectedDate
       : selectedDate;
   const isHistorical = historicalDate !== null;
-  const userStateLabel = viewerStateLabel(
-    isAuthenticated,
-    appEnv.demoMode,
-    languageMode,
-  );
   const authActionLabel = isAuthenticated ? tKey("shell.signOut") : tKey("shell.adminSignIn");
   const authActionIcon = isAuthenticated ? "logout" : "login";
-  const currentUserInitials = profileInitials(currentUserLabel);
 
   const isRefreshing = refreshMutation.isPending;
   const refreshError = refreshMutation.error instanceof Error
@@ -317,6 +368,7 @@ export function DataPlatformHome({
   }
 
   function retryPlatformData(): void {
+    retryFocusRef.current = true;
     void retry().catch((retryError) => {
       console.error("Error retrying platform queries:", retryError);
     });
@@ -429,7 +481,15 @@ export function DataPlatformHome({
       );
 
       const nextPath = nextParams.toString();
-      router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
+      const currentPath = searchParams.toString()
+        ? `${pathname}?${searchParams.toString()}`
+        : pathname;
+      const destinationPath = nextPath ? `${pathname}?${nextPath}` : pathname;
+      if (destinationPath === currentPath) {
+        return;
+      }
+
+      router.push(destinationPath);
     },
     [pathname, router, searchParams, selectedEnergyTab, selectedMobilityTab],
   );
@@ -696,7 +756,27 @@ export function DataPlatformHome({
       selectNav(FALLBACK_NAV_KEY);
       setSearchValue("");
       setIsEventsExpanded(true);
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        window.requestAnimationFrame(() => {
+          document.querySelector<HTMLElement>(".events-panel-expanded")?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+              ? "auto"
+              : "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+        });
+      }
     }
+  }
+
+  function restoreRecentEventsFocus(): void {
+    window.requestAnimationFrame(() => {
+      const trigger = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(".notification-button"),
+      ).find((element) => element.getClientRects().length > 0 && !element.disabled);
+      trigger?.focus();
+    });
   }
 
   function closeEventDetail(): void {
@@ -720,6 +800,7 @@ export function DataPlatformHome({
     markRecentEventRead(event.id);
     setSearchValue("");
     setIsEventsExpanded(false);
+    setSelectedEventId(null);
 
     if (resolvedNavKey === MOBILITY_NAV_KEY) {
       setSelectedMobilityTab(target.mobilityTab ?? selectedMobilityTab);
@@ -737,7 +818,15 @@ export function DataPlatformHome({
     );
 
     const nextPath = nextParams.toString();
-    router.replace(nextPath ? `${pathname}?${nextPath}` : pathname);
+    const currentPath = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+    const destinationPath = nextPath ? `${pathname}?${nextPath}` : pathname;
+    if (destinationPath === currentPath) {
+      return;
+    }
+
+    router.push(destinationPath);
   }
 
   const replaceCityParam = useCallback(
@@ -791,6 +880,29 @@ export function DataPlatformHome({
   }, [isScopePending]);
 
   useEffect(() => {
+    // The mobile navigation is a modal drawer. Keep the app behind it out of
+    // the accessibility tree and sequential focus order while it is open.
+    const dashboardApp = dashboardAppRef.current;
+    if (dashboardApp) {
+      dashboardApp.inert = isMobileMenuOpen || isAssistantOpen;
+    }
+
+    const sideNavigation = mobileNavigationRef.current;
+    if (sideNavigation) {
+      sideNavigation.inert = isAssistantOpen;
+    }
+
+    return () => {
+      if (dashboardApp) {
+        dashboardApp.inert = false;
+      }
+      if (sideNavigation) {
+        sideNavigation.inert = false;
+      }
+    };
+  }, [isAssistantOpen, isMobileMenuOpen]);
+
+  useEffect(() => {
     const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
     const nextMobilityTab = resolveMobilityTabParam(
       searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
@@ -814,7 +926,15 @@ export function DataPlatformHome({
     }
 
     previousNavKeyRef.current = selectedNavKey;
-    const frame = window.requestAnimationFrame(() => mainContentRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      const mainContent = mainContentRef.current;
+      if (!mainContent) {
+        return;
+      }
+
+      mainContent.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      mainContent.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [selectedNavKey]);
 
@@ -954,24 +1074,52 @@ export function DataPlatformHome({
       return;
     }
 
-    const timeout = window.setTimeout(() => {
-      const element = document.getElementById(eventAnchorId(highlightedEventId));
-      if (!element) {
+    let attempts = 0;
+    let retryTimeout: number | null = null;
+    let activeClassTimeout: number | null = null;
+    let cancelled = false;
+
+    const scrollToEvent = () => {
+      if (cancelled) {
         return;
       }
 
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      const element = document.getElementById(eventAnchorId(highlightedEventId));
+      if (!element) {
+        attempts += 1;
+        if (attempts < 60) {
+          retryTimeout = window.setTimeout(scrollToEvent, 50);
+        }
+        return;
+      }
+
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
+      element.scrollIntoView({ behavior, block: "center" });
       element.classList.add("event-anchor-active");
-      window.setTimeout(() => {
+      activeClassTimeout = window.setTimeout(() => {
         element.classList.remove("event-anchor-active");
       }, 1800);
-    }, 180);
+    };
 
-    return () => window.clearTimeout(timeout);
+    const timeout = window.setTimeout(scrollToEvent, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      if (retryTimeout !== null) {
+        window.clearTimeout(retryTimeout);
+      }
+      if (activeClassTimeout !== null) {
+        window.clearTimeout(activeClassTimeout);
+      }
+    };
   }, [highlightedEventId, isDetailPage, selectedMobilityTab, selectedNavKey]);
 
   function selectCity(nextCityValue: string): void {
     const nextCity = normalizeCityValue(nextCityValue);
+    setSelectedEventId(null);
     setSelectedCity(nextCity);
     saveCityValue(nextCity);
     replaceCityParam(nextCity);
@@ -979,6 +1127,7 @@ export function DataPlatformHome({
 
   function selectDate(nextDate: string | null): void {
     restoreDateFocusRef.current = true;
+    setSelectedEventId(null);
     if (nextDate !== null) {
       setNeedsHistoryAvailability(true);
     }
@@ -1038,12 +1187,14 @@ export function DataPlatformHome({
     language: languageMode,
     notificationCount: recentNotificationCount,
     notificationTone: recentNotificationTone,
+    onToggleTheme: toggleThemeMode,
     onCalendarOpen: requestHistoryAvailability,
     onCityChange: selectCity,
     onDateChange: selectDate,
     onLanguageChange: selectLanguageMode,
     onNotificationsClick: openRecentEventsPanel,
     onRefresh: triggerDataRefresh,
+    themeMode,
     showExport: workspaceMode === "data" && !appEnv.demoMode,
     renderAuthActionButton,
   };
@@ -1052,12 +1203,12 @@ export function DataPlatformHome({
   // Streamed first paint: the overview arrives after the shell, and without the
   // overview the nav and workspaces would render as empty states rather than as
   // "still loading". Placed after every hook so hook order stays stable.
-  if (isPending) {
+  // Keep the first-load skeleton, but do not unmount an already-visible error
+  // shell during a retry. Unmounting the retry button drops keyboard focus to
+  // the document body and leaves a failed retry without a recovery target.
+  if (isPending && !hasRenderedPlatformStateRef.current) {
     return (
       <I18nProvider language={languageMode}>
-        <a className="skip-link" href="#main-content">
-          {tKey("shell.skipToMainContent")}
-        </a>
         <PlatformSkeleton loadingLabel={tKey("shell.loadingDashboard")} />
       </I18nProvider>
     );
@@ -1075,9 +1226,14 @@ export function DataPlatformHome({
         <DataPlatformSideNav
           categories={categories}
           className={sideNavClassName}
+          city={selectedCity}
           currentUserLabel={currentUserLabel}
+          date={selectedDate}
           isAuthenticated={isAuthenticated}
+          isHistorical={isHistorical}
+          isAssistantOpen={isAssistantOpen}
           isMobileMenuOpen={isMobileMenuOpen}
+          isRefreshing={isRefreshing}
           navBadges={{
             today: todayBrief?.topActions.length ?? 0,
             mobility: mobilityCategory?.events.length ?? 0,
@@ -1091,8 +1247,10 @@ export function DataPlatformHome({
             }
           }}
           onPrefetchNavItem={prefetchNavItem}
+          onRefresh={triggerDataRefresh}
           onSelectNavItem={selectNavItem}
           renderAuthActionButton={renderAuthActionButton}
+          showExport={workspaceMode === "data" && !appEnv.demoMode}
           selectedNavKey={selectedNavKey}
           themeMode={themeMode}
           onToggleTheme={toggleThemeMode}
@@ -1103,20 +1261,19 @@ export function DataPlatformHome({
           <DataPlatformSideNavBackdrop onClose={() => setIsMobileMenuOpen(false)} />
         ) : null}
 
-        <div className="dashboard-app">
+        <div
+          aria-hidden={isMobileMenuOpen || isAssistantOpen ? "true" : undefined}
+          className="dashboard-app"
+          ref={dashboardAppRef}
+        >
           <DataPlatformMobileHeader
             {...scopeControlProps}
-            currentUserInitials={currentUserInitials}
-            currentUserLabel={currentUserLabel}
             isDetailPage={isDetailPage}
             isMobileMenuOpen={isMobileMenuOpen}
             navigationButtonRef={mobileNavigationButtonRef}
             onSearchChange={setSearchValue}
             onOpenNavigation={() => setIsMobileMenuOpen(true)}
             searchValue={searchValue}
-            themeMode={themeMode}
-            onToggleTheme={toggleThemeMode}
-            userStateLabel={userStateLabel}
             workspaceMode={workspaceMode}
           />
 
@@ -1136,7 +1293,7 @@ export function DataPlatformHome({
           <main
             id="main-content"
             ref={mainContentRef}
-            tabIndex={-1}
+            tabIndex={0}
             className={
               isDetailPage
                 ? "dashboard-content detail-content-shell"
@@ -1173,7 +1330,7 @@ export function DataPlatformHome({
                   ) : null}
                 </span>
                 <a className="demo-mode-banner-link" href="/about">
-                  {tKey("shell.connectApi")}
+                  {tKey("shell.aboutArkiWatch")}
                   <span aria-hidden="true"> →</span>
                 </a>
               </div>
@@ -1326,9 +1483,12 @@ export function DataPlatformHome({
                       onMarkEventRead={markRecentEventRead}
                       onOpenEvent={openRecentEvent}
                       onSelectEvent={selectRecentEvent}
-                      onToggleExpanded={() =>
-                        setIsEventsExpanded((isExpanded) => !isExpanded)
-                      }
+                      onToggleExpanded={() => {
+                        if (isEventsExpanded) {
+                          restoreRecentEventsFocus();
+                        }
+                        setIsEventsExpanded(!isEventsExpanded);
+                      }}
                       platformTimezone={platformTimezone}
                       readRecentEventIds={readRecentEventIds}
                       selectedEvent={selectedEvent}
@@ -1386,21 +1546,22 @@ export function DataPlatformHome({
             onSelectNavItem={selectNavItem}
             selectedNavKey={selectedNavKey}
           />
-          <AssistantWidget
-            city={selectedCity}
-            date={historicalDate}
-            overview={overview}
-            language={languageMode}
-            mode={workspaceMode}
-            scopeKey={selectedNavKey}
-            focusReturnRefs={assistantFocusReturnRefs}
-            openRequest={assistantOpenRequest}
-            openQuestion={assistantOpenQuestion}
-            scopePending={isScopePending}
-            onOpenView={openAssistantView}
-            userId={defaultUserId ?? resolvedUserId}
-          />
         </div>
+        <AssistantWidget
+          city={selectedCity}
+          date={historicalDate}
+          overview={overview}
+          language={languageMode}
+          mode={workspaceMode}
+          scopeKey={selectedNavKey}
+          focusReturnRefs={assistantFocusReturnRefs}
+          onOpenChange={setIsAssistantOpen}
+          openRequest={assistantOpenRequest}
+          openQuestion={assistantOpenQuestion}
+          scopePending={isScopePending}
+          onOpenView={openAssistantView}
+          userId={defaultUserId ?? resolvedUserId}
+        />
       </div>
     </I18nProvider>
   );

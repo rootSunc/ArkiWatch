@@ -405,7 +405,7 @@ const TRANSIT_EVENT = event(
   ["digitransit"],
   at(1),
   at(4),
-  { route_ids: ["4", "10"] },
+  { alert_id: "demo-alert-4", route_ids: ["4", "10"] },
   {
     title_zh: "乘坐西向有轨电车请预留几分钟",
     body_zh: "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
@@ -422,7 +422,10 @@ const ROAD_EVENT = event(
   ["digitraffic"],
   at(5),
   at(8),
-  {},
+  {
+    location_description: "Helsinki westbound approach",
+    situation_id: "demo-road-1",
+  },
   {
     title_zh: "降雨后路面可能湿滑",
     body_zh: "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
@@ -1062,13 +1065,16 @@ export function demoFixtureForScope(scope: {
       coverage_area: `${scopedBaseFixture.publicDashboard.coverage_area}${scopeSuffix}`,
       snapshot_date: date ?? scopedBaseFixture.publicDashboard.snapshot_date,
       snapshot_available:
-        date === null || date === DEMO_SNAPSHOT_DATE,
-      top_actions: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.top_actions,
-      scenario_sections: unavailableHistoricalDate
+        !unavailableScopedData && (date === null || date === DEMO_SNAPSHOT_DATE),
+      top_actions: unavailableScopedData ? [] : scopedBaseFixture.publicDashboard.top_actions,
+      scenario_channels: unavailableScopedData
+        ? []
+        : scopedBaseFixture.publicDashboard.scenario_channels,
+      scenario_sections: unavailableScopedData
         ? []
         : scopedBaseFixture.publicDashboard.scenario_sections,
-      timeline: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.timeline,
-      broadcasts: unavailableHistoricalDate ? [] : scopedBaseFixture.publicDashboard.broadcasts,
+      timeline: unavailableScopedData ? [] : scopedBaseFixture.publicDashboard.timeline,
+      broadcasts: unavailableScopedData ? [] : scopedBaseFixture.publicDashboard.broadcasts,
     },
     weather: {
       ...withScope(emptyDemoResponse(scopedBaseFixture.weather, unavailableScopedData), date),

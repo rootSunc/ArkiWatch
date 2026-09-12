@@ -80,7 +80,7 @@ export function MobileBottomNav({
           aria-disabled={isScopePending || undefined}
           className="mobile-bottom-nav-item mobile-bottom-nav-assistant"
           disabled={isScopePending}
-          onClick={onOpenAssistant}
+          onClick={() => onOpenAssistant()}
           ref={assistantButtonRef}
           title={
             isScopePending

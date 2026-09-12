@@ -198,7 +198,7 @@ export function buildActionDataPoints(
     const window = energy?.current_window;
     const startsAt = formatTime(window?.starts_at ?? null, language, timeZone);
     const endsAt = formatTime(window?.ends_at ?? null, language, timeZone);
-    addPoint(points, t("shell.window"), startsAt && endsAt ? `${startsAt}–${endsAt}` : null);
+    addPoint(points, t("shell.window"), startsAt && endsAt ? `${startsAt} - ${endsAt}` : null);
     const average = formatNumber(window?.average_value, 2);
     addPoint(
       points,

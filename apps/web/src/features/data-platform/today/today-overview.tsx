@@ -68,8 +68,26 @@ export function TodayOverview({
         <span className="material-symbols-outlined" aria-hidden="true">
           cloud
         </span>
-        <strong>{tKey("shell.scenarioOverviewUnavailable")}</strong>
+        <h1>{tKey("shell.scenarioOverviewUnavailable")}</h1>
         <p>{tKey("shell.publicRecommendationsCouldNotBeLoadedTryAgainOrOpenAllSignals")}</p>
+        <button className="today-secondary-action" onClick={onOpenSignals} type="button">
+          {tKey("shell.openAllSignals")}
+        </button>
+      </section>
+    );
+  }
+
+  if (!todayBrief.hasScopedData) {
+    return (
+      <section
+        className="today-overview today-overview-empty"
+        aria-label={tKey("shell.navToday")}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          database
+        </span>
+        <h1>{tKey("shell.noSignalDataForScope")}</h1>
+        <p>{tKey("shell.noSignalDataForScopeDetail")}</p>
         <button className="today-secondary-action" onClick={onOpenSignals} type="button">
           {tKey("shell.openAllSignals")}
         </button>
@@ -190,7 +208,7 @@ export function TodayOverview({
           </div>
         </div>
 
-        <div className="today-glance" aria-label={tKey("shell.todayAtAGlance")}>
+        <div className="today-glance" role="group" aria-label={tKey("shell.todayAtAGlance")}>
           <span className="today-glance-title">{tKey("shell.todayAtAGlance")}</span>
           <div className="today-glance-grid">
             {todayBrief.summaryTiles.map((tile) => (

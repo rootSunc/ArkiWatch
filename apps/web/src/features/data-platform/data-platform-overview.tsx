@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, ReactNode } from "react";
+import { useRef, type ChangeEvent, type ReactNode } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
 
@@ -58,28 +58,39 @@ function OverviewSearch({
   value: string;
 }) {
   const { tKey } = useI18n();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>): void {
     onChange(event.currentTarget.value);
   }
 
   return (
-    <label className="overview-search">
+    <div
+      aria-label={tKey("shell.searchSignalsPlaceholder")}
+      className="overview-search"
+      role="search"
+    >
       <span className="material-symbols-outlined" aria-hidden="true">
         search
       </span>
-      <span className="sr-only">{tKey("shell.searchSignalsPlaceholder")}</span>
+      <label className="sr-only" htmlFor="overview-signal-search">
+        {tKey("shell.searchSignalsPlaceholder")}
+      </label>
       <input
-        aria-label={tKey("shell.searchSignalsPlaceholder")}
+        id="overview-signal-search"
         onChange={handleChange}
         placeholder={tKey("shell.searchSignalsPlaceholder")}
+        ref={inputRef}
         value={value}
       />
       {value ? (
         <button
           aria-label={tKey("shell.clearSearch")}
           className="overview-search-clear"
-          onClick={() => onChange("")}
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
           type="button"
         >
           <span className="material-symbols-outlined" aria-hidden="true">
@@ -87,7 +98,7 @@ function OverviewSearch({
           </span>
         </button>
       ) : null}
-    </label>
+    </div>
   );
 }
 
@@ -147,7 +158,7 @@ function OverviewStatusBar({
               * shared baseline against the three cells beside it. */}
             <strong>{snapshotTime || snapshotDate}</strong>
             <small>
-              {snapshotTime ? `${snapshotDate} · ${platformTimezone}` : platformTimezone}
+              {snapshotTime ? `${snapshotDate}, ${platformTimezone}` : platformTimezone}
             </small>
           </div>
         </article>
@@ -240,9 +251,21 @@ export function DataPlatformOverview({
         </div>
         <div className="overview-signal-grid">
           {coreSignalCards ?? (
-            <div className="dashboard-empty-state">
-              {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
-            </div>
+            hasSearch ? (
+              <div className="dashboard-empty-state">
+                {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
+              </div>
+            ) : (
+              <div className="dashboard-empty-state dashboard-empty-state-rich" role="status">
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  database
+                </span>
+                <div className="dashboard-empty-state-copy">
+                  <strong>{tKey("shell.noSignalDataForScope")}</strong>
+                  <p>{tKey("shell.noSignalDataForScopeDetail")}</p>
+                </div>
+              </div>
+            )
           )}
         </div>
       </section>

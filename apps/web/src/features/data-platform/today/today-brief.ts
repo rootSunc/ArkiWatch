@@ -17,6 +17,7 @@ const ALLOWED_CLOCK_SKEW_MS = 5 * 60 * 1000;
 export type TodayBrief = {
   checkedAt: string | null;
   coverageArea: string;
+  hasScopedData: boolean;
   historicalSnapshotAvailable: boolean;
   timezone: string;
   recommendationCoverageArea: string | null;
@@ -246,6 +247,14 @@ export function buildTodayBrief({
       !isPlaceholderRecommendation(action.id, action.body) &&
       !isRecommendationExpired(action, now),
   );
+  const historicalSnapshotAvailable =
+    !isHistorical || publicDashboard.snapshot_available !== false;
+  const hasScopedData =
+    historicalSnapshotAvailable &&
+    (publicDashboard.top_actions.length > 0 ||
+      publicDashboard.scenario_sections.length > 0 ||
+      timelineItems.length > 0 ||
+      summaryTiles.some((tile) => tile.tone !== "neutral"));
   const recommendationCoverageArea =
     overviewCoverageArea &&
     coverageRegion(overviewCoverageArea) !== coverageRegion(publicDashboard.coverage_area)
@@ -257,17 +266,16 @@ export function buildTodayBrief({
     recommendationCoverageArea,
     snapshotFresh: isHistorical || isLiveSnapshotFresh(publicDashboard, now),
   });
-  const historicalSnapshotAvailable =
-    !isHistorical || publicDashboard.snapshot_available !== false;
-
   return {
     checkedAt: historicalSnapshotAvailable ? publicDashboard.checked_at : null,
     coverageArea: overviewCoverageArea ?? publicDashboard.coverage_area,
+    hasScopedData,
     historicalSnapshotAvailable,
     timezone: publicDashboard.timezone,
     recommendationCoverageArea,
-    headline:
-      recommendationMode === "historical"
+    headline: !hasScopedData
+      ? translateMessageKey(language, "shell.noSignalDataForScope")
+      : recommendationMode === "historical"
         ? translateMessageKey(language, "shell.historicalRecommendationsReadOnly")
         : recommendationMode === "out_of_scope"
           ? translateMessageKey(language, "shell.recommendationsUnavailableForScope")

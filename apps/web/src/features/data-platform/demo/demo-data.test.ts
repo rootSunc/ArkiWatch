@@ -53,7 +53,11 @@ describe("demo fixture", () => {
       "2026-08-08T15:00:00.000Z",
     );
     expect(fixture.publicDashboard.snapshot_date).toBe(DEMO_SNAPSHOT_DATE);
-    expect(fixture.publicDashboard.snapshot_available).toBe(true);
+    expect(fixture.publicDashboard.snapshot_available).toBe(false);
+    expect(fixture.publicDashboard.top_actions).toEqual([]);
+    expect(fixture.publicDashboard.scenario_sections).toEqual([]);
+    expect(fixture.publicDashboard.timeline).toEqual([]);
+    expect(fixture.publicDashboard.broadcasts).toEqual([]);
     expect(fixture.weather.location).toBe("Espoo");
     expect(fixture.weather.status).toBe("empty");
     expect(fixture.history.weather).toEqual([]);

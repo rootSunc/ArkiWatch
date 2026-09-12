@@ -3,6 +3,7 @@ import "./data-platform.css";
 const NAV_ROW_COUNT = 8;
 const SUMMARY_TILE_COUNT = 4;
 const CARD_COUNT = 4;
+const MOBILE_NAV_ITEM_COUNT = 5;
 
 /**
  * Static shell placeholder rendered while platform data is in flight.
@@ -37,19 +38,35 @@ export function PlatformSkeleton({
       </aside>
 
       <div className="dashboard-app">
-        <div className="platform-skeleton-topbar" aria-hidden="true">
+        <div className="platform-skeleton-topbar platform-skeleton-desktop-topbar" aria-hidden="true">
           <span className="platform-skeleton-block platform-skeleton-topbar-title" />
           <span className="platform-skeleton-topbar-spacer" />
           <span className="platform-skeleton-block platform-skeleton-topbar-control" />
           <span className="platform-skeleton-block platform-skeleton-topbar-control" />
         </div>
 
-        <main
-          className="dashboard-content"
-          id="main-content"
-          tabIndex={-1}
-          aria-hidden="true"
-        >
+        <div className="platform-skeleton-mobile-topbar" aria-hidden="true">
+          <span className="platform-skeleton-block platform-skeleton-mobile-menu" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-mark" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-brand" />
+          <span className="platform-skeleton-mobile-spacer" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-notification" />
+        </div>
+
+        <div className="platform-skeleton-mobile-context" aria-hidden="true">
+          <span className="platform-skeleton-block platform-skeleton-mobile-city" />
+          <span className="platform-skeleton-mobile-separator" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-date" />
+          <span className="platform-skeleton-mobile-spacer" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-context-action" />
+          <span className="platform-skeleton-block platform-skeleton-mobile-context-action" />
+        </div>
+
+        {/* Keep the loading placeholder out of the live main-content anchor.
+            The interactive shell can mount alongside this placeholder during
+            a streamed transition, so reusing that id creates duplicate
+            landmarks and breaks skip-link targeting. */}
+        <main className="dashboard-content" tabIndex={-1} aria-hidden="true">
           <div className="platform-skeleton-tiles">
             {Array.from({ length: SUMMARY_TILE_COUNT }, (_, index) => (
               <span
@@ -67,6 +84,15 @@ export function PlatformSkeleton({
             ))}
           </div>
         </main>
+
+        <div className="platform-skeleton-mobile-nav" aria-hidden="true">
+          {Array.from({ length: MOBILE_NAV_ITEM_COUNT }, (_, index) => (
+            <span className="platform-skeleton-mobile-nav-item" key={index}>
+              <span className="platform-skeleton-block platform-skeleton-mobile-nav-icon" />
+              <span className="platform-skeleton-block platform-skeleton-mobile-nav-label" />
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

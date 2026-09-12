@@ -24,6 +24,7 @@ export async function copyTextToClipboard(value: string): Promise<void> {
   }
 
   const textarea = document.createElement("textarea");
+  const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   textarea.value = value;
   textarea.setAttribute("readonly", "");
   textarea.style.position = "fixed";
@@ -39,6 +40,7 @@ export async function copyTextToClipboard(value: string): Promise<void> {
     }
   } finally {
     textarea.remove();
+    previousFocus?.focus({ preventScroll: true });
   }
 }
 
@@ -84,16 +86,23 @@ export function ShareViewLinkButton({ language, scopeKey = "" }: ShareViewLinkBu
   }, [scopeKey]);
 
   return (
-    <button
-      className={`icon-button share-view-link-button share-view-link-button-${copyState}`}
-      aria-label={label}
-      onClick={copyLink}
-      title={label}
-      type="button"
-    >
-      <MaterialIcon
-        name={copyState === "success" ? "check" : copyState === "error" ? "error" : "link"}
-      />
-    </button>
+    <>
+      <button
+        className={`icon-button share-view-link-button share-view-link-button-${copyState}`}
+        aria-label={label}
+        onClick={copyLink}
+        title={label}
+        type="button"
+      >
+        <MaterialIcon
+          name={copyState === "success" ? "check" : copyState === "error" ? "error" : "link"}
+        />
+      </button>
+      {/* The live region has to already be in the DOM when its text changes.
+          Mounting it together with the message is not reliably announced. */}
+      <span aria-atomic="true" aria-live="polite" className="sr-only" role="status">
+        {copyState === "idle" ? "" : label}
+      </span>
+    </>
   );
 }

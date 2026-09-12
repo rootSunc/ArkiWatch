@@ -7,7 +7,9 @@ import {
   DateScopeSelector,
   NotificationButton,
   RefreshDataButton,
+  ThemeToggleButton,
   type DashboardTone,
+  type ThemeMode,
 } from "./data-platform-shell";
 import { LanguageSwitchButton, type LanguageMode } from "./i18n";
 import { ExportSnapshotButton } from "./export-snapshot-button";
@@ -40,6 +42,8 @@ type PlatformScopeControlsProps = {
   showRefresh?: boolean;
   showShare?: boolean;
   showAuth?: boolean;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
 };
 
 export function PlatformScopeControls({
@@ -68,6 +72,8 @@ export function PlatformScopeControls({
   showRefresh = true,
   showShare = true,
   showAuth = true,
+  themeMode,
+  onToggleTheme,
 }: PlatformScopeControlsProps) {
   return (
     <>
@@ -91,6 +97,11 @@ export function PlatformScopeControls({
       <span aria-hidden="true" className="scope-control-divider" />
       <div className="scope-control-cluster">
         <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
+        <ThemeToggleButton
+          language={language}
+          onToggle={onToggleTheme}
+          themeMode={themeMode}
+        />
         {showRefresh && isAuthenticated && !isHistorical ? (
           <RefreshDataButton
             isRefreshing={isRefreshing}

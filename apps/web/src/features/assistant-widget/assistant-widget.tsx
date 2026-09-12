@@ -48,6 +48,7 @@ type AssistantWidgetProps = {
   focusReturnRef?: RefObject<HTMLElement>;
   focusReturnRefs?: Array<RefObject<HTMLElement>>;
   scopePending?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
   onOpenView?: (view: string) => void;
 };
 
@@ -79,10 +80,16 @@ export function AssistantWidget({
   focusReturnRef,
   focusReturnRefs,
   scopePending = false,
+  onOpenChange,
   onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
+
   const tKey = useCallback(
     (key: string) => translateMessageKey(language, key),
     [language],
@@ -171,6 +178,7 @@ export function AssistantWidget({
 
   const closeAssistant = useCallback(() => {
     setIsOpen(false);
+    onOpenChange?.(false);
     window.requestAnimationFrame(() => {
       const focusTargets = focusReturnRefs ?? (focusReturnRef ? [focusReturnRef] : []);
       const focusTarget = focusTargets.find(
@@ -178,7 +186,7 @@ export function AssistantWidget({
       );
       focusTarget?.current?.focus();
     });
-  }, [focusReturnRef, focusReturnRefs]);
+  }, [focusReturnRef, focusReturnRefs, onOpenChange]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -243,6 +251,9 @@ export function AssistantWidget({
       text: tKey("assistant.welcome")
     }
   ]);
+  const [helpfulMessageIds, setHelpfulMessageIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -250,6 +261,7 @@ export function AssistantWidget({
     activeRequestRef.current = null;
     setIsLoading(false);
     setInputValue("");
+    setHelpfulMessageIds(new Set());
     setMessages([
       {
         id: "welcome",
@@ -545,7 +557,7 @@ export function AssistantWidget({
     <div className={`assistant-widget assistant-widget-open assistant-widget-mode-${mode}`}>
       <div className="assistant-overlay">
         <button
-          aria-label={tKey("assistant.close")}
+          aria-label={tKey("assistant.dismissOutside")}
           className="assistant-scrim"
           onClick={closeAssistant}
           type="button"
@@ -559,7 +571,7 @@ export function AssistantWidget({
           ref={drawerRef}
           role="dialog"
         >
-          <header className="assistant-panel-header">
+          <div className="assistant-panel-header">
             <span className="assistant-avatar" aria-hidden="true">
               <Image
                 src={ASSISTANT_MASCOT_SRC}
@@ -589,6 +601,7 @@ export function AssistantWidget({
                 activeRequestRef.current = null;
                 setIsLoading(false);
                 setInputValue("");
+                setHelpfulMessageIds(new Set());
                 setMessages([
                   {
                     id: "welcome",
@@ -611,7 +624,7 @@ export function AssistantWidget({
                 close
               </span>
             </button>
-          </header>
+          </div>
 
           <div
             aria-busy={isLoading}
@@ -725,8 +738,27 @@ export function AssistantWidget({
                             {tKey("assistant.checkedAt").replace("{time}", checkedAt)}
                           </time>
                         ) : null}
-                        <button className="assistant-helpful" type="button">
-                          {tKey("assistant.helpful")}
+                        <button
+                          aria-pressed={helpfulMessageIds.has(message.id)}
+                          className={`assistant-helpful${helpfulMessageIds.has(message.id) ? " assistant-helpful-active" : ""}`}
+                          onClick={() => {
+                            setHelpfulMessageIds((current) => {
+                              const next = new Set(current);
+                              if (next.has(message.id)) {
+                                next.delete(message.id);
+                              } else {
+                                next.add(message.id);
+                              }
+                              return next;
+                            });
+                          }}
+                          type="button"
+                        >
+                          {tKey(
+                            helpfulMessageIds.has(message.id)
+                              ? "assistant.helpfulMarked"
+                              : "assistant.helpful",
+                          )}
                         </button>
                       </footer>
                       {(() => {

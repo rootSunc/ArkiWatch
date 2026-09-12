@@ -46,6 +46,12 @@ export function handleTabListKeyDown<Key extends string>(
   const nextKey = tabs[nextIndex].key;
   onChange(nextKey);
   window.requestAnimationFrame(() => {
-    document.getElementById(`${idPrefix}-${nextKey}`)?.focus();
+    const nextTab = document.getElementById(`${idPrefix}-${nextKey}`);
+    if (!nextTab) {
+      return;
+    }
+
+    nextTab.focus();
+    nextTab.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   });
 }

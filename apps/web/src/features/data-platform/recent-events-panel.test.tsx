@@ -91,6 +91,19 @@ describe("RecentEventsPanel", () => {
     expect(onSelectEvent).toHaveBeenCalledWith(event, expect.anything());
   });
 
+  it("keeps decorative notification ligatures out of the accessibility tree", () => {
+    const { container } = renderPanel();
+
+    const notificationIcons = Array.from(container.querySelectorAll(".material-symbols-outlined")).filter(
+      (icon) => icon.textContent?.trim() === "notifications",
+    );
+
+    expect(notificationIcons).toHaveLength(2);
+    for (const icon of notificationIcons) {
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+    }
+  });
+
   it("does not mount the event surface while collapsed", () => {
     renderPanel({ isExpanded: false });
 

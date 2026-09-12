@@ -11,6 +11,7 @@ type ExportSnapshotButtonProps = {
   city: string;
   date: string | null;
   language: LanguageMode;
+  variant?: "icon" | "nav";
 };
 
 type ExportState = "idle" | "loading" | "success" | "error";
@@ -37,6 +38,7 @@ export function ExportSnapshotButton({
   city,
   date,
   language,
+  variant = "icon",
 }: ExportSnapshotButtonProps) {
   const [state, setState] = useState<ExportState>("idle");
   const activeExportRef = useRef<AbortController | null>(null);
@@ -115,27 +117,35 @@ export function ExportSnapshotButton({
   }, [state]);
 
   return (
-    <button
-      aria-label={label}
-      aria-busy={state === "loading"}
-      className={`icon-button export-snapshot-button export-snapshot-button-${state}`}
-      disabled={state === "loading"}
-      onClick={() => void downloadSnapshot()}
-      title={label}
-      type="button"
-    >
-      <MaterialIcon
-        name={
-          state === "loading"
-            ? "progress_activity"
-            : state === "error"
-              ? "error"
-              : state === "success"
-                ? "check"
-                : "download"
-        }
-        className={state === "loading" ? "spin-animation" : undefined}
-      />
-    </button>
+    <>
+      <button
+        aria-label={label}
+        aria-busy={state === "loading"}
+        className={`${variant === "nav" ? "nav-row side-nav-utility-row" : "icon-button"} export-snapshot-button export-snapshot-button-${state}`}
+        disabled={state === "loading"}
+        onClick={() => void downloadSnapshot()}
+        title={label}
+        type="button"
+      >
+        <MaterialIcon
+          name={
+            state === "loading"
+              ? "progress_activity"
+              : state === "error"
+                ? "error"
+                : state === "success"
+                  ? "check"
+                  : "download"
+          }
+          className={state === "loading" ? "spin-animation" : undefined}
+        />
+        {variant === "nav" ? <span>{label}</span> : null}
+      </button>
+      {/* The live region has to already be in the DOM when its text changes.
+          Mounting it together with the message is not reliably announced. */}
+      <span aria-atomic="true" aria-live="polite" className="sr-only" role="status">
+        {state === "idle" ? "" : label}
+      </span>
+    </>
   );
 }

@@ -58,6 +58,8 @@ describe("AssistantRetryButton", () => {
     );
 
     const input = await screen.findByRole("textbox", { name: "Ask about platform data" });
+    expect(screen.getByRole("button", { name: "Dismiss assistant by clicking outside" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Close assistant" })).toHaveLength(1);
     await waitFor(() => {
       expect(input).toHaveValue("Explain my personal recommendations.");
     });
@@ -204,6 +206,45 @@ describe("AssistantRetryButton", () => {
     expect(
       await screen.findByText("The assistant is busy. Try again in 17 seconds."),
     ).toBeInTheDocument();
+  });
+
+  it("acknowledges helpful feedback on a cited answer", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          'event: token\ndata: {"content":"Weather looks stable."}\n\n' +
+            'event: done\ndata: {"citations":[{"source":"weather","checked_at":null,"detail":"Weather data snapshot."}],"answer_mode":"fallback"}\n\n',
+          { headers: { "content-type": "text/event-stream" } },
+        ),
+      ),
+    );
+
+    render(
+      <I18nProvider language="en">
+        <AssistantWidget
+          city="helsinki"
+          date={null}
+          language="en"
+          mode="data"
+          openRequest={1}
+          overview={null}
+          userId=""
+        />
+      </I18nProvider>,
+    );
+
+    const input = await screen.findByRole("textbox", { name: "Ask about platform data" });
+    fireEvent.change(input, { target: { value: "How is the weather?" } });
+    fireEvent.submit(input.closest("form") as HTMLFormElement);
+
+    await screen.findByRole("button", { name: "Open Weather workspace" });
+    fireEvent.click(screen.getByRole("button", { name: "Helpful" }));
+
+    expect(screen.getByRole("button", { name: "Marked helpful" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("returns a retryable, localized state when a stream stalls", async () => {

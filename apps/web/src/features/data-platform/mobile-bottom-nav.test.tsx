@@ -55,4 +55,24 @@ describe("MobileBottomNav", () => {
     fireEvent.click(assistant);
     expect(onOpenAssistant).not.toHaveBeenCalled();
   });
+
+  it("does not forward the click event to the assistant opener", () => {
+    const onOpenAssistant = vi.fn();
+
+    render(
+      <I18nProvider language="en">
+        <MobileBottomNav
+          assistantButtonRef={{ current: null }}
+          isScopePending={false}
+          items={items}
+          onOpenAssistant={onOpenAssistant}
+          onSelectNavItem={vi.fn()}
+          selectedNavKey="today"
+        />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect(onOpenAssistant).toHaveBeenCalledWith();
+  });
 });

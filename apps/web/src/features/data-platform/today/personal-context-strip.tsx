@@ -20,7 +20,7 @@ const STEP_LABEL_KEYS: Record<string, string> = {
 };
 
 type PersonalContextStripProps = {
-  dashboard: PersonalDashboardRead;
+  dashboard: Pick<PersonalDashboardRead, "onboarding_completion_percent" | "workflow_steps">;
   onOpenAssistant: () => void;
   onOpenSettings?: () => void;
 };
@@ -76,7 +76,7 @@ export function PersonalContextStrip({
       </span>
       <button
         className="today-secondary-action"
-        onClick={actionOpener}
+        onClick={() => actionOpener()}
         type="button"
       >
         {actionLabel}

@@ -109,7 +109,7 @@ export function RecentEventsPanel({
             className={`events-panel-icon events-panel-icon-${latestEventTone}`}
             aria-hidden="true"
           >
-            <span className="material-symbols-outlined">notifications</span>
+            <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
           </span>
           <span className="events-panel-copy">
             <span className="events-panel-title">
@@ -144,7 +144,7 @@ export function RecentEventsPanel({
               className={`events-panel-icon events-panel-icon-${latestEventTone}`}
               aria-hidden="true"
             >
-              <span className="material-symbols-outlined">notifications</span>
+              <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
             </span>
             <div className="overall-notification-copy">
               <span className="overall-notification-kicker">

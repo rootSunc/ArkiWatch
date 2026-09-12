@@ -19,6 +19,7 @@ const emptySignals: ScenarioLiveSignals = {
 const brief: TodayBrief = {
   checkedAt: "2026-08-11T07:00:00+00:00",
   coverageArea: "Espoo / Uusimaa",
+  hasScopedData: true,
   historicalSnapshotAvailable: true,
   timezone: "Europe/Helsinki",
   recommendationCoverageArea: null,
@@ -45,6 +46,41 @@ const briefWithSummaryTiles: TodayBrief = {
 };
 
 describe("TodayOverview source health notice", () => {
+  it("explains when the selected scope has no signal data", () => {
+    render(
+      <I18nProvider language="en">
+        <TodayOverview
+          isHistorical={false}
+          isScopePending={false}
+          language="en"
+          liveSignals={emptySignals}
+          onOpenAssistant={vi.fn()}
+          onOpenEvent={vi.fn()}
+          onOpenScenario={vi.fn()}
+          onOpenSignals={vi.fn()}
+          onOpenSummaryTile={vi.fn()}
+          personalDashboard={null}
+          planItems={[]}
+          sourceIssueCount={0}
+          todayBrief={{ ...brief, hasScopedData: false }}
+        />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText("No signal data is available for this scope.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "No signal data is available for this scope.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Choose a supported city or date, or connect the live API to inspect current signals.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("keeps long summary values readable instead of hiding their unit", () => {
     render(
       <I18nProvider language="en">
@@ -67,6 +103,7 @@ describe("TodayOverview source health notice", () => {
     );
 
     expect(screen.getByText("9.60 c/kWh")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "At a glance" })).toBeInTheDocument();
   });
 
   it("surfaces source issues before the user acts on the brief", () => {

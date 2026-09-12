@@ -1,6 +1,8 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { copyTextToClipboard } from "./share-view-link-button";
+import { copyTextToClipboard, ShareViewLinkButton } from "./share-view-link-button";
 
 describe("copyTextToClipboard", () => {
   afterEach(() => {
@@ -37,6 +39,25 @@ describe("copyTextToClipboard", () => {
     expect(document.querySelectorAll("textarea")).toHaveLength(0);
   });
 
+  it("restores focus after the legacy copy path", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(document, "execCommand", {
+      configurable: true,
+      value: vi.fn().mockReturnValue(true),
+    });
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    await copyTextToClipboard("https://example.test/view");
+
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
   it("reports a rejected legacy copy instead of claiming success", async () => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -51,5 +72,23 @@ describe("copyTextToClipboard", () => {
       "Clipboard copy command was rejected",
     );
     expect(document.querySelectorAll("textarea")).toHaveLength(0);
+  });
+
+  it("announces a copy failure when the button state changes", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(document, "execCommand", {
+      configurable: true,
+      value: vi.fn().mockReturnValue(false),
+    });
+
+    render(createElement(ShareViewLinkButton, { language: "en" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy view link" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Could not copy link");
+    expect(screen.getByRole("button", { name: "Could not copy link" })).toBeInTheDocument();
   });
 });

@@ -43,4 +43,34 @@ describe("handleTabListKeyDown", () => {
     expect(onChange).toHaveBeenCalledWith("three");
     expect(preventDefault).toHaveBeenCalledOnce();
   });
+
+  it("scrolls the newly focused tab into view", () => {
+    const onChange = vi.fn();
+    const preventDefault = vi.fn();
+    const nextTab = document.createElement("button");
+    const scrollIntoView = vi.fn();
+    nextTab.id = "test-tab-two";
+    nextTab.scrollIntoView = scrollIntoView;
+    document.body.append(nextTab);
+
+    const requestAnimationFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callback(0);
+        return 0;
+      });
+
+    handleTabListKeyDown(
+      { key: "ArrowRight", preventDefault } as never,
+      [{ key: "one" }, { key: "two" }],
+      "one",
+      onChange,
+      "test-tab",
+    );
+
+    expect(nextTab).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", inline: "nearest" });
+    requestAnimationFrame.mockRestore();
+    nextTab.remove();
+  });
 });

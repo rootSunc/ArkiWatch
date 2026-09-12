@@ -57,10 +57,41 @@ describe("TodayActionCard", () => {
       </I18nProvider>,
     );
 
-    screen.getByRole("button", { name: "Commute. Keep a little buffer" }).click();
+    screen
+      .getByRole("button", {
+        name: /Commute: Keep a little buffer, \d{2}:\d{2}\. A transit alert may affect the westbound route\./,
+      })
+      .click();
     screen.getByRole("button", { name: "Ask about Commute" }).click();
 
     expect(onOpen).toHaveBeenCalledOnce();
     expect(onAskAssistant).toHaveBeenCalledWith("Analyze Commute data");
+  });
+
+  it("does not repeat the category when it matches the decision title", () => {
+    render(
+      <I18nProvider language="en">
+        <TodayActionCard
+          language="en"
+          liveSignals={signals}
+          onAskAssistant={vi.fn()}
+          onOpen={vi.fn()}
+          section={{
+            ...section,
+            title: "Commute",
+            recommendation: {
+              ...section.recommendation,
+              title: "Commute",
+            },
+          }}
+        />
+      </I18nProvider>,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: /^Commute, \d{2}:\d{2}\. A transit alert may affect the westbound route\./,
+      }),
+    ).toBeVisible();
   });
 });

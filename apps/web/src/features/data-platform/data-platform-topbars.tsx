@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, ReactNode, RefObject } from "react";
+import { useRef, type ChangeEvent, type ReactNode, type RefObject } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,8 +8,6 @@ import {
   CityScopeSelector,
   DateScopeSelector,
   NotificationButton,
-  RefreshDataButton,
-  ThemeToggleButton,
   type DashboardTone,
   type ThemeMode,
   type WorkspaceMode,
@@ -22,9 +20,8 @@ import {
 
 const ASSISTANT_MASCOT_SRC = "/brand/zoro_mascot_launcher.png";
 import { SideNavRestoreButton } from "./data-platform-side-nav";
-import { LanguageSwitchButton, type LanguageMode, useI18n } from "./i18n";
+import { type LanguageMode, useI18n } from "./i18n";
 import { PlatformScopeControls } from "./platform-scope-controls";
-import { ExportSnapshotButton } from "./export-snapshot-button";
 import { ShareViewLinkButton } from "./share-view-link-button";
 import type { PlatformCategory, PlatformHistoryAvailabilityDay } from "./types";
 import { displayTitle } from "./data-platform-view-model";
@@ -51,6 +48,8 @@ type ScopeControlProps = {
   onRefresh: () => void;
   renderAuthActionButton: (className: string) => ReactNode;
   showExport?: boolean;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
 };
 
 type DashboardSearchProps = {
@@ -70,6 +69,8 @@ function DashboardSearch({
   placeholder,
   value,
 }: DashboardSearchProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   function handleChange(event: ChangeEvent<HTMLInputElement>): void {
     onChange(event.currentTarget.value);
   }
@@ -83,13 +84,17 @@ function DashboardSearch({
         aria-label={label}
         onChange={handleChange}
         placeholder={placeholder}
+        ref={inputRef}
         value={value}
       />
       {value ? (
         <button
           aria-label={clearLabel}
           className="dashboard-search-clear"
-          onClick={() => onChange("")}
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
           title={clearLabel}
           type="button"
         >
@@ -103,8 +108,6 @@ function DashboardSearch({
 }
 
 type DataPlatformMobileHeaderProps = ScopeControlProps & {
-  currentUserInitials: string;
-  currentUserLabel: string;
   isDetailPage: boolean;
   isMobileMenuOpen: boolean;
   navigationButtonRef: RefObject<HTMLButtonElement>;
@@ -112,42 +115,27 @@ type DataPlatformMobileHeaderProps = ScopeControlProps & {
   workspaceMode: WorkspaceMode;
   onOpenNavigation: () => void;
   searchValue: string;
-  themeMode: ThemeMode;
-  onToggleTheme: () => void;
-  userStateLabel: string;
 };
 
 export function DataPlatformMobileHeader({
   availability,
   city,
-  currentUserInitials,
-  currentUserLabel,
   date,
   isDemo,
-  isAuthenticated,
   isCityPending,
   isDatePending,
   isDetailPage,
   isMobileMenuOpen,
   navigationButtonRef,
   isEventsExpanded,
-  isHistorical,
-  isRefreshing,
   language,
   notificationCount,
   notificationTone,
   onCalendarOpen,
   onCityChange,
   onDateChange,
-  onLanguageChange,
   onNotificationsClick,
   onOpenNavigation,
-  onRefresh,
-  onToggleTheme,
-  renderAuthActionButton,
-  showExport,
-  themeMode,
-  userStateLabel,
 }: DataPlatformMobileHeaderProps) {
   const { tKey } = useI18n();
 
@@ -214,32 +202,10 @@ export function DataPlatformMobileHeader({
             settings
           </span>
         </Link>
-      </div>
-      <div className="mobile-header-secondary">
-        <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
-        <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />
-        {isAuthenticated && !isDetailPage && !isHistorical ? (
-          <RefreshDataButton
-            isRefreshing={isRefreshing}
-            language={language}
-            onRefresh={onRefresh}
-          />
-        ) : null}
-        {showExport ? (
-          <ExportSnapshotButton city={city} date={date} language={language} />
-        ) : null}
         <ShareViewLinkButton
           language={language}
           scopeKey={`${city}:${date ?? "live"}`}
         />
-        <span
-          className="profile-avatar mobile-overflow-action"
-          aria-label={userStateLabel}
-          title={currentUserLabel}
-        >
-          {currentUserInitials}
-        </span>
-        {renderAuthActionButton("icon-button mobile-overflow-action")}
       </div>
     </header>
   );
@@ -281,10 +247,12 @@ export function DataPlatformWorkspaceTopbar({
   onNotificationsClick,
   onRefresh,
   onSelectNav,
+  onToggleTheme,
   renderAuthActionButton,
   restoreSideNavButton,
   selectedNavKey,
   showExport,
+  themeMode,
 }: DataPlatformWorkspaceTopbarProps) {
   const { tKey } = useI18n();
   const crumb = breadcrumbForNav(selectedNavKey);
@@ -332,10 +300,11 @@ export function DataPlatformWorkspaceTopbar({
           onLanguageChange={onLanguageChange}
           onNotificationsClick={onNotificationsClick}
           onRefresh={onRefresh}
+          onToggleTheme={onToggleTheme}
           renderAuthActionButton={renderAuthActionButton}
           showAuth={false}
           showExport={showExport}
-          showShare={false}
+          themeMode={themeMode}
         />
         {onOpenAssistant ? (
           <button
@@ -397,12 +366,14 @@ export function DataPlatformDesktopHeader({
   onNotificationsClick,
   onRefresh,
   onSearchChange,
+  onToggleTheme,
   renderAuthActionButton,
   restoreSideNavButton,
   searchValue,
   selectedCategory,
   selectedNavKey,
   showExport,
+  themeMode,
 }: DataPlatformDesktopHeaderProps) {
   const { tKey } = useI18n();
 
@@ -461,8 +432,10 @@ export function DataPlatformDesktopHeader({
           onLanguageChange={onLanguageChange}
           onNotificationsClick={onNotificationsClick}
           onRefresh={onRefresh}
+          onToggleTheme={onToggleTheme}
           renderAuthActionButton={renderAuthActionButton}
           showExport={showExport}
+          themeMode={themeMode}
         />
       </div>
     </div>

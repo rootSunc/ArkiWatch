@@ -156,6 +156,14 @@ export function TrendChart({
     null
   );
   const range = chartPoints.length > 0 ? valueRange(chartPoints) : null;
+  const chartSummary =
+    lowPoint && peakPoint
+      ? lowPoint.value === peakPoint.value
+        ? formatValue(lowPoint.value, unit, maximumFractionDigits)
+        : `${formatValue(lowPoint.value, unit, maximumFractionDigits)} ${tKey("shell.to")} ${formatValue(peakPoint.value, unit, maximumFractionDigits)}`
+      : resolvedEmptyMessage;
+  const chartAriaLabel = `${title}: ${chartSummary}`;
+  const isSinglePoint = chartPoints.length === 1;
   const rootClassName = [className, "trend-panel"].filter(Boolean).join(" ");
 
   return (
@@ -166,7 +174,7 @@ export function TrendChart({
       <header>
         <div>
           <span>{eyebrow}</span>
-          <h3>{title}</h3>
+          <h2>{title}</h2>
         </div>
         <strong>
           {latestPoint
@@ -176,11 +184,15 @@ export function TrendChart({
       </header>
 
       {chartPoints.length > 0 && range ? (
-        <div className="trend-chart-frame">
+        <div className={`trend-chart-frame${isSinglePoint ? " trend-chart-frame-single" : ""}`}>
+          {isSinglePoint ? (
+            <p className="trend-chart-single-note">{tKey("shell.singleSnapshotTrend")}</p>
+          ) : null}
           <svg
-            aria-hidden="true"
+            aria-label={chartAriaLabel}
             className="trend-chart-svg"
             focusable="false"
+            role="img"
             viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
           >
             {[CHART_TOP, (CHART_TOP + CHART_BOTTOM) / 2, CHART_BOTTOM].map((yValue) => (

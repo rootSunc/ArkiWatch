@@ -98,8 +98,8 @@ export function NotificationButton({
   const hasNotifications = count > 0;
   const label = translateMessageKey(
     language,
-    hasNotifications ? "shell.openRecentEvents" : "shell.openNotifications",
-  );
+    hasNotifications ? "shell.openRecentEventsWithCount" : "shell.openNotifications",
+  ).replace("{count}", displayCount);
 
   return (
     <button
@@ -116,7 +116,7 @@ export function NotificationButton({
         notifications
       </span>
       {hasNotifications ? (
-        <span className="notification-badge">{displayCount}</span>
+        <span aria-hidden="true" className="notification-badge">{displayCount}</span>
       ) : null}
     </button>
   );
@@ -182,6 +182,7 @@ export function RefreshDataButton({
     <button
       className="icon-button theme-toggle-button refresh-button"
       aria-label={label}
+      aria-busy={isRefreshing}
       disabled={isRefreshing}
       onClick={onRefresh}
       title={label}
@@ -218,9 +219,9 @@ export function RefreshErrorBanner({
       <MaterialIcon name="sync_problem" />
       <span className="refresh-error-banner-copy">
         <strong>{translateMessageKey(language, "shell.refreshFailed")}</strong>
-        <span>
+        <small>
           {translateMessageKey(language, detailKey)}
-        </span>
+        </small>
       </span>
       <button
         aria-label={translateMessageKey(language, "shell.dismissRefreshError")}
@@ -357,7 +358,7 @@ function formatDateScopeValue(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: "UTC",
     ...(includeYear ? { year: "numeric" } : {}),
@@ -389,6 +390,15 @@ function dateValue(year: number, month: number, day: number): string {
 
 function monthKeyFromDateValue(value: string): string {
   return value.slice(0, 7);
+}
+
+function availableHistoryDates(
+  availability: PlatformHistoryAvailabilityDay[],
+): string[] {
+  return availability
+    .filter((day) => day.has_data)
+    .map((day) => day.date)
+    .sort();
 }
 
 function addMonths(monthKey: string, offset: number): string {
@@ -447,10 +457,12 @@ export function DateScopeSelector({
   onDateChange: (date: string | null) => void;
 }) {
   const controlRef = useRef<HTMLDivElement | null>(null);
+  const calendarRef = useRef<HTMLDivElement | null>(null);
   const dateTriggerRef = useRef<HTMLButtonElement | null>(null);
   const restoreDateTriggerFocusRef = useRef(false);
   const calendarId = `arkiwatch-date-calendar-${useId().replace(/:/g, "")}`;
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarAvailabilitySyncedRef = useRef(false);
   const label = translateMessageKey(language, "shell.selectedDate");
   const todayStr = todayDateValue();
   const displayValue = date ?? todayStr;
@@ -481,10 +493,15 @@ export function DateScopeSelector({
     () => new Map(availability.map((day) => [day.date, day])),
     [availability],
   );
+  const availableDates = useMemo(
+    () => availableHistoryDates(availability),
+    [availability],
+  );
+  const latestAvailableDateValue = availableDates[availableDates.length - 1] ?? null;
   const weekdayLabels = useMemo(() => buildWeekdayLabels(language), [language]);
   const calendarCells = useMemo(() => buildCalendarCells(visibleMonth), [visibleMonth]);
-  const earliestAvailabilityMonth = availability[0]?.date
-    ? monthKeyFromDateValue(availability[0].date)
+  const earliestAvailabilityMonth = availableDates[0]
+    ? monthKeyFromDateValue(availableDates[0])
     : null;
   const todayMonth = monthKeyFromDateValue(todayStr);
   const previousMonth = addMonths(visibleMonth, -1);
@@ -508,8 +525,67 @@ export function DateScopeSelector({
   }, [date, isCalendarOpen]);
 
   useEffect(() => {
+    if (!isCalendarOpen) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const calendar = calendarRef.current;
+      if (!calendar) {
+        return;
+      }
+
+      // Only pull focus in when it is not already inside the calendar. A month
+      // change re-runs this effect, and unconditionally focusing a day cell
+      // would take focus off the previous/next month button the user just
+      // pressed, so they could never page through two months in a row. The
+      // effect still recovers focus when a month switch unmounts the cell that
+      // had it, which is what happens when availability moves the visible month
+      // right after the calendar opens.
+      if (calendar.contains(document.activeElement)) {
+        return;
+      }
+
+      const target =
+        calendar.querySelector<HTMLButtonElement>(
+          ".date-calendar-day[aria-current='date']:not([disabled])",
+        ) ??
+        calendar.querySelector<HTMLButtonElement>(
+          ".date-calendar-day:not(.date-calendar-day-adjacent):not([disabled])",
+        ) ??
+        calendar.querySelector<HTMLButtonElement>("button:not([disabled])");
+      target?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isCalendarOpen, visibleMonth]);
+
+  useEffect(() => {
     setVisibleMonth(monthKeyFromDateValue(displayValue));
   }, [displayValue]);
+
+  useEffect(() => {
+    if (
+      !isCalendarOpen ||
+      isHistorical ||
+      calendarAvailabilitySyncedRef.current ||
+      !latestAvailableDateValue
+    ) {
+      return;
+    }
+
+    calendarAvailabilitySyncedRef.current = true;
+    const latestMonth = monthKeyFromDateValue(latestAvailableDateValue);
+    if (visibleMonth === todayMonth && latestMonth !== todayMonth) {
+      setVisibleMonth(latestMonth);
+    }
+  }, [
+    isCalendarOpen,
+    isHistorical,
+    latestAvailableDateValue,
+    todayMonth,
+    visibleMonth,
+  ]);
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -580,8 +656,15 @@ export function DateScopeSelector({
         disabled={isPending}
         ref={dateTriggerRef}
         onClick={() => {
-          setVisibleMonth(monthKeyFromDateValue(displayValue));
           const nextOpen = !isCalendarOpen;
+          if (nextOpen) {
+            calendarAvailabilitySyncedRef.current = false;
+            setVisibleMonth(
+              monthKeyFromDateValue(
+                date ? displayValue : latestAvailableDateValue ?? displayValue,
+              ),
+            );
+          }
           setIsCalendarOpen(nextOpen);
           if (nextOpen) {
             onCalendarOpen?.();
@@ -614,106 +697,105 @@ export function DateScopeSelector({
           expand_more
         </span>
       )}
-      {isCalendarOpen ? (
-        <div
-          className="date-calendar-popover"
-          id={calendarId}
-          role="dialog"
-          aria-label={translateMessageKey(language, "shell.availableHistoricalData")}
-        >
-          <div className="date-calendar-header">
-            <strong>{formatMonthLabel(visibleMonth, language)}</strong>
-            <div className="date-calendar-nav">
-              <button
-                aria-label={translateMessageKey(language, "shell.previousMonth")}
-                disabled={!canGoPrevious}
-                onClick={() => setVisibleMonth(previousMonth)}
-                title={translateMessageKey(language, "shell.previousMonth")}
-                type="button"
-              >
-                <MaterialIcon name="keyboard_arrow_left" />
-              </button>
-              <button
-                aria-label={translateMessageKey(language, "shell.nextMonth")}
-                disabled={!canGoNext}
-                onClick={() => setVisibleMonth(nextMonth)}
-                title={translateMessageKey(language, "shell.nextMonth")}
-                type="button"
-              >
-                <MaterialIcon name="keyboard_arrow_right" />
-              </button>
-            </div>
-          </div>
-          <div className="date-calendar-weekdays" aria-hidden="true">
-            {weekdayLabels.map((weekday, index) => (
-              <span key={`${weekday}-${index}`}>{weekday}</span>
-            ))}
-          </div>
-          <div className="date-calendar-grid">
-            {calendarCells.map((cell) => {
-              const availabilityDay = availabilityByDate.get(cell.dateValue);
-              const hasData = Boolean(availabilityDay?.has_data);
-              const isFuture = cell.dateValue > todayStr;
-              const isSelected = cell.dateValue === displayValue;
-              const cellLabel = hasData
-                ? `${formatDateScopeValue(cell.dateValue, language)}: ${
-                    availabilityDay?.record_count ?? 0
-                  } ${translateMessageKey(language, "shell.records")}`
-                : formatDateScopeValue(cell.dateValue, language);
-
-              return (
-                <button
-                  key={cell.dateValue}
-                  className={[
-                    "date-calendar-day",
-                    cell.isCurrentMonth ? "" : "date-calendar-day-adjacent",
-                    hasData ? "date-calendar-day-has-data" : "",
-                    isSelected ? "date-calendar-day-selected" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-label={cellLabel}
-                  aria-current={isSelected ? "date" : undefined}
-                  disabled={isFuture || isPending}
-                  onClick={() => selectCalendarDate(cell.dateValue)}
-                  title={
-                    hasData
-                      ? `${cellLabel}`
-                      : `${cellLabel}: ${translateMessageKey(language, "shell.noHistoricalData")}`
-                  }
-                  type="button"
-                >
-                  <span>{cell.dayNumber}</span>
-                  {hasData ? (
-                    <span className="date-calendar-data-dot" aria-hidden="true" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-          <div className="date-calendar-actions">
+      <div
+        hidden={!isCalendarOpen}
+        className="date-calendar-popover"
+        id={calendarId}
+        role="dialog"
+        aria-label={translateMessageKey(language, "shell.availableHistoricalData")}
+        ref={calendarRef}
+      >
+        <div className="date-calendar-header">
+          <strong>{formatMonthLabel(visibleMonth, language)}</strong>
+          <div className="date-calendar-nav">
             <button
-              onClick={() => {
-                onDateChange(null);
-                closeCalendar();
-              }}
+              aria-label={translateMessageKey(language, "shell.previousMonth")}
+              disabled={!canGoPrevious}
+              onClick={() => setVisibleMonth(previousMonth)}
+              title={translateMessageKey(language, "shell.previousMonth")}
               type="button"
             >
-              {translateMessageKey(language, "shell.clearDate")}
+              <MaterialIcon name="keyboard_arrow_left" />
             </button>
             <button
-              onClick={() => {
-                onDateChange(null);
-                setVisibleMonth(monthKeyFromDateValue(todayStr));
-                closeCalendar();
-              }}
+              aria-label={translateMessageKey(language, "shell.nextMonth")}
+              disabled={!canGoNext}
+              onClick={() => setVisibleMonth(nextMonth)}
+              title={translateMessageKey(language, "shell.nextMonth")}
               type="button"
             >
-              {translateMessageKey(language, "shell.navToday")}
+              <MaterialIcon name="keyboard_arrow_right" />
             </button>
           </div>
         </div>
-      ) : null}
+        <div className="date-calendar-weekdays" aria-hidden="true">
+          {weekdayLabels.map((weekday, index) => (
+            <span key={`${weekday}-${index}`}>{weekday}</span>
+          ))}
+        </div>
+        <div className="date-calendar-grid">
+          {calendarCells.map((cell) => {
+            const availabilityDay = availabilityByDate.get(cell.dateValue);
+            const hasData = Boolean(availabilityDay?.has_data);
+            const isFuture = cell.dateValue > todayStr;
+            const isSelected = cell.dateValue === displayValue;
+            const cellLabel = hasData
+              ? `${formatDateScopeValue(cell.dateValue, language)}: ${
+                  availabilityDay?.record_count ?? 0
+                } ${translateMessageKey(language, "shell.records")}`
+              : `${formatDateScopeValue(cell.dateValue, language)}: ${translateMessageKey(
+                  language,
+                  "shell.noHistoricalData",
+                )}`;
+
+            return (
+              <button
+                key={cell.dateValue}
+                className={[
+                  "date-calendar-day",
+                  cell.isCurrentMonth ? "" : "date-calendar-day-adjacent",
+                  hasData ? "date-calendar-day-has-data" : "",
+                  isSelected ? "date-calendar-day-selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-label={cellLabel}
+                aria-current={isSelected ? "date" : undefined}
+                disabled={isFuture || isPending}
+                onClick={() => selectCalendarDate(cell.dateValue)}
+                title={cellLabel}
+                type="button"
+              >
+                <span>{cell.dayNumber}</span>
+                {hasData ? (
+                  <span className="date-calendar-data-dot" aria-hidden="true" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="date-calendar-actions">
+          <button
+            onClick={() => {
+              onDateChange(null);
+              closeCalendar();
+            }}
+            type="button"
+          >
+            {translateMessageKey(language, "shell.clearDate")}
+          </button>
+          <button
+            onClick={() => {
+              onDateChange(null);
+              setVisibleMonth(monthKeyFromDateValue(todayStr));
+              closeCalendar();
+            }}
+            type="button"
+          >
+            {translateMessageKey(language, "shell.navToday")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -729,6 +811,7 @@ export function HistoricalWarningBanner({
   onReturnToLive: () => void;
   timeScope: PlatformTimeScope | null;
 }) {
+  const formattedDate = formatDateScopeValue(date, language);
   const windowLabel =
     timeScope?.window_start && timeScope.window_end
       ? `${formatTimestamp(timeScope.window_start, "dateTime", language, timeScope.timezone)} - ${formatTimestamp(
@@ -749,7 +832,7 @@ export function HistoricalWarningBanner({
       </span>
       <span className="historical-banner-text">
         <strong>
-          {translateMessageKey(language, "shell.viewingHistoricalDashboardFor")} {date}
+          {translateMessageKey(language, "shell.viewingHistoricalDashboardFor")} {formattedDate}
         </strong>
         <span>
           {windowLabel ??

@@ -186,18 +186,6 @@ export function loadReadRecentEventIds(): Set<string> {
   }
 }
 
-export function profileInitials(label: string): string {
-  const initials = label
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return initials || "DV";
-}
-
 export function saveReadRecentEventIds(ids: Set<string>): void {
   if (typeof window === "undefined") {
     return;
@@ -269,6 +257,13 @@ export function resolveNavKey(
 
   if (!categoryVisibleToCurrentUser(normalized)) {
     return TODAY_NAV_KEY;
+  }
+
+  if (categories.length === 0 && isCatalogCategoryKey(normalized)) {
+    // The server shell can render before the overview categories hydrate. Keep
+    // a known catalog deep link stable during that loading window instead of
+    // flashing the Today workspace and then replacing it after hydration.
+    return normalized;
   }
 
   const primaryNavItem = PRIMARY_NAV_ITEMS.find((item) => item.key === normalized);
