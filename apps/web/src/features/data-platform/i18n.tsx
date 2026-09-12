@@ -40,7 +40,7 @@ import zhMessages from "./messages/zh.json";
 
 export type LanguageMode = "en" | "zh";
 
-export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
+const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
 export const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 type StructuredMessages = {
@@ -294,7 +294,7 @@ export function translateMessageKey(language: LanguageMode, key: string): string
   return englishFallback ?? key;
 }
 
-export function isLanguageMode(value: string | null): value is LanguageMode {
+function isLanguageMode(value: string | null): value is LanguageMode {
   return value === "en" || value === "zh";
 }
 
@@ -336,7 +336,7 @@ export function applyLanguageMode(language: LanguageMode): void {
   document.documentElement.dataset.language = language;
 }
 
-export function translateText(language: LanguageMode, value: string): string {
+function translateText(language: LanguageMode, value: string): string {
   if (language === "en") {
     return value;
   }

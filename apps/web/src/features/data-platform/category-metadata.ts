@@ -1,4 +1,3 @@
-import { translateKeyDataItemLabel, type LanguageMode } from "./i18n";
 import { PlatformCategory, PlatformKeyDataItem } from "./types";
 
 const CATEGORY_KEY_DATA_ITEMS: Record<string, string[]> = {
@@ -45,7 +44,7 @@ export function toKeyDataItem(key: string): PlatformKeyDataItem {
   return { key, label_key: keyDataItemLabelKey(key) };
 }
 
-export function keyDataItemKey(item: PlatformKeyDataItem | string): string {
+function keyDataItemKey(item: PlatformKeyDataItem | string): string {
   return typeof item === "string" ? item : item.key;
 }
 
@@ -55,10 +54,6 @@ export function categoryKeyDataItems(category: PlatformCategory): PlatformKeyDat
   }
 
   return (CATEGORY_KEY_DATA_ITEMS[category.key] ?? []).map(toKeyDataItem);
-}
-
-export function categoryKeyDataItemKeys(category: PlatformCategory): string[] {
-  return categoryKeyDataItems(category).map(keyDataItemKey);
 }
 
 export function mergeKeyDataItems(categories: PlatformCategory[]): PlatformKeyDataItem[] {
@@ -79,14 +74,3 @@ export function mergeKeyDataItems(categories: PlatformCategory[]): PlatformKeyDa
   return items;
 }
 
-export function keyDataItemLabel(
-  language: LanguageMode,
-  item: PlatformKeyDataItem | string,
-): string {
-  return translateKeyDataItemLabel(language, item);
-}
-
-/** @deprecated Use keyDataItemLabel with structured key_data_items instead. */
-export function formatDataItemLabel(value: string): string {
-  return value.replaceAll("_", " ");
-}

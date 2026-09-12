@@ -17,7 +17,7 @@ export const CITY_OPTIONS: CityScopeOption[] = [
   ...CITY_PACKS.map(({ value, label }) => ({ value, label })),
 ];
 
-export const CITY_COVERAGE_AREAS: Record<string, string> = {
+const CITY_COVERAGE_AREAS: Record<string, string> = {
   ...Object.fromEntries(CITY_PACKS.map((pack) => [pack.value, `${pack.label} / ${pack.region}`])),
 };
 

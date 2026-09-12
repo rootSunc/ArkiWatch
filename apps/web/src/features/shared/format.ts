@@ -85,10 +85,6 @@ export function formatRelativeAge(value: string | null, language: "en" | "zh" = 
   return language === "zh" ? `${Math.round(diffInHours / 24)} 天前` : `${Math.round(diffInHours / 24)} d ago`;
 }
 
-export function formatLabel(value: string): string {
-  return value.replaceAll("_", " ");
-}
-
 export function statusTone(status: string): string {
   switch (status) {
     case "active":

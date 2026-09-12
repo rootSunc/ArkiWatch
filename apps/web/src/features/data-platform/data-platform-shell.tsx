@@ -32,11 +32,6 @@ export type NavItem = {
 
 export type WorkspaceMode = "today" | "data";
 
-export const WORKSPACE_MODE_ITEMS: Array<NavItem & { mode: WorkspaceMode }> = [
-  { key: "overview", labelKey: "navSignals", icon: "hub", mode: "data" },
-  { key: "today", labelKey: "navToday", icon: "calendar_today", mode: "today" },
-];
-
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { key: "overview", labelKey: "navSignals", icon: "hub" },
   { key: "today", labelKey: "navToday", icon: "calendar_today" },

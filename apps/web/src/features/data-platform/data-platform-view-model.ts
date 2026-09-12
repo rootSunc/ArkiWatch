@@ -579,7 +579,7 @@ export function eventTimeLabel(
   return `${formatTimestamp(event.starts_at, "dateTime", language, timezone)} - ${categoryLabel}`;
 }
 
-export function eventSeverityRank(event: PlatformEvent): number {
+function eventSeverityRank(event: PlatformEvent): number {
   switch (event.severity.toUpperCase()) {
     case "HIGH":
       return 3;
@@ -653,7 +653,7 @@ export function recentEventLabel(
   return `${count} ${translateMessageKey(language, count === 1 ? "shell.recentEvent" : "shell.recentEventsCount")}`;
 }
 
-export function attributeLabel(key: string): string {
+function attributeLabel(key: string): string {
   return key
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")

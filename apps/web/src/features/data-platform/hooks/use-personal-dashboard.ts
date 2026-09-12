@@ -8,7 +8,7 @@ import { fetchPersonalDashboard } from "../personal-dashboard";
 
 const PERSONAL_DASHBOARD_STALE_TIME_MS = 60 * 1000;
 
-export const personalDashboardKeys = {
+const personalDashboardKeys = {
   all: ["personal-dashboard"] as const,
   current: (userId: string | undefined) =>
     [...personalDashboardKeys.all, userId ?? "anonymous"] as const,

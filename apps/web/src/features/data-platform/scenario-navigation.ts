@@ -13,7 +13,7 @@ export const SCENARIO_NAV_KEYS: Record<string, string> = {
   energy: "energy",
 };
 
-export const SUMMARY_TILE_NAV_KEYS: Record<string, string> = {
+const SUMMARY_TILE_NAV_KEYS: Record<string, string> = {
   outdoor: "weather",
   air: "air",
   commute: "mobility",
@@ -25,17 +25,6 @@ export type ScenarioNavigationTarget = {
   mobilityTab?: MobilityTabKey;
   energyTab?: EnergyPanelKey;
 };
-
-export const TODAY_QUICK_LINKS: Array<{
-  scenarioKey: string;
-  label: string;
-  icon: string;
-}> = [
-  { scenarioKey: "outdoor", label: "Outdoor", icon: "wb_sunny" },
-  { scenarioKey: "home_air", label: "Home air", icon: "air" },
-  { scenarioKey: "commute", label: "Commute", icon: "commute" },
-  { scenarioKey: "energy", label: "Energy", icon: "bolt" },
-];
 
 export function resolveMobilityTabForSignals(
   signals: ScenarioLiveSignals,

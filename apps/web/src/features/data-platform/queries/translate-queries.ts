@@ -18,7 +18,7 @@ export type TranslateTextInput = {
   context?: string;
 };
 
-export function descriptionQueryKey(
+function descriptionQueryKey(
   eventId: string,
   language: LanguageMode,
   text: string,

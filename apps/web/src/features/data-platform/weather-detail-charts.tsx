@@ -115,7 +115,7 @@ export function chartConfig(mode: ChartMode): ForecastChartConfig {
   return CHART_MODES.find((item) => item.key === mode) ?? CHART_MODES[0];
 }
 
-export function chartValue(point: WeatherForecastPoint, mode: ChartMode): number | null {
+function chartValue(point: WeatherForecastPoint, mode: ChartMode): number | null {
   switch (mode) {
     case "temperature":
       return point.temperature_c;
@@ -206,7 +206,7 @@ export function chartX(index: number, count: number): number {
   return (index / (count - 1)) * FORECAST_CHART_WIDTH;
 }
 
-export function chartPointX(point: ForecastChartPoint): number {
+function chartPointX(point: ForecastChartPoint): number {
   return chartX(point.sourceIndex, point.sourceCount);
 }
 
@@ -221,7 +221,7 @@ export function chartY(value: number, scale: ForecastChartScale): number {
   );
 }
 
-export function chartLinePath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
+function chartLinePath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
   if (points.length === 0) {
     return "";
   }
@@ -236,7 +236,7 @@ export function chartLinePath(points: ForecastChartPoint[], scale: ForecastChart
     .join(" ");
 }
 
-export function chartAreaPath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
+function chartAreaPath(points: ForecastChartPoint[], scale: ForecastChartScale): string {
   if (points.length === 0) {
     return "";
   }
@@ -245,7 +245,7 @@ export function chartAreaPath(points: ForecastChartPoint[], scale: ForecastChart
   return `${linePath} L${chartPointX(points[points.length - 1]).toFixed(1)},${FORECAST_CHART_BOTTOM} L${chartPointX(points[0]).toFixed(1)},${FORECAST_CHART_BOTTOM} Z`;
 }
 
-export function chartPolyline(points: ForecastChartPoint[], scale: ForecastChartScale): string {
+function chartPolyline(points: ForecastChartPoint[], scale: ForecastChartScale): string {
   return points
     .map((point) => {
       const x = chartPointX(point);

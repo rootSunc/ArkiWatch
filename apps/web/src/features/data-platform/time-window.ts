@@ -1,16 +1,9 @@
 import { WeatherTimePreset, WeatherTimeWindow } from "./types";
 
-export const TIME_PRESETS: Array<{ key: WeatherTimePreset; label: string }> = [
-  { key: "day", label: "Day" },
-  { key: "next24h", label: "24h" },
-  { key: "next7d", label: "7d" },
-  { key: "custom", label: "Custom" }
-];
-
 const HELSINKI_TIME_ZONE = "Europe/Helsinki";
 const MS_PER_HOUR = 60 * 60 * 1000;
 
-export function localDateInputValue(value: Date): string {
+function localDateInputValue(value: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "2-digit",

@@ -31,7 +31,7 @@ export type PlatformDataNeedsOptions = {
   needsHistoryAvailability?: boolean;
 };
 
-export const DEMO_PLATFORM_DATA_NEEDS: PlatformDataNeeds = {
+const DEMO_PLATFORM_DATA_NEEDS: PlatformDataNeeds = {
   weather: true,
   air: true,
   energy: true,

@@ -624,7 +624,7 @@ function publicEventTimeBoost(event: PlatformEvent, now: number): number {
   return (attributeBoolean(event, "is_free") ? 12 : 0) + (hours <= 12 ? 10 : 4);
 }
 
-export function recentEventUsefulness(event: PlatformEvent, now = Date.now()): number {
+function recentEventUsefulness(event: PlatformEvent, now = Date.now()): number {
   const type = eventType(event) ?? "";
   const starts = startsAtMs(event);
   const ends = endsAtMs(event);

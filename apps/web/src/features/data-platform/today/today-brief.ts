@@ -129,7 +129,7 @@ function coverageRegion(value: string): string {
   return (segments[segments.length - 1] ?? withoutDate).trim().toLowerCase();
 }
 
-export function recommendationModeForToday({
+function recommendationModeForToday({
   isHistorical = false,
   overviewCoverageArea,
   recommendationCoverageArea,

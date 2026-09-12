@@ -1,4 +1,4 @@
-import { formatRelativeAge, parseValidDate } from "@/features/shared/format";
+import { parseValidDate } from "@/features/shared/format";
 
 import { translateEnumLabel, translateMetricLabel, type LanguageMode } from "./i18n";
 import {
@@ -51,7 +51,7 @@ export function metricByKey(category: PlatformCategory, key: string): PlatformMe
   return category.summary_metrics.find((metric) => metric.key === key) ?? null;
 }
 
-export function displayMetricLabelKey(metric: PanelMetric | null): string | null {
+function displayMetricLabelKey(metric: PanelMetric | null): string | null {
   if (metric?.key === "estimated_cost") {
     return "estimatedCost";
   }
@@ -109,10 +109,6 @@ export function formatCompactTime(
   })
     .format(parsedDate)
     .toUpperCase();
-}
-
-export function relativeTime(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string): string {
-  return value ? formatRelativeAge(value, language) : tKey("energy.notObserved");
 }
 
 export function toneFromStatus(status: string): EnergyTone {
@@ -290,11 +286,11 @@ export function pointValueRange(points: EnergyPoint[]): { min: number; max: numb
   };
 }
 
-export function energyPointUnit(point: EnergyPoint | null, fallback: string | null | undefined): string | null {
+function energyPointUnit(point: EnergyPoint | null, fallback: string | null | undefined): string | null {
   return point?.unit ?? fallback ?? null;
 }
 
-export function formatValueWithUnit(value: number, unit: string | null | undefined): string {
+function formatValueWithUnit(value: number, unit: string | null | undefined): string {
   if (unit?.toUpperCase() === "EUR") {
     return formatEstimatedCost(value, (label) => label);
   }
@@ -315,11 +311,11 @@ export function formatEstimatedCost(value: number | null | undefined, tKey: (key
   return `EUR ${value.toFixed(2)}`;
 }
 
-export function isPriceUnit(unit: string | null | undefined): boolean {
+function isPriceUnit(unit: string | null | undefined): boolean {
   return unit !== null && unit !== undefined && unit.toLowerCase().includes("kwh");
 }
 
-export function estimatedCostFromPrice(
+function estimatedCostFromPrice(
   priceValue: number | null | undefined,
   unit: string | null | undefined,
   usageKwh: number | null | undefined
@@ -331,7 +327,7 @@ export function estimatedCostFromPrice(
   return (priceValue * usageKwh) / 100;
 }
 
-export function priceDisplayPoint(
+function priceDisplayPoint(
   point: EnergyPoint,
   fallbackUnit: string | null | undefined,
   usageKwh: number | null | undefined
@@ -474,7 +470,7 @@ export function formatHistoryDate(
   }).format(parsed);
 }
 
-export function averagePointValue(points: EnergyPoint[]): number | null {
+function averagePointValue(points: EnergyPoint[]): number | null {
   if (points.length === 0) {
     return null;
   }
@@ -553,7 +549,7 @@ export function formatClockTime(
   }).format(parsedDate);
 }
 
-export function formatClockRange(
+function formatClockRange(
   startsAt: string | null | undefined,
   endsAt: string | null | undefined,
   timeZone = DEFAULT_DATA_TIME_ZONE,
@@ -567,7 +563,7 @@ export function formatClockRange(
   return start ?? end ?? "";
 }
 
-export function formatGroupedInt(value: number): string {
+function formatGroupedInt(value: number): string {
   return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
@@ -575,11 +571,11 @@ export function formatPriceNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
-export function formatSpreadNumber(value: number): string {
+function formatSpreadNumber(value: number): string {
   return value.toFixed(1);
 }
 
-export function pointAtReference(
+function pointAtReference(
   points: EnergyPoint[],
   reference: string | null | undefined,
 ): EnergyPoint | null {
@@ -785,19 +781,3 @@ export function energyHighlightRows(options: {
   });
 }
 
-export function orderedEnergyMetrics(metrics: EnergyMetric[], isPricePanel: boolean): PanelMetric[] {
-  const priority = isPricePanel
-    ? ["estimated_cost", "window_average", "relative_savings", "minimum_value", "maximum_value", "point_count"]
-    : ["window_average", "relative_savings", "minimum_value", "maximum_value", "point_count"];
-
-  return [...metrics]
-    .sort((left, right) => {
-      const leftIndex = priority.indexOf(left.key);
-      const rightIndex = priority.indexOf(right.key);
-      return (leftIndex === -1 ? priority.length : leftIndex) - (rightIndex === -1 ? priority.length : rightIndex);
-    })
-    .map((metric) => ({
-      ...metric,
-      tone: energyMetricTone(metric)
-    }));
-}

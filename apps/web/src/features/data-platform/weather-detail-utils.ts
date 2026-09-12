@@ -122,7 +122,7 @@ export function formatTimeZoneName(
   return timeZoneName ?? "EET";
 }
 
-export function formatTimelineTime(
+function formatTimelineTime(
   value: string | null | undefined,
   language: LanguageMode,
   timeZone = DEFAULT_DATA_TIME_ZONE,
@@ -148,7 +148,7 @@ export function formatTimelineTime(
     .toUpperCase();
 }
 
-export function pointTime(point: WeatherForecastPoint): number {
+function pointTime(point: WeatherForecastPoint): number {
   return new Date(point.timestamp).getTime();
 }
 
@@ -157,7 +157,7 @@ function referenceTimestamp(value: string | number | null | undefined): number {
   return Number.isFinite(timestamp) ? timestamp : Date.now();
 }
 
-export function orderedPoints(points: WeatherForecastPoint[]): WeatherForecastPoint[] {
+function orderedPoints(points: WeatherForecastPoint[]): WeatherForecastPoint[] {
   return [...points].sort((left, right) => pointTime(left) - pointTime(right));
 }
 
@@ -295,7 +295,7 @@ export function compassDirection(degrees: number | null | undefined): string {
   return directions[Math.round(degrees / 22.5) % directions.length];
 }
 
-export function warningTone(warning: WeatherWarning): TimelineItem["tone"] {
+function warningTone(warning: WeatherWarning): TimelineItem["tone"] {
   const severity = warning.severity?.toLowerCase() ?? "";
   if (severity.includes("high") || severity.includes("severe") || severity.includes("red")) {
     return "bad";
@@ -319,7 +319,7 @@ export function eventTone(event: PlatformEvent): TimelineItem["tone"] {
   return "neutral";
 }
 
-export function peakGustPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
+function peakGustPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
   return (
     [...points]
       .filter((point) => point.wind_gust_ms !== null || point.wind_speed_ms !== null)

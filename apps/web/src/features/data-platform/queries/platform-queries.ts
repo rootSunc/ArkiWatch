@@ -32,8 +32,8 @@ import {
   type PlatformDataNeedsOptions,
 } from "./platform-data-needs";
 
-export const HISTORY_DAY_COUNT = 7;
-export const HISTORY_AVAILABILITY_DAY_COUNT = 90;
+const HISTORY_DAY_COUNT = 7;
+const HISTORY_AVAILABILITY_DAY_COUNT = 90;
 export {
   PLATFORM_QUERY_REFETCH_INTERVAL_MS,
   PLATFORM_QUERY_STALE_TIME_MS,
@@ -116,7 +116,7 @@ export const platformKeys = {
 
 export { normalizeApiBaseUrl };
 
-export function resolvePlatformScope(scope: PlatformQueryScope = {}) {
+function resolvePlatformScope(scope: PlatformQueryScope = {}) {
   const apiBaseUrl = resolveApiBaseUrl();
   const city = normalizeCityValue(scope.city ?? DEFAULT_CITY);
   const date = normalizeSourceDateValue(scope.date);
@@ -162,7 +162,7 @@ function emptyHistory(): PlatformHistoryResponse {
   };
 }
 
-export function normalizeHistoryResponse(
+function normalizeHistoryResponse(
   history: PlatformHistoryApiResponse | null,
 ): PlatformHistoryResponse {
   if (!history) {
