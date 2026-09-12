@@ -18,7 +18,6 @@ import { appEnv } from "@/lib/env";
 
 import "./data-platform.css";
 
-import { categoryVisibleToCurrentUser } from "./category-access";
 import {
   cityLabel,
   normalizeCityValue,
@@ -66,11 +65,10 @@ import {
 } from "./data-platform-nav-utils";
 import { useEventAnchorScroll } from "./hooks/use-event-anchor-scroll";
 import { useShellFocus } from "./hooks/use-shell-focus";
+import { useVisibleOverview } from "./hooks/use-visible-overview";
 import { useRefreshPlatformData, useSignOut } from "./queries/platform-actions";
 import type { PlatformCategory, PlatformEvent } from "./types";
 import {
-  buildAirQualityRecentEvents,
-  buildWeatherRecentEvents,
   curatedRecentEvents,
   eventNavigationId,
   eventTarget,
@@ -102,7 +100,6 @@ import { SourceHealthStrip } from "./source-health-strip";
 import { sourceIssueCountForScope } from "./source-health";
 import { platformErrorMessage } from "./platform-error";
 import { isEmptyStatus } from "./platform-status";
-import { scopedReferenceTime } from "./data-time-scope";
 import { buildTodayBrief, todayBriefEvaluationTime } from "./today/today-brief";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import { buildUserSummaryTiles } from "./user-summary-stats";
@@ -116,14 +113,12 @@ import {
 import {
   MOBILITY_NAV_KEY,
   recentEventLabel,
-  buildMobilityCategory,
   displayTitle,
   eventCategoryLabel,
   eventMatchesSearch,
   isMobilityCategoryKey,
   isNotificationEvent,
   matchesSearch,
-  mergeMobilityCategories,
   notificationToneForEvents,
   pickPriorityEvent,
 } from "./data-platform-view-model";
@@ -366,71 +361,27 @@ export function DataPlatformHome({
     );
   }
 
-  const categories = useMemo(
-    () =>
-      (overview?.categories ?? []).filter((category) =>
-        categoryVisibleToCurrentUser(category.key),
-      ),
-    [overview],
-  );
-  const transitCategory = useMemo(
-    () => categoryByKey(categories, "transit"),
-    [categories],
-  );
-  const roadRailCategory = useMemo(
-    () => categoryByKey(categories, "traffic"),
-    [categories],
-  );
-  const mobilityCategory = useMemo(
-    () => buildMobilityCategory(categories, transit, roadRail),
-    [categories, roadRail, transit],
-  );
-  const displayCategories = useMemo(
-    () => mergeMobilityCategories(categories, mobilityCategory),
-    [categories, mobilityCategory],
-  );
-  const eventReferenceAt = scopedReferenceTime(activeTimeScope, overview?.checked_at ?? null);
-  const recentEventCandidates = useMemo(
-    () =>
-      [
-        ...buildWeatherRecentEvents(weather, { city: selectedCity }),
-        ...buildAirQualityRecentEvents(airQuality),
-        ...categories.flatMap((category) => category.events),
-        ...(overview?.recent_events ?? []),
-      ].filter((event) => categoryVisibleToCurrentUser(event.category_key)),
-    [airQuality, categories, overview, selectedCity, weather],
-  );
-  const recentEvents = useMemo(
-    () =>
-      curatedRecentEvents(recentEventCandidates, RECENT_EVENT_LIMIT, {
-        city: selectedCity,
-        referenceAt: eventReferenceAt,
-      }),
-    [eventReferenceAt, recentEventCandidates, selectedCity],
-  );
-  const sources = useMemo(
-    () =>
-      (overview?.sources ?? []).filter((source) => {
-        const sourceCategories = source.categories ?? [];
-        return (
-          sourceCategories.length === 0 ||
-          sourceCategories.some(categoryVisibleToCurrentUser)
-        );
-      }),
-    [overview],
-  );
-  const visibleOverview = useMemo(
-    () =>
-      overview
-        ? {
-            ...overview,
-            categories: displayCategories,
-            recent_events: recentEvents,
-            sources,
-          }
-        : null,
-    [displayCategories, overview, recentEvents, sources],
-  );
+  const {
+    categories,
+    transitCategory,
+    roadRailCategory,
+    mobilityCategory,
+    displayCategories,
+    eventReferenceAt,
+    recentEventCandidates,
+    recentEvents,
+    sources,
+    visibleOverview,
+  } = useVisibleOverview({
+    overview,
+    weather,
+    airQuality,
+    transit,
+    roadRail,
+    selectedCity,
+    activeTimeScope,
+  });
+
   const updateNavQuery = useCallback(
     (
       nextNavKey: string,
