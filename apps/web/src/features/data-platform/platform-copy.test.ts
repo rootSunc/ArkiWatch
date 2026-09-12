@@ -9,6 +9,7 @@ describe("localizedPlatformCopy", () => {
       "示例家庭电价在中午左右最低。",
     );
     expect(localizedPlatformCopy("Westbound tram service is slower", "zh")).toBe("西向有轨电车运行较慢");
+    expect(localizedPlatformCopy("Helsinki westbound approach", "zh")).toBe("赫尔辛基西向路段");
     expect(localizedPlatformCopy("Static demo fixture", "zh")).toBe("静态演示数据");
     expect(localizedPlatformCopy("FMI (Finnish Meteorological Institute)", "zh")).toBe("FMI（芬兰气象研究所）");
   });

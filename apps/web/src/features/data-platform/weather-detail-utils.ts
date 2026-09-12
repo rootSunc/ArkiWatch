@@ -137,7 +137,7 @@ export function formatTimelineTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -644,7 +644,7 @@ export function currentMetricCards(
           label: tKey("weather.cloudCover"),
           value: formatNumber(current.cloud_cover_pct, 0),
           unit: "%",
-          detail: `FMI ${tKey("weather.symbol")} ${current.weather_symbol ?? UNAVAILABLE_DATA_VALUE} / smart ${current.smart_symbol ?? UNAVAILABLE_DATA_VALUE}`,
+          detail: `FMI ${tKey("weather.symbol")} ${current.weather_symbol ?? UNAVAILABLE_DATA_VALUE} / ${tKey("weather.smartSymbol")} ${current.smart_symbol ?? UNAVAILABLE_DATA_VALUE}`,
           progress: Math.min(100, current.cloud_cover_pct),
           tone: "cloud"
         }
@@ -652,19 +652,21 @@ export function currentMetricCards(
   ].filter((item): item is CurrentMetricCard => item !== null);
 }
 
-export function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+export function formatHistoryDate(
+  value: string,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsed)
-    .toUpperCase();
+  }).format(parsed);
 }
 
 export function average(values: number[]): number | null {
@@ -678,6 +680,7 @@ export function average(values: number[]): number | null {
 export function weatherHistoryPoints(
   history: PlatformHistoricalSnapshot<WeatherForecastResponse>[],
   tKey: (key: string) => string,
+  language: LanguageMode = "en",
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -701,7 +704,7 @@ export function weatherHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date, timeZone),
+        label: formatHistoryDate(snapshot.date, language, timeZone),
         value: averageTemperature,
         detail: tKey("weather.historyPointDetail")
           .replace("{rain}", formatNumber(totalRain, 1))

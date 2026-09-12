@@ -15,6 +15,7 @@ export function liveStatusTone(status: string | null | undefined): LiveStatusTon
     case "summary_only":
       return "ready";
     case "stale":
+    case "partial":
     case "pending":
     case "planned":
     case "watch":
@@ -22,6 +23,7 @@ export function liveStatusTone(status: string | null | undefined): LiveStatusTon
     case "empty":
     case "missing":
     case "not_collected":
+    case "unavailable":
       return "empty";
     case "failed":
     case "failing":
@@ -37,7 +39,12 @@ export function liveStatusTone(status: string | null | undefined): LiveStatusTon
 /** True when a payload explicitly says that no usable records are available. */
 export function isEmptyStatus(status: string | null | undefined): boolean {
   const normalized = status?.trim().toLowerCase();
-  return normalized === "empty" || normalized === "missing" || normalized === "not_collected";
+  return (
+    normalized === "empty" ||
+    normalized === "missing" ||
+    normalized === "not_collected" ||
+    normalized === "unavailable"
+  );
 }
 
 /**
@@ -56,6 +63,10 @@ export function liveStatusLabel(
     return tKey(readyKey);
   }
 
+  if (normalized === "partial") {
+    return tKey("shell.partial");
+  }
+
   if (liveStatusTone(status) === "stale") {
     return tKey(staleKey);
   }
@@ -66,6 +77,10 @@ export function liveStatusLabel(
 
   if (normalized === "not_collected") {
     return tKey("shell.notCollected");
+  }
+
+  if (normalized === "unavailable") {
+    return tKey("shell.unavailable");
   }
 
   if (liveStatusTone(status) === "failed") {

@@ -149,6 +149,7 @@
     "demoIncidentTitle": "路面湿滑风险",
     "demoIncidentDescription": "降雨时段过后路面可能湿滑。",
     "demoCorridor": "赫尔辛基西向通道",
+    "demoIncidentLocation": "赫尔辛基西向路段",
     "normalizedRoadEvents": "标准化道路事件",
     "staticDemoRoadNote": "静态演示数据；并非实时道路事件。",
     "digitrafficSourceLabel": "Digitraffic 道路事件"

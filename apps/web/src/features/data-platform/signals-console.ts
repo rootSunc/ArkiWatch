@@ -61,7 +61,7 @@ export function buildSignalSystemTiles({
       key: "signal_categories",
       label: translateMessageKey(language, "shell.signalCategories"),
       value: String(categories.length),
-      detail: `${availableCoreCategories} ${translateMessageKey(language, isHistorical ? "shell.captured" : "shell.active")} · ${unavailableCoreCategories} ${translateMessageKey(language, "shell.empty")} · ${catalogCategoryCount} ${translateMessageKey(language, "shell.catalog")}`,
+      detail: `${availableCoreCategories} ${translateMessageKey(language, isHistorical ? "shell.captured" : "shell.active")}, ${unavailableCoreCategories} ${translateMessageKey(language, "shell.empty")}, ${catalogCategoryCount} ${translateMessageKey(language, "shell.catalog")}`,
       tone: availableCoreCategories > 0 ? "good" : "neutral",
       icon: "hub",
       valueStyle: "emphasis",

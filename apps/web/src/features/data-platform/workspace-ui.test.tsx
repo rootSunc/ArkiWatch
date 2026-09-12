@@ -72,4 +72,18 @@ describe("WorkspaceEmptyState", () => {
     expect(screen.getByRole("heading", { name: "No current data" })).toBeInTheDocument();
     expect(screen.getByText("The source has not returned a usable snapshot.")).toBeInTheDocument();
   });
+
+  it("can own the page heading when the normal evidence header is unavailable", () => {
+    render(
+      <WorkspaceEmptyState
+        description="The selected window has no usable snapshot."
+        headingLevel={1}
+        title="Weather data is not available"
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Weather data is not available" }),
+    ).toBeInTheDocument();
+  });
 });

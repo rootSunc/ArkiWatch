@@ -24,6 +24,15 @@ describe("formatTimestamp", () => {
     ).toContain("15:00");
   });
 
+  it("uses natural Chinese calendar day formatting", () => {
+    expect(
+      formatTimestamp("2026-08-09T12:00:00Z", "dateTime", "zh", "Europe/Helsinki"),
+    ).toContain("8月9日");
+    expect(
+      formatTimestamp("2026-08-09T12:00:00Z", "dateTime", "zh", "Europe/Helsinki"),
+    ).not.toContain("8月09日");
+  });
+
   it("falls back to the runtime timezone when a configured timezone is invalid", () => {
     expect(
       formatTimestamp("2026-08-09T12:00:00Z", "dateTime", "en", "not/a-timezone"),

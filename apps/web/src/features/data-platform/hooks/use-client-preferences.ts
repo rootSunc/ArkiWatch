@@ -14,6 +14,7 @@ import {
   preferredLanguageMode,
   saveLanguageMode,
   storedLanguageMode,
+  useIsomorphicLayoutEffect,
   type LanguageMode,
 } from "../i18n";
 import { loadReadRecentEventIds, saveReadRecentEventIds } from "../data-platform-nav-utils";
@@ -27,13 +28,13 @@ export function useClientPreferences() {
     setReadRecentEventIds(loadReadRecentEventIds());
   }, []);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const nextThemeMode = storedThemeMode() ?? preferredThemeMode();
     setThemeMode(nextThemeMode);
     applyThemeMode(nextThemeMode);
   }, []);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const nextLanguageMode = storedLanguageMode() ?? preferredLanguageMode();
     setLanguageMode(nextLanguageMode);
     applyLanguageMode(nextLanguageMode);

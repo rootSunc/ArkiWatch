@@ -87,17 +87,27 @@ export function buildScenarioLiveHint(
         return null;
       }
       const score = airQuality.worst_score;
+      const worstStation = airQuality.stations.find(
+        (station) => station.station === airQuality.worst_station,
+      );
+      const worstStationLabel = worstStation?.label ?? airQuality.worst_station;
       const headline =
         score !== null && score !== undefined
           ? `${scoreLabel(score, airQuality.worst_label, language)} (${Math.round(score)}/5)`
           : airQuality.summary ?? translateMessageKey(language, "shell.airQualityLoaded");
       const reporting = airQuality.quality.reporting_station_count;
       const total = airQuality.quality.station_count;
+      const conditionLabel =
+        score !== null && score !== undefined
+          ? scoreLabel(score, airQuality.worst_label, language)
+          : airQuality.worst_label
+            ? translateDataLabel(language, airQuality.worst_label)
+            : null;
       return {
         headline,
         detail:
-          airQuality.worst_station && airQuality.worst_label
-            ? `${airQuality.worst_station} · ${airQuality.worst_label}`
+          worstStationLabel && conditionLabel
+            ? `${worstStationLabel} · ${conditionLabel}`
             : `${reporting}/${total} ${translateMessageKey(language, "shell.stations")}`,
         timeScope: airQuality.time_scope,
         updatedAt: airQuality.observed_at ?? airQuality.checked_at,

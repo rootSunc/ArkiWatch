@@ -20,6 +20,7 @@ export type WorkspaceTone =
 type WorkspaceEvidenceHeaderProps = {
   className?: string;
   eyebrow?: ReactNode;
+  headingLevel?: 1 | 2;
   title: ReactNode;
   status?: ReactNode;
   statusTone?: WorkspaceTone;
@@ -41,6 +42,7 @@ type WorkspaceEvidenceHeaderProps = {
 export function WorkspaceEvidenceHeader({
   className = "",
   eyebrow,
+  headingLevel = 1,
   title,
   status,
   statusTone = "neutral",
@@ -53,6 +55,7 @@ export function WorkspaceEvidenceHeader({
   timezone,
   children,
 }: WorkspaceEvidenceHeaderProps) {
+  const Heading = headingLevel === 2 ? "h2" : "h1";
   const timestamp = scopedDataTimestamp(
     observedAt,
     timeScope,
@@ -68,7 +71,7 @@ export function WorkspaceEvidenceHeader({
         {eyebrow ? (
           <span className="workspace-evidence-eyebrow">{eyebrow}</span>
         ) : null}
-        <h1>{title}</h1>
+        <Heading>{title}</Heading>
         {status ? (
           <div className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}>
             <span aria-hidden="true" />
@@ -94,6 +97,7 @@ export function WorkspaceEvidenceHeader({
 type WorkspaceEmptyStateProps = {
   className?: string;
   eyebrow?: ReactNode;
+  headingLevel?: 1 | 2;
   title: ReactNode;
   description: ReactNode;
   action?: ReactNode;
@@ -103,15 +107,18 @@ type WorkspaceEmptyStateProps = {
 export function WorkspaceEmptyState({
   className = "",
   eyebrow,
+  headingLevel = 2,
   title,
   description,
   action,
 }: WorkspaceEmptyStateProps) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
+
   return (
     <section className={`workspace-empty-state ${className}`.trim()}>
       {eyebrow ? <span className="workspace-empty-state-eyebrow">{eyebrow}</span> : null}
       <MaterialIcon name="cloud_off" className="workspace-empty-state-icon" />
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       <p>{description}</p>
       {action ? <div className="workspace-empty-state-action">{action}</div> : null}
     </section>

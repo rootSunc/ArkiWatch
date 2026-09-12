@@ -5,6 +5,7 @@ import {
   householdChromeTiles,
   sourceRecordsMetric,
   systemChromeTiles,
+  toneFromStatus,
 } from "./energy-workspace-utils";
 
 import type { EnergyCurrentResponse } from "./types";
@@ -29,6 +30,11 @@ describe("energy source metrics", () => {
 
   it("keeps an observed zero distinct from an unavailable count", () => {
     expect(sourceRecordsMetric(sourceWithRecords(0)).value).toBe("0");
+  });
+
+  it("surfaces partial energy data as a warning instead of neutral", () => {
+    expect(toneFromStatus("partial")).toBe("warn");
+    expect(toneFromStatus("PARTIAL")).toBe("warn");
   });
 });
 

@@ -106,7 +106,7 @@ export function CrossDomainTimelinePanel({
                 {localizedContent(language, item.detail, item.detail_zh)}
               </span>
               <time>
-                {formatTimestamp(item.startsAt, "dateTime", language, timezone)} –{" "}
+                {formatTimestamp(item.startsAt, "dateTime", language, timezone)} -{" "}
                 {formatTimestamp(item.endsAt, "dateTime", language, timezone)}
               </time>
             </button>

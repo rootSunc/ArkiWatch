@@ -37,6 +37,7 @@ const PLATFORM_COPY_KEYS: Record<string, string> = {
   "Wet road surface risk": "roadRail.demoIncidentTitle",
   "Road surfaces may be slippery after the rain window.": "roadRail.demoIncidentDescription",
   "Helsinki westbound": "roadRail.demoCorridor",
+  "Helsinki westbound approach": "roadRail.demoIncidentLocation",
   "Normalized road events": "roadRail.normalizedRoadEvents",
   "Static demo fixture; not a live road event.": "roadRail.staticDemoRoadNote",
   "Static demo fixture": "shell.staticDemoFixture",

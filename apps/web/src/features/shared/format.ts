@@ -32,7 +32,7 @@ export function formatTimestamp(
           ...(timeZone ? { timeZone } : {}),
         }
       : {
-          day: "2-digit",
+          day: language === "zh" ? "numeric" : "2-digit",
           month: "short",
           ...(mode === "dateTime"
             ? {

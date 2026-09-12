@@ -149,6 +149,7 @@
     "demoIncidentTitle": "Wet road surface risk",
     "demoIncidentDescription": "Road surfaces may be slippery after the rain window.",
     "demoCorridor": "Helsinki westbound",
+    "demoIncidentLocation": "Helsinki westbound approach",
     "normalizedRoadEvents": "Normalized road events",
     "staticDemoRoadNote": "Static demo fixture; not a live road event.",
     "digitrafficSourceLabel": "Digitraffic road events"

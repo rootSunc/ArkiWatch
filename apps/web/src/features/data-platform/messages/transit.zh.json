@@ -10,7 +10,7 @@
     "highSeverityCount": "{count} 条高严重度",
     "stopsInScope": "范围内站点",
     "priorityFirst": "优先显示高优先级，然后是生效与即将发生。",
-    "serviceAlertContext": "仅作服务提醒上下文——这不是全国范围的路径保证。",
+    "serviceAlertContext": "仅作服务提醒上下文：这不是全国范围的路径保证。",
     "startsAtClock": "开始于 {time}",
     "activeAtSnapshotSummary": "快照时生效",
     "atSnapshot": "快照时",

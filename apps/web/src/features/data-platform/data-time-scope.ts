@@ -14,7 +14,7 @@ function formatHistoricalTimestamp(
 ): string {
   try {
     return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-      day: "2-digit",
+      day: language === "zh" ? "numeric" : "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       month: "short",

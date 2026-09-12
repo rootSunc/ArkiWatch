@@ -115,7 +115,7 @@ export function WeatherDetailView({
     ? weather?.generated_at ?? sourceRequest?.fetched_at ?? historicalReference
     : weather?.generated_at ?? weather?.checked_at ?? sourceRequest?.fetched_at ?? null;
   const metricCards = currentMetricCards(current, language, tKey, dataTimezone);
-  const historyPoints = weatherHistoryPoints(history, tKey, dataTimezone);
+  const historyPoints = weatherHistoryPoints(history, tKey, language, dataTimezone);
 
   if (!weather || isEmptyStatus(weather.status)) {
     return (
@@ -123,6 +123,7 @@ export function WeatherDetailView({
         className="weather-detail-empty"
         description={tKey("weather.theFmiForecastEndpointDidNotReturnCurrentWeatherDataForThisPlatformWindow")}
         eyebrow={tKey("weather.weatherDetail")}
+        headingLevel={1}
         title={tKey("weather.weatherDataIsNotAvailableYet")}
       />
     );

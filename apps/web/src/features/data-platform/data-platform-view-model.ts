@@ -1,6 +1,7 @@
 import { formatTimestamp, statusTone } from "@/features/shared/format";
 
 import { categoryKeyDataItems, mergeKeyDataItems } from "./category-metadata";
+import { localizedContent } from "./content-localization";
 import type { DashboardTone } from "./data-platform-shell";
 import {
   LanguageMode,
@@ -328,9 +329,24 @@ export function matchesSearch(
     ...categoryKeyDataItems(category).map((item) => item.key),
     ...categoryKeyDataItems(category).map((item) => translateKeyDataItemLabel(language, item)),
     ...category.summary_metrics.map(
-      (metric) => `${metric.label} ${metric.value} ${metric.detail ?? ""}`,
+      (metric) =>
+        [
+          metric.key,
+          metric.label,
+          translateMetricLabel(language, metric),
+          metric.value,
+          metric.detail ?? "",
+        ].join(" "),
     ),
-    ...category.events.map((event) => `${event.title} ${event.body}`),
+    ...category.events.map((event) =>
+      [
+        localizedContent(language, event.title, event.title_zh),
+        event.title,
+        localizedContent(language, event.body, event.body_zh),
+        event.body,
+        event.event_type,
+      ].join(" "),
+    ),
   ]
     .join(" ")
     .toLowerCase();
@@ -348,7 +364,18 @@ export function eventMatchesSearch(
     return true;
   }
 
-  return `${event.title} ${event.body} ${event.category_key} ${event.severity} ${translateEnumLabel(language, event.severity)} ${event.source_codes.join(" ")}`
+  return [
+    localizedContent(language, event.title, event.title_zh),
+    event.title,
+    localizedContent(language, event.body, event.body_zh),
+    event.body,
+    event.category_key,
+    event.event_type,
+    event.severity,
+    translateEnumLabel(language, event.severity),
+    event.source_codes.join(" "),
+  ]
+    .join(" ")
     .toLowerCase()
     .includes(query);
 }

@@ -38,7 +38,7 @@ export function SourceHealthStrip({
     overview.checked_at ? `${tKey("shell.lastProbe")} ${lastProbe}` : null,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 
   return (
     <section

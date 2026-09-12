@@ -28,7 +28,7 @@
     "incomeEmpty": "Annual, per resident",
     "employmentEmpty": "Ages 20-64",
     "healthEmpty": "National burden comparison not observed",
-    "indicatorsEmpty": "Empty means no StatFi or THL observations in this snapshot.",
+    "indicatorsEmpty": "Empty means no connected indicator observations are available for this snapshot. On narrow screens, scroll horizontally to view all columns.",
     "operatingCondition": "Regional profile operating condition",
     "contextState": "Regional Context State",
     "datasets": "Datasets",

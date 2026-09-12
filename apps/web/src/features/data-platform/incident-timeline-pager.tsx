@@ -29,10 +29,10 @@ function formatPagerRange(
   language: LanguageMode
 ): string {
   if (language === "zh") {
-    return `第 ${start}–${end} 条，共 ${total} 条`;
+    return `第 ${start} - ${end} 条，共 ${total} 条`;
   }
 
-  return `${start}–${end} of ${total}`;
+  return `${start} - ${end} of ${total}`;
 }
 
 type IncidentTimelinePagerProps = {

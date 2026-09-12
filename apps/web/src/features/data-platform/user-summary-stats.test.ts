@@ -26,4 +26,26 @@ describe("buildUserSummaryTiles", () => {
     expect(tiles.map((tile) => tile.value)).toEqual(["n/a", "n/a", "n/a", "n/a"]);
     expect(tiles.every((tile) => tile.tone === "neutral")).toBe(true);
   });
+
+  it("uses the station display label for the air summary tile", () => {
+    const tiles = buildUserSummaryTiles(
+      {
+        weather: null,
+        airQuality: {
+          status: "ready",
+          worst_score: 1,
+          worst_label: "Good",
+          worst_station: "kallio",
+          stations: [{ station: "kallio", label: "Kallio" }],
+        } as never,
+        transit: null,
+        roadRail: null,
+        householdEnergy: null,
+        systemEnergy: null,
+      },
+      "zh",
+    );
+
+    expect(tiles.find((tile) => tile.key === "air")?.detail).toBe("Kallio");
+  });
 });

@@ -64,11 +64,20 @@ describe("translateEnumLabel", () => {
     expect(translateEnumLabel("zh", "needs_attention")).toBe("需要留意");
     expect(translateEnumLabel("zh", "good_window")).toBe("划算时段");
   });
+
+  it("localizes transit alert enums", () => {
+    expect(translateEnumLabel("en", "transit_delay")).toBe("transit delay");
+    expect(translateEnumLabel("zh", "transit_delay")).toBe("公共交通延误");
+    expect(translateEnumLabel("zh", "TRAFFIC_JAM")).toBe("交通拥堵");
+    expect(translateEnumLabel("zh", "SIGNIFICANT_DELAYS")).toBe("明显延误");
+    expect(translateEnumLabel("zh", "SLIPPERY_ROAD")).toBe("路面湿滑");
+  });
 });
 
 describe("translateDataLabel", () => {
   it("resolves labels namespace from English metric text", () => {
     expect(translateDataLabel("zh", "Visibility")).toBe("能见度");
+    expect(translateDataLabel("zh", "Road weather")).toBe("道路天气");
   });
 
   it("resolves labels namespace from snake_case field keys", () => {

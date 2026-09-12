@@ -82,7 +82,9 @@ describe("data platform view model", () => {
       category_key: "weather",
       event_type: "rain_risk",
       title: "Rain risk",
+      title_zh: "降雨提醒",
       body: "Bring an umbrella",
+      body_zh: "带上雨伞",
       severity: "LOW",
       starts_at: "2026-05-31T09:00:00Z",
       ends_at: "2026-05-31T12:00:00Z",
@@ -92,6 +94,9 @@ describe("data platform view model", () => {
 
     expect(matchesSearch(category("weather", [event]), "umbrella", "en")).toBe(true);
     expect(eventMatchesSearch(event, "rain", "en")).toBe(true);
+    expect(matchesSearch(category("weather", [event]), "雨伞", "zh")).toBe(true);
+    expect(eventMatchesSearch(event, "降雨", "zh")).toBe(true);
+    expect(matchesSearch(category("weather"), "来源状态", "zh")).toBe(true);
   });
 
   it("resolves category titles from shell nav keys", () => {

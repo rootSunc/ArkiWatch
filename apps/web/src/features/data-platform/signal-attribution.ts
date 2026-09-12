@@ -1,5 +1,6 @@
 import type { LanguageMode } from "./i18n";
 import { translateMessageKey } from "./i18n";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { scopedDataAge } from "./data-time-scope";
 import type {
   AirQualityCurrentResponse,
@@ -102,7 +103,7 @@ export function categorySignalAttribution(
       };
     default:
       return {
-        sources: codes.join(" · ").toUpperCase() || "—",
+        sources: codes.join(" · ").toUpperCase() || UNAVAILABLE_DATA_VALUE,
         timeScope: null,
         updatedAt: category.sources[0]?.last_run_finished_at ?? null,
       };

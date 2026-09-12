@@ -1,7 +1,7 @@
 "use client";
 
 import { NextIntlClientProvider } from "next-intl";
-import { createContext, ReactNode, useContext, useMemo } from "react";
+import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useMemo } from "react";
 
 import airQualityEnMessages from "./messages/airQuality.en.json";
 import airQualityZhMessages from "./messages/airQuality.zh.json";
@@ -41,6 +41,7 @@ import zhMessages from "./messages/zh.json";
 export type LanguageMode = "en" | "zh";
 
 export const LANGUAGE_STORAGE_KEY = "arkiwatch-language";
+export const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 type StructuredMessages = {
   shell: Record<string, string>;
@@ -229,6 +230,7 @@ function resolveDynamicLabelKey(value: string | null | undefined): string | null
   const structuredCandidates = [
     `shell.${camel}`,
     `shell.status${camel.charAt(0).toUpperCase()}${camel.slice(1)}`,
+    `labels.${camel}`,
   ];
 
   for (const key of structuredCandidates) {

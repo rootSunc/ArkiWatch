@@ -28,7 +28,7 @@
     "incomeEmpty": "年度，人均",
     "employmentEmpty": "20-64 岁",
     "healthEmpty": "未观测到全国负担对比",
-    "indicatorsEmpty": "空值表示此快照中没有统计局或 THL 观测。",
+    "indicatorsEmpty": "空值表示此快照中没有已连接的指标观测。窄屏下可横向滚动查看全部列。",
     "operatingCondition": "区域概况运行状况",
     "contextState": "区域背景状态",
     "datasets": "数据集",

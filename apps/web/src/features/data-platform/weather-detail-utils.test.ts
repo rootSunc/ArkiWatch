@@ -12,6 +12,7 @@ import {
   forecastWindow,
   formatCompactTime,
   formatDegree,
+  formatHistoryDate,
   formatNumber,
   formatTimeZoneName,
   latestPoint,
@@ -66,12 +67,19 @@ describe("formatTimeZoneName", () => {
 
 describe("unavailable weather values", () => {
   it("uses a language-neutral placeholder instead of leaking n/a", () => {
-    expect(formatNumber(null)).toBe("—");
-    expect(formatDegree(undefined)).toBe("—");
-    expect(formatCompactTime(null, "zh")).toBe("—");
-    expect(formatCompactTime("not-a-timestamp", "zh")).toBe("—");
-    expect(compassDirection(null)).toBe("—");
-    expect(metricValue(null, "forecast_hours")).toBe("—");
+    expect(formatNumber(null)).toBe("-");
+    expect(formatDegree(undefined)).toBe("-");
+    expect(formatCompactTime(null, "zh")).toBe("-");
+    expect(formatCompactTime("not-a-timestamp", "zh")).toBe("-");
+    expect(compassDirection(null)).toBe("-");
+    expect(metricValue(null, "forecast_hours")).toBe("-");
+  });
+});
+
+describe("localized weather history labels", () => {
+  it("formats historical chart dates in the selected language", () => {
+    expect(formatHistoryDate("2026-08-08", "en", "Europe/Helsinki")).toBe("08 Aug");
+    expect(formatHistoryDate("2026-08-08", "zh", "Europe/Helsinki")).toBe("8月8日");
   });
 });
 

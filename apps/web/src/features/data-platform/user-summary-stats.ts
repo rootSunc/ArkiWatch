@@ -77,6 +77,9 @@ export function buildUserSummaryTiles(
     weatherWarnings > 0 ? "warn" : weather ? "good" : "neutral";
 
   const airScore = airQuality?.worst_score;
+  const airStation = airQuality?.stations.find(
+    (station) => station.station === airQuality.worst_station,
+  )?.label ?? airQuality?.worst_station;
   const airValue =
     airScore !== null && airScore !== undefined
       ? `${scoreLabel(airScore, airQuality?.worst_label, language)}`
@@ -121,7 +124,7 @@ export function buildUserSummaryTiles(
       key: "air",
       label: translateMessageKey(language, "shell.homeAir"),
       value: airValue,
-      detail: signals.airQuality?.worst_station ?? translateMessageKey(language, "shell.stationNetwork"),
+      detail: airStation ?? translateMessageKey(language, "shell.stationNetwork"),
       tone: airTone,
       icon: "air",
       valueStyle: "emphasis",

@@ -108,6 +108,7 @@ export function EnergyWorkspace({
         className="energy-detail-empty"
         description={tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}
         eyebrow={tKey("energy.energy")}
+        headingLevel={1}
         title={tKey("energy.energySignalsAreNotAvailableYet")}
       />
     );
@@ -125,6 +126,7 @@ export function EnergyWorkspace({
         className="energy-detail-empty"
         description={tKey("energy.fingridElectricitySystemMetadataHasNotArrivedForTheCurrentPlatformView")}
         eyebrow={tKey("energy.energy")}
+        headingLevel={1}
         title={tKey("energy.energySignalsAreNotAvailableYet")}
       />
     );
@@ -226,7 +228,7 @@ export function EnergyWorkspace({
     return ticks;
   })() : [];
 
-  const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel, dataTimezone);
+  const historyPoints = energyHistoryPoints(activeHistory, tKey, isPricePanel, language, dataTimezone);
   const activeSourceLabel = isHistorical
     ? tKey("shell.historicalEvidence")
     : sourceStatusLabel(activeSource, activeStatus, language);
@@ -276,7 +278,7 @@ export function EnergyWorkspace({
     : [];
   const chartDate = chromeReference
     ? new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-        day: "2-digit",
+        day: language === "zh" ? "numeric" : "2-digit",
         month: "short",
         timeZone: dataTimezone,
       }).format(new Date(chromeReference))
@@ -285,10 +287,15 @@ export function EnergyWorkspace({
     ? tKey("energy.estimatedHouseholdCostOn").replace("{date}", chartDate)
     : tKey("energy.nationalGridLoad24h");
   const chartRangeLabel = chartRange
-    ? `${formatPriceNumber(chartRange.min)} – ${formatPriceNumber(chartRange.max)} ${chartUnit ?? ""}`.trim()
+    ? `${formatPriceNumber(chartRange.min)} - ${formatPriceNumber(chartRange.max)} ${chartUnit ?? ""}`.trim()
     : isPricePanel
       ? tKey("energy.ckwhUnit")
       : (activeEnergy?.unit ?? "MW");
+  const chartAriaLabel = `${tKey(
+    isPricePanel
+      ? "energy.householdElectricityPriceForecast"
+      : "energy.fingridElectricitySystemTimeseries",
+  )}: ${chartTitle}, ${chartRangeLabel}`;
   const hourFooter = ["00", "06", "12", "18", "23"];
 
   return (
@@ -350,7 +357,7 @@ export function EnergyWorkspace({
         className="energy-workspace-panel"
         id={energyPanelId}
         role="tabpanel"
-        tabIndex={0}
+        tabIndex={-1}
       >
 
       <section
@@ -427,14 +434,14 @@ export function EnergyWorkspace({
               >
                 {isPricePanel ? tKey("energy.householdPriceForecast") : tKey("energy.fingridSystemTimeseries")}
               </DataLabelWithHelp>
-              <h3>{isPricePanel
+              <h2>{isPricePanel
                 ? tKey("energy.spotPriceByTimeAndEstimatedFlexibleUseCost")
-                : tKey("energy.configuredFingridDatasetByTimeAndSelectedLowValueWindow")}</h3>
+                : tKey("energy.configuredFingridDatasetByTimeAndSelectedLowValueWindow")}</h2>
             </div>
             <strong>{signalMetrics.length} {tKey("energy.metrics")}</strong>
           </header>
           {chartPoints.length > 0 && chartRange && chartVisualScale ? (
-            <div className="energy-price-chart" aria-label={isPricePanel ? tKey("energy.householdElectricityPriceForecast") : tKey("energy.fingridElectricitySystemTimeseries")}>
+            <div className="energy-price-chart" role="group" aria-label={isPricePanel ? tKey("energy.householdElectricityPriceForecast") : tKey("energy.fingridElectricitySystemTimeseries")}>
               <div className="energy-chart-heading">
                 <div>
                   <span>{tKey(`energy.${activeProfile.chartKindLabelKey}`)}</span>
@@ -466,8 +473,10 @@ export function EnergyWorkspace({
               </div>
               <svg
                 aria-hidden="false"
+                aria-label={chartAriaLabel}
                 className="energy-price-line"
                 focusable="false"
+                role="img"
                 viewBox={`0 0 ${PRICE_CHART_WIDTH} ${PRICE_CHART_HEIGHT}`}
               >
                 {/* Y-axis Grid Lines & Text Labels */}

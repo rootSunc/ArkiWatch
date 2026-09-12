@@ -100,7 +100,7 @@ export function formatCompactTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -116,13 +116,15 @@ export function relativeTime(value: string | null | undefined, language: Languag
 }
 
 export function toneFromStatus(status: string): EnergyTone {
-  if (status === "healthy" || status === "ready" || status === "fetched" || status === "connected") {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === "healthy" || normalized === "ready" || normalized === "fetched" || normalized === "connected") {
     return "good";
   }
-  if (status === "pending" || status === "stale" || status === "watch" || status === "planned") {
+  if (normalized === "partial" || normalized === "pending" || normalized === "stale" || normalized === "watch" || normalized === "planned") {
     return "warn";
   }
-  if (status === "failing" || status === "inactive" || status === "alert" || status === "failed" || status === "error") {
+  if (normalized === "failing" || normalized === "inactive" || normalized === "alert" || normalized === "failed" || normalized === "error") {
     return "bad";
   }
   return "neutral";
@@ -455,19 +457,21 @@ export function isNoActiveWindowLabel(value: string): boolean {
   return normalizedValue.startsWith("no active") || normalizedValue.includes("not available yet");
 }
 
-export function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+export function formatHistoryDate(
+  value: string,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsed)
-    .toUpperCase();
+  }).format(parsed);
 }
 
 export function averagePointValue(points: EnergyPoint[]): number | null {
@@ -482,6 +486,7 @@ export function energyHistoryPoints(
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[],
   tKey: (key: string) => string,
   showEstimatedCost: boolean,
+  language: LanguageMode = "en",
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -517,7 +522,7 @@ export function energyHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date, timeZone),
+        label: formatHistoryDate(snapshot.date, language, timeZone),
         value: averageValue,
         detail: data.current_window
           ? `${rangeDetail} · ${data.current_window.point_count} ${tKey("energy.windowPoints")}`
@@ -556,7 +561,7 @@ export function formatClockRange(
   const start = formatClockTime(startsAt, timeZone);
   const end = formatClockTime(endsAt, timeZone);
   if (start && end) {
-    return `${start} – ${end}`;
+    return `${start} - ${end}`;
   }
 
   return start ?? end ?? "";
