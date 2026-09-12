@@ -10,7 +10,7 @@ COPY apps/api/ ./
 
 ARG TARGETOS=linux
 ARG TARGETARCH
-ARG APP_VERSION=0.0.0
+ARG APP_VERSION=0.1.0
 ARG BUILD_SHA=development
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w -X main.buildVersion=${APP_VERSION} -X main.buildSHA=${BUILD_SHA}" -o /out/arkiwatch-api ./cmd/server \
     && CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w -X main.buildVersion=${APP_VERSION} -X main.buildSHA=${BUILD_SHA}" -o /out/arkiwatch-scheduler ./cmd/scheduler \

@@ -133,7 +133,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		AppName:                          "ArkiWatch",
-		AppVersion:                       "0.0.0",
+		AppVersion:                       "0.1.0",
 		BuildSHA:                         "development",
 		APIPrefix:                        "/api",
 		APIHost:                          "127.0.0.1",
