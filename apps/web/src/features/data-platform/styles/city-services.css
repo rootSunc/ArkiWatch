@@ -423,6 +423,7 @@
   min-width: 0;
 }
 
+.city-service-panel h2,
 .city-service-panel h3,
 .city-visual-panel h3 {
   margin-top: 2px;
@@ -624,7 +625,7 @@
 .city-glass-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .city-hero {
@@ -661,7 +662,7 @@
 .city-summary-strip article:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.22);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 

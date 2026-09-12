@@ -30,6 +30,14 @@
   overflow: visible;
 }
 
+/* Route changes and the skip link move focus here so assistive technology can
+ * announce the new page. Keep the main region keyboard-focusable because it
+ * owns the page's scrollable content, but do not paint a browser outline
+ * around the whole page when it receives route focus. */
+.dashboard-content#main-content:focus {
+  outline: none;
+}
+
 .data-help-icon,
 .data-help-icon .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
@@ -49,14 +57,88 @@
 }
 
 .workspace-panel-loading {
-  align-items: center;
+  align-content: start;
   display: grid;
-  justify-items: center;
-  min-height: 240px;
-  opacity: 0.72;
+  gap: 24px;
+  justify-items: stretch;
+  min-height: min(560px, calc(100dvh - 160px));
+  padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 40px) 64px;
+}
+
+.workspace-panel-loading-heading {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.workspace-panel-loading-kicker {
+  border-radius: 3px;
+  height: 10px;
+  width: 112px;
 }
 
 .workspace-panel-loading-label {
-  font-size: 1.5rem;
-  letter-spacing: 0.2em;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.workspace-panel-loading-summary {
+  border-radius: 3px;
+  height: 12px;
+  max-width: 34rem;
+  width: min(100%, 34rem);
+}
+
+.workspace-panel-loading-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workspace-panel-loading-tile {
+  border-radius: 12px;
+  min-height: 108px;
+}
+
+.workspace-panel-loading-body {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(180px, 0.8fr);
+}
+
+.workspace-panel-loading-block {
+  border-radius: 16px;
+  min-height: 236px;
+}
+
+@media (max-width: 720px) {
+  .workspace-panel-loading-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-panel-loading-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .workspace-panel-loading {
+    gap: 16px;
+    padding: 24px 16px 56px;
+  }
+
+  .workspace-panel-loading-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-panel-loading-tile {
+    min-height: 72px;
+  }
+
+  .workspace-panel-loading-block {
+    min-height: 168px;
+  }
 }

@@ -17,7 +17,9 @@ import {
   fetchPersonalContext,
   savePersonalContext,
   type PersonalChannel,
+  type PersonalChannelInput,
   type PersonalCommuteInput,
+  type PersonalContextResource,
   type PersonalContextRead,
   type PersonalLocationInput,
   type PersonalPreferenceInput,
@@ -93,6 +95,15 @@ type LocationForm = {
   lat: string;
   lon: string;
   is_default: boolean;
+};
+
+type PersonalSaveRequest = {
+  resource: PersonalContextResource;
+  payload:
+    | PersonalLocationInput
+    | PersonalPreferenceInput
+    | PersonalCommuteInput
+    | PersonalChannelInput;
 };
 
 function locationFormFromDefault(): LocationForm {
@@ -171,8 +182,7 @@ function PersonalSettingsContent({
   const [commuteForm, setCommuteForm] = useState<PersonalCommuteInput>(DEFAULT_COMMUTE);
   const [telegramId, setTelegramId] = useState("");
   const [telegramActive, setTelegramActive] = useState(false);
-  const [commuteArrival, setCommuteArrival] = useState("");
-  const [outdoorLevel, setOutdoorLevel] = useState<"low" | "medium" | "high">("medium");
+  const [outdoorLevel, setOutdoorLevel] = useState<"standard" | "sensitive">("standard");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -183,6 +193,29 @@ function PersonalSettingsContent({
   const saveRequestRef = useRef(0);
   const contextControllerRef = useRef<AbortController | null>(null);
   const saveControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const title = `${tKey("shell.personalSettingsTitle")} | ArkiWatch`;
+    const applyTitle = () => {
+      if (document.title !== title) {
+        document.title = title;
+      }
+    };
+
+    applyTitle();
+
+    // Keep a client-side language change from being overwritten by streamed
+    // metadata reconciliation during navigation or hydration.
+    const titleSyncs = [0, 50, 250, 1000].map((delay) =>
+      window.setTimeout(applyTitle, delay),
+    );
+
+    return () => {
+      for (const titleSync of titleSyncs) {
+        window.clearTimeout(titleSync);
+      }
+    };
+  }, [tKey]);
 
   const completion = completionState(context);
   const completedCount = Object.values(completion).filter(Boolean).length;
@@ -226,7 +259,7 @@ function PersonalSettingsContent({
         quiet_hours_end: nextContext.preferences.quiet_hours_end,
         max_notifications_per_day: nextContext.preferences.max_notifications_per_day,
       });
-      setOutdoorLevel(nextContext.preferences.allergy_sensitive ? "high" : "medium");
+      setOutdoorLevel(nextContext.preferences.allergy_sensitive ? "sensitive" : "standard");
     }
     if (nextContext.locations.length >= 2) {
       const savedCommute =
@@ -276,67 +309,146 @@ function PersonalSettingsContent({
     };
   }, [refreshContext]);
 
-  const save = async (
-    resource: "locations" | "preferences" | "commuteProfiles" | "channels",
-    payload: PersonalLocationInput | PersonalPreferenceInput | PersonalCommuteInput | {
-      channel_type: "TELEGRAM";
-      external_id: string | null;
-      is_active: boolean;
-    },
-    successText: string,
-  ) => {
+  const persist = async (requests: PersonalSaveRequest[], successText: string) => {
     const requestId = ++saveRequestRef.current;
     saveControllerRef.current?.abort();
     const controller = new AbortController();
     saveControllerRef.current = controller;
     setIsSaving(true);
     setNotice(null);
-    const result = await savePersonalContext(resource, payload, controller.signal);
-    if (saveControllerRef.current === controller) {
-      saveControllerRef.current = null;
-    }
-    if (!isMountedRef.current || requestId !== saveRequestRef.current) {
-      return false;
-    }
 
-    if (result.error) {
-      setNotice({ tone: "error", text: tKey("shell.personalSettingsRequestFailed") });
-      setIsSaving(false);
-      return false;
+    for (const request of requests) {
+      const result = await savePersonalContext(request.resource, request.payload, controller.signal);
+      if (!isMountedRef.current || requestId !== saveRequestRef.current) {
+        return false;
+      }
+
+      if (result.error) {
+        if (saveControllerRef.current === controller) {
+          saveControllerRef.current = null;
+        }
+        setNotice({ tone: "error", text: tKey("shell.personalSettingsRequestFailed") });
+        setIsSaving(false);
+        return false;
+      }
     }
 
     const refreshed = await refreshContext();
     if (!isMountedRef.current || requestId !== saveRequestRef.current || !refreshed) {
       if (isMountedRef.current && requestId === saveRequestRef.current && !refreshed) {
+        if (saveControllerRef.current === controller) {
+          saveControllerRef.current = null;
+        }
         setIsSaving(false);
       }
       return false;
     }
 
+    if (saveControllerRef.current === controller) {
+      saveControllerRef.current = null;
+    }
     setNotice({ tone: "success", text: successText });
     setIsSaving(false);
     return true;
   };
 
-  const saveLocation = async () => {
-    const lat = Number(locationForm.lat);
-    const lon = Number(locationForm.lon);
-    if (!locationForm.label.trim() || !locationForm.city.trim() || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+  const save = async (
+    resource: PersonalContextResource,
+    payload: PersonalSaveRequest["payload"],
+    successText: string,
+  ) => persist([{ resource, payload }], successText);
+
+  const locationPayload = (): PersonalLocationInput | null => {
+    const label = locationForm.label.trim();
+    const city = locationForm.city.trim();
+    const countryCode = locationForm.country_code.trim().toUpperCase() || "FI";
+    const latInput = locationForm.lat.trim();
+    const lonInput = locationForm.lon.trim();
+    const lat = Number(latInput);
+    const lon = Number(lonInput);
+    const hasValidCoordinates =
+      latInput !== "" &&
+      lonInput !== "" &&
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lon >= -180 &&
+      lon <= 180;
+
+    if (
+      !label ||
+      label.length > 40 ||
+      !city ||
+      city.length > 80 ||
+      countryCode.length !== 2 ||
+      !hasValidCoordinates
+    ) {
       setNotice({ tone: "error", text: tKey("shell.personalSettingsLocationValidation") });
+      return null;
+    }
+
+    return {
+      ...locationForm,
+      label,
+      city,
+      district: locationForm.district.trim() || null,
+      country_code: countryCode,
+      lat,
+      lon,
+    };
+  };
+
+  const preferencePayload = (): PersonalPreferenceInput | null => {
+    const maxNotifications = Number(preferenceForm.max_notifications_per_day);
+    if (!Number.isInteger(maxNotifications) || maxNotifications < 1 || maxNotifications > 20) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsPreferenceValidation") });
+      return null;
+    }
+
+    return {
+      ...preferenceForm,
+      max_notifications_per_day: maxNotifications,
+    };
+  };
+
+  const commutePayload = (): PersonalCommuteInput | null => {
+    const name = commuteForm.name.trim();
+    const departureTime = commuteForm.departure_time_local.trim();
+    const timeMatch = /^(\d{2}):(\d{2})$/.exec(departureTime);
+    const hasValidDepartureTime = Boolean(
+      timeMatch &&
+        Number(timeMatch[1]) >= 0 &&
+        Number(timeMatch[1]) <= 23 &&
+        Number(timeMatch[2]) >= 0 &&
+        Number(timeMatch[2]) <= 59,
+    );
+    const hasValidWeekdays =
+      commuteForm.weekdays.length > 0 &&
+      commuteForm.weekdays.every((day) => Number.isInteger(day) && day >= 1 && day <= 7);
+
+    if (!name || name.length > 80 || !hasValidDepartureTime || !hasValidWeekdays) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsCommuteValidation") });
+      return null;
+    }
+
+    return {
+      ...commuteForm,
+      name,
+      departure_time_local: departureTime,
+      weekdays: [...commuteForm.weekdays].sort((left, right) => left - right),
+    };
+  };
+
+  const saveLocation = async () => {
+    const payload = locationPayload();
+    if (!payload) {
       return;
     }
 
     const didSave = await save(
       "locations",
-      {
-        ...locationForm,
-        label: locationForm.label.trim(),
-        city: locationForm.city.trim(),
-        district: locationForm.district.trim() || null,
-        country_code: locationForm.country_code.trim().toUpperCase() || "FI",
-        lat,
-        lon,
-      },
+      payload,
       tKey("shell.personalSettingsSaved"),
     );
     if (didSave) {
@@ -345,7 +457,12 @@ function PersonalSettingsContent({
   };
 
   const savePreferences = async () => {
-    const didSave = await save("preferences", preferenceForm, tKey("shell.personalSettingsSaved"));
+    const payload = preferencePayload();
+    if (!payload) {
+      return;
+    }
+
+    const didSave = await save("preferences", payload, tKey("shell.personalSettingsSaved"));
     if (didSave) {
       setActiveSection("commute");
     }
@@ -361,7 +478,12 @@ function PersonalSettingsContent({
       return;
     }
 
-    const didSave = await save("commuteProfiles", commuteForm, tKey("shell.personalSettingsSaved"));
+    const payload = commutePayload();
+    if (!payload) {
+      return;
+    }
+
+    const didSave = await save("commuteProfiles", payload, tKey("shell.personalSettingsSaved"));
     if (didSave) {
       setActiveSection("telegram");
     }
@@ -380,6 +502,42 @@ function PersonalSettingsContent({
     if (didSave) {
       setActiveSection("location");
     }
+  };
+
+  const saveContext = async () => {
+    const location = locationPayload();
+    if (!location) {
+      return;
+    }
+    const preferences = preferencePayload();
+    if (!preferences) {
+      return;
+    }
+
+    const hasOrigin = Boolean(commuteForm.origin_location_id);
+    const hasDestination = Boolean(commuteForm.destination_location_id);
+    if (hasOrigin !== hasDestination) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsSelectLocations") });
+      return;
+    }
+    if (hasOrigin && commuteForm.origin_location_id === commuteForm.destination_location_id) {
+      setNotice({ tone: "error", text: tKey("shell.personalSettingsDifferentLocations") });
+      return;
+    }
+
+    const requests: PersonalSaveRequest[] = [
+      { resource: "locations", payload: location },
+      { resource: "preferences", payload: preferences },
+    ];
+    if (hasOrigin && hasDestination) {
+      const commute = commutePayload();
+      if (!commute) {
+        return;
+      }
+      requests.push({ resource: "commuteProfiles", payload: commute });
+    }
+
+    await persist(requests, tKey("shell.personalSettingsSaved"));
   };
 
   const startNewLocation = () => {
@@ -422,7 +580,9 @@ function PersonalSettingsContent({
     return (
       <main className={styles.page}>
         <div className={styles.shell}>
-          <div className={styles.loading}>{tKey("shell.personalSettingsSaving")}</div>
+          <div aria-live="polite" className={styles.loading} role="status">
+            {tKey("shell.personalSettingsLoading")}
+          </div>
         </div>
       </main>
     );
@@ -452,8 +612,11 @@ function PersonalSettingsContent({
 
         <div className={styles.contextList}>
           <div className={styles.field}>
-            <span className={styles.label}>{tKey("shell.personalSettingsHomeCity")}</span>
+            <label className={styles.label} htmlFor="personal-home-city">
+              {tKey("shell.personalSettingsHomeCity")}
+            </label>
             <select
+              id="personal-home-city"
               className={styles.select}
               onChange={(event) => {
                 const option = CITY_OPTIONS.find((city) => city.value === event.target.value);
@@ -482,59 +645,53 @@ function PersonalSettingsContent({
             </select>
           </div>
           <div className={styles.field}>
-            <span className={styles.label}>{tKey("shell.personalSettingsCommuteWindow")}</span>
-            <div className={styles.timeRow}>
-              <input
-                className={styles.timeInput}
-                onChange={(event) => {
-                  setCommuteForm((current) => ({
-                    ...current,
-                    departure_time_local: event.target.value,
-                  }));
-                }}
-                type="time"
-                value={commuteForm.departure_time_local}
-              />
-              <span aria-hidden="true">→</span>
-              <input
-                className={styles.timeInput}
-                onChange={(event) => setCommuteArrival(event.target.value)}
-                type="time"
-                value={commuteArrival}
-              />
-            </div>
+            <label className={styles.label} htmlFor="personal-commute-departure">
+              {tKey("shell.personalSettingsDeparture")}
+            </label>
+            <input
+              id="personal-commute-departure"
+              className={styles.timeInput}
+              onChange={(event) => {
+                setCommuteForm((current) => ({
+                  ...current,
+                  departure_time_local: event.target.value,
+                }));
+              }}
+              type="time"
+              value={commuteForm.departure_time_local}
+            />
           </div>
-          <div className={styles.field}>
+          <div className={styles.field} role="group" aria-label={tKey("shell.personalSettingsOutdoorSensitivity")}>
             <span className={styles.label}>{tKey("shell.personalSettingsOutdoorSensitivity")}</span>
             <div className={styles.segmented}>
-              {(["low", "medium", "high"] as const).map((level) => (
+              {(["standard", "sensitive"] as const).map((level) => (
                 <button
+                  aria-pressed={outdoorLevel === level}
                   className={outdoorLevel === level ? styles.segmentedActive : undefined}
                   key={level}
                   onClick={() => {
                     setOutdoorLevel(level);
                     setPreferenceForm((current) => ({
                       ...current,
-                      allergy_sensitive: level === "high",
+                      allergy_sensitive: level === "sensitive",
                     }));
                   }}
                   type="button"
                 >
                   {tKey(
-                    level === "low"
-                      ? "shell.personalSettingsSensitivityLow"
-                      : level === "medium"
-                        ? "shell.personalSettingsSensitivityMedium"
-                        : "shell.personalSettingsSensitivityHigh",
+                    level === "standard"
+                      ? "shell.personalSettingsSensitivityStandard"
+                      : "shell.personalSettingsSensitivitySensitive",
                   )}
                 </button>
               ))}
             </div>
           </div>
-          <div className={styles.field}>
+          <div className={styles.field} role="group" aria-label={tKey("shell.personalSettingsTheme")}>
             <span className={styles.label}>{tKey("shell.personalSettingsTheme")}</span>
             <div className={styles.segmented}>
               <button
+                aria-pressed={themeMode === "light"}
                 className={themeMode === "light" ? styles.segmentedActive : undefined}
                 onClick={() => {
                   if (themeMode !== "light") {
@@ -546,6 +703,7 @@ function PersonalSettingsContent({
                 {tKey("shell.personalSettingsThemeLight")}
               </button>
               <button
+                aria-pressed={themeMode === "dark"}
                 className={themeMode === "dark" ? styles.segmentedActive : undefined}
                 onClick={() => {
                   if (themeMode !== "dark") {
@@ -567,11 +725,7 @@ function PersonalSettingsContent({
           <button
             className={styles.primaryButton}
             disabled={isSaving}
-            onClick={() => {
-              void saveLocation();
-              void savePreferences();
-              void saveCommute();
-            }}
+            onClick={() => void saveContext()}
             type="button"
           >
             {tKey("shell.personalSettingsSaveContext")}
@@ -580,7 +734,6 @@ function PersonalSettingsContent({
             className={styles.quietButton}
             onClick={() => {
               void refreshContext();
-              setCommuteArrival("");
             }}
             type="button"
           >
@@ -595,6 +748,7 @@ function PersonalSettingsContent({
                 className={`${styles.navItem}${activeSection === section.key ? ` ${styles.navItemActive}` : ""}${completion[section.key] ? ` ${styles.navItemComplete}` : ""}`}
                 key={section.key}
                 onClick={() => setActiveSection(section.key)}
+                aria-current={activeSection === section.key ? "step" : undefined}
                 type="button"
               >
                 <MaterialIcon name={section.icon} className={styles.navIcon} />
@@ -630,7 +784,10 @@ function PersonalSettingsContent({
             </div>
 
             {notice ? (
-              <div className={`${styles.notice}${notice.tone === "error" ? ` ${styles.noticeError}` : ""}`} role="status">
+              <div
+                className={`${styles.notice}${notice.tone === "error" ? ` ${styles.noticeError}` : ""}`}
+                role={notice.tone === "error" ? "alert" : "status"}
+              >
                 <MaterialIcon name={notice.tone === "error" ? "error" : "check_circle"} />
                 {notice.text}
               </div>
@@ -725,13 +882,13 @@ function LocationSection({
       </div>
       <div className={styles.formGrid}>
         <Field label={tKey("shell.personalSettingsLabel")}>
-          <input className={styles.input} value={form.label} onChange={(event) => onChange({ ...form, label: event.target.value })} />
+          <input className={styles.input} maxLength={40} value={form.label} onChange={(event) => onChange({ ...form, label: event.target.value })} />
         </Field>
         <Field label={tKey("shell.personalSettingsCity")}>
-          <input className={styles.input} value={form.city} onChange={(event) => onChange({ ...form, city: event.target.value })} />
+          <input className={styles.input} maxLength={80} value={form.city} onChange={(event) => onChange({ ...form, city: event.target.value })} />
         </Field>
         <Field label={tKey("shell.personalSettingsDistrict")}>
-          <input className={styles.input} value={form.district} onChange={(event) => onChange({ ...form, district: event.target.value })} />
+          <input className={styles.input} maxLength={80} value={form.district} onChange={(event) => onChange({ ...form, district: event.target.value })} />
         </Field>
         <Field label={tKey("shell.personalSettingsCountryCode")}>
           <input className={styles.input} maxLength={2} value={form.country_code} onChange={(event) => onChange({ ...form, country_code: event.target.value })} />
@@ -870,7 +1027,7 @@ function CommuteSection({
         <>
           <div className={styles.formGrid}>
             <Field label={tKey("shell.personalSettingsProfileName")}>
-              <input className={styles.input} value={form.name} onChange={(event) => onChange({ ...form, name: event.target.value })} />
+              <input className={styles.input} maxLength={80} value={form.name} onChange={(event) => onChange({ ...form, name: event.target.value })} />
             </Field>
             <Field label={tKey("shell.personalSettingsMode")}>
               <select className={styles.select} value={form.preferred_mode} onChange={(event) => onChange({ ...form, preferred_mode: event.target.value as PersonalCommuteInput["preferred_mode"] })}>

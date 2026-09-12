@@ -153,7 +153,7 @@ export function MobilityWorkspace({
         className="mobility-workspace-panel"
         id={mobilityPanelId}
         role="tabpanel"
-        tabIndex={0}
+        tabIndex={-1}
       >
         {activeTab === "transit" ? (
           <TransitWorkspace

@@ -211,7 +211,7 @@ function formatCompactTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -229,7 +229,7 @@ function formatTimelineBoundary(value: number, language: LanguageMode, timeZone 
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
@@ -413,6 +413,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
         className="water-detail-empty"
         description={tKey("waterSnow.sykeMetadataMissing")}
         eyebrow={tKey("waterSnow.title")}
+        headingLevel={1}
         title={tKey("waterSnow.signalsUnavailable")}
       />
     );

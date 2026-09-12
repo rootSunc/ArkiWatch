@@ -351,19 +351,21 @@ function readyFieldCount(fields: FieldSignal[]): string {
   return `${fields.filter((field) => field.ready).length}/${fields.length}`;
 }
 
-function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+function formatHistoryDate(
+  value: string,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsed)
-    .toUpperCase();
+  }).format(parsed);
 }
 
 function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | null {
@@ -381,6 +383,7 @@ function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | nul
 function airHistoryPoints(
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[],
   tKey: (key: string) => string,
+  language: LanguageMode = "en",
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -396,7 +399,7 @@ function airHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date, timeZone),
+        label: formatHistoryDate(snapshot.date, language, timeZone),
         value: worstScore,
         detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatPercent(data.quality.field_coverage_pct, tKey)} ${tKey("airQuality.coverage")}`
       }
@@ -497,6 +500,7 @@ export function AirQualityWorkspace({
         className="air-detail-empty"
         description={tKey("airQuality.hsyAirQualityStationSnapshotsHaveNotArrivedForTheCurrentPlatformWindow")}
         eyebrow={tKey("airQuality.airQuality")}
+        headingLevel={1}
         title={tKey("airQuality.stationDataIsNotAvailableYet")}
       />
     );
@@ -509,7 +513,7 @@ export function AirQualityWorkspace({
   const currentScore = airQuality.worst_score;
   const dataTimezone = resolveDataTimezone(airQuality.time_scope?.timezone);
   const currentTone = scoreTone(currentScore);
-  const historyPoints = airHistoryPoints(history, tKey, dataTimezone);
+  const historyPoints = airHistoryPoints(history, tKey, language, dataTimezone);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
   const highlightedCategoryEvent =
     (highlightedEventId
@@ -745,7 +749,7 @@ export function AirQualityWorkspace({
                   ? formatStationClock(airQuality.observed_at, dataTimezone)
                   : null;
                 return (
-                  <article className={`air-station air-station-${tone}`} key={station.station} role="row">
+                  <div className={`air-station air-station-${tone}`} key={station.station} role="row">
                     <strong role="cell">{stationDisplayName(station)}</strong>
                     <span className="air-station-score" role="cell">
                       {hasNumber(station.score)
@@ -753,12 +757,12 @@ export function AirQualityWorkspace({
                         : tKey("airQuality.noValue")}
                     </span>
                     <span role="cell">
-                      {hasNumber(station.pm2_5) ? formatNumber(station.pm2_5, 1) : "—"}
+                      {hasNumber(station.pm2_5) ? formatNumber(station.pm2_5, 1) : UNAVAILABLE_DATA_VALUE}
                     </span>
                     <span className="air-station-updated" role="cell">
                       {updatedClock ?? tKey("airQuality.empty")}
                     </span>
-                  </article>
+                  </div>
                 );
               })
             ) : (

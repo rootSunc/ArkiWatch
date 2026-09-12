@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { severityTone } from "@/features/shared/format";
+import { MaterialIcon } from "@/features/shared/material-icon";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
@@ -198,7 +199,7 @@ function localDateKey(value: Date, timeZone = DEFAULT_DATA_TIME_ZONE): string {
 
 function formatEventDateTime(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     hour: "2-digit",
     hour12: false,
     minute: "2-digit",
@@ -210,7 +211,7 @@ function formatEventDateTime(value: string, language: LanguageMode, timeZone = D
 
 function formatEventDate(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone),
     weekday: "short",
@@ -228,7 +229,7 @@ function formatEventTime(value: string, language: LanguageMode, timeZone = DEFAU
 
 function formatEventMonthDay(value: string, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone),
   }).format(new Date(value));
@@ -673,8 +674,11 @@ export function LinkedEventsWorkspace({
     setSelectedEventId(highlighted.id);
   }, [highlightedEventId, sortedEvents]);
 
+  // Keep the inspector inside the active result set. Falling back to the first
+  // unfiltered event made a zero-result filter look as if it had not applied:
+  // the list was empty while the hero and inspector still showed an old event.
   const selectedEvent =
-    filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? sortedEvents[0] ?? null;
+    filteredEvents.find((event) => event.id === selectedEventId) ?? filteredEvents[0] ?? null;
   const selectedDescriptionSource = useMemo(
     () => eventDescriptionSource(selectedEvent, language, tKey),
     [language, selectedEvent, tKey],
@@ -734,6 +738,7 @@ export function LinkedEventsWorkspace({
         className="linked-events-empty"
         description={tKey("linkedEvents.eventPlaceAndKeywordRecordsAreMissingFromThisPlatformView")}
         eyebrow={tKey("linkedEvents.linkedEvents")}
+        headingLevel={1}
         title={tKey("linkedEvents.linkedEventsFeedIsNotAvailableYet")}
       />
     );
@@ -749,6 +754,52 @@ export function LinkedEventsWorkspace({
   const selectedDescription = selectedEvent
     ? truncateDescription(translatedSelectedDescription ?? selectedDescriptionSource.text)
     : tKey("linkedEvents.noActivitiesAreAvailableForTheSelectedCityYetTheCitySpecificFeedMayNeedAFreshCollection");
+  // The list is empty for exactly one of three reasons, and each needs its own
+  // headline and its own detail line. Reusing one sentence for both printed the
+  // same text twice, which read as a rendering fault rather than an empty state.
+  const hasActiveFilters =
+    filter !== "all" ||
+    categoryFilter !== "all" ||
+    Boolean(activeKeyword || activeVenue || searchText.trim());
+  const isFilteredOut = sortedEvents.length > 0;
+  const emptyListTitle = isFilteredOut
+    ? tKey("linkedEvents.noMatchingActivities")
+    : tKey("linkedEvents.noUpcomingActivities");
+  const emptyListMessage = isFilteredOut
+    ? tKey("linkedEvents.noActivitiesMatchTheCurrentFilters")
+    : category.events.length === 0
+      ? tKey("linkedEvents.noActivitiesAreAvailableForTheSelectedCityYetTheCitySpecificFeedMayNeedAFreshCollection")
+      : tKey("linkedEvents.noActivitiesAvailableForTheSelectedTime");
+
+  function clearFilters(): void {
+    setFilter("all");
+    setActiveKeyword(null);
+    setActiveVenue(null);
+    setCategoryFilter("all");
+    setSearchText("");
+  }
+
+  const emptyState = (
+    <div className="linked-events-empty-state">
+      <div className="linked-events-empty-state-copy" role="status">
+        <MaterialIcon
+          className="linked-events-empty-state-icon"
+          name={hasActiveFilters ? "filter_alt_off" : "event_busy"}
+        />
+        <span>
+          <strong>{emptyListTitle}</strong>
+          <span>{emptyListMessage}</span>
+        </span>
+      </div>
+      {hasActiveFilters ? (
+        <button className="linked-events-empty-state-action" onClick={clearFilters} type="button">
+          {tKey("linkedEvents.clearFilters")}
+          <MaterialIcon name="arrow_forward" />
+        </button>
+      ) : null}
+    </div>
+  );
+
   const filterOptions: Array<{ key: EventFilter; labelKey: string; count: number }> = [
     { key: "all", labelKey: "allFilter", count: sortedEvents.length },
     { key: "today", labelKey: "today", count: filterEvents(sortedEvents, "today", referenceDate, dataTimezone).length },
@@ -772,7 +823,11 @@ export function LinkedEventsWorkspace({
         <p className="linked-events-chart-description">
           {tKey("linkedEvents.clickAVenueToNarrowTheActivityList")}
         </p>
-        <div className="linked-events-venue-list">
+        <div
+          aria-label={tKey("linkedEvents.topVenues")}
+          className="linked-events-venue-list"
+          role="group"
+        >
           {venueCounts.map(([venue, count]) => {
             const widthPct = Math.max(8, (count / maxCount) * 100);
             const isFilterActive = activeVenue === venue;
@@ -780,6 +835,8 @@ export function LinkedEventsWorkspace({
 
             return (
               <button
+                aria-pressed={isFilterActive}
+                aria-label={`${venue}: ${count} ${tKey("linkedEvents.events")}`}
                 key={venue}
                 className={`linked-events-venue-row linked-events-venue-row-${tone} ${isFilterActive ? "active" : ""}`}
                 onClick={() => setActiveVenue(isFilterActive ? null : venue)}
@@ -814,12 +871,18 @@ export function LinkedEventsWorkspace({
         <p className="linked-events-chart-description">
           {tKey("linkedEvents.clickATagToFilterUpcomingActivities")}
         </p>
-        <div className="linked-events-keyword-cloud">
+        <div
+          aria-label={tKey("linkedEvents.activityTags")}
+          className="linked-events-keyword-cloud"
+          role="group"
+        >
           {keywordCounts.map(([keyword, count]) => {
             const isFilterActive = activeKeyword === keyword;
             const tone = isFilterActive ? "good" : "neutral";
             return (
               <button
+                aria-pressed={isFilterActive}
+                aria-label={`${keyword}: ${count}`}
                 key={keyword}
                 className={`linked-events-keyword-tag linked-events-keyword-tag-${tone} ${isFilterActive ? "active" : ""}`}
                 onClick={() => setActiveKeyword(isFilterActive ? null : keyword)}
@@ -836,7 +899,10 @@ export function LinkedEventsWorkspace({
   }
 
   return (
-    <section className="linked-events-page" aria-label={tKey("linkedEvents.linkedEventsDetail")}>
+    <section
+      className={filteredEvents.length === 0 ? "linked-events-page linked-events-page-empty" : "linked-events-page"}
+      aria-label={tKey("linkedEvents.linkedEventsDetail")}
+    >
       <WorkspaceEvidenceHeader
         className="linked-events-header"
         eyebrow={tKey("linkedEvents.workspace")}
@@ -857,6 +923,12 @@ export function LinkedEventsWorkspace({
         title={tKey("linkedEvents.publicEventsNearYou")}
         timezone={dataTimezone}
       />
+
+      {filteredEvents.length === 0 ? (
+        <div className="linked-events-timeline-list linked-events-empty-result">
+          {emptyState}
+        </div>
+      ) : null}
 
       <section className="linked-events-command" aria-label={tKey("linkedEvents.linkedEventsOperatingCondition")}>
         <article className={`linked-events-panel linked-events-hero linked-events-hero-${selectedTone}`}>
@@ -908,22 +980,27 @@ export function LinkedEventsWorkspace({
               value={searchText}
             />
           </label>
-          <div className="linked-events-filter-grid">
-            {filterOptions.map((option) => (
-              <button
-                className={filter === option.key ? "linked-events-filter linked-events-filter-active" : "linked-events-filter"}
-                key={option.key}
-                onClick={() => {
-                  setFilter(option.key);
-                  setActiveKeyword(null);
-                  setActiveVenue(null);
-                }}
-                type="button"
-              >
-                <span>{tKey(`linkedEvents.${option.labelKey}`)}</span>
-                <strong>{option.count}</strong>
-              </button>
-            ))}
+          <div className="linked-events-filter-grid" role="group" aria-label={tKey("linkedEvents.browseActivities")}>
+            {filterOptions.map((option) => {
+              const label = tKey(`linkedEvents.${option.labelKey}`);
+              return (
+                <button
+                  aria-label={`${label}: ${option.count}`}
+                  aria-pressed={filter === option.key}
+                  className={filter === option.key ? "linked-events-filter linked-events-filter-active" : "linked-events-filter"}
+                  key={option.key}
+                  onClick={() => {
+                    setFilter(option.key);
+                    setActiveKeyword(null);
+                    setActiveVenue(null);
+                  }}
+                  type="button"
+                >
+                  <span>{label}</span>
+                  <strong>{option.count}</strong>
+                </button>
+              );
+            })}
           </div>
         </article>
 
@@ -932,19 +1009,27 @@ export function LinkedEventsWorkspace({
             <span>{tKey("linkedEvents.activityCategories")}</span>
             <strong>{categoryCounts.get("all") ?? 0}</strong>
           </header>
-          <div className="linked-events-category-grid">
+          <div
+            aria-label={tKey("linkedEvents.activityCategories")}
+            className="linked-events-category-grid"
+            role="group"
+          >
             {EVENT_CATEGORY_DEFINITIONS.map((definition) => {
               const isActive = categoryFilter === definition.key;
+              const label = tKey(`linkedEvents.${definition.labelKey}`);
+              const count = categoryCounts.get(definition.key) ?? 0;
               return (
                 <button
+                  aria-label={`${label}: ${count}`}
+                  aria-pressed={isActive}
                   className={isActive ? "linked-events-category-chip active" : "linked-events-category-chip"}
                   key={definition.key}
                   onClick={() => setCategoryFilter(definition.key)}
                   type="button"
                 >
                   <span className="material-symbols-outlined" aria-hidden="true">{definition.icon}</span>
-                  <span>{tKey(`linkedEvents.${definition.labelKey}`)}</span>
-                  <strong>{categoryCounts.get(definition.key) ?? 0}</strong>
+                  <span>{label}</span>
+                  <strong>{count}</strong>
                 </button>
               );
             })}
@@ -958,22 +1043,17 @@ export function LinkedEventsWorkspace({
           <header>
             <div>
               <span>{tKey("linkedEvents.activityList")}</span>
-              <h3>{tKey("linkedEvents.activitiesValidFromSelectedTime")}</h3>
+              <h2>{tKey("linkedEvents.activitiesValidFromSelectedTime")}</h2>
             </div>
             <div className="linked-events-filter-status">
-              {activeKeyword || activeVenue || searchText || categoryFilter !== "all" ? (
+              {hasActiveFilters ? (
                 <button
                   className="linked-events-clear-filters"
-                  onClick={() => {
-                    setActiveKeyword(null);
-                    setActiveVenue(null);
-                    setCategoryFilter("all");
-                    setSearchText("");
-                  }}
+                  onClick={clearFilters}
                   type="button"
                 >
                   {tKey("linkedEvents.clearFilters")}
-                  <span className="material-symbols-outlined" style={{ fontSize: "14px", marginLeft: "4px" }}>close</span>
+                  <span className="material-symbols-outlined linked-events-clear-icon" aria-hidden="true">close</span>
                 </button>
               ) : (
                 <strong>{filteredEvents.length} {tKey("linkedEvents.activities")}</strong>
@@ -981,7 +1061,11 @@ export function LinkedEventsWorkspace({
             </div>
           </header>
 
-          <div className="linked-events-timeline-list">
+          <div
+            aria-label={tKey("linkedEvents.activityList")}
+            className="linked-events-timeline-list"
+            role="group"
+          >
             {filteredEvents.length > 0 ? (
               filteredEvents.slice(0, 24).map((event) => {
                 const isSelected = event.id === selectedEvent?.id;
@@ -989,6 +1073,7 @@ export function LinkedEventsWorkspace({
                 const keywords = attributeList(event, "keywords").slice(0, 3);
                 return (
 	                  <button
+	                    aria-pressed={isSelected}
 	                    className={
 	                      isSelected
 	                        ? `linked-events-row linked-events-row-${tone} linked-events-row-selected`
@@ -1016,9 +1101,7 @@ export function LinkedEventsWorkspace({
                   </button>
                 );
               })
-            ) : (
-              <div className="linked-events-empty-state">{tKey("linkedEvents.noActivitiesMatchTheCurrentFilters")}</div>
-            )}
+            ) : null}
           </div>
           <div className="linked-events-scope-note">
             <span>{tKey("linkedEvents.eventsInScope").replace("{shown}", String(filteredEvents.length)).replace("{total}", String(sortedEvents.length))}</span>
@@ -1060,6 +1143,8 @@ export function LinkedEventsWorkspace({
                     {eventAddress(selectedEvent, tKey)}
                     {attributeText(selectedEvent, "place_name") && (
                       <button
+                        aria-label={tKey("linkedEvents.filterByThisVenue")}
+                        aria-pressed={activeVenue === eventPlace(selectedEvent, tKey)}
                         className="linked-events-inspector-filter-btn"
                         onClick={() => {
                           const place = eventPlace(selectedEvent, tKey);
@@ -1068,7 +1153,7 @@ export function LinkedEventsWorkspace({
                         title={tKey("linkedEvents.filterByThisVenue")}
                         type="button"
                       >
-                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>filter_list</span>
+                        <span className="material-symbols-outlined linked-events-inspector-filter-icon" aria-hidden="true">filter_list</span>
                       </button>
                     )}
                   </dd>

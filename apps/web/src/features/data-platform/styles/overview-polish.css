@@ -11,7 +11,7 @@
 .metric-tile:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 
@@ -47,7 +47,7 @@
 
 .summary-grid-user .metric-tile-link:hover {
   transform: translateY(-2px);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .summary-grid-user .metric-tile strong {

@@ -27,6 +27,17 @@
   line-height: 1.55;
 }
 
+.today-overview-empty h1 {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--on-surface);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
 .today-command {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
@@ -774,7 +785,7 @@
   margin-bottom: 16px;
 }
 
-.day-plan-timeline-header h3 {
+.day-plan-timeline-header h2 {
   margin-top: 5px;
   color: var(--on-surface);
   font-size: 1rem;

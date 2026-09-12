@@ -13,6 +13,7 @@
     display: flex;
     width: 256px;
     height: 100vh;
+    height: 100dvh;
     flex: 0 0 256px;
     flex-direction: column;
     border-right: 1px solid var(--outline-variant);
@@ -454,6 +455,7 @@
   .dashboard-main-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     min-height: calc(100vh - 220px);
+    min-height: calc(100dvh - 220px);
   }
 
   .signal-section {
@@ -470,6 +472,7 @@
 
   .events-panel-expanded {
     height: clamp(420px, calc(100vh - 220px), 640px);
+    height: clamp(420px, calc(100dvh - 220px), 640px);
   }
 
   .weather-ops-grid {
@@ -678,41 +681,6 @@
     border: 1px solid var(--outline-variant);
     border-radius: 10px;
     background: var(--surface-container-low);
-  }
-
-  .mobile-utility-actions {
-    grid-column: 2;
-    grid-row: 1;
-    width: auto;
-    min-width: 0;
-    max-width: 100%;
-    justify-content: flex-end;
-    gap: 6px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    padding-bottom: 2px;
-  }
-
-  .mobile-utility-actions::-webkit-scrollbar {
-    display: none;
-  }
-
-  .mobile-utility-actions > * {
-    flex: 0 0 auto;
-  }
-
-  .mobile-overflow-action {
-    display: none !important;
-  }
-
-  .mobile-dashboard-header .profile-avatar {
-    display: inline-flex;
-    width: 36px;
-    height: 36px;
-    font-size: 12px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
   }
 
   .language-switcher {
@@ -1091,7 +1059,7 @@
   .events-panel-expanded {
     position: fixed;
     right: 8px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(77px + env(safe-area-inset-bottom));
     left: 8px;
     width: auto;
     height: min(62dvh, 420px);
@@ -1101,7 +1069,7 @@
 
   .events-panel-collapsed {
     right: 8px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(77px + env(safe-area-inset-bottom));
     left: 8px;
     width: auto;
   }
@@ -1747,6 +1715,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);

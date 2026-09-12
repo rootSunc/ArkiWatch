@@ -36,6 +36,7 @@
 .dashboard-shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   height: auto;
   overflow: visible;
 }
@@ -86,6 +87,7 @@
   flex-direction: column;
   gap: 32px;
   height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
   overflow: auto;
@@ -129,7 +131,6 @@
   min-width: 0;
 }
 
-.brand-panel h1,
 .brand-title-main {
   color: var(--ink);
   font-size: 15px;
@@ -673,6 +674,17 @@
   }
 }
 
+@media (min-width: 1024px) and (max-width: 1100px) {
+  /* At the narrow desktop breakpoint, keep the timeline's decision label
+     readable instead of letting the source-status badge consume its only
+     line and silently ellipsize the action title. */
+  .dashboard-shell-mode-today .day-plan-timeline-top strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
 /* ==========================================================================
    4. Content frame
    ========================================================================== */
@@ -741,8 +753,12 @@
 }
 
 .demo-mode-banner-link {
+  display: inline-flex;
+  align-items: center;
   margin-left: auto;
   flex: 0 0 auto;
+  min-height: 32px;
+  padding-block: 8px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--blue);
@@ -899,6 +915,7 @@
 .overview-search input {
   flex: 1;
   min-width: 0;
+  min-height: 44px;
   height: auto;
   border: 0;
   outline: 0;
@@ -915,8 +932,10 @@
 
 .overview-search-clear {
   position: static;
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
   border-radius: var(--r-chip);
   background: transparent;
   color: var(--muted-2);
@@ -1144,6 +1163,42 @@
   margin-bottom: 80px;
 }
 
+.dashboard-empty-state-rich {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--muted-2);
+}
+
+.dashboard-empty-state-rich > .material-symbols-outlined {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--blue);
+  font-size: 22px;
+}
+
+.dashboard-empty-state-copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.dashboard-empty-state-copy strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.dashboard-empty-state-copy p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted-3);
+  font-size: 13px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+
 .overview-signal-grid-catalog {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   padding: 0 0 22px;
@@ -1163,6 +1218,14 @@
 
 .overview-catalog + .overview-secondary-content {
   border-top: 0;
+}
+
+/* The browser's default details rule is weaker than the grid declaration
+   below, so a closed catalog could keep painting its cards while the summary
+   still reported the disclosure as collapsed. Keep the native disclosure
+   state authoritative. */
+.overview-catalog:not([open]) > .overview-signal-grid-catalog {
+  display: none;
 }
 
 .overview-catalog > summary,
@@ -1819,7 +1882,7 @@
   margin-bottom: 12px;
 }
 
-.day-plan-timeline-header h3 {
+.day-plan-timeline-header h2 {
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -2387,7 +2450,7 @@
   color: var(--muted-2);
 }
 
-.trend-panel > header h3 {
+.trend-panel > header h2 {
   margin-top: 8px;
   font-size: 19px;
   font-weight: 600;
@@ -2442,6 +2505,25 @@
   color: var(--muted-3);
 }
 
+.trend-chart-frame-single {
+  display: grid;
+  gap: 12px;
+}
+
+.trend-chart-frame-single .trend-chart-svg {
+  height: 132px;
+}
+
+.trend-chart-single-note {
+  margin: 0;
+  border-left: 2px solid var(--trend-color);
+  background: color-mix(in srgb, var(--trend-color) 7%, var(--canvas));
+  color: var(--muted-2);
+  font-size: 12px;
+  line-height: 18px;
+  padding: 9px 12px;
+}
+
 .trend-chart-stats {
   display: flex;
   gap: 24px;
@@ -2476,7 +2558,6 @@
 .weather-summary-strip,
 .weather-lower-grid,
 .weather-ops-grid,
-.weather-detail-page .workspace-evidence-coordinates,
 .weather-provider-status,
 .weather-detail-freshness,
 .weather-detail-page .trend-chart-stats,
@@ -4110,6 +4191,13 @@
   align-items: start;
 }
 
+@media (max-width: 640px) {
+  .geo-catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+
 .geo-catalog-grid h2,
 .regional-indicators h2 {
   margin: 0 0 24px;
@@ -4372,6 +4460,7 @@
   .dashboard-shell,
   .dashboard-app {
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -4436,6 +4525,43 @@
     grid-template-columns: 1fr;
   }
 
+  /* Keep workspace tabs readable at the narrowest supported width. The
+   * desktop tabs can size to their labels, but a clipped second tab leaves
+   * the available panel undiscoverable on a 320px viewport. */
+  .energy-tab-list,
+  .mobility-tab-list {
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .energy-tab,
+  .mobility-tab {
+    min-width: 0;
+    flex: 1 1 0;
+    height: auto;
+    min-height: 40px;
+    padding: 6px 8px;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .air-pipeline-panel > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The refreshed catalog summary is a stacked grid on narrow screens, not
+   * the legacy horizontal scroller. Remove the old bleed and scroll gutter
+   * so its border stays aligned with the detail content. */
+  .city-summary-strip {
+    margin-inline: 0;
+    overflow: visible;
+    padding: 0;
+    scroll-snap-type: none;
+  }
+
   .day-plan-timeline-button {
     grid-template-columns: 1fr;
     gap: 6px;
@@ -4457,13 +4583,6 @@
   .mobile-dashboard-header {
     min-height: 52px;
     padding: 8px 16px;
-  }
-
-  .mobile-dashboard-header .mobile-utility-actions
-    > :is(.theme-toggle-button, .share-view-link-button, .refresh-button,
-          .export-snapshot-button, .language-switcher, .profile-avatar,
-          .mobile-overflow-action) {
-    display: none;
   }
 
   .mobile-bottom-nav {
@@ -4502,6 +4621,19 @@
   .mobile-dashboard-footer {
     border-top: 1px solid var(--line);
     background: var(--canvas);
+  }
+}
+
+@media (max-width: 320px) {
+  .mobile-bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow-x: hidden;
+  }
+
+  .mobile-bottom-nav-item {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 2px;
   }
 }
 
@@ -4551,7 +4683,7 @@
   display: none;
 }
 
-.transit-alert-panel > header h3,
+.transit-alert-panel > header h2,
 .road-rail-incident-panel > header h3 {
   margin: 0;
   font-size: 22px;
@@ -4725,7 +4857,8 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  width: 260px;
+  width: min(260px, 100%);
+  max-width: 100%;
   border: 0;
   border-bottom: 1px solid var(--line-strong);
   padding: 0 2px 8px;
@@ -4795,6 +4928,19 @@
   box-shadow: none;
   padding: 20px 0 0;
   margin-bottom: 48px;
+}
+
+@media (max-width: 640px) {
+  /* Keep an empty result explanation above the fixed mobile navigation. */
+  .linked-events-page-empty {
+    gap: 16px;
+  }
+
+  .linked-events-page-empty .linked-events-filter-panel,
+  .linked-events-page-empty .linked-events-category-panel,
+  .linked-events-page-empty .linked-events-category-grid {
+    margin-bottom: 0;
+  }
 }
 
 .linked-events-row {
@@ -5005,7 +5151,7 @@
 
 :root[data-language="zh"] :where(
   .overview-section-heading h2,
-  .day-plan-timeline-header h3,
+  .day-plan-timeline-header h2,
   .today-decisions-title
 ) {
   letter-spacing: -0.005em;
@@ -5039,10 +5185,6 @@
 }
 
 .brand-title-mobile-nav {
-  display: none;
-}
-
-.mobile-header-secondary {
   display: none;
 }
 
@@ -5107,8 +5249,8 @@
 
   .mobile-context-row .city-scope-control,
   .mobile-context-row .date-scope-control {
-    min-height: 0;
-    height: auto;
+    min-height: 32px;
+    height: 32px;
     width: auto;
     max-width: none;
     padding: 0;
@@ -5162,6 +5304,15 @@
     width: auto;
   }
 
+  .mobile-context-row .date-calendar-popover {
+    /* The date control sits before the settings and share actions. Align the
+       popover with the row's content edge instead of clipping it to the
+       control's narrower inline box. */
+    right: -86px;
+    width: min(320px, calc(100vw - 24px));
+    padding: 10px 12px 12px;
+  }
+
   .mobile-context-sep {
     color: var(--divider-fill);
   }
@@ -5173,8 +5324,10 @@
     color: var(--muted-2);
   }
 
-  .mobile-header-secondary {
-    display: none !important;
+  .mobile-context-row .share-view-link-button {
+    width: 32px;
+    height: 32px;
+    color: var(--muted-2);
   }
 
   .dashboard-side-nav.mobile-side-nav-open .brand-icon,
@@ -5203,13 +5356,45 @@
     padding: 16px 12px 0;
   }
 
+  .side-nav-mobile-actions {
+    display: grid;
+    gap: 2px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .side-nav-mobile-actions .nav-row,
+  .side-nav-mobile-actions .export-snapshot-button {
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .side-nav-mobile-actions .export-snapshot-button {
+    width: 100%;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: var(--r-control);
+    background: transparent;
+    padding: 0 8px;
+    color: var(--ink-soft);
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    font-weight: 400;
+    text-align: left;
+  }
+
+  .side-nav-mobile-actions .export-snapshot-button:hover {
+    background: var(--surface-variant);
+    color: var(--on-surface);
+  }
+
   .dashboard-shell-mode-today .demo-mode-banner,
-  .dashboard-shell-mode-today .today-assistant-action,
   .dashboard-shell-mode-today .today-provenance,
   .dashboard-shell-mode-today .today-glance-title,
   .dashboard-shell-mode-today .today-scope-note,
   .dashboard-shell-mode-today .today-decisions,
-  .dashboard-shell-mode-today .day-plan-timeline-header h3,
+  .dashboard-shell-mode-today .day-plan-timeline-header h2,
   .dashboard-shell-mode-today .day-plan-timeline-detail,
   .dashboard-shell-mode-today .day-plan-timeline-top .material-symbols-outlined {
     display: none;
@@ -5250,6 +5435,11 @@
     justify-content: center;
     font-size: 15px;
     margin-bottom: 0;
+  }
+
+  .dashboard-shell-mode-today .today-assistant-action {
+    min-height: 48px;
+    justify-content: center;
   }
 
   .dashboard-shell-mode-today .today-primary-action .material-symbols-outlined {
@@ -5329,8 +5519,9 @@
     grid-row: 1;
     font-size: 11px;
     padding-top: 0;
-    height: 1.2em;
-    overflow: hidden;
+    min-height: 1.2em;
+    height: auto;
+    overflow: visible;
   }
 
   .dashboard-shell-mode-today .day-plan-timeline-top .status-badge {
@@ -5345,14 +5536,92 @@
   .air-summary-strip {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
+    min-width: 0;
     overflow: visible;
     margin-inline: 0;
     padding: 0;
+  }
+
+  .air-main-grid {
+    min-width: 0;
   }
 
   .energy-summary-strip article strong,
   .transit-summary-strip article strong,
   .road-rail-summary-strip article strong {
     overflow-wrap: anywhere;
+  }
+
+  /* Keep compact scope values readable as data, rather than allowing a
+     single word such as "National" to split at an arbitrary character. */
+  .road-rail-summary-strip > .road-rail-scope-tile > strong {
+    font-size: clamp(1.2rem, 6vw, 1.375rem);
+    overflow-wrap: normal;
+    white-space: nowrap;
+    word-break: normal;
+  }
+
+  .energy-summary-strip article.energy-summary-compact {
+    padding-inline: 16px;
+  }
+
+  .energy-summary-strip article.energy-summary-compact strong {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+@media (max-width: 360px) {
+  .energy-summary-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-shell-mode-today .today-assistant-action {
+    width: 100%;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-button {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-button time {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-top {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .dashboard-shell-mode-today .day-plan-timeline-detail {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .transit-alert,
+  .road-rail-incident {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .transit-alert-severity,
+  .road-rail-incident-kind {
+    justify-self: start;
+  }
+
+  .transit-alert-main,
+  .road-rail-incident-main,
+  .transit-alert-when,
+  .road-rail-incident-when {
+    grid-column: 1;
+  }
+
+  .transit-alert-when,
+  .road-rail-incident-when {
+    justify-self: start;
+    white-space: normal;
   }
 }

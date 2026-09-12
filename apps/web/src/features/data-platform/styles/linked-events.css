@@ -289,6 +289,7 @@
 
 .linked-events-search input {
   min-width: 0;
+  min-height: 42px;
   border: 0;
   background: transparent;
   color: var(--on-background);
@@ -447,6 +448,7 @@
   min-width: 0;
 }
 
+.linked-events-timeline-panel h2,
 .linked-events-timeline-panel h3 {
   margin-top: 2px;
   color: var(--on-background);
@@ -988,12 +990,19 @@
   background: color-mix(in srgb, var(--error) 12%, transparent);
 }
 
+.linked-events-clear-icon {
+  font-size: 14px;
+  margin-left: 4px;
+}
+
 .linked-events-inspector-filter-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
   border: 1px solid var(--separator-border);
   border-radius: 4px;
   background: var(--detail-panel-bg);
@@ -1010,6 +1019,19 @@
   background: color-mix(in srgb, var(--primary) 6%, var(--detail-panel-bg));
 }
 
+.linked-events-inspector-filter-icon {
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .linked-events-inspector-filter-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}
+
 .linked-events-panel,
 .linked-events-empty,
 .linked-events-empty-state {
@@ -1024,7 +1046,7 @@
 .linked-events-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .linked-events-hero {
@@ -1061,7 +1083,7 @@
 .linked-events-summary-strip article:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.22);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 
@@ -1086,12 +1108,17 @@
 .linked-events-filter {
   border-radius: 999px !important;
   border: 1px solid var(--outline-variant) !important;
-  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition:
+    background-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 250ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .linked-events-filter:hover {
   border-color: var(--primary) !important;
-  background: rgba(var(--primary), 0.08) !important;
+  background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
   transform: translateY(-1.5px) !important;
 }
@@ -1100,7 +1127,7 @@
   border-color: var(--primary) !important;
   background: var(--primary-container) !important;
   color: var(--on-primary-container) !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(var(--primary), 0.12) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 12px color-mix(in srgb, var(--primary) 12%, transparent) !important;
 }
 
 .linked-events-filter:active {

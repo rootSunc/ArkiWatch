@@ -618,7 +618,7 @@
 }
 
 .water-insight-grid .water-coverage-list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .water-insight-grid .water-field-grid {
@@ -1085,7 +1085,7 @@
 .water-glass-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .water-hero {
@@ -1122,7 +1122,7 @@
 .water-summary-strip article:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.22);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 

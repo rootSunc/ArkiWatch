@@ -114,7 +114,7 @@ function formatCompactTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -154,7 +154,7 @@ function formatAlertWindow(
   tKey: (key: string) => string,
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): string {
-  return `${formatClockTime(alert.starts_at, language, tKey, timeZone)} – ${formatClockTime(alert.ends_at, language, tKey, timeZone)}`;
+  return `${formatClockTime(alert.starts_at, language, tKey, timeZone)} - ${formatClockTime(alert.ends_at, language, tKey, timeZone)}`;
 }
 
 function uniqueJoined(values: string[]): string {
@@ -209,8 +209,8 @@ function severityTone(severity: string): TransitTone {
   return "neutral";
 }
 
-function eventTypeLabel(value: string): string {
-  return value.replace(/^transit_/, "").replaceAll("_", " ");
+function eventTypeLabel(value: string, language: LanguageMode): string {
+  return translateEnumLabel(language, value);
 }
 
 function stopLabel(stopId: string): string {
@@ -659,24 +659,27 @@ function timelinePercent(value: number, bounds: { startsAt: number; endsAt: numb
   return Math.max(0, Math.min(100, ((value - bounds.startsAt) / (bounds.endsAt - bounds.startsAt)) * 100));
 }
 
-function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+function formatHistoryDate(
+  value: string,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsed)
-    .toUpperCase();
+  }).format(parsed);
 }
 
 function transitHistoryPoints(
   history: PlatformHistoricalSnapshot<TransitCurrentResponse>[],
   tKey: (key: string) => string,
+  language: LanguageMode = "en",
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -687,7 +690,7 @@ function transitHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date, timeZone),
+        label: formatHistoryDate(snapshot.date, language, timeZone),
         value: data.quality.normalized_event_count,
         detail: tKey("transit.historyPointDetailAtSnapshot")
           .replace("{active}", String(data.quality.active_alert_count))
@@ -863,7 +866,7 @@ export function TransitWorkspace({
   const scopeRows = transitScopeMetrics(transit.alerts, tKey);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
-  const historyPoints = transitHistoryPoints(history, tKey, dataTimezone);
+  const historyPoints = transitHistoryPoints(history, tKey, language, dataTimezone);
   const highSeverityCount = transit.alerts.filter((alert) => alert.severity.toUpperCase() === "HIGH").length;
   const upcomingAlerts = transit.alerts.filter(
     (alert) => scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming",
@@ -884,6 +887,7 @@ export function TransitWorkspace({
         className="transit-detail-header"
         eyebrow={tKey("mobility.mobilityWorkspace")}
         fallbackKey="transit.notObserved"
+        headingLevel={2}
         language={language}
         observedAt={transit.observed_at}
         sourceLabel={transit.source_code.toUpperCase()}
@@ -1001,7 +1005,7 @@ export function TransitWorkspace({
           <header>
             <div>
               <span>{tKey("transit.incidentTimeline")}</span>
-              <h3>{tKey(isHistorical ? "transit.alertsInSnapshotWindow" : "transit.activeAndUpcomingServiceAlerts")}</h3>
+              <h2>{tKey(isHistorical ? "transit.alertsInSnapshotWindow" : "transit.activeAndUpcomingServiceAlerts")}</h2>
             </div>
             <strong>{tKey("transit.priorityFirst")}</strong>
           </header>
@@ -1081,7 +1085,7 @@ export function TransitWorkspace({
                         <div className="sr-only">
                           <TransitAlertStatusBadge alert={alert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <small className="transit-alert-scope-preview">{scopePreview(alert, tKey)}</small>
-                          <em>{eventTypeLabel(alert.event_type)}</em>
+                          <em>{eventTypeLabel(alert.event_type, language)}</em>
                           <span>{causeLabel(alert.cause, language, tKey)}</span>
                           <span>{effectLabel(alert.effect, language, tKey)}</span>
                           <span>{scopeLabel(alert, tKey)}</span>
@@ -1121,7 +1125,7 @@ export function TransitWorkspace({
                   <div className="transit-alert-detail-meta">
                     <div>
                       <span>{tKey("transit.type")}</span>
-                      <strong>{eventTypeLabel(selectedAlert.event_type)}</strong>
+                      <strong>{eventTypeLabel(selectedAlert.event_type, language)}</strong>
                     </div>
                     <div>
                       <span>{tKey("transit.cause")}</span>

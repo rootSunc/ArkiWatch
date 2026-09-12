@@ -107,7 +107,7 @@ function formatCompactTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -214,6 +214,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
         className="city-detail-empty"
         description={tKey("cityServices.metadataMissing")}
         eyebrow={tKey("cityServices.title")}
+        headingLevel={1}
         title={tKey("cityServices.signalsUnavailable")}
       />
     );
@@ -354,15 +355,17 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
 
         <article className="city-glass-panel city-field-panel">
           <header>
-            <DataLabelWithHelp
-              helpText={dataHelpText({
-                key: "tracked_fields",
-                label: "Service Model",
-                language,
-              })}
-            >
-              {tKey("cityServices.serviceModel")}
-            </DataLabelWithHelp>
+            <h2>
+              <DataLabelWithHelp
+                helpText={dataHelpText({
+                  key: "tracked_fields",
+                  label: "Service Model",
+                  language,
+                })}
+              >
+                {tKey("cityServices.serviceModel")}
+              </DataLabelWithHelp>
+            </h2>
             <strong>{fieldCount}</strong>
           </header>
           <div className="city-field-grid">
@@ -387,7 +390,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
           <header>
             <div>
               <span>{tKey("cityServices.serviceOperations")}</span>
-              <h3>{tKey("cityServices.serviceOperationsLead")}</h3>
+              <h2>{tKey("cityServices.serviceOperationsLead")}</h2>
             </div>
             <strong>{category.events.length || category.sources.length} {tKey("cityServices.rows")}</strong>
           </header>

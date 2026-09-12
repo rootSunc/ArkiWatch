@@ -18,8 +18,8 @@ describe("catalog-only workspaces", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getAllByText("Catalog-only mapping").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("No connected sources").length).toBeGreaterThan(0);
+    expect(screen.getByText("CATALOG ONLY")).toBeInTheDocument();
+    expect(screen.getByText("No source connected")).toBeInTheDocument();
     expect(screen.queryByText("NLS documentation")).not.toBeInTheDocument();
     expect(screen.queryByText("CC BY 4.0")).not.toBeInTheDocument();
   });
@@ -31,8 +31,16 @@ describe("catalog-only workspaces", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getAllByText("Catalog-only mapping").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("No connected sources").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(
+        "This workspace describes the planned data model; no provider feed is connected yet.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Empty means no connected indicator observations are available for this snapshot. On narrow screens, scroll horizontally to view all columns.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByText("StatFi")).not.toBeInTheDocument();
     expect(screen.queryByText("Sotkanet")).not.toBeInTheDocument();
     expect(screen.queryByText("CC BY 4.0")).not.toBeInTheDocument();

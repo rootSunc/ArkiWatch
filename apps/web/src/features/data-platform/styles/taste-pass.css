@@ -131,6 +131,68 @@
 }
 
 /* --------------------------------------------------------------------------
+   5a. Detail-workspace contrast corrections
+
+   The energy price rows sit on `--surface-container`, which is intentionally
+   tinted rather than white. The original muted values were calibrated for
+   the page canvas and fell below AA on this denser surface. Keep the quiet
+   hierarchy, but give the row text a readable ink value and preserve the
+   positive state with a slightly ink-weighted green.
+   -------------------------------------------------------------------------- */
+
+.energy-price-row > span,
+.energy-price-row > em,
+.energy-price-row > small {
+  color: var(--ink-soft);
+}
+
+.energy-price-row-good > strong {
+  color: color-mix(in srgb, var(--green) 88%, var(--ink));
+}
+
+/* The legacy active-filter rule uses !important, so the final theme-safe
+   control tokens must also win at the last cascade layer. */
+.linked-events-filter-active,
+.linked-events-filter-chip-active,
+.linked-events-time-filter-active,
+.transit-filter-chip-active,
+.road-rail-filter-chip-active,
+.linked-events-filter-active:hover,
+.linked-events-filter-active:focus-visible,
+.linked-events-filter-chip-active:hover,
+.linked-events-filter-chip-active:focus-visible,
+.linked-events-time-filter-active:hover,
+.linked-events-time-filter-active:focus-visible,
+.transit-filter-chip-active:hover,
+.transit-filter-chip-active:focus-visible,
+.road-rail-filter-chip-active:hover,
+.road-rail-filter-chip-active:focus-visible {
+  background: var(--btn-fill) !important;
+  border-color: var(--btn-fill) !important;
+  color: var(--btn-label) !important;
+}
+
+.linked-events-filter-active > span,
+.linked-events-filter-active > strong,
+.linked-events-filter-chip-active > span,
+.linked-events-filter-chip-active > strong,
+.linked-events-time-filter-active > span,
+.linked-events-time-filter-active > strong,
+.transit-filter-chip-active > span,
+.transit-filter-chip-active > strong,
+.road-rail-filter-chip-active > span,
+.road-rail-filter-chip-active > strong {
+  color: var(--btn-label) !important;
+}
+
+/* Opacity on the entire table-head row also fades its text into the canvas;
+   the header already has its own muted token and only the divider needs to
+   recede. */
+.regional-table thead tr {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
    6. Observatory heading redundancy
    The kicker above the h1 prints "Data platform", which is already the root
    of the breadcrumb 40px above it in the top bar. Two identical labels in one
@@ -156,15 +218,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   7. Today strip on phones
-   The strip is one line at desktop, so clipping the detail with an ellipsis is
-   the right call there. Once it stacks on a phone it has the full column width
-   and vertical room, and clipping the headline mid-word ("Leave a few minutes
-   e...") hides the recommendation this product exists to deliver. Let both
-   lines wrap below the phone breakpoint.
+   7. Today strip in the compact shell
+   The strip is one line on wide desktop, so clipping the detail with an
+   ellipsis is the right call there. The compact shell still owns the 641px
+   tablet breakpoint (bottom navigation, no side rail), where the same rule
+   leaves the recommendation ending mid-sentence ("morni..."). Give that
+   shell the vertical room it already has on phones, while keeping the wider
+   desktop treatment unchanged.
    -------------------------------------------------------------------------- */
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .today-digest-strip-copy strong,
   .today-digest-strip-detail {
     overflow: visible;
@@ -236,6 +299,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .dashboard-shell *,
+  .dashboard-shell *::before,
+  .dashboard-shell *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
   .dashboard-shell :where(button, a, [role="button"], summary) {
     transition: none;
   }
@@ -243,5 +313,1009 @@
   .dashboard-shell
     :where(button, a, [role="button"], summary):not(:disabled):active {
     transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. Nordic civic observatory
+
+   Design read: a public-data workspace for people making everyday city
+   decisions. The interface should feel calm and exact, but not sterile. This
+   layer gives the shell a recognisable Helsinki character through cold
+   mineral neutrals, a single fjord-blue accent, and an asymmetric data grid.
+
+   Shape rule: panels are 12px, controls are 9px, count/status chips may be
+   fully rounded. Elevation is reserved for the sticky chrome and interactive
+   signal cards. Everything else is separated with space or a hairline.
+   -------------------------------------------------------------------------- */
+
+:root,
+:root[data-theme="light"] {
+  --canvas: #f7f9fa;
+  --surface-soft: #edf2f4;
+  --nav-active: #e2ecef;
+  --nav-hover: #e8eff1;
+  --row-hover: #eff4f5;
+  --ink: #13252c;
+  --ink-hover: #0a171c;
+  --ink-soft: #31474f;
+  --body: #50656d;
+  --muted: #5c7077;
+  --muted-2: #52666d;
+  --icon-idle: #52666d;
+  --line: #ccd8dc;
+  --line-strong: #aebfc5;
+  --line-soft: #dce5e8;
+  --line-softest: #e7edef;
+  --blue: #006b78;
+  --blue-soft: #cbe5e7;
+  --blue-fill: #c0dde0;
+  --green: #08756b;
+  --amber: #76520b;
+  --red: #a5352c;
+  --selection: #bee1e4;
+  --sidenav-ground: #eef3f4;
+  --sidenav-edge: #d6e0e3;
+  --sidenav-row-hover: rgba(255, 255, 255, 0.7);
+  --sidenav-row-active: #ffffff;
+  --sidenav-row-active-edge: #d4e0e3;
+  --topbar-scrim: rgba(247, 249, 250, 0.86);
+  --btn-fill: #143039;
+  --btn-fill-hover: #0b222a;
+  --r-chip: 999px;
+  --r-filter: 9px;
+  --r-control: 9px;
+  --r-card: 12px;
+  --r-panel: 12px;
+  --r-frame: 16px;
+  --workspace-shadow: 0 18px 50px rgba(28, 63, 73, 0.08);
+  --card-lift-shadow: 0 16px 30px rgba(31, 72, 82, 0.09);
+}
+
+:root[data-theme="dark"] {
+  --canvas: #10191d;
+  --surface-soft: #18252a;
+  --nav-active: #20343a;
+  --nav-hover: #1b2c31;
+  --row-hover: #19292e;
+  --ink: #edf5f6;
+  --ink-hover: #ffffff;
+  --ink-soft: #d0dee1;
+  --body: #b5c7cb;
+  --muted: #a5b8bc;
+  --muted-2: #95a9ae;
+  --icon-idle: #9aafb4;
+  --line: #354b52;
+  --line-strong: #4b6269;
+  --line-soft: #283b41;
+  --line-softest: #213238;
+  --blue: #72d1d8;
+  --blue-soft: #21484d;
+  --blue-fill: #28575d;
+  --green: #66d9c8;
+  --amber: #efc26d;
+  --red: #ffaaa2;
+  --selection: #275158;
+  --sidenav-ground: #0b1418;
+  --sidenav-edge: #22343a;
+  --sidenav-row-hover: #15252a;
+  --sidenav-row-active: #18282d;
+  --sidenav-row-active-edge: #2d444b;
+  --topbar-scrim: rgba(16, 25, 29, 0.88);
+  --btn-fill: #8bdbe0;
+  --btn-fill-hover: #a9e6e9;
+  --btn-label: #0b1b20;
+  --workspace-shadow: 0 22px 56px rgba(0, 0, 0, 0.22);
+  --card-lift-shadow: 0 18px 34px rgba(0, 0, 0, 0.2);
+}
+
+body {
+  background:
+    radial-gradient(circle at 72% -10%, color-mix(in srgb, var(--blue) 8%, transparent), transparent 34rem),
+    var(--sidenav-ground);
+}
+
+.dashboard-shell {
+  min-height: 100dvh;
+  background: transparent;
+}
+
+.dashboard-app {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--blue) 2%, transparent), transparent 300px),
+    var(--canvas);
+}
+
+.dashboard-side-nav {
+  width: 268px;
+  flex-basis: 268px;
+  padding: 30px 22px 24px;
+  gap: 30px;
+}
+
+.brand-panel {
+  gap: 12px;
+  padding-inline: 7px;
+}
+
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+  border-radius: 50%;
+  background: var(--canvas);
+  box-shadow: 0 0 0 1px var(--line-soft), 0 6px 18px rgba(28, 63, 73, 0.08);
+}
+
+.brand-title-main {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.nav-row {
+  min-height: 42px;
+  height: 42px;
+  padding-inline: 10px;
+  border-radius: var(--r-control);
+}
+
+.nav-row-active,
+.nav-row-active:hover {
+  padding-inline: 9px;
+  box-shadow: 0 7px 20px rgba(31, 72, 82, 0.06);
+}
+
+.nav-row-active::before {
+  content: "";
+  width: 3px;
+  height: 18px;
+  flex: 0 0 3px;
+  margin-left: -10px;
+  margin-right: -5px;
+  border-radius: 999px;
+  background: var(--blue);
+}
+
+.side-nav-group-label,
+.side-nav-catalog-label {
+  padding: 0 10px 9px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+}
+
+.detail-topbar {
+  min-height: 70px;
+  padding: 15px 34px;
+  border-bottom-color: color-mix(in srgb, var(--line) 82%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+  box-shadow: 0 7px 22px rgba(31, 72, 82, 0.04);
+}
+
+.topbar-crumb {
+  font-size: 10px;
+  letter-spacing: 0.13em;
+}
+
+.detail-topbar .city-scope-control,
+.detail-topbar .date-scope-control,
+.language-switcher,
+.icon-button,
+.notification-button,
+.theme-toggle-button,
+.topbar-assistant {
+  height: 38px;
+  min-height: 38px;
+}
+
+.icon-button,
+.notification-button,
+.theme-toggle-button {
+  width: 38px;
+}
+
+.topbar-assistant {
+  padding-inline: 16px;
+  font-weight: 600;
+}
+
+.dashboard-content {
+  max-width: 1240px;
+  padding: 48px 48px 112px;
+}
+
+.demo-mode-banner {
+  min-height: 40px;
+  padding: 9px 12px;
+  margin-bottom: 48px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--surface-soft) 66%, transparent);
+}
+
+.overview-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  align-items: end;
+  gap: clamp(40px, 7vw, 96px);
+  margin-bottom: 46px;
+}
+
+.overview-hero-copy {
+  max-width: 720px;
+}
+
+.overview-hero h1 {
+  max-width: 12ch;
+  margin-bottom: 16px;
+  font-size: clamp(46px, 5vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.overview-hero-copy p {
+  max-width: 58ch;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.overview-hero-tools {
+  width: 100%;
+  align-items: stretch;
+  gap: 9px;
+}
+
+.overview-search {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--canvas) 82%, transparent);
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+
+.overview-search:focus-within {
+  border-color: var(--blue);
+  background: var(--canvas);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+.overview-hero-updated {
+  padding-inline: 2px;
+}
+
+.today-digest-strip {
+  min-height: 68px;
+  margin-bottom: 34px;
+  padding: 14px 16px 14px 18px;
+  border: 1px solid var(--amber-line);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--r-card);
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--amber-soft) 90%, transparent), transparent 72%),
+    var(--canvas);
+}
+
+.overview-status-bar {
+  margin-bottom: 72px;
+}
+
+.overview-status-items {
+  grid-template-columns: 1.25fr 0.8fr 1fr 1fr;
+  gap: 10px;
+  border: 0;
+}
+
+.overview-status-items > .overview-status-item {
+  min-height: 138px;
+  padding: 22px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+}
+
+.overview-status-items > .overview-status-item:nth-child(1),
+.overview-status-items > .overview-status-item:nth-child(3) {
+  background: color-mix(in srgb, var(--blue-soft) 28%, var(--canvas));
+}
+
+.overview-status-item > .material-symbols-outlined {
+  color: var(--blue);
+}
+
+.overview-status-item strong {
+  letter-spacing: -0.045em;
+}
+
+.overview-section-heading {
+  align-items: end;
+  margin-bottom: 26px;
+}
+
+.overview-section-kicker {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.overview-section-heading h2 {
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.overview-section-heading p {
+  margin-top: 9px;
+  max-width: 54ch;
+}
+
+.overview-section-count {
+  margin-bottom: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  padding: 5px 10px;
+  background: var(--surface-soft);
+}
+
+.overview-signal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.overview-signal-grid > :nth-child(4n + 1),
+.overview-signal-grid > :nth-child(4n + 4) {
+  grid-column: span 7;
+}
+
+.overview-signal-grid > :nth-child(4n + 2),
+.overview-signal-grid > :nth-child(4n + 3) {
+  grid-column: span 5;
+}
+
+.signal-card {
+  min-height: 190px;
+  padding: 22px;
+  border-color: var(--line-soft);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--canvas) 92%, transparent);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+.signal-card:hover,
+.signal-card:focus-visible {
+  border-color: color-mix(in srgb, var(--blue) 38%, var(--line));
+  background: var(--canvas);
+  box-shadow: var(--card-lift-shadow);
+  transform: translateY(-3px);
+}
+
+.signal-card:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.signal-card-title {
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.signal-card-status {
+  border: 1px solid currentColor;
+  border-radius: var(--r-chip);
+  padding: 4px 8px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.overview-catalog,
+.source-health-panel,
+.overview-secondary-content > * {
+  border-radius: var(--r-card);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-content {
+    padding-inline: 32px;
+  }
+
+  .overview-status-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .dashboard-content {
+    /* Keep browser focus scrolling above the fixed mobile navigation. The
+     * content already has matching bottom padding, but scroll containers do
+     * not use that padding as a focus-safe inset by default. */
+    scroll-padding-block-end: calc(112px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The fixed mobile rail is especially tall relative to a short tablet
+ * viewport. Keep the first actionable recommendation above it instead of
+ * allowing the initial fold to end halfway through the card. */
+@media (max-width: 1023px) and (max-height: 700px) {
+  .dashboard-content {
+    padding-top: 28px;
+  }
+
+  .demo-mode-banner {
+    margin-bottom: 28px;
+  }
+
+  .overview-hero {
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .overview-hero {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 28px;
+  }
+
+  .overview-hero-tools {
+    max-width: 520px;
+  }
+
+  .overview-signal-grid > * {
+    grid-column: span 6 !important;
+  }
+}
+
+/* The desktop rail starts at 1024px, but Today cards are still compact at
+ * that breakpoint. Stack their provenance lines before the single-line meta
+ * row turns provider names into ellipses inside a narrow card. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .today-action-card-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .today-action-card-meta > span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .today-action-card-meta > span:last-child {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-content {
+    /* Keep the last row clear of the fixed mobile nav and the home-indicator
+     * inset when the app is running as a standalone PWA. Focus navigation gets
+     * a slightly larger inset below so scrollable tables do not land beneath
+     * the fixed rail on short screens. */
+    padding: 28px 16px calc(88px + env(safe-area-inset-bottom));
+    scroll-padding-block-end: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .demo-mode-banner {
+    margin-bottom: 32px;
+  }
+
+  .overview-hero {
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .overview-hero h1 {
+    font-size: clamp(38px, 12vw, 48px);
+  }
+
+  .overview-status-bar {
+    margin-bottom: 52px;
+  }
+
+  .overview-status-items {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-status-items > .overview-status-item {
+    min-height: 0;
+  }
+
+  .overview-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-signal-grid > * {
+    grid-column: 1 !important;
+  }
+
+  .signal-card {
+    min-height: 172px;
+  }
+}
+
+/* Short mobile viewports cannot show the full six-row calendar and the fixed
+ * bottom rail at once. Keep the popover above the rail and let its secondary
+ * month actions scroll inside the same surface instead of clipping them off
+ * the screen. */
+@media (max-width: 1023px) and (max-height: 560px) {
+  .mobile-scope-switchers .date-calendar-popover,
+  .mobile-context-row .date-calendar-popover {
+    max-height: calc(100dvh - 176px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+
+/* On a short, narrow viewport the English failure copy wraps to six rows.
+ * Keep the diagnostic endpoint above the fixed bottom rail's shadow without
+ * shrinking the readable type or hiding the retry action. */
+@media (max-width: 640px) and (max-height: 520px) {
+  .platform-error {
+    gap: 8px;
+    margin-top: 12px;
+    padding-block: 14px;
+  }
+}
+
+/* The overview search is the first high-frequency control after the hero.
+ * On a 480px-tall phone the normal title and demo notice push it entirely
+ * under the fixed rail, so reclaim only the compact shell's vertical rhythm
+ * while keeping the input's touch target intact. */
+@media (max-width: 640px) and (max-height: 520px) {
+  .dashboard-content {
+    padding-top: 8px;
+  }
+
+  .demo-mode-banner {
+    margin-bottom: 8px;
+    padding-block: 6px;
+  }
+
+  .overview-hero {
+    gap: 8px;
+  }
+
+  .overview-hero h1 {
+    margin-bottom: 2px;
+    font-size: clamp(34px, 11vw, 38px);
+  }
+
+  .overview-hero-copy p {
+    line-height: 1.35;
+  }
+
+  .overview-search,
+  .overview-search input {
+    min-height: 36px;
+  }
+}
+
+/* A 480px-tall phone leaves only a short window between the compact context
+ * row and the fixed bottom rail. Tighten the first decision surface and the
+ * shared evidence header there so its primary controls remain actionable;
+ * preserve the 44px minimum touch target for both buttons and tabs. */
+@media (max-width: 640px) and (max-height: 520px) {
+  .dashboard-shell-mode-today .today-focus > p {
+    margin-bottom: 16px;
+    line-height: 1.45;
+  }
+
+  .dashboard-shell-mode-today .today-focus-footer {
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  .dashboard-shell-mode-today .today-focus-actions {
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .dashboard-shell-mode-today .today-primary-action,
+  .dashboard-shell-mode-today .today-assistant-action {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .workspace-evidence-header {
+    gap: 8px;
+  }
+
+  .workspace-evidence-eyebrow {
+    margin-bottom: 8px;
+  }
+
+  .workspace-evidence-heading h1,
+  .workspace-evidence-heading h2 {
+    margin-bottom: 6px;
+  }
+
+  .workspace-evidence-status {
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+
+  .workspace-evidence-meta {
+    line-height: 1.55;
+  }
+
+  .workspace-evidence-header.energy-detail-header,
+  .workspace-evidence-header.mobility-detail-header {
+    margin-bottom: 8px;
+  }
+
+  .road-rail-summary-strip > .road-rail-scope-tile {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 320px) {
+  .demo-mode-banner {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: start;
+    row-gap: 0;
+  }
+
+  .demo-mode-banner > .material-symbols-outlined {
+    grid-column: 1;
+    grid-row: 1;
+    margin-top: 2px;
+  }
+
+  .demo-mode-banner-copy {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .demo-mode-banner-link {
+    grid-column: 2;
+    grid-row: 2;
+    margin-left: 0;
+    padding-top: 4px;
+  }
+
+  .mobile-context-row {
+    /* The 40px utility targets need two fewer pixels at each seam to leave
+     * the compact date label enough room at the 280px breakpoint. */
+    gap: 3px;
+  }
+
+  .mobile-context-row .mobile-context-settings {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+}
+
+/* Keep the compact mobile date row visually quiet while giving its date
+ * trigger and calendar actions the same usable hit area as nearby controls. */
+@media (max-width: 640px) {
+  .mobile-context-row .city-scope-control {
+    height: 32px;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .mobile-context-row .city-scope-control select {
+    height: 100%;
+    min-height: 32px;
+  }
+
+  .mobile-context-row .date-scope-control {
+    height: 32px;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .mobile-context-row .date-scope-trigger {
+    min-height: 32px;
+  }
+
+  .date-calendar-nav button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .date-calendar-day {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .date-calendar-actions button {
+    min-height: 36px;
+    padding-inline: 8px;
+  }
+
+  /* Keep the high-frequency mobile actions easy to hit without widening the
+   * context row's text controls. The compact 32px variant was still legal,
+   * but noticeably small on a narrow touch viewport. */
+  .mobile-brand > .icon-button,
+  .mobile-context-row .mobile-context-settings,
+  .mobile-context-row .share-view-link-button {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+}
+
+/* The drawer's language switch is a primary mobile preference, not a compact
+ * desktop utility. Match its hit area to the surrounding navigation rows. */
+.side-nav-mobile-preferences .language-switcher {
+  height: 44px;
+}
+
+.side-nav-mobile-preferences .language-option {
+  height: 36px;
+  min-height: 36px;
+}
+
+@media (min-width: 1024px) {
+  .detail-topbar .city-scope-control select {
+    height: 100%;
+    min-height: 32px;
+  }
+
+  .detail-topbar .language-switcher {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .detail-topbar .language-option {
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .dashboard-content .today-provenance-link,
+  .dashboard-content .today-action-card-main {
+    min-height: 32px;
+  }
+}
+
+/* Today rows keep their secondary assistant action discoverable for every
+ * input method. The redesign's visually-hidden rule left a focusable 1px
+ * button, so keep the route quiet but give it a stable, visible target. */
+.dashboard-content .today-action-card-assistant {
+  position: static;
+  display: inline-flex;
+  width: fit-content;
+  max-width: calc(100% - 16px);
+  height: 32px;
+  min-height: 32px;
+  margin: 8px 0 0 17px;
+  padding: 0 8px;
+  overflow: hidden;
+  clip: auto;
+  white-space: nowrap;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--blue);
+  text-overflow: ellipsis;
+}
+
+.dashboard-content .today-action-card-assistant .material-symbols-outlined {
+  flex: 0 0 auto;
+}
+
+/* Component hover/active rules often share the :focus-visible selector and
+ * suppress the browser outline. Keep keyboard focus unmistakable even when
+ * the focused control is already in its active visual state. */
+.dashboard-shell :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--blue) !important;
+  outline-offset: 2px;
+}
+
+/* Empty result sets should explain the state and offer a way back to the
+ * full feed instead of leaving a single sentence stranded in the timeline. */
+.linked-events-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 132px;
+  padding: 28px 0;
+}
+
+.linked-events-empty-state-copy {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--muted-2);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.linked-events-empty-state-copy > span:last-child {
+  display: grid;
+  gap: 6px;
+  max-width: 58ch;
+}
+
+.linked-events-empty-state-copy strong {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.linked-events-empty-state-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--blue);
+  font-size: 24px;
+}
+
+.linked-events-empty-state-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--canvas);
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.linked-events-empty-state-action:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+@media (max-width: 640px) {
+  .linked-events-empty-state {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .linked-events-empty-state-action {
+    align-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .detail-topbar,
+  .overview-search,
+  .overview-status-items > .overview-status-item {
+    background: var(--canvas);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Keep the Workspace group intact at short desktop heights. The list used to
+ * shrink into an inner scroll area while the catalog stayed in normal flow;
+ * the catalog then visually covered the last Workspace rows. Let the rail
+ * itself scroll so the group hierarchy remains readable and predictable. */
+@media (min-width: 1024px) {
+  .dashboard-side-nav > .brand-panel,
+  .dashboard-side-nav .side-nav-list {
+    flex-shrink: 0;
+  }
+
+  .dashboard-side-nav .side-nav-list {
+    flex-basis: auto;
+    overflow: visible;
+  }
+}
+
+/* workspace-ui.css supplies the shared glass-panel frame after the catalog
+ * workspace flattening rules. Keep the visible service-field section flat so
+ * its heading does not sit on top of a rounded card border. */
+.city-detail-page .city-field-panel,
+.city-detail-page .city-service-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.city-detail-page .city-field-panel > header > h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* On a very short phone viewport the compact overview still needs to expose
+ * the recommendation title before the fixed bottom rail begins. Preserve the
+ * generous rhythm at normal heights, but reclaim the two large gaps here. */
+@media (max-width: 640px) and (max-height: 700px) {
+  .demo-mode-banner {
+    margin-bottom: 12px;
+  }
+
+  .overview-hero {
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+}
+
+/* The transit list header has enough room for a side-by-side treatment on
+ * desktop, but the priority note becomes a second narrow text column on
+ * phones. Stack the two pieces so the section title keeps its natural measure
+ * and the note reads as supporting copy. */
+@media (max-width: 640px) {
+  .transit-alert-panel > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .transit-alert-panel > header strong {
+    max-width: 34ch;
+  }
+}
+
+/* Two narrow water tiles make the 34px empty-state value wrap inside the
+ * word itself at 320px. A single column preserves the data token and keeps
+ * the summary readable without horizontal scrolling. */
+@media (max-width: 360px) {
+  .water-summary-strip {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Keep the first lower detail heading clear of the fixed mobile rail. The
+ * desktop rhythm stays generous; only the narrow presentation reclaims the
+ * space that the rail would otherwise cover. */
+@media (max-width: 640px) {
+  .city-detail-page {
+    gap: 32px;
+  }
+
+  .transit-summary-strip > article {
+    min-height: 0;
+    padding: 8px 14px;
+  }
+}
+
+/* The narrow mobility header wraps to two lines; reclaim the tab and summary
+ * spacing so the first alert heading remains above the fixed rail. */
+@media (max-width: 360px) {
+  .mobility-detail-header {
+    margin-bottom: 0;
+  }
+
+  .mobility-tab-list {
+    margin-bottom: 0;
+  }
+
+  .transit-alert-panel > header {
+    margin-bottom: 15px;
+  }
+
+  .transit-summary-strip > article {
+    padding: 0 10px;
+  }
+
+  .transit-summary-strip {
+    margin-bottom: -1px;
+  }
+
+  .mobility-detail-header .workspace-evidence-heading h1 {
+    font-size: 28px;
+    line-height: 1.08;
   }
 }

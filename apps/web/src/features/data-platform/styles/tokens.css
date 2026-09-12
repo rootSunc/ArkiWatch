@@ -167,6 +167,7 @@
   --secondary-fixed: var(--ink-soft);
   --tertiary: var(--amber);
   --tertiary-container: var(--amber);
+  --on-tertiary-container: var(--btn-label);
   --error: var(--red);
   --error-container: var(--amber-line);
   --on-error-container: var(--red);
@@ -312,6 +313,7 @@
   --on-secondary-container: var(--ink-soft);
   --tertiary: var(--amber);
   --tertiary-container: var(--amber);
+  --on-tertiary-container: var(--btn-label);
   --error: var(--red);
   --error-container: var(--amber-line);
   --on-error-container: var(--red);

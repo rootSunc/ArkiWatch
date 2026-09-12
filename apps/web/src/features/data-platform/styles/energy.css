@@ -535,6 +535,7 @@
   min-width: 0;
 }
 
+.energy-signal-panel h2,
 .energy-signal-panel h3 {
   margin-top: 2px;
   color: var(--on-background);

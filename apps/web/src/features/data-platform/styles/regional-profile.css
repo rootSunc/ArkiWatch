@@ -107,6 +107,11 @@
   margin-top: 16px;
 }
 
+.regional-table-wrapper:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
 .regional-table {
   width: 100%;
   border-collapse: collapse;

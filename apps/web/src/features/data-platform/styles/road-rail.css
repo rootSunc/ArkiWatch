@@ -560,7 +560,11 @@
   line-height: 12px;
   padding: 6px 14px;
   text-transform: uppercase;
-  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    gap 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .road-rail-filter-chip:hover {
@@ -1498,7 +1502,7 @@
 .road-rail-glass-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .road-rail-hero {
@@ -1535,7 +1539,7 @@
 .road-rail-summary-strip article:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.22);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }
 

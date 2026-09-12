@@ -2,6 +2,7 @@
   display: flex;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--background);
 }
@@ -15,6 +16,7 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 100vh;
+  height: 100dvh;
   flex-direction: column;
   overflow: hidden;
   background: var(--background);
@@ -86,7 +88,7 @@
   object-position: center;
 }
 
-.brand-panel h1 {
+.brand-title-main {
   color: var(--on-surface-variant);
   font-size: 10px;
   font-weight: 800;
@@ -297,8 +299,7 @@
   background: var(--outline-variant);
 }
 
-.mobile-scope-switchers,
-.mobile-utility-actions {
+.mobile-scope-switchers {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -745,6 +746,8 @@
   height: 32px;
   align-items: center;
   justify-content: center;
+  border: 0;
+  background: transparent;
   border-radius: 8px;
   color: var(--on-surface);
 }
@@ -787,7 +790,9 @@
   height: 42px;
   align-items: center;
   justify-content: center;
+  border: 0;
   border-radius: 7px;
+  background: transparent;
   color: var(--on-surface);
   font-size: 17px;
   font-weight: 780;
@@ -844,25 +849,11 @@
 }
 
 .date-calendar-actions button {
+  border: 0;
+  background: transparent;
   color: var(--primary);
   font-size: 15px;
   font-weight: 800;
-}
-
-.profile-avatar {
-  display: inline-flex;
-  width: var(--control-height-desktop, 36px);
-  height: var(--control-height-desktop, 36px);
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  border: 1px solid var(--outline-variant);
-  border-radius: 50%;
-  background: var(--surface-variant);
-  color: var(--primary-fixed);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .desktop-dashboard-header {
@@ -1149,7 +1140,7 @@
 .metric-tile div > span:first-child,
 .signal-section h3,
 .events-panel-heading,
-.brand-panel h1,
+.brand-title-main,
 .platform-error > span {
   letter-spacing: 0;
 }
@@ -1612,6 +1603,7 @@
 
 .events-panel-expanded {
   height: 420px;
+  scroll-margin-block-start: 132px;
 }
 
 .events-panel-collapsed {
@@ -1719,7 +1711,7 @@
 .events-panel-summary {
   min-width: 0;
   overflow: hidden;
-  color: var(--on-surface-variant);
+  color: var(--on-surface);
   font-size: 12px;
   line-height: 16px;
   text-overflow: ellipsis;
@@ -2067,6 +2059,10 @@
   font-weight: 700;
   line-height: 12px;
   text-transform: uppercase;
+}
+
+.event-detail-kicker {
+  color: var(--on-surface);
 }
 
 .event-detail-close {

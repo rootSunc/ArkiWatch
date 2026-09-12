@@ -1,5 +1,6 @@
 .page {
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-y: auto;
   padding: 56px clamp(18px, 4vw, 40px) 96px;
   background: var(--canvas);
@@ -79,7 +80,10 @@
 }
 
 .headerActions {
-  display: none;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .quietButton,
@@ -100,6 +104,7 @@
   font-family: var(--font-ui);
   font-size: 14.5px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .quietButton,
@@ -134,20 +139,20 @@
 }
 
 .layout {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: start;
+  gap: 40px;
+  margin-top: 40px;
 }
 
 .nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 2px;
   padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -163,16 +168,17 @@
 }
 
 .navItem {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  width: auto;
-  min-height: auto;
-  padding: 0 0 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 8px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--muted-3);
+  color: var(--ink-soft);
   font-size: 13.5px;
   text-align: left;
 }
@@ -183,19 +189,22 @@
 }
 
 .navItemActive {
-  border-bottom-color: var(--ink);
-  background: transparent;
+  border: 0;
+  background: var(--nav-active);
   color: var(--ink);
   font-weight: 600;
 }
 
-.navIcon,
-.navStatus {
-  display: none;
+.navItemActive .navStatus {
+  color: var(--ink-soft);
+}
+
+.navItemComplete .navIcon {
+  color: var(--green);
 }
 
 .navIcon {
-  display: none;
+  display: grid;
   width: 20px;
   height: 20px;
   place-items: center;
@@ -217,15 +226,14 @@
 
 .navTitle {
   overflow: hidden;
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.navIcon,
 .navStatus {
-  display: none;
+  font-size: 0.68rem;
 }
 
 .segmented {
@@ -253,8 +261,8 @@
 }
 
 .segmentedActive {
-  background: var(--ink);
-  color: #ffffff;
+  background: var(--btn-fill);
+  color: var(--btn-label);
 }
 
 .content {
@@ -268,7 +276,12 @@
 }
 
 .hero {
-  display: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 22px;
+  border-radius: var(--r-card);
 }
 
 .hero h2 {
@@ -340,11 +353,9 @@
 }
 
 .card {
-  margin-top: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: var(--r-card);
 }
 
 .sectionHeader {
@@ -452,6 +463,12 @@
 .select:focus {
   border-color: var(--blue);
   box-shadow: none;
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
 }
 
 .toggleGrid {
@@ -590,9 +607,9 @@
 
 .dayButton:hover,
 .dayButtonActive {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #ffffff;
+  border-color: var(--btn-fill);
+  background: var(--btn-fill);
+  color: var(--btn-label);
 }
 
 .loading {
@@ -615,6 +632,7 @@
   }
 
   .headerActions {
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 
@@ -640,6 +658,17 @@
 }
 
 @media (max-width: 560px) {
+  .nav {
+    display: grid;
+    overflow: visible;
+    gap: 2px;
+    padding: 0;
+  }
+
+  .navItem {
+    min-width: 0;
+  }
+
   .hero {
     grid-template-columns: 1fr;
   }
@@ -665,5 +694,32 @@
 
   .buttonRow > button {
     flex: 1;
+  }
+
+  /* Saved locations and commute profiles contain user-provided labels. Keep
+   * their edit action reachable when a narrow phone would otherwise push the
+   * fixed-width action group outside the clipped page canvas. */
+  .savedRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .savedRow > span:first-child {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .savedActions {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .savedMeta {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }

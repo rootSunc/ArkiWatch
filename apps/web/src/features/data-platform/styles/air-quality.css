@@ -442,7 +442,10 @@
   font-weight: 700;
   line-height: 14px;
   padding: 6px 12px;
-  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .air-pollutant-toggle button:hover {
@@ -1018,7 +1021,7 @@
 .air-glass-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .trend-panel {
@@ -1033,7 +1036,7 @@
 .trend-panel:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.25);
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .air-hero {
@@ -1080,6 +1083,6 @@
 .air-summary-strip article:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow);
-  border-color: rgba(var(--primary), 0.22);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
   background: linear-gradient(135deg, var(--surface-bright), var(--card-bg));
 }

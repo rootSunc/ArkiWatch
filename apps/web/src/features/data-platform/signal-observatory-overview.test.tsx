@@ -31,7 +31,7 @@ const tiles: SignalSystemTile[] = [
     key: "signal_categories",
     label: "Signal categories",
     value: "9",
-    detail: "4 active · 2 empty · 3 catalog",
+    detail: "4 active, 2 empty, 3 catalog",
     tone: "good",
     icon: "hub",
     valueStyle: "emphasis",
@@ -54,7 +54,7 @@ describe("SignalObservatoryOverview", () => {
       "Signal observatory",
     );
     expect(screen.getByText("Signal categories")).toBeInTheDocument();
-    expect(screen.getByText("4 active · 2 empty · 3 catalog")).toBeInTheDocument();
+    expect(screen.getByText("4 active, 2 empty, 3 catalog")).toBeInTheDocument();
     expect(screen.getByText(/Updated/)).toBeInTheDocument();
   });
 });

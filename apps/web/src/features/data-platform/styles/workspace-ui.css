@@ -36,7 +36,8 @@
   margin-bottom: 16px;
 }
 
-.workspace-evidence-heading h1 {
+.workspace-evidence-heading h1,
+.workspace-evidence-heading h2 {
   min-width: 0;
   overflow-wrap: anywhere;
   color: var(--ink);
@@ -148,6 +149,10 @@
 }
 
 .workspace-evidence-extra summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding-block: 4px;
   cursor: pointer;
   color: var(--blue);
   font-weight: 400;
@@ -177,6 +182,12 @@
   text-align: left;
 }
 
+/* Author styles on the popover override the browser's closed-details rule.
+ * Keep source evidence out of the paint tree until the user opens it. */
+.workspace-evidence-extra:not([open]) > .workspace-evidence-extra-content {
+  display: none;
+}
+
 /* The domain files keep their own `-detail-page` / `-detail-header` class names;
  * give every detail workspace the same frame without a markup rewrite. */
 .weather-detail-page,
@@ -201,13 +212,15 @@
 .water-detail-header,
 .city-detail-header,
 .linked-events-header {
+  /* The detail page owns the vertical rhythm through its flex/grid gap. A
+   * second shared-header margin would double-count that separation. */
   display: flex;
   min-width: 0;
   align-items: flex-end;
   justify-content: space-between;
   gap: 40px;
   flex-wrap: wrap;
-  margin: 0 0 56px;
+  margin: 0;
   padding: 0 0 24px;
   border-bottom: 1px solid var(--line);
 }
@@ -301,6 +314,7 @@
   font-size: 26px;
 }
 
+.workspace-empty-state h1,
 .workspace-empty-state h2 {
   color: var(--ink);
   font-size: 20px;
@@ -352,6 +366,7 @@
   }
 
   .workspace-evidence-heading h1,
+  .workspace-evidence-heading h2,
   .weather-detail-header h1,
   .air-detail-header h1,
   .energy-detail-header h1,
@@ -359,7 +374,25 @@
   .road-rail-detail-header h1,
   .water-detail-header h1,
   .city-detail-header h1,
-  .linked-events-header h1 {
+  .linked-events-header h1,
+  .weather-detail-header h2,
+  .air-detail-header h2,
+  .energy-detail-header h2,
+  .transit-detail-header h2,
+  .road-rail-detail-header h2,
+  .water-detail-header h2,
+  .city-detail-header h2,
+  .linked-events-header h2 {
     font-size: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-evidence-extra-content {
+    left: 0;
+    right: auto;
+    width: min(360px, calc(100vw - 32px));
+    min-width: 0;
+    max-width: calc(100vw - 32px);
   }
 }

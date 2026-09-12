@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { parseValidDate } from "@/features/shared/format";
 
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
-import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
+import { LanguageMode, translateDataLabel, translateEnumLabel, useI18n } from "./i18n";
 import {
   PlatformCategory,
   PlatformHistoricalSnapshot,
@@ -107,7 +107,7 @@ function formatCompactTime(
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -147,7 +147,7 @@ function formatIncidentWindow(
   tKey: (key: string) => string,
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): string {
-  return `${formatClockTime(incident.starts_at, language, tKey, timeZone)} – ${formatClockTime(incident.ends_at, language, tKey, timeZone)}`;
+  return `${formatClockTime(incident.starts_at, language, tKey, timeZone)} - ${formatClockTime(incident.ends_at, language, tKey, timeZone)}`;
 }
 
 function uniqueJoined(values: string[]): string {
@@ -162,7 +162,7 @@ function formatTimelineBoundary(value: number, language: LanguageMode, timeZone 
   }
 
   return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
-    day: "2-digit",
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
@@ -591,16 +591,29 @@ function incidentWindowProgress(incident: RoadRailIncident, nowTimestamp: number
   return Math.max(8, Math.min(100, ((nowTimestamp - startsAt) / (endsAt - startsAt)) * 100));
 }
 
-function locationLabel(incident: RoadRailIncident, tKey: (key: string) => string): string {
-  return incident.location_description || incident.location_ref.replaceAll("-", " ") || tKey("roadRail.locationUnavailable");
-}
-
-function scopePreview(incident: RoadRailIncident, tKey: (key: string) => string): string {
-  if (incident.feature_names.length > 0) {
-    return `${tKey("roadRail.features")} ${incident.feature_names.slice(0, 3).join(", ")}${incident.feature_names.length > 3 ? " +" : ""}`;
+function locationLabel(
+  incident: RoadRailIncident,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+): string {
+  const rawLocation = incident.location_description || incident.location_ref.replaceAll("-", " ");
+  if (!rawLocation) {
+    return tKey("roadRail.locationUnavailable");
   }
 
-  return locationLabel(incident, tKey);
+  return localizedPlatformCopy(rawLocation, language) ?? rawLocation;
+}
+
+function scopePreview(
+  incident: RoadRailIncident,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+): string {
+  if (incident.feature_names.length > 0) {
+    return `${tKey("roadRail.features")} ${incident.feature_names.slice(0, 3).map((feature) => translateDataLabel(language, feature)).join(", ")}${incident.feature_names.length > 3 ? " +" : ""}`;
+  }
+
+  return locationLabel(incident, language, tKey);
 }
 
 function bboxLabel(bbox: number[] | null, tKey: (key: string) => string): string {
@@ -611,7 +624,12 @@ function bboxLabel(bbox: number[] | null, tKey: (key: string) => string): string
   return bbox.map((value) => value.toFixed(2)).join(" / ");
 }
 
-function detailLocationItems(incident: RoadRailIncident, tKey: (key: string) => string): RoadRailDetailItem[] {
+function detailLocationItems(
+  incident: RoadRailIncident,
+  language: LanguageMode,
+  tKey: (key: string) => string,
+): RoadRailDetailItem[] {
+  const rawLocationRef = incident.location_ref.replaceAll("-", " ");
   return [
     {
       key: "location",
@@ -620,8 +638,8 @@ function detailLocationItems(incident: RoadRailIncident, tKey: (key: string) => 
       values: [
         {
           id: incident.location_ref,
-          label: locationLabel(incident, tKey),
-          meta: incident.location_ref.replaceAll("-", " ")
+          label: locationLabel(incident, language, tKey),
+          meta: localizedPlatformCopy(rawLocationRef, language) ?? rawLocationRef
         }
       ],
       empty: tKey("roadRail.noLocationAttached")
@@ -632,8 +650,8 @@ function detailLocationItems(incident: RoadRailIncident, tKey: (key: string) => 
       icon: "route",
       values: incident.feature_names.map((feature) => ({
         id: feature,
-        label: feature,
-        meta: incident.location_description
+        label: translateDataLabel(language, feature),
+        meta: localizedPlatformCopy(incident.location_description, language) ?? incident.location_description
       })),
       empty: tKey("roadRail.noFeatureNamesAttached")
     },
@@ -689,24 +707,27 @@ function renderCorridor(
   );
 }
 
-function formatHistoryDate(value: string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+function formatHistoryDate(
+  value: string,
+  language: LanguageMode = "en",
+  timeZone = DEFAULT_DATA_TIME_ZONE,
+): string {
   const parsed = new Date(`${value}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
+  return new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+    day: language === "zh" ? "numeric" : "2-digit",
     month: "short",
     timeZone: resolveDataTimezone(timeZone)
-  })
-    .format(parsed)
-    .toUpperCase();
+  }).format(parsed);
 }
 
 function roadRailHistoryPoints(
   history: PlatformHistoricalSnapshot<RoadRailCurrentResponse>[],
   tKey: (key: string) => string,
+  language: LanguageMode = "en",
   timeZone = DEFAULT_DATA_TIME_ZONE,
 ): TrendChartPoint[] {
   return history.flatMap((snapshot) => {
@@ -717,7 +738,7 @@ function roadRailHistoryPoints(
 
     return [
       {
-        label: formatHistoryDate(snapshot.date, timeZone),
+        label: formatHistoryDate(snapshot.date, language, timeZone),
         value: data.quality.normalized_event_count,
         detail: `${data.quality.raw_message_count} ${tKey("roadRail.raw")} · ${data.quality.weather_risk_count} ${tKey("roadRail.weather")}`
       }
@@ -811,7 +832,7 @@ function RoadRailIncidentLiveLayer({
         </div>
         <div>
           <dt>{tKey("roadRail.location")}</dt>
-          <dd>{locationLabel(incident, tKey)}</dd>
+          <dd>{locationLabel(incident, language, tKey)}</dd>
         </div>
       </dl>
     </section>
@@ -890,13 +911,17 @@ export function RoadRailWorkspace({
   const maxCorridorEvents = Math.max(1, ...topCorridors.map((corridor) => corridor.event_count));
   const severityRows = severityDistribution(roadRail.incidents);
   const networkRows = networkCompositionRows(roadRail, tKey);
-  const historyPoints = roadRailHistoryPoints(history, tKey, dataTimezone);
+  const historyPoints = roadRailHistoryPoints(history, tKey, language, dataTimezone);
   const timebandIncidents = pagedIncidents;
   const timelineBounds = incidentTimelineBounds(timebandIncidents, nowTimestamp);
   const readyPipelineCount = roadRail.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = roadRail.source_requests.filter((request) => request.status === "fetched").length;
-  const focusCorridor = topCorridors[0]?.label ?? tKey("roadRail.noCorridorFocus");
-  const corridorPreview = uniqueJoined(roadRail.corridors.map((corridor) => corridor.label));
+  const focusCorridor = topCorridors[0]
+    ? localizedPlatformCopy(topCorridors[0].label, language) ?? topCorridors[0].label
+    : tKey("roadRail.noCorridorFocus");
+  const corridorPreview = uniqueJoined(
+    roadRail.corridors.map((corridor) => localizedPlatformCopy(corridor.label, language) ?? corridor.label),
+  );
   const roadworkIncidents = roadRail.incidents.filter((incident) =>
     /roadwork|construction|resurfac|maintenance/i.test(
       `${incident.event_type} ${incident.situation_type ?? ""} ${incident.message_type ?? ""} ${incident.title}`,
@@ -905,7 +930,10 @@ export function RoadRailWorkspace({
   const railPreview = uniqueJoined(
     roadRail.incidents
       .filter((incident) => /rail/i.test(`${incident.event_type} ${incident.situation_type ?? ""} ${incident.title}`))
-      .map((incident) => incident.location_description || incident.location_ref),
+      .map((incident) => {
+        const rawLocation = incident.location_description || incident.location_ref;
+        return localizedPlatformCopy(rawLocation, language) ?? rawLocation;
+      }),
   );
   const liveTone = liveStatusTone(roadRail.status);
 
@@ -915,6 +943,7 @@ export function RoadRailWorkspace({
         className="road-rail-detail-header"
         eyebrow={tKey("mobility.mobilityWorkspace")}
         fallbackKey="roadRail.notObserved"
+        headingLevel={2}
         language={language}
         observedAt={roadRail.observed_at}
         sourceLabel={roadRail.source_code.toUpperCase()}
@@ -1090,7 +1119,7 @@ export function RoadRailWorkspace({
                           <i aria-hidden="true">
                             <span style={bandStyle} />
                           </i>
-                          <strong>{locationLabel(incident, tKey)}</strong>
+                          <strong>{locationLabel(incident, language, tKey)}</strong>
                         </article>
                       );
                     })}
@@ -1120,9 +1149,9 @@ export function RoadRailWorkspace({
                         <div className="sr-only">
                           <RoadRailIncidentStatusBadge incident={incident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <span>{enumLabel(incident.severity)}</span>
-                          <small className="road-rail-incident-scope-preview">{scopePreview(incident, tKey)}</small>
+                          <small className="road-rail-incident-scope-preview">{scopePreview(incident, language, tKey)}</small>
                           <span>{messageTypeLabel(incident.message_type, language, tKey)}</span>
-                          <span>{locationLabel(incident, tKey)}</span>
+                          <span>{locationLabel(incident, language, tKey)}</span>
                         </div>
                       </div>
                       <span className="road-rail-incident-when">
@@ -1170,7 +1199,7 @@ export function RoadRailWorkspace({
                     </div>
                   </div>
                   <div className="road-rail-incident-detail-scope">
-                    {detailLocationItems(selectedIncident, tKey).map((item) => (
+                    {detailLocationItems(selectedIncident, language, tKey).map((item) => (
                       <section className="road-rail-scope-group" key={item.key}>
                         <header className="road-rail-scope-group-header">
                           <span className="material-symbols-outlined" aria-hidden="true">
@@ -1326,7 +1355,7 @@ export function RoadRailWorkspace({
             <span className="material-symbols-outlined" aria-hidden="true">
               traffic
             </span>
-            Digitraffic Road Messages
+            {tKey("roadRail.digitrafficSourceLabel")}
           </span>
           <i aria-hidden="true" />
           <span>

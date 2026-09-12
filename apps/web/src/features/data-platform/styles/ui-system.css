@@ -79,7 +79,7 @@
   background: var(--surface-container-low);
 }
 
-.brand-panel h1 {
+.brand-title-main {
   color: var(--on-surface);
   font-size: 14px;
   letter-spacing: -0.01em;
@@ -385,12 +385,18 @@
 
 .scope-pending-banner-copy {
   display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
   gap: 2px;
 }
 
 .scope-pending-banner-copy strong {
   color: var(--on-surface);
   font-size: 11px;
+}
+
+.scope-pending-banner-copy > span {
+  overflow-wrap: anywhere;
 }
 
 .refresh-error-banner {
