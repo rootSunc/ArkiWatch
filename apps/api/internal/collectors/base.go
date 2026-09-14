@@ -1,6 +1,7 @@
 package collectors
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -48,11 +49,36 @@ func BuildObservationHash(sourceCode, dataset, areaCode string, observedAt time.
 }
 
 func CollectJSON(ctx context.Context, client *http.Client, method, endpoint string, headers map[string]string, query map[string]string) (map[string]any, http.Header, string, error) {
+	return collectRequest(ctx, client, method, endpoint, headers, query, nil)
+}
+
+// CollectGraphQL posts a GraphQL document. Digitransit's routing API only
+// answers POST with a JSON body, which the query-string path cannot express.
+func CollectGraphQL(ctx context.Context, client *http.Client, endpoint string, headers map[string]string, document string, variables map[string]any) (map[string]any, http.Header, string, error) {
+	request := map[string]any{"query": document}
+	if len(variables) > 0 {
+		request["variables"] = variables
+	}
+	encoded, err := json.Marshal(request)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return collectRequest(ctx, client, http.MethodPost, endpoint, headers, nil, encoded)
+}
+
+func collectRequest(ctx context.Context, client *http.Client, method, endpoint string, headers map[string]string, query map[string]string, requestBody []byte) (map[string]any, http.Header, string, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		request, err := http.NewRequestWithContext(ctx, method, endpoint, nil)
+		var reader io.Reader
+		if requestBody != nil {
+			reader = bytes.NewReader(requestBody)
+		}
+		request, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
 		if err != nil {
 			return nil, nil, "", err
+		}
+		if requestBody != nil {
+			request.Header.Set("Content-Type", "application/json")
 		}
 		values := request.URL.Query()
 		for key, value := range query {

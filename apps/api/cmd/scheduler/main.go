@@ -48,7 +48,7 @@ func main() {
 		if listErr != nil {
 			return listErr
 		}
-		result, syncErr := store.SyncScheduledJobs(ctx, scheduler.BuildDefaultSpecs(intervals, cfg), time.Now().UTC(), cfg.SchedulerInitialJitterSeconds)
+		result, syncErr := store.SyncScheduledJobs(ctx, scheduler.BuildDefaultSpecs(intervals, cfg), time.Now().UTC(), cfg.SchedulerInitialJitterSeconds, cfg.Timezone)
 		if syncErr == nil {
 			fmt.Printf("[scheduler:sync] jobs=%d created=%d updated=%d\n", result.Jobs, result.Created, result.Updated)
 		}
@@ -92,7 +92,7 @@ func runOnce(ctx context.Context, store *database.Store, cfg config.Config, inst
 			message = &text
 			result = map[string]any{}
 		}
-		if err := store.CompleteScheduledJob(ctx, job, status, result, message, time.Now().UTC(), cfg.SchedulerFailureRetrySeconds, cfg.SchedulerRescheduleJitterSeconds); err != nil {
+		if err := store.CompleteScheduledJob(ctx, job, status, result, message, time.Now().UTC(), cfg.SchedulerFailureRetrySeconds, cfg.SchedulerRescheduleJitterSeconds, cfg.Timezone); err != nil {
 			return err
 		}
 		fmt.Printf("[scheduler:job] key=%s status=%s\n", job.JobKey, status)

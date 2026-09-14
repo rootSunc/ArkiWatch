@@ -675,7 +675,7 @@ function buildTransit(): TransitCurrentResponse {
       },
     ],
     source_requests: [
-      sourceRequest("digitransit", "Digitransit alerts", "https://realtime.hsl.fi"),
+      sourceRequest("digitransit", "Digitransit alerts", "https://api.digitransit.fi"),
     ],
     data_pipeline: [dataStage("normalized", "Normalized transit alerts", 1)],
     quality: {

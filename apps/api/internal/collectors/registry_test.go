@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -653,5 +654,85 @@ func TestHistoricalPriceURLReplacesLatestEndpoint(t *testing.T) {
 	}
 	if value != "https://api.porssisahko.net/v2/price.json" {
 		t.Fatalf("URL = %q", value)
+	}
+}
+
+func TestDigitransitCollectPostsGraphQLAndCarriesAlerts(t *testing.T) {
+	var method, contentType, key string
+	var document struct {
+		Query string `json:"query"`
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		method, contentType, key = request.Method, request.Header.Get("Content-Type"), request.Header.Get("digitransit-subscription-key")
+		if err := json.NewDecoder(request.Body).Decode(&document); err != nil {
+			t.Fatalf("decode request body: %v", err)
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"data":{"alerts":[{"id":"HSL:1","alertHeaderText":"Tram 9 diverted"}]}}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.DigitransitRoutingURL = server.URL
+	cfg.DigitransitSubscriptionKey = "test-key"
+	items, err := digitransitCollector{cfg: cfg}.Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if method != http.MethodPost || contentType != "application/json" || key != "test-key" {
+		t.Fatalf("method=%q contentType=%q key=%q", method, contentType, key)
+	}
+	if !strings.Contains(document.Query, "alerts(feeds:") {
+		t.Fatalf("query = %q", document.Query)
+	}
+	if len(items) != 1 || items[0].AreaCode != "helsinki" {
+		t.Fatalf("items = %#v", items)
+	}
+	alerts, ok := items[0].Payload["body"].(map[string]any)["data"].(map[string]any)["alerts"].([]any)
+	if !ok || len(alerts) != 1 {
+		t.Fatalf("payload = %#v", items[0].Payload)
+	}
+}
+
+// GraphQL reports a rejected query as HTTP 200 with an errors array, so without
+// an explicit check a broken query would be stored as a healthy empty run.
+func TestDigitransitCollectFailsOnInlineGraphQLErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"errors":[{"message":"Validation error: Field 'entities' is undefined"}],"data":null}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.DigitransitRoutingURL = server.URL
+	cfg.DigitransitSubscriptionKey = "test-key"
+	_, err := digitransitCollector{cfg: cfg}.Collect(context.Background())
+	if err == nil || !strings.Contains(err.Error(), "entities") {
+		t.Fatalf("expected the GraphQL error to fail the run, got %v", err)
+	}
+}
+
+func TestDigitransitCollectRefusesToRunWithoutASubscriptionKey(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		t.Fatal("collector must not reach the network without a key")
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.DigitransitRoutingURL = server.URL
+	cfg.DigitransitSubscriptionKey = ""
+	if _, err := (digitransitCollector{cfg: cfg}).Collect(context.Background()); err == nil {
+		t.Fatal("expected a missing subscription key to fail the run")
+	}
+}
+
+// An env file that sets the variable to an empty string must not leave the
+// collector posting at a bare host.
+func TestDigitransitGraphQLURLFallsBackWhenTheEnvBlanksTheRoutingURL(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.DigitransitRoutingURL = ""
+	cfg.DigitransitAPIURL = ""
+	if url := cfg.DigitransitGraphQLURL(); !strings.HasPrefix(url, "https://api.digitransit.fi/routing/") {
+		t.Fatalf("url = %q", url)
 	}
 }

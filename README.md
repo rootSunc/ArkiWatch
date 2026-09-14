@@ -77,12 +77,21 @@ live public feeds — see [Run it yourself](#run-it-yourself).
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
+      <a href="apps/web/public/screenshots/today-workspace-en.jpg">
+        <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="Today workspace with one recommendation, glance metrics, and the plan for the next few hours" width="100%">
+      </a><br>
+      <strong>Today</strong><br>
+      <sub>One next step, with the evidence behind it.</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/data-platform-overview-en.jpg">
         <img src="apps/web/public/screenshots/data-platform-overview-en.jpg" alt="Signal observatory with source health, core signals, and today's recommendation" width="100%">
       </a><br>
       <strong>Signal observatory</strong><br>
       <sub>Scope, freshness, and evidence at a glance.</sub>
     </td>
+  </tr>
+  <tr>
     <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/weather-workspace-en.jpg">
         <img src="apps/web/public/screenshots/weather-workspace-en.jpg" alt="Weather workspace for the Helsinki meteorological region with current conditions and evidence header" width="100%">
@@ -90,11 +99,9 @@ live public feeds — see [Run it yourself](#run-it-yourself).
       <strong>Signal workspaces</strong><br>
       <sub>Category detail with source and timestamp on the page.</sub>
     </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center" valign="top">
+    <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/assistant-chat-en.jpg">
-        <img src="apps/web/public/screenshots/assistant-chat-en.jpg" alt="ArkiWatch assistant answering from the current snapshot, with the fixture it used cited below the answer" width="72%">
+        <img src="apps/web/public/screenshots/assistant-chat-en.jpg" alt="ArkiWatch assistant answering from the current snapshot, with the fixture it used cited below the answer" width="100%">
       </a><br>
       <strong>Assistant</strong><br>
       <sub>Every answer carries the snapshot it was drawn from.</sub>
@@ -129,19 +136,11 @@ is `GET /api/platform/coverage`, alongside `GET /api/health/data-quality`.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  P[Public providers] --> C[Go collectors]
-  C --> R[(Raw records)]
-  R --> N[Normalizer]
-  N --> E[(Events and snapshots)]
-  E --> U[Recommendation rules]
-  U --> A[Go HTTP API]
-  A --> T[Today]
-  A --> D[Observatory]
-  A --> S[Assistant]
-  A -.-> G[Optional Telegram]
-```
+<p align="center">
+  <a href="docs/architecture-overview.jpg">
+    <img src="docs/architecture-overview.jpg" alt="ArkiWatch architecture: public providers feed collector adapters, raw records, normalized events and snapshots, the rules engine, and then the Go serving layer, the Next.js workspaces, and optional Telegram delivery" width="100%">
+  </a>
+</p>
 
 Each external API is isolated behind a collector adapter. Raw records keep their
 fetch metadata, and the normalized products feed both the guidance and the
@@ -228,5 +227,7 @@ Collectors need fixtures and tests; user-facing copy needs both EN and 中文.
 for demo, accounts, and self-hosted deployments.
 
 Public data belongs to the providers listed above; ArkiWatch only adapts,
-timestamps, and explains what it fetched. Confirm each provider's current terms,
-attribution rules, and rate limits before deploying a city pack.
+timestamps, and explains what it fetched. Most feeds are CC BY 4.0 and need
+crediting — [docs/data-sources.md](docs/data-sources.md) lists each provider's
+licence, access requirement, and attribution string. Confirm those terms are
+still current before deploying a city pack.

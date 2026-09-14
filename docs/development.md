@@ -1,6 +1,6 @@
 # Development
 
-This page covers the full local stack. If you only want to evaluate ArkiWatch, use the zero-credential [`pnpm demo`](../README.md#try-the-demo) first.
+This page covers the full local stack. If you only want to evaluate ArkiWatch, use the zero-credential [`pnpm demo`](../README.md#try-it-in-one-command) first.
 
 ## Requirements
 

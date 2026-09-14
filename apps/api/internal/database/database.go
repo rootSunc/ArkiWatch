@@ -203,7 +203,7 @@ func (store *Store) SyncDefaultScheduledJobs(ctx context.Context, cfg config.Con
 	if err != nil {
 		return scheduler.SyncResult{}, err
 	}
-	return store.SyncScheduledJobs(ctx, scheduler.BuildDefaultSpecs(intervals, cfg), time.Now().UTC(), cfg.SchedulerInitialJitterSeconds)
+	return store.SyncScheduledJobs(ctx, scheduler.BuildDefaultSpecs(intervals, cfg), time.Now().UTC(), cfg.SchedulerInitialJitterSeconds, cfg.Timezone)
 }
 
 func (store *Store) EnqueuePlatformRefresh(ctx context.Context) (map[string]any, error) {
@@ -356,6 +356,7 @@ func (store *Store) RefreshDailySnapshots(ctx context.Context, now time.Time) (S
 				return selected[i].ValidTo.Before(selected[j].ValidTo)
 			})
 			summary := spec.empty
+			summaryZH := spec.emptyZH
 			severity := "info"
 			var validTo any
 			if len(selected) > 0 {
@@ -367,10 +368,15 @@ func (store *Store) RefreshDailySnapshots(ctx context.Context, now time.Time) (S
 					parts = append(parts, item.Summary)
 				}
 				summary = strings.Join(parts, " ")
+				// Event summaries are normalized in English only, so drop the
+				// Chinese empty-state sentence once real signals are present:
+				// the client falls back to the English summary when this is
+				// blank, which beats telling a reader there is no signal.
+				summaryZH = ""
 				severity = strings.ToLower(selected[0].Severity)
 				validTo = selected[0].ValidTo.UTC().Format(time.RFC3339Nano)
 			}
-			item := map[string]any{"type": spec.key, "title": spec.title, "title_zh": spec.titleZH, "summary": summary, "summary_zh": spec.emptyZH, "severity": severity}
+			item := map[string]any{"type": spec.key, "title": spec.title, "title_zh": spec.titleZH, "summary": summary, "summary_zh": summaryZH, "severity": severity}
 			if validTo != nil {
 				item["valid_to"] = validTo
 			}
@@ -915,7 +921,16 @@ func (store *Store) sourceCodeForObservation(ctx context.Context, tx pgx.Tx, ite
 	return sourceCode, err
 }
 
-func (store *Store) SyncScheduledJobs(ctx context.Context, specs []scheduler.JobSpec, now time.Time, initialJitterSeconds int) (scheduler.SyncResult, error) {
+// nullableDaily keeps an interval job's daily_at_local NULL rather than "", so
+// the column reads as "not a wall-clock job" instead of an unparseable time.
+func nullableDaily(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
+}
+
+func (store *Store) SyncScheduledJobs(ctx context.Context, specs []scheduler.JobSpec, now time.Time, initialJitterSeconds int, timezone string) (scheduler.SyncResult, error) {
 	result := scheduler.SyncResult{Jobs: len(specs)}
 	for _, spec := range specs {
 		payload, err := json.Marshal(spec.Payload)
@@ -926,17 +941,23 @@ func (store *Store) SyncScheduledJobs(ctx context.Context, specs []scheduler.Job
 		var interval int
 		var nextRun time.Time
 		var existingPayload []byte
+		var existingDaily sql.NullString
 		err = store.pool.QueryRow(ctx, `
-			SELECT id, task_type::text, interval_seconds, payload, next_run_at
+			SELECT id, task_type::text, interval_seconds, daily_at_local, payload, next_run_at
 			FROM scheduled_jobs WHERE job_key = $1
-		`, spec.JobKey).Scan(&id, &taskType, &interval, &existingPayload, &nextRun)
+		`, spec.JobKey).Scan(&id, &taskType, &interval, &existingDaily, &existingPayload, &nextRun)
 		if err == pgx.ErrNoRows {
 			nextRun = now.UTC().Add(time.Duration(scheduler.StableJitterSeconds(spec.JobKey, spec.IntervalSeconds, initialJitterSeconds)) * time.Second)
+			// A wall-clock job waits for its hour rather than firing at boot,
+			// so a restart cannot send a morning brief in the evening.
+			if at, ok := scheduler.NextDailyRun(now.UTC(), spec.DailyAtLocal, timezone); ok {
+				nextRun = at
+			}
 			_, err = store.pool.Exec(ctx, `
 				INSERT INTO scheduled_jobs
-					(id, job_key, task_type, interval_seconds, payload, is_enabled, next_run_at)
-				VALUES ($1, $2, $3::scheduler_task_type, $4, $5::jsonb, TRUE, $6)
-			`, randomID(), spec.JobKey, string(spec.TaskType), spec.IntervalSeconds, payload, nextRun)
+					(id, job_key, task_type, interval_seconds, daily_at_local, payload, is_enabled, next_run_at)
+				VALUES ($1, $2, $3::scheduler_task_type, $4, $5, $6::jsonb, TRUE, $7)
+			`, randomID(), spec.JobKey, string(spec.TaskType), spec.IntervalSeconds, nullableDaily(spec.DailyAtLocal), payload, nextRun)
 			if err != nil {
 				return scheduler.SyncResult{}, err
 			}
@@ -946,14 +967,15 @@ func (store *Store) SyncScheduledJobs(ctx context.Context, specs []scheduler.Job
 		if err != nil {
 			return scheduler.SyncResult{}, err
 		}
-		changed := taskType != string(spec.TaskType) || interval != spec.IntervalSeconds || !bytes.Equal(existingPayload, payload)
+		changed := taskType != string(spec.TaskType) || interval != spec.IntervalSeconds ||
+			existingDaily.String != spec.DailyAtLocal || !bytes.Equal(existingPayload, payload)
 		if changed {
 			_, err = store.pool.Exec(ctx, `
 				UPDATE scheduled_jobs
 				SET task_type = $1::scheduler_task_type, interval_seconds = $2,
-				    payload = $3::jsonb, updated_at = now()
-				WHERE id = $4
-			`, string(spec.TaskType), spec.IntervalSeconds, payload, id)
+				    daily_at_local = $3, payload = $4::jsonb, updated_at = now()
+				WHERE id = $5
+			`, string(spec.TaskType), spec.IntervalSeconds, nullableDaily(spec.DailyAtLocal), payload, id)
 			if err != nil {
 				return scheduler.SyncResult{}, err
 			}
@@ -974,7 +996,7 @@ func (store *Store) ClaimScheduledJobs(ctx context.Context, instanceID string, n
 	defer func() { _ = tx.Rollback(ctx) }()
 	lockedUntil := now.UTC().Add(time.Duration(lockTTLSeconds) * time.Second)
 	rows, err := tx.Query(ctx, `
-		SELECT id, job_key, task_type::text, interval_seconds, payload
+		SELECT id, job_key, task_type::text, interval_seconds, daily_at_local, payload
 		FROM scheduled_jobs
 		WHERE is_enabled = TRUE
 		  AND next_run_at <= $1
@@ -993,9 +1015,11 @@ func (store *Store) ClaimScheduledJobs(ctx context.Context, instanceID string, n
 		var job scheduler.ClaimedJob
 		var taskType string
 		var payloadBytes []byte
-		if err := rows.Scan(&job.ID, &job.JobKey, &taskType, &job.IntervalSeconds, &payloadBytes); err != nil {
+		var dailyAt sql.NullString
+		if err := rows.Scan(&job.ID, &job.JobKey, &taskType, &job.IntervalSeconds, &dailyAt, &payloadBytes); err != nil {
 			return nil, err
 		}
+		job.DailyAtLocal = dailyAt.String
 		job.TaskType = scheduler.TaskType(taskType)
 		job.StartedAt = now.UTC()
 		job.LockedBy = instanceID
@@ -1034,7 +1058,7 @@ func (store *Store) ClaimScheduledJobs(ctx context.Context, instanceID string, n
 	return claimed, nil
 }
 
-func (store *Store) CompleteScheduledJob(ctx context.Context, job scheduler.ClaimedJob, status scheduler.RunStatus, result map[string]any, errorMessage *string, now time.Time, failureRetrySeconds, rescheduleJitterSeconds int) error {
+func (store *Store) CompleteScheduledJob(ctx context.Context, job scheduler.ClaimedJob, status scheduler.RunStatus, result map[string]any, errorMessage *string, now time.Time, failureRetrySeconds, rescheduleJitterSeconds int, timezone string) error {
 	finishedAt := now.UTC()
 	duration := int(finishedAt.Sub(job.StartedAt.UTC()).Milliseconds())
 	if duration < 0 {
@@ -1057,22 +1081,41 @@ func (store *Store) CompleteScheduledJob(ctx context.Context, job scheduler.Clai
 	`, string(status), finishedAt, duration, resultBytes, errorMessage, job.RunID); err != nil {
 		return err
 	}
-	delay := job.IntervalSeconds
-	if status != scheduler.RunSucceeded {
-		delay = failureRetrySeconds
-	}
-	delay += scheduler.StableJitterSeconds(job.JobKey, delay, rescheduleJitterSeconds)
+	nextRun := scheduledNextRun(job, status, finishedAt, failureRetrySeconds, rescheduleJitterSeconds, timezone)
 	_, err = tx.Exec(ctx, `
 		UPDATE scheduled_jobs
 		SET next_run_at = $1, locked_by = NULL, locked_until = NULL,
 		    last_finished_at = $2, last_status = $3::scheduler_run_status,
 		    last_error = $4, updated_at = now()
 		WHERE id = $5 AND locked_by = $6
-	`, finishedAt.Add(time.Duration(delay)*time.Second), finishedAt, string(status), errorMessage, job.ID, job.LockedBy)
+	`, nextRun, finishedAt, string(status), errorMessage, job.ID, job.LockedBy)
 	if err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// scheduledNextRun places the job's next run. An interval job keeps the jittered
+// spacing that spreads load; a wall-clock job returns to its hour, and gets no
+// jitter because the whole point is that it lands at the time it advertises. A
+// failed wall-clock run retries soon, but never past its own next occurrence.
+func scheduledNextRun(job scheduler.ClaimedJob, status scheduler.RunStatus, finishedAt time.Time, failureRetrySeconds, rescheduleJitterSeconds int, timezone string) time.Time {
+	daily, isDaily := scheduler.NextDailyRun(finishedAt, job.DailyAtLocal, timezone)
+	if isDaily {
+		if status == scheduler.RunSucceeded {
+			return daily
+		}
+		if retry := finishedAt.Add(time.Duration(failureRetrySeconds) * time.Second); retry.Before(daily) {
+			return retry
+		}
+		return daily
+	}
+	delay := job.IntervalSeconds
+	if status != scheduler.RunSucceeded {
+		delay = failureRetrySeconds
+	}
+	delay += scheduler.StableJitterSeconds(job.JobKey, delay, rescheduleJitterSeconds)
+	return finishedAt.Add(time.Duration(delay) * time.Second)
 }
 
 func randomID() string {
@@ -1126,16 +1169,16 @@ func (store *Store) GetOrCreateAdminUser(ctx context.Context, cfg config.Config)
 	if err == pgx.ErrNoRows {
 		err = scanUser(tx.QueryRow(ctx, `
 			INSERT INTO users (id, email, name, locale, timezone, status)
-			VALUES ($1, $2, $3, 'zh-CN', $4, 'ACTIVE')
+			VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
 			RETURNING id, email, name, locale, timezone, status::text, created_at, updated_at
-		`, cfg.AdminUserID, cfg.AdminEmail, cfg.AdminName, cfg.Timezone), &user)
+		`, cfg.AdminUserID, cfg.AdminEmail, cfg.AdminName, cfg.AdminLocale, cfg.Timezone), &user)
 	} else if err == nil {
 		err = scanUser(tx.QueryRow(ctx, `
 			UPDATE users
-			SET email = $1, name = $2, timezone = $3, status = 'ACTIVE', updated_at = now()
-			WHERE id = $4
+			SET email = $1, name = $2, locale = $3, timezone = $4, status = 'ACTIVE', updated_at = now()
+			WHERE id = $5
 			RETURNING id, email, name, locale, timezone, status::text, created_at, updated_at
-		`, cfg.AdminEmail, cfg.AdminName, cfg.Timezone, user.ID), &user)
+		`, cfg.AdminEmail, cfg.AdminName, cfg.AdminLocale, cfg.Timezone, user.ID), &user)
 	}
 	if err != nil {
 		return users.User{}, err

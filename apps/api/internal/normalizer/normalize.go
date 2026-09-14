@@ -205,22 +205,7 @@ func airScore(properties map[string]any) (int, string) {
 	}
 	for _, key := range []string{"index", "aqi", "aq_index", "overall_index", "ilmanlaatuindeksi"} {
 		if number, ok := floatValue(value(properties, key)); ok {
-			score := int(math.Round(number))
-			if score > 5 {
-				switch {
-				case score <= 50:
-					score = 1
-				case score <= 75:
-					score = 2
-				case score <= 100:
-					score = 3
-				case score <= 150:
-					score = 4
-				default:
-					score = 5
-				}
-			}
-			return score, strconv.FormatFloat(number, 'f', -1, 64)
+			return airIndexBand(number), strconv.FormatFloat(number, 'f', -1, 64)
 		}
 	}
 	return 0, ""
@@ -230,9 +215,12 @@ func airScore(properties map[string]any) (int, string) {
 // source, so station-based and index-based readings describe themselves alike.
 var airQualityLabels = map[int]string{1: "good", 2: "fair", 3: "moderate", 4: "poor", 5: "very poor"}
 
-// europeanAirQualityScore folds a European AQI value into the same 1-5 band the
-// station feeds report directly.
-func europeanAirQualityScore(aqi float64) int {
+// airIndexBand folds a numeric air-quality index into the shared 1-5 band. Every
+// numeric index we read — HSY's Ilmanlaatuindeksi and the European AQI alike — is
+// an open-ended point scale whose cleanest readings are single digits, so a small
+// number must never be passed through as if it were already a band: an index of 4
+// is excellent air, while band 4 is "poor" and raises a health warning.
+func airIndexBand(aqi float64) int {
 	switch {
 	case aqi <= 50:
 		return 1
@@ -300,7 +288,7 @@ func openMeteoAir(item collectors.Observation) []Draft {
 	}
 	// Open-Meteo reports a city-wide index rather than named stations, so the
 	// place itself stands in for the station the advice copy refers to.
-	score := europeanAirQualityScore(aqi)
+	score := airIndexBand(aqi)
 	label, station := airQualityLabels[score], labelFor(item)
 	eventType, severity := airQualityEvent(score)
 	return []Draft{{EventType: eventType, Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: item.ObservedAt, EndsAt: item.ObservedAt.Add(3 * time.Hour), Confidence: confidence(.580), Title: "Air quality update for " + station, Summary: fmt.Sprintf("European air quality index is %.0f (%s).", aqi, label), Attributes: map[string]any{"european_aqi": aqi, "pm10": current["pm10"], "pm2_5": current["pm2_5"], "nitrogen_dioxide": current["nitrogen_dioxide"], "worst_label": label, "worst_station": station, "worst_score": score}, DedupeKey: item.Hash + ":air_quality_status"}}
@@ -310,6 +298,8 @@ type weatherPoint struct {
 	At                                                                         time.Time
 	Precip, Temp, Wind, Gust, Cloud, Humidity, Visibility                      float64
 	HasPrecip, HasTemp, HasWind, HasGust, HasCloud, HasHumidity, HasVisibility bool
+	Dew, Pressure, WindDir, Symbol, SmartSymbol                                float64
+	HasDew, HasPressure, HasWindDir, HasSymbol, HasSmartSymbol                 bool
 }
 
 func fmi(item collectors.Observation) []Draft {
@@ -322,6 +312,7 @@ func fmi(item collectors.Observation) []Draft {
 		return nil
 	}
 	sort.Slice(points, func(i, j int) bool { return points[i].At.Before(points[j].At) })
+	points = mergeWeatherPoints(points)
 	temp := make([]weatherPoint, 0)
 	for _, point := range points {
 		if point.HasTemp {
@@ -351,7 +342,7 @@ func fmi(item collectors.Observation) []Draft {
 				minVisibility = point.Visibility
 			}
 		}
-		attrs := map[string]any{"min_temp_c": minTemp, "max_temp_c": maxTemp, "max_wind_ms": maxWind, "max_wind_gust_ms": maxGust, "max_cloud_cover_pct": maxCloud, "max_humidity_pct": maxHumidity, "min_visibility_m": minVisibility, "point_count": len(points), "generated_at": item.ObservedAt.Format(time.RFC3339Nano)}
+		attrs := map[string]any{"min_temp_c": minTemp, "max_temp_c": maxTemp, "max_wind_ms": maxWind, "max_wind_gust_ms": maxGust, "max_cloud_cover_pct": maxCloud, "max_humidity_pct": maxHumidity, "min_visibility_m": minVisibility, "point_count": len(points), "forecast_points": forecastPointPayload(points), "generated_at": item.ObservedAt.Format(time.RFC3339Nano)}
 		severity := "INFO"
 		if math.Max(maxWind, maxGust) >= 10 {
 			severity = "LOW"
@@ -376,9 +367,142 @@ func fmi(item collectors.Observation) []Draft {
 		} else if peak >= 1 {
 			severity = "MEDIUM"
 		}
-		result = append(result, Draft{EventType: "rain_risk", Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.760), Title: "Rain expected in " + labelFor(item), Summary: fmt.Sprintf("Rain is forecast from %s to %s UTC. Peak intensity reaches %.1f mm.", start.Format("15:04"), end.Format("15:04"), peak), Attributes: map[string]any{"peak_precip_mm": peak, "total_precip_mm": total, "rain_hours": len(rain), "generated_at": item.ObservedAt.Format(time.RFC3339Nano)}, DedupeKey: item.Hash + ":rain_risk"})
+		result = append(result, Draft{EventType: "rain_risk", Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.760), Title: "Rain expected in " + labelFor(item), Summary: fmt.Sprintf("Rain is forecast from %s to %s UTC. Peak intensity reaches %.1f mm.", start.Format("15:04"), end.Format("15:04"), peak), Attributes: map[string]any{"peak_precip_mm": peak, "total_precip_mm": total, "rain_hours": len(rain), "rain_windows": rainWindowPayload(rain), "generated_at": item.ObservedAt.Format(time.RFC3339Nano)}, DedupeKey: item.Hash + ":rain_risk"})
 	}
 	return result
+}
+
+// mergeWeatherPoints folds FMI's per-parameter measurements into one point per
+// timestamp. Every MeasurementTVP carries a single parameter, so the hourly
+// series the weather workspace charts only exists once timestamps are joined.
+func mergeWeatherPoints(points []weatherPoint) []weatherPoint {
+	order := []time.Time{}
+	byTime := map[time.Time]*weatherPoint{}
+	for _, point := range points {
+		merged, seen := byTime[point.At]
+		if !seen {
+			entry := point
+			byTime[point.At] = &entry
+			order = append(order, point.At)
+			continue
+		}
+		if point.HasTemp {
+			merged.Temp, merged.HasTemp = point.Temp, true
+		}
+		if point.HasPrecip {
+			merged.Precip, merged.HasPrecip = point.Precip, true
+		}
+		if point.HasWind {
+			merged.Wind, merged.HasWind = point.Wind, true
+		}
+		if point.HasGust {
+			merged.Gust, merged.HasGust = point.Gust, true
+		}
+		if point.HasCloud {
+			merged.Cloud, merged.HasCloud = point.Cloud, true
+		}
+		if point.HasHumidity {
+			merged.Humidity, merged.HasHumidity = point.Humidity, true
+		}
+		if point.HasVisibility {
+			merged.Visibility, merged.HasVisibility = point.Visibility, true
+		}
+		if point.HasWindDir {
+			merged.WindDir, merged.HasWindDir = point.WindDir, true
+		}
+		if point.HasDew {
+			merged.Dew, merged.HasDew = point.Dew, true
+		}
+		if point.HasPressure {
+			merged.Pressure, merged.HasPressure = point.Pressure, true
+		}
+		if point.HasSymbol {
+			merged.Symbol, merged.HasSymbol = point.Symbol, true
+		}
+		if point.HasSmartSymbol {
+			merged.SmartSymbol, merged.HasSmartSymbol = point.SmartSymbol, true
+		}
+	}
+	result := make([]weatherPoint, 0, len(order))
+	for _, at := range order {
+		result = append(result, *byTime[at])
+	}
+	return result
+}
+
+// forecastPointPayload renders the merged series in the shape the weather read
+// model parses. Absent parameters are omitted rather than sent as zero, so a
+// missing dew point never reads as 0 C.
+func forecastPointPayload(points []weatherPoint) []any {
+	items := make([]any, 0, len(points))
+	for _, point := range points {
+		item := map[string]any{"timestamp": point.At.UTC().Format(time.RFC3339Nano)}
+		for _, field := range []struct {
+			key     string
+			value   float64
+			present bool
+		}{
+			{"temperature_c", point.Temp, point.HasTemp},
+			{"precipitation_mm", point.Precip, point.HasPrecip},
+			{"wind_speed_ms", point.Wind, point.HasWind},
+			{"wind_gust_ms", point.Gust, point.HasGust},
+			{"wind_direction_deg", point.WindDir, point.HasWindDir},
+			{"cloud_cover_pct", point.Cloud, point.HasCloud},
+			{"humidity_pct", point.Humidity, point.HasHumidity},
+			{"dew_point_c", point.Dew, point.HasDew},
+			{"pressure_hpa", point.Pressure, point.HasPressure},
+			{"visibility_m", point.Visibility, point.HasVisibility},
+		} {
+			if field.present {
+				item[field.key] = field.value
+			}
+		}
+		if point.HasSymbol {
+			item["weather_symbol"] = int(point.Symbol)
+		}
+		if point.HasSmartSymbol {
+			item["smart_symbol"] = int(point.SmartSymbol)
+		}
+		items = append(items, item)
+	}
+	return items
+}
+
+// rainWindowPayload splits the wet hours into contiguous windows. Reporting a
+// single hull across the horizon would fold a morning shower and an evening one
+// into one window and hide the dry afternoon between them.
+func rainWindowPayload(points []weatherPoint) []any {
+	windows := []any{}
+	group := []weatherPoint{}
+	flush := func() {
+		if len(group) == 0 {
+			return
+		}
+		peak, total, peakAt := group[0].Precip, 0.0, group[0].At
+		for _, point := range group {
+			if point.Precip > peak {
+				peak, peakAt = point.Precip, point.At
+			}
+			total += point.Precip
+		}
+		windows = append(windows, map[string]any{
+			"starts_at":       group[0].At.UTC().Format(time.RFC3339Nano),
+			"ends_at":         group[len(group)-1].At.Add(time.Hour).UTC().Format(time.RFC3339Nano),
+			"peak_precip_mm":  peak,
+			"peak_precip_at":  peakAt.UTC().Format(time.RFC3339Nano),
+			"total_precip_mm": math.Round(total*10) / 10,
+			"hours":           len(group),
+		})
+		group = nil
+	}
+	for _, point := range points {
+		if len(group) > 0 && point.At.Sub(group[len(group)-1].At) > time.Hour {
+			flush()
+		}
+		group = append(group, point)
+	}
+	flush()
+	return windows
 }
 
 func parseFMI(raw string) []weatherPoint {
@@ -444,6 +568,16 @@ func parseFMI(raw string) []weatherPoint {
 						current.Humidity, current.HasHumidity = number, true
 					case strings.Contains(property, "visibility"):
 						current.Visibility, current.HasVisibility = number, true
+					case strings.Contains(property, "winddirection"):
+						current.WindDir, current.HasWindDir = number, true
+					case strings.Contains(property, "dewpoint"):
+						current.Dew, current.HasDew = number, true
+					case strings.Contains(property, "pressure"):
+						current.Pressure, current.HasPressure = number, true
+					case strings.Contains(property, "smartsymbol"):
+						current.SmartSymbol, current.HasSmartSymbol = number, true
+					case strings.Contains(property, "weathersymbol"):
+						current.Symbol, current.HasSymbol = number, true
 					}
 				}
 			}
@@ -669,23 +803,110 @@ func digitransit(item collectors.Observation) []Draft {
 			end = parsed
 		}
 		search := strings.ToLower(title + " " + summary)
-		severity := "LOW"
-		if strings.Contains(search, "cancel") || strings.Contains(search, "suspend") || strings.Contains(search, "closed") {
-			severity = "HIGH"
-		} else if strings.Contains(search, "delay") || strings.Contains(search, "divert") {
-			severity = "MEDIUM"
-		}
+		effect := firstText(value(m, "alertEffect", "effect"))
+		cause := firstText(value(m, "alertCause", "cause"))
+		severity := alertSeverity(firstText(value(m, "alertSeverityLevel", "severity")), effect, search)
+		// Kind and grading are independent: a severe alert can still be a delay.
 		eventType := "transit_disruption"
-		if strings.Contains(search, "delay") {
+		if strings.EqualFold(effect, "SIGNIFICANT_DELAYS") || strings.Contains(search, "delay") {
 			eventType = "transit_delay"
 		}
 		id := firstText(value(m, "id", "alertId", "gtfsId"))
 		if id == "" {
 			id = fmt.Sprintf("%d:%s", index, title)
 		}
-		result = append(result, Draft{EventType: eventType, Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.730), Title: title, Summary: summary, Attributes: map[string]any{"alert_id": id, "effect": firstText(m["effect"]), "cause": firstText(m["cause"]), "source": "digitransit"}, DedupeKey: "digitransit:" + id})
+		attributes := map[string]any{"alert_id": id, "effect": effect, "cause": cause, "source": "digitransit"}
+		// Route and stop identifiers are what a commute rule needs to decide
+		// whether an alert touches this user's line rather than the whole city.
+		if routes, stops := alertEntities(m); len(routes) > 0 || len(stops) > 0 {
+			if len(routes) > 0 {
+				attributes["routes"] = routes
+			}
+			if len(stops) > 0 {
+				attributes["stops"] = stops
+			}
+		}
+		result = append(result, Draft{EventType: eventType, Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.730), Title: title, Summary: summary, Attributes: attributes, DedupeKey: "digitransit:" + id})
 	}
 	return result
+}
+
+// alertSeverity prefers the feed's own grading. GTFS severity and effect are
+// declared by the operator, so they beat guessing from English keywords in a
+// feed whose text is often Finnish first.
+func alertSeverity(level, effect, search string) string {
+	switch strings.ToUpper(strings.TrimSpace(level)) {
+	case "SEVERE":
+		return "HIGH"
+	case "WARNING":
+		return "MEDIUM"
+	case "INFO":
+		return "LOW"
+	}
+	switch strings.ToUpper(strings.TrimSpace(effect)) {
+	case "NO_SERVICE":
+		return "HIGH"
+	case "REDUCED_SERVICE", "SIGNIFICANT_DELAYS", "DETOUR":
+		return "MEDIUM"
+	}
+	if strings.Contains(search, "cancel") || strings.Contains(search, "suspend") || strings.Contains(search, "closed") {
+		return "HIGH"
+	}
+	if strings.Contains(search, "delay") || strings.Contains(search, "divert") {
+		return "MEDIUM"
+	}
+	return "LOW"
+}
+
+// alertEntities pulls the routes and stops an alert is attached to. OTP2 returns
+// them as a typed union under entities; older shapes carry a single route or
+// stop object, and both are read so the attribute survives a schema change.
+func alertEntities(alert map[string]any) ([]any, []any) {
+	routes, stops := []any{}, []any{}
+	appendRoute := func(entity map[string]any) {
+		name := firstText(value(entity, "shortName", "name", "longName"))
+		if name == "" {
+			return
+		}
+		route := map[string]any{"name": name}
+		if id := firstText(value(entity, "gtfsId", "id")); id != "" {
+			route["gtfs_id"] = id
+		}
+		if mode := firstText(entity["mode"]); mode != "" {
+			route["mode"] = mode
+		}
+		routes = append(routes, route)
+	}
+	appendStop := func(entity map[string]any) {
+		name := firstText(value(entity, "name", "shortName"))
+		if name == "" {
+			return
+		}
+		stop := map[string]any{"name": name}
+		if id := firstText(value(entity, "gtfsId", "id")); id != "" {
+			stop["gtfs_id"] = id
+		}
+		stops = append(stops, stop)
+	}
+	for _, raw := range asList(alert["entities"]) {
+		entity := asMap(raw)
+		if entity == nil {
+			continue
+		}
+		switch strings.ToLower(firstText(entity["__typename"])) {
+		case "route":
+			appendRoute(entity)
+		case "stop":
+			appendStop(entity)
+		}
+	}
+	if entity := asMap(alert["route"]); entity != nil {
+		appendRoute(entity)
+	}
+	if entity := asMap(alert["stop"]); entity != nil {
+		appendStop(entity)
+	}
+	return routes, stops
 }
 
 func servicemap(item collectors.Observation) []Draft {

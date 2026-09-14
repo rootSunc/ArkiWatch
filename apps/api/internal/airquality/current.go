@@ -288,10 +288,12 @@ func scoreFromProperties(properties map[string]any) (*int, string) {
 	return nil, ""
 }
 
+// scoreFromNumericIndex folds a numeric air-quality index into the shared 1-5
+// band. HSY's Ilmanlaatuindeksi and the European AQI are both open-ended point
+// scales whose cleanest readings are single digits, so a small value must not be
+// passed through as a band: an index of 4 is excellent air, band 4 is "poor".
 func scoreFromNumericIndex(value int) int {
 	switch {
-	case value >= 1 && value <= 5:
-		return value
 	case value <= 50:
 		return 1
 	case value <= 75:

@@ -31,7 +31,7 @@ type ruleSeed struct {
 func (store *Store) SeedOperationalMetadata(ctx context.Context, cfg config.Config) (int, int, error) {
 	sources := []sourceSeed{
 		{Code: "fmi", Name: "Finnish Meteorological Institute", Endpoint: cfg.FMIAPIBaseURL, Interval: 1800, Active: true},
-		{Code: "digitransit", Name: "Digitransit / HSL", Endpoint: cfg.DigitransitHSLAlertsURL, Interval: 600, Active: true},
+		{Code: "digitransit", Name: "Digitransit / HSL", Endpoint: cfg.DigitransitGraphQLURL(), Interval: 600, Active: true},
 		{Code: "fingrid", Name: "Fingrid", Endpoint: nonEmpty(cfg.FingridDatasetURL, fmt.Sprintf("%s/datasets/%d/data", cfg.FingridAPIBaseURL, cfg.FingridDatasetID)), AuthType: "API_KEY", Interval: 3600, Active: true},
 		{Code: "porssisahko", Name: "Porssisahko.net", Endpoint: cfg.ElectricityPriceAPIURL, Interval: 43200, Active: true},
 		{Code: "hsy", Name: "HSY Air Quality", Endpoint: cfg.HSYWFSURL, Interval: 1800, Active: true},

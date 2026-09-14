@@ -85,7 +85,6 @@ type Config struct {
 	HSYAirQualityLayer               string
 	OpenMeteoAirQualityURL           string
 	DigitrafficRoadAPIBaseURL        string
-	DigitransitHSLAlertsURL          string
 	DigitransitSubscriptionKey       string
 	FingridAPIBaseURL                string
 	FingridAPIKey                    string
@@ -104,6 +103,7 @@ type Config struct {
 	AdminPassword                    string
 	AdminPasswordHash                string
 	AdminName                        string
+	AdminLocale                      string
 	LoginRateLimitRequests           int
 	LoginRateLimitWindowSeconds      int
 	SchedulerPollSeconds             float64
@@ -199,7 +199,6 @@ func DefaultConfig() Config {
 		HSYAirQualityLayer:               "Ilmanlaatu_nyt",
 		OpenMeteoAirQualityURL:           "https://air-quality-api.open-meteo.com/v1/air-quality",
 		DigitrafficRoadAPIBaseURL:        "https://tie.digitraffic.fi",
-		DigitransitHSLAlertsURL:          "https://realtime.hsl.fi/realtime/service-alerts/v2/hsl",
 		FingridAPIBaseURL:                "https://data.fingrid.fi/api",
 		FingridDatasetID:                 166,
 		FingridForecastHorizonHours:      36,
@@ -215,6 +214,7 @@ func DefaultConfig() Config {
 		AdminPassword:                    "admin",
 		AdminPasswordHash:                "",
 		AdminName:                        "Admin",
+		AdminLocale:                      "en",
 		LoginRateLimitRequests:           10,
 		LoginRateLimitWindowSeconds:      60,
 		SchedulerPollSeconds:             10,
@@ -254,7 +254,6 @@ func Load() (Config, error) {
 	cfg.HSYAirQualityLayer = envOr("HSY_AIR_QUALITY_LAYER", cfg.HSYAirQualityLayer)
 	cfg.OpenMeteoAirQualityURL = envOr("OPEN_METEO_AIR_QUALITY_URL", cfg.OpenMeteoAirQualityURL)
 	cfg.DigitrafficRoadAPIBaseURL = envOr("DIGITRAFFIC_ROAD_API_BASE_URL", cfg.DigitrafficRoadAPIBaseURL)
-	cfg.DigitransitHSLAlertsURL = envOr("DIGITRANSIT_HSL_ALERTS_URL", cfg.DigitransitHSLAlertsURL)
 	cfg.DigitransitSubscriptionKey = envOr("DIGITRANSIT_SUBSCRIPTION_KEY", cfg.DigitransitSubscriptionKey)
 	cfg.FingridAPIBaseURL = envOr("FINGRID_API_BASE_URL", cfg.FingridAPIBaseURL)
 	cfg.FingridAPIKey = envOr("FINGRID_API_KEY", cfg.FingridAPIKey)
@@ -287,6 +286,7 @@ func Load() (Config, error) {
 	cfg.AdminPassword = envOr("ADMIN_PASSWORD", cfg.AdminPassword)
 	cfg.AdminPasswordHash = envOr("ADMIN_PASSWORD_HASH", cfg.AdminPasswordHash)
 	cfg.AdminName = envOr("ADMIN_NAME", cfg.AdminName)
+	cfg.AdminLocale = envOr("ADMIN_LOCALE", cfg.AdminLocale)
 	cfg.HouseholdElectricityProvider = envOr("HOUSEHOLD_ELECTRICITY_PROVIDER", cfg.HouseholdElectricityProvider)
 	cfg.CORSOrigins = parseCSV(envOr("BACKEND_CORS_ORIGINS", ""))
 	cfg.WeatherPlaces = parseCSV(envOr("WEATHER_PLACES", strings.Join(cfg.WeatherPlaces, ",")))
@@ -562,6 +562,19 @@ func Load() (Config, error) {
 
 func (c Config) Address() string {
 	return fmt.Sprintf("%s:%d", c.APIHost, c.APIPort)
+}
+
+// DigitransitGraphQLURL is the single owner of the routing endpoint the HSL
+// alert collector posts to. An env file that sets the variable to an empty
+// string leaves the field blank rather than falling back, so the choice is made
+// here instead of at each call site.
+func (cfg Config) DigitransitGraphQLURL() string {
+	for _, candidate := range []string{cfg.DigitransitRoutingURL, cfg.DigitransitAPIURL} {
+		if trimmed := strings.TrimSpace(candidate); trimmed != "" {
+			return trimmed
+		}
+	}
+	return DefaultConfig().DigitransitRoutingURL
 }
 
 func envOr(key, fallback string) string {

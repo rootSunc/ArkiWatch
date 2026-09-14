@@ -796,6 +796,81 @@ func haversineMeters(fromLat, fromLon, toLat, toLon float64) float64 {
 	return 2 * earthRadiusM * math.Asin(math.Sqrt(a))
 }
 
+// hslAlertsDocument asks the routing API for the service alerts the commute
+// rules consume. The realtime.hsl.fi feed carries the same alerts as GTFS-RT
+// protobuf, which neither survives a jsonb round trip nor matches anything the
+// normalizer can read, so the alerts are taken from GraphQL instead.
+const hslAlertsDocument = `query ArkiWatchServiceAlerts {
+  alerts(feeds: ["HSL"]) {
+    id
+    alertHeaderText
+    alertDescriptionText
+    alertSeverityLevel
+    alertEffect
+    alertCause
+    effectiveStartDate
+    effectiveEndDate
+    entities {
+      __typename
+      ... on Route { gtfsId shortName longName mode }
+      ... on Stop { gtfsId name }
+    }
+  }
+}`
+
+type digitransitCollector struct{ cfg config.Config }
+
+func (collector digitransitCollector) SourceCode() string { return "digitransit" }
+func (collector digitransitCollector) Dataset() string    { return "service_alerts" }
+
+func (collector digitransitCollector) Collect(ctx context.Context) ([]Observation, error) {
+	if strings.TrimSpace(collector.cfg.DigitransitSubscriptionKey) == "" {
+		return nil, fmt.Errorf("digitransit requires DIGITRANSIT_SUBSCRIPTION_KEY; request a free key at https://portal-api.digitransit.fi")
+	}
+	now := observedNow()
+	endpoint := collector.cfg.DigitransitGraphQLURL()
+	body, headers, _, err := CollectGraphQL(ctx, client(collector.cfg.CollectorTimeoutSeconds), endpoint,
+		map[string]string{"digitransit-subscription-key": collector.cfg.DigitransitSubscriptionKey}, hslAlertsDocument, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := graphQLError(body); err != nil {
+		return nil, err
+	}
+	area := "helsinki"
+	payload := payloadForRequest(body, endpoint, headers.Get("Content-Type"))
+	payload["fetched_at"] = now.Format(time.RFC3339Nano)
+	hash, err := BuildObservationHash(collector.SourceCode(), collector.Dataset(), area, now, payload)
+	if err != nil {
+		return nil, err
+	}
+	return []Observation{{Dataset: collector.Dataset(), AreaCode: area, ObservedAt: now, Payload: payload, Hash: hash}}, nil
+}
+
+// graphQLError turns an inline errors array into a failed run. GraphQL answers
+// HTTP 200 with its errors in the body, so without this a rejected query would
+// be recorded as a healthy collection that happened to find no alerts.
+func graphQLError(body map[string]any) error {
+	raw, ok := body["errors"].([]any)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	messages := []string{}
+	for _, item := range raw {
+		entry, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if message, ok := entry["message"].(string); ok && strings.TrimSpace(message) != "" {
+			messages = append(messages, message)
+		}
+	}
+	if len(messages) == 0 {
+		return fmt.Errorf("digitransit returned %d GraphQL errors", len(raw))
+	}
+	return fmt.Errorf("digitransit GraphQL error: %s", strings.Join(messages, "; "))
+}
+
 func Registry(cfg config.Config) map[string]Collector {
 	return map[string]Collector{
 		"fmi": fmiCollector{cfg: cfg},
@@ -811,7 +886,7 @@ func Registry(cfg config.Config) map[string]Collector {
 			return map[string]string{"startTime": start.Format(time.RFC3339), "endTime": end.Format(time.RFC3339), "format": "json", "pageSize": strconv.Itoa(cfg.FingridPageSize)}
 		}},
 		"digitraffic":  multiEndpointCollector{cfg: cfg, endpoints: map[string]string{"traffic_announcements": "/api/traffic-message/v2/traffic-announcements", "roadworks": "/api/traffic-message/v2/roadworks", "weight_restrictions": "/api/traffic-message/v2/weight-restrictions", "exempted_transports": "/api/traffic-message/v2/exempted-transports"}},
-		"digitransit":  endpointCollector{cfg: cfg, source: "digitransit", dataset: "service_alerts", endpoint: nonEmpty(cfg.DigitransitHSLAlertsURL, cfg.DigitransitAPIURL), area: "helsinki", headers: headerIfPresent("digitransit-subscription-key", cfg.DigitransitSubscriptionKey)},
+		"digitransit":  digitransitCollector{cfg: cfg},
 		"syke":         sykeCollector{cfg: cfg},
 		"servicemap":   servicemapCollector{cfg: cfg},
 		"linkedevents": linkedEventsCollector{cfg: cfg},

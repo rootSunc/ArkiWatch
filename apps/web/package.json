@@ -19,7 +19,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
     "leaflet": "^1.9.4",
-    "next": "^15.5.23",
+    "next": "^15.5.25",
     "next-intl": "^4.13.2",
     "proj4": "^2.20.8",
     "react": "^18.3.1",
@@ -36,7 +36,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^8.57.0",
-    "eslint-config-next": "^15.5.23",
+    "eslint-config-next": "^15.5.25",
     "jsdom": "^29.1.1",
     "openapi-typescript": "^7.13.0",
     "typescript": "^5.5.4",

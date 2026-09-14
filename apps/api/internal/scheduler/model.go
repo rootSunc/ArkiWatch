@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
@@ -33,8 +35,16 @@ type JobSpec struct {
 	JobKey          string
 	TaskType        TaskType
 	IntervalSeconds int
-	Payload         map[string]any
+	// DailyAtLocal pins a job to a wall-clock time ("06:50") instead of an
+	// interval. A morning brief has to land before the reader leaves the house,
+	// which an interval cannot express: it drifts with every run duration and
+	// shifts by an hour at each daylight-saving change.
+	DailyAtLocal string
+	Payload      map[string]any
 }
+
+// IsDaily reports whether the job is anchored to the wall clock.
+func (spec JobSpec) IsDaily() bool { return spec.DailyAtLocal != "" }
 
 type ClaimedJob struct {
 	ID              string
@@ -42,6 +52,7 @@ type ClaimedJob struct {
 	JobKey          string
 	TaskType        TaskType
 	IntervalSeconds int
+	DailyAtLocal    string
 	Payload         map[string]any
 	StartedAt       time.Time
 	LockedBy        string
@@ -66,6 +77,46 @@ func StableJitterSeconds(jobKey string, intervalSeconds, maxJitterSeconds int) i
 	}
 	digest := sha256.Sum256([]byte(jobKey))
 	return int(binary.BigEndian.Uint32(digest[:4]) % uint32(ceiling+1))
+}
+
+// ParseDailyAt reads an "HH:MM" wall-clock time. It is strict on purpose: a
+// malformed value must not silently become midnight.
+func ParseDailyAt(value string) (int, int, bool) {
+	text := strings.TrimSpace(value)
+	hourText, minuteText, found := strings.Cut(text, ":")
+	if !found || len(hourText) != 2 || len(minuteText) != 2 {
+		return 0, 0, false
+	}
+	hour, err := strconv.Atoi(hourText)
+	if err != nil || hour < 0 || hour > 23 {
+		return 0, 0, false
+	}
+	minute, err := strconv.Atoi(minuteText)
+	if err != nil || minute < 0 || minute > 59 {
+		return 0, 0, false
+	}
+	return hour, minute, true
+}
+
+// NextDailyRun returns the first occurrence of a wall-clock time in the given
+// zone strictly after `after`. Building the instant with time.Date in the zone
+// is what keeps 06:50 at 06:50 across a daylight-saving change, and it also
+// normalizes the hour that does not exist on the spring-forward night.
+func NextDailyRun(after time.Time, dailyAtLocal, timezone string) (time.Time, bool) {
+	hour, minute, ok := ParseDailyAt(dailyAtLocal)
+	if !ok {
+		return time.Time{}, false
+	}
+	zone, err := time.LoadLocation(timezone)
+	if err != nil {
+		zone = time.UTC
+	}
+	local := after.In(zone)
+	candidate := time.Date(local.Year(), local.Month(), local.Day(), hour, minute, 0, 0, zone)
+	if !candidate.After(local) {
+		candidate = time.Date(local.Year(), local.Month(), local.Day()+1, hour, minute, 0, 0, zone)
+	}
+	return candidate.UTC(), true
 }
 
 func BuildDefaultSpecs(sourceIntervals map[string]int, cfg config.Config) []JobSpec {

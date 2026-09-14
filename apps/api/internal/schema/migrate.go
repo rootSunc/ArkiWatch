@@ -191,6 +191,7 @@ func ensureTables(ctx context.Context, tx pgx.Tx) error {
 			job_key VARCHAR(120) NOT NULL UNIQUE,
 			task_type scheduler_task_type NOT NULL,
 			interval_seconds INTEGER NOT NULL,
+			daily_at_local VARCHAR(5),
 			payload JSONB NOT NULL,
 			is_enabled BOOLEAN NOT NULL,
 			next_run_at TIMESTAMPTZ NOT NULL,
@@ -529,6 +530,7 @@ func ensureRawObservations(ctx context.Context, tx pgx.Tx) error {
 
 func ensureColumnsAndData(ctx context.Context, tx pgx.Tx) error {
 	statements := []string{
+		`ALTER TABLE scheduled_jobs ADD COLUMN IF NOT EXISTS daily_at_local VARCHAR(5)`,
 		`ALTER TABLE recommendations ADD COLUMN IF NOT EXISTS advice_title_zh VARCHAR(200)`,
 		`ALTER TABLE recommendations ADD COLUMN IF NOT EXISTS advice_body_zh TEXT`,
 		`UPDATE recommendations SET advice_title_zh = rationale #>> '{localized,zh,title}', advice_body_zh = rationale #>> '{localized,zh,body}' WHERE advice_title_zh IS NULL AND rationale IS NOT NULL AND rationale #>> '{localized,zh,title}' IS NOT NULL`,
