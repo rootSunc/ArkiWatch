@@ -740,36 +740,37 @@ export interface components {
             /** Checked At */
             checked_at: string;
             /** Data Pipeline */
-            data_pipeline?: components["schemas"]["AirQualityDataStageRead"][];
+            data_pipeline: components["schemas"]["AirQualityDataStageRead"][];
             /** Location */
-            location?: string | null;
+            location: string | null;
             /** Metrics */
-            metrics?: components["schemas"]["AirQualityMetricRead"][];
+            metrics: components["schemas"]["AirQualityMetricRead"][];
             /** Observed At */
-            observed_at?: string | null;
-            quality?: components["schemas"]["AirQualityQualityRead"];
+            observed_at: string | null;
+            quality: components["schemas"]["AirQualityQualityRead"];
             /**
              * Source Code
              * @default hsy
              */
             source_code: string;
             /** Source Requests */
-            source_requests?: components["schemas"]["AirQualitySourceRequestRead"][];
+            source_requests: components["schemas"]["AirQualitySourceRequestRead"][];
             /** Stations */
-            stations?: components["schemas"]["AirQualityStationRead"][];
+            stations: components["schemas"]["AirQualityStationRead"][];
             /** Status */
             status: string;
             /** Summary */
-            summary?: string | null;
+            summary: string | null;
             time_scope?: components["schemas"]["TimeScopeRead"] | null;
             /** Valid To */
-            valid_to?: string | null;
+            valid_to: string | null;
             /** Worst Label */
-            worst_label?: string | null;
+            worst_label: string | null;
             /** Worst Score */
-            worst_score?: number | null;
+            worst_score: number | null;
             /** Worst Station */
-            worst_station?: string | null;
+            worst_station: string | null;
+            detail?: components["schemas"]["AirQualityDetailRead"];
         };
         /** AirQualityDataStageRead */
         AirQualityDataStageRead: {
@@ -780,11 +781,11 @@ export interface components {
             /** Label */
             label: string;
             /** Record Count */
-            record_count?: number | null;
+            record_count: number | null;
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** AirQualityHistorySnapshotRead */
         AirQualityHistorySnapshotRead: {
@@ -803,7 +804,7 @@ export interface components {
             /** Label Key */
             label_key: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: string;
         };
@@ -815,9 +816,9 @@ export interface components {
              */
             field_coverage_pct: number;
             /** Missing Fields */
-            missing_fields?: string[];
+            missing_fields: string[];
             /** Notes */
-            notes?: string[];
+            notes: string[];
             /**
              * Reporting Station Count
              * @default 0
@@ -832,11 +833,11 @@ export interface components {
         /** AirQualitySourceRequestRead */
         AirQualitySourceRequestRead: {
             /** Content Type */
-            content_type?: string | null;
+            content_type: string | null;
             /** Endpoint */
-            endpoint?: string | null;
+            endpoint: string | null;
             /** Fetched At */
-            fetched_at?: string | null;
+            fetched_at: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -847,23 +848,28 @@ export interface components {
         /** AirQualityStationRead */
         AirQualityStationRead: {
             /** European Aqi */
-            european_aqi?: number | null;
+            european_aqi: number | null;
             /** Label */
             label: string;
             /** Lat */
-            lat?: number | null;
+            lat: number | null;
             /** Lon */
-            lon?: number | null;
+            lon: number | null;
             /** No2 */
-            no2?: number | null;
+            no2: number | null;
             /** Pm10 */
-            pm10?: number | null;
+            pm10: number | null;
             /** Pm2 5 */
-            pm2_5?: number | null;
+            pm2_5: number | null;
             /** Score */
-            score?: number | null;
+            score: number | null;
             /** Station */
             station: string;
+            index?: number | null;
+            tone?: string;
+            pollutant_tones?: {
+                [key: string]: string;
+            };
         };
         /** AssistantChatMessage */
         AssistantChatMessage: {
@@ -1049,17 +1055,17 @@ export interface components {
             /** Documentation Url */
             documentation_url?: string | null;
             /** Error Message */
-            error_message?: string | null;
+            error_message: string | null;
             /** Id */
             id: string;
             /** Key Data Items */
             key_data_items?: string[];
             /** Last Run Finished At */
-            last_run_finished_at?: string | null;
+            last_run_finished_at: string | null;
             /** Last Run Started At */
-            last_run_started_at?: string | null;
+            last_run_started_at: string | null;
             /** Last Run Status */
-            last_run_status?: string | null;
+            last_run_status: string | null;
             /** License Label */
             license_label?: string | null;
             /** Normalized Event Structures */
@@ -1069,7 +1075,7 @@ export interface components {
             /** Poll Interval Seconds */
             poll_interval_seconds: number;
             /** Records Ingested */
-            records_ingested?: number | null;
+            records_ingested: number | null;
             /** Source Code */
             source_code: string;
             /** Source Name */
@@ -1120,7 +1126,7 @@ export interface components {
              */
             required: boolean;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value Type */
             value_type: string;
         };
@@ -1156,38 +1162,38 @@ export interface components {
         EnergyCurrentRead: {
             /** Checked At */
             checked_at: string;
-            current_window?: components["schemas"]["EnergyWindowRead"] | null;
+            current_window: components["schemas"]["EnergyWindowRead"] | null;
             /** Data Pipeline */
-            data_pipeline?: components["schemas"]["EnergyDataStageRead"][];
+            data_pipeline: components["schemas"]["EnergyDataStageRead"][];
             /** Location */
-            location?: string | null;
+            location: string | null;
             /** Metrics */
-            metrics?: components["schemas"]["EnergyMetricRead"][];
+            metrics: components["schemas"]["EnergyMetricRead"][];
             /** Observed At */
-            observed_at?: string | null;
+            observed_at: string | null;
             /** Points */
-            points?: components["schemas"]["EnergyPointRead"][];
+            points: components["schemas"]["EnergyPointRead"][];
             /** Provider Name */
-            provider_name?: string | null;
-            quality?: components["schemas"]["EnergyQualityRead"];
+            provider_name: string | null;
+            quality: components["schemas"]["EnergyQualityRead"];
             /**
              * Source Code
              * @default fingrid
              */
             source_code: string;
             /** Source Requests */
-            source_requests?: components["schemas"]["EnergySourceRequestRead"][];
+            source_requests: components["schemas"]["EnergySourceRequestRead"][];
             /** Status */
             status: string;
             /** Summary */
-            summary?: string | null;
+            summary: string | null;
             time_scope?: components["schemas"]["TimeScopeRead"] | null;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Valid From */
-            valid_from?: string | null;
+            valid_from: string | null;
             /** Valid To */
-            valid_to?: string | null;
+            valid_to: string | null;
         };
         /** EnergyDataStageRead */
         EnergyDataStageRead: {
@@ -1198,11 +1204,11 @@ export interface components {
             /** Label */
             label: string;
             /** Record Count */
-            record_count?: number | null;
+            record_count: number | null;
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** EnergyHistorySnapshotRead */
         EnergyHistorySnapshotRead: {
@@ -1221,7 +1227,7 @@ export interface components {
             /** Label Key */
             label_key: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: string;
         };
@@ -1230,31 +1236,31 @@ export interface components {
             /** Ends At */
             ends_at: string;
             /** Estimated Cost Eur */
-            estimated_cost_eur?: number | null;
+            estimated_cost_eur: number | null;
             /** Starts At */
             starts_at: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: number;
         };
         /** EnergyQualityRead */
         EnergyQualityRead: {
             /** Average Value */
-            average_value?: number | null;
+            average_value: number | null;
             /**
              * Field Coverage Pct
              * @default 0
              */
             field_coverage_pct: number;
             /** Maximum Value */
-            maximum_value?: number | null;
+            maximum_value: number | null;
             /** Minimum Value */
-            minimum_value?: number | null;
+            minimum_value: number | null;
             /** Missing Fields */
-            missing_fields?: string[];
+            missing_fields: string[];
             /** Notes */
-            notes?: string[];
+            notes: string[];
             /**
              * Point Count
              * @default 0
@@ -1274,11 +1280,11 @@ export interface components {
         /** EnergySourceRequestRead */
         EnergySourceRequestRead: {
             /** Content Type */
-            content_type?: string | null;
+            content_type: string | null;
             /** Endpoint */
-            endpoint?: string | null;
+            endpoint: string | null;
             /** Fetched At */
-            fetched_at?: string | null;
+            fetched_at: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -1293,9 +1299,9 @@ export interface components {
             /** Ends At */
             ends_at: string;
             /** Estimated Cost Eur */
-            estimated_cost_eur?: number | null;
+            estimated_cost_eur: number | null;
             /** Horizon Average Value */
-            horizon_average_value?: number | null;
+            horizon_average_value: number | null;
             /** Maximum Value */
             maximum_value: number;
             /** Minimum Value */
@@ -1303,9 +1309,9 @@ export interface components {
             /** Point Count */
             point_count: number;
             /** Savings Vs Average Pct */
-            savings_vs_average_pct?: number | null;
+            savings_vs_average_pct: number | null;
             /** Selection Strategy */
-            selection_strategy?: string | null;
+            selection_strategy: string | null;
             /**
              * Severity
              * @default INFO
@@ -1319,11 +1325,11 @@ export interface components {
             /** Starts At */
             starts_at: string;
             /** Threshold Value */
-            threshold_value?: number | null;
+            threshold_value: number | null;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Usage Kwh */
-            usage_kwh?: number | null;
+            usage_kwh: number | null;
         };
         /** EventContentRead */
         EventContentRead: {
@@ -1501,6 +1507,8 @@ export interface components {
             body_zh?: string | null;
             notification?: boolean;
             notification_priority?: number;
+            state?: string;
+            detail_visible?: boolean;
         };
         /** PlatformHistoryAvailabilityDayRead */
         PlatformHistoryAvailabilityDayRead: {
@@ -1551,7 +1559,7 @@ export interface components {
         /** PlatformMetricRead */
         PlatformMetricRead: {
             /** Detail */
-            detail?: string | null;
+            detail: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -1563,9 +1571,9 @@ export interface components {
             /** Tone */
             tone: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
             /** Value */
             value: string;
         };
@@ -1591,10 +1599,7 @@ export interface components {
         };
         /** PlatformVisualizationRead */
         PlatformVisualizationRead: {
-            /** Data */
-            data: {
-                [key: string]: unknown;
-            };
+            data: components["schemas"]["PlatformVisualizationDataRead"];
             /** Description */
             description: string;
             /** Id */
@@ -1608,9 +1613,9 @@ export interface components {
             /** Type */
             type: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** PublicActionRead */
         PublicActionRead: {
@@ -1688,6 +1693,9 @@ export interface components {
             valid_from: string;
             /** Valid To */
             valid_to: string;
+            title_zh?: string | null;
+            description_zh?: string | null;
+            status_label_zh?: string | null;
         };
         /** PublicTimelineItemRead */
         PublicTimelineItemRead: {
@@ -1701,6 +1709,7 @@ export interface components {
             severity: string;
             /** Starts At */
             starts_at: string;
+            label_zh?: string | null;
         };
         /** RecommendationRead */
         RecommendationRead: {
@@ -1736,7 +1745,7 @@ export interface components {
             /** Event Count */
             event_count: number;
             /** Geometry Bbox */
-            geometry_bbox?: number[] | null;
+            geometry_bbox: number[] | null;
             /** Key */
             key: string;
             /** Label */
@@ -1755,30 +1764,31 @@ export interface components {
             /** Checked At */
             checked_at: string;
             /** Corridors */
-            corridors?: components["schemas"]["RoadRailCorridorRead"][];
+            corridors: components["schemas"]["RoadRailCorridorRead"][];
             /** Data Pipeline */
-            data_pipeline?: components["schemas"]["RoadRailDataStageRead"][];
+            data_pipeline: components["schemas"]["RoadRailDataStageRead"][];
             /** Incidents */
-            incidents?: components["schemas"]["RoadRailIncidentRead"][];
+            incidents: components["schemas"]["RoadRailIncidentRead"][];
             /** Location */
-            location?: string | null;
+            location: string | null;
             /** Metrics */
-            metrics?: components["schemas"]["RoadRailMetricRead"][];
+            metrics: components["schemas"]["RoadRailMetricRead"][];
             /** Observed At */
-            observed_at?: string | null;
-            quality?: components["schemas"]["RoadRailQualityRead"];
+            observed_at: string | null;
+            quality: components["schemas"]["RoadRailQualityRead"];
             /**
              * Source Code
              * @default digitraffic
              */
             source_code: string;
             /** Source Requests */
-            source_requests?: components["schemas"]["RoadRailSourceRequestRead"][];
+            source_requests: components["schemas"]["RoadRailSourceRequestRead"][];
             /** Status */
             status: string;
             /** Summary */
-            summary?: string | null;
+            summary: string | null;
             time_scope?: components["schemas"]["TimeScopeRead"] | null;
+            detail?: components["schemas"]["MobilityDetailRead"];
         };
         /** RoadRailDataStageRead */
         RoadRailDataStageRead: {
@@ -1789,11 +1799,11 @@ export interface components {
             /** Label */
             label: string;
             /** Record Count */
-            record_count?: number | null;
+            record_count: number | null;
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** RoadRailHistorySnapshotRead */
         RoadRailHistorySnapshotRead: {
@@ -1814,25 +1824,27 @@ export interface components {
             /** Event Type */
             event_type: string;
             /** Feature Names */
-            feature_names?: string[];
+            feature_names: string[];
             /** Geometry Bbox */
-            geometry_bbox?: number[] | null;
+            geometry_bbox: number[] | null;
             /** Id */
             id: string;
             /** Location Description */
-            location_description?: string | null;
+            location_description: string | null;
             /** Location Ref */
             location_ref: string;
             /** Message Type */
-            message_type?: string | null;
+            message_type: string | null;
             /** Severity */
             severity: string;
             /** Situation Type */
-            situation_type?: string | null;
+            situation_type: string | null;
             /** Starts At */
             starts_at: string;
             /** Title */
             title: string;
+            state?: string;
+            filters?: string[];
         };
         /** RoadRailMetricRead */
         RoadRailMetricRead: {
@@ -1843,7 +1855,7 @@ export interface components {
             /** Label Key */
             label_key: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: string;
         };
@@ -1865,14 +1877,14 @@ export interface components {
              */
             field_coverage_pct: number;
             /** Missing Fields */
-            missing_fields?: string[];
+            missing_fields: string[];
             /**
              * Normalized Event Count
              * @default 0
              */
             normalized_event_count: number;
             /** Notes */
-            notes?: string[];
+            notes: string[];
             /**
              * Rail Event Count
              * @default 0
@@ -1897,11 +1909,11 @@ export interface components {
         /** RoadRailSourceRequestRead */
         RoadRailSourceRequestRead: {
             /** Content Type */
-            content_type?: string | null;
+            content_type: string | null;
             /** Endpoint */
-            endpoint?: string | null;
+            endpoint: string | null;
             /** Fetched At */
-            fetched_at?: string | null;
+            fetched_at: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -1922,6 +1934,8 @@ export interface components {
             scenario_key: string;
             /** Title */
             title: string;
+            title_zh?: string | null;
+            description_zh?: string | null;
         };
         /**
          * ScenarioKey
@@ -2058,7 +2072,7 @@ export interface components {
         /** TimeScopeRead */
         TimeScopeRead: {
             /** Date */
-            date?: string | null;
+            date: string | null;
             /** Mode */
             mode: string;
             /** Reference Time */
@@ -2066,9 +2080,9 @@ export interface components {
             /** Timezone */
             timezone: string;
             /** Window End */
-            window_end?: string | null;
+            window_end: string | null;
             /** Window Start */
-            window_start?: string | null;
+            window_start: string | null;
         };
         /** TodayCard */
         TodayCard: {
@@ -2103,11 +2117,11 @@ export interface components {
             /** Active */
             active: boolean;
             /** Cause */
-            cause?: string | null;
+            cause: string | null;
             /** Description */
             description: string;
             /** Effect */
-            effect?: string | null;
+            effect: string | null;
             /** Ends At */
             ends_at: string;
             /** Event Type */
@@ -2115,45 +2129,48 @@ export interface components {
             /** Id */
             id: string;
             /** Route Ids */
-            route_ids?: string[];
+            route_ids: string[];
             /** Severity */
             severity: string;
             /** Starts At */
             starts_at: string;
             /** Stop Ids */
-            stop_ids?: string[];
+            stop_ids: string[];
             /** Title */
             title: string;
             /** Trip Ids */
-            trip_ids?: string[];
+            trip_ids: string[];
+            state?: string;
+            filters?: string[];
         };
         /** TransitCurrentRead */
         TransitCurrentRead: {
             /** Alerts */
-            alerts?: components["schemas"]["TransitAlertRead"][];
+            alerts: components["schemas"]["TransitAlertRead"][];
             /** Checked At */
             checked_at: string;
             /** Data Pipeline */
-            data_pipeline?: components["schemas"]["TransitDataStageRead"][];
+            data_pipeline: components["schemas"]["TransitDataStageRead"][];
             /** Location */
-            location?: string | null;
+            location: string | null;
             /** Metrics */
-            metrics?: components["schemas"]["TransitMetricRead"][];
+            metrics: components["schemas"]["TransitMetricRead"][];
             /** Observed At */
-            observed_at?: string | null;
-            quality?: components["schemas"]["TransitQualityRead"];
+            observed_at: string | null;
+            quality: components["schemas"]["TransitQualityRead"];
             /**
              * Source Code
              * @default digitransit
              */
             source_code: string;
             /** Source Requests */
-            source_requests?: components["schemas"]["TransitSourceRequestRead"][];
+            source_requests: components["schemas"]["TransitSourceRequestRead"][];
             /** Status */
             status: string;
             /** Summary */
-            summary?: string | null;
+            summary: string | null;
             time_scope?: components["schemas"]["TimeScopeRead"] | null;
+            detail?: components["schemas"]["MobilityDetailRead"];
         };
         /** TransitDataStageRead */
         TransitDataStageRead: {
@@ -2164,11 +2181,11 @@ export interface components {
             /** Label */
             label: string;
             /** Record Count */
-            record_count?: number | null;
+            record_count: number | null;
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** TransitHistorySnapshotRead */
         TransitHistorySnapshotRead: {
@@ -2187,7 +2204,7 @@ export interface components {
             /** Label Key */
             label_key: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: string;
         };
@@ -2204,14 +2221,14 @@ export interface components {
              */
             field_coverage_pct: number;
             /** Missing Fields */
-            missing_fields?: string[];
+            missing_fields: string[];
             /**
              * Normalized Event Count
              * @default 0
              */
             normalized_event_count: number;
             /** Notes */
-            notes?: string[];
+            notes: string[];
             /**
              * Raw Alert Count
              * @default 0
@@ -2231,11 +2248,11 @@ export interface components {
         /** TransitSourceRequestRead */
         TransitSourceRequestRead: {
             /** Content Type */
-            content_type?: string | null;
+            content_type: string | null;
             /** Endpoint */
-            endpoint?: string | null;
+            endpoint: string | null;
             /** Fetched At */
-            fetched_at?: string | null;
+            fetched_at: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -2508,78 +2525,80 @@ export interface components {
             /** Label */
             label: string;
             /** Record Count */
-            record_count?: number | null;
+            record_count: number | null;
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** WeatherForecastPointRead */
         WeatherForecastPointRead: {
             /** Cloud Cover Pct */
-            cloud_cover_pct?: number | null;
+            cloud_cover_pct: number | null;
             /** Dew Point C */
-            dew_point_c?: number | null;
+            dew_point_c: number | null;
             /** Humidity Pct */
-            humidity_pct?: number | null;
+            humidity_pct: number | null;
             /** Precipitation Mm */
-            precipitation_mm?: number | null;
+            precipitation_mm: number | null;
             /** Pressure Hpa */
-            pressure_hpa?: number | null;
+            pressure_hpa: number | null;
             /** Smart Symbol */
-            smart_symbol?: number | null;
+            smart_symbol: number | null;
             /** Temperature C */
-            temperature_c?: number | null;
+            temperature_c: number | null;
             /** Timestamp */
             timestamp: string;
             /** Visibility M */
-            visibility_m?: number | null;
+            visibility_m: number | null;
             /** Weather Symbol */
-            weather_symbol?: number | null;
+            weather_symbol: number | null;
             /** Wind Direction Deg */
-            wind_direction_deg?: number | null;
+            wind_direction_deg: number | null;
             /** Wind Gust Ms */
-            wind_gust_ms?: number | null;
+            wind_gust_ms: number | null;
             /** Wind Speed Ms */
-            wind_speed_ms?: number | null;
+            wind_speed_ms: number | null;
+            assessment?: components["schemas"]["WeatherPointAssessmentRead"];
         };
         /** WeatherForecastRead */
         WeatherForecastRead: {
             /** Checked At */
             checked_at: string;
             /** Data Pipeline */
-            data_pipeline?: components["schemas"]["WeatherDataStageRead"][];
+            data_pipeline: components["schemas"]["WeatherDataStageRead"][];
             /** Generated At */
-            generated_at?: string | null;
+            generated_at: string | null;
             /** Location */
-            location?: string | null;
+            location: string | null;
             /** Metrics */
-            metrics?: components["schemas"]["WeatherMetricRead"][];
+            metrics: components["schemas"]["WeatherMetricRead"][];
             /** Points */
-            points?: components["schemas"]["WeatherForecastPointRead"][];
-            quality?: components["schemas"]["WeatherQualityRead"];
+            points: components["schemas"]["WeatherForecastPointRead"][];
+            quality: components["schemas"]["WeatherQualityRead"];
             /** Rain Windows */
-            rain_windows?: components["schemas"]["WeatherRainWindowRead"][];
+            rain_windows: components["schemas"]["WeatherRainWindowRead"][];
             /**
              * Source Code
              * @default fmi
              */
             source_code: string;
             /** Source Layers */
-            source_layers?: components["schemas"]["WeatherSourceLayerRead"][];
+            source_layers: components["schemas"]["WeatherSourceLayerRead"][];
             /** Source Requests */
-            source_requests?: components["schemas"]["WeatherSourceRequestRead"][];
+            source_requests: components["schemas"]["WeatherSourceRequestRead"][];
             /** Status */
             status: string;
             /** Summary */
-            summary?: string | null;
+            summary: string | null;
             time_scope?: components["schemas"]["TimeScopeRead"] | null;
             /** Valid From */
-            valid_from?: string | null;
+            valid_from: string | null;
             /** Valid To */
-            valid_to?: string | null;
+            valid_to: string | null;
             /** Warnings */
-            warnings?: components["schemas"]["WeatherWarningRead"][];
+            warnings: components["schemas"]["WeatherWarningRead"][];
+            advisories?: components["schemas"]["WeatherAdvisoryRead"][];
         };
         /** WeatherHistorySnapshotRead */
         WeatherHistorySnapshotRead: {
@@ -2598,7 +2617,7 @@ export interface components {
             /** Label Key */
             label_key: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** Value */
             value: string;
         };
@@ -2615,9 +2634,9 @@ export interface components {
              */
             forecast_hours: number;
             /** Missing Fields */
-            missing_fields?: string[];
+            missing_fields: string[];
             /** Notes */
-            notes?: string[];
+            notes: string[];
             /**
              * Point Count
              * @default 0
@@ -2655,16 +2674,16 @@ export interface components {
             /** Status */
             status: string;
             /** Updated At */
-            updated_at?: string | null;
+            updated_at: string | null;
         };
         /** WeatherSourceRequestRead */
         WeatherSourceRequestRead: {
             /** Content Type */
-            content_type?: string | null;
+            content_type: string | null;
             /** Endpoint */
-            endpoint?: string | null;
+            endpoint: string | null;
             /** Fetched At */
-            fetched_at?: string | null;
+            fetched_at: string | null;
             /** Key */
             key: string;
             /** Label */
@@ -2675,15 +2694,16 @@ export interface components {
         /** WeatherWarningRead */
         WeatherWarningRead: {
             /** Description */
-            description?: string | null;
+            description: string | null;
             /** Link */
-            link?: string | null;
+            link: string | null;
             /** Published At */
-            published_at?: string | null;
+            published_at: string | null;
             /** Severity */
-            severity?: string | null;
+            severity: string | null;
             /** Title */
             title: string;
+            tone?: string;
         };
         BriefingTimelineItemRead: {
             id: string;
@@ -2764,6 +2784,96 @@ export interface components {
             payload: {
                 [key: string]: unknown;
             };
+        };
+        WeatherPointAssessmentRead: {
+            apparent_temperature_c: number | null;
+            condition: string;
+            gust_risk: boolean;
+            low_visibility: boolean;
+        };
+        WeatherAdvisoryRead: {
+            kind: string;
+            starts_at: string;
+            ends_at: string;
+            state: string;
+            value: number;
+            total: number;
+        };
+        AirPollutantSummaryRead: {
+            average: number | null;
+            peak: number | null;
+            reporting: number;
+            caution: number;
+            severe: number;
+            tone: string;
+            station_order: string[];
+        };
+        AirQualityDetailRead: {
+            tone: string;
+            station_order: string[];
+            score_counts: {
+                [key: string]: number;
+            };
+            coverage: {
+                [key: string]: number;
+            };
+            pollutants: {
+                [key: string]: components["schemas"]["AirPollutantSummaryRead"];
+            };
+        };
+        MobilityDetailRead: {
+            severity_counts: {
+                [key: string]: number;
+            };
+            highest_severity: string;
+            next_active_end: string | null;
+            active_count: number;
+            high_active: number;
+            high_upcoming: number;
+            weather_active: number;
+            tone: string;
+            risk: string;
+            scopes?: {
+                [key: string]: {
+                    count: number;
+                    alerts: number;
+                };
+            };
+        };
+        PlatformVisualizationPointRead: {
+            label: string;
+            tone?: string;
+            detail?: string;
+            timestamp?: string;
+            value: number;
+        };
+        PlatformVisualizationSeriesRead: {
+            key: string;
+            label: string;
+            unit: string | null;
+            tone?: string;
+            points: components["schemas"]["PlatformVisualizationPointRead"][];
+        };
+        PlatformVisualizationTimelineItemRead: {
+            id: string;
+            label: string;
+            detail: string;
+            severity: string;
+            tone?: string;
+            starts_at: string;
+            ends_at: string;
+        };
+        PlatformVisualizationDataRead: {
+            points?: components["schemas"]["PlatformVisualizationPointRead"][];
+            series?: components["schemas"]["PlatformVisualizationSeriesRead"][];
+            items?: components["schemas"]["PlatformVisualizationTimelineItemRead"][];
+            value?: number;
+            max?: number;
+            label?: string | null;
+            rain_windows?: {
+                [key: string]: unknown;
+            }[];
+            point_count?: number;
         };
     };
     responses: never;

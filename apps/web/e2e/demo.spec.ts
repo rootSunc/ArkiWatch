@@ -1,5 +1,5 @@
 import { AxeBuilder } from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const recentEventsButtonName = /^Open recent events(?: \(\d+\+?\))?$/;
 const todayNavigationButtonName = /^Today(?: \(\d+\+?\))?$/;
@@ -37,7 +37,7 @@ test.describe("deterministic demo", () => {
     await page.setViewportSize({ width, height: 740 });
 
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((value) => window.localStorage.setItem("arkiwatch-language", value), language);
+      await setPreference(page, "language", language);
       await page.goto("/?view=overview&city=tampere", { waitUntil: "networkidle" });
 
       const empty = page.locator(".dashboard-empty-state-rich");
@@ -60,7 +60,7 @@ test.describe("deterministic demo", () => {
       expect(layout.height).toBeGreaterThanOrEqual(126);
     }
 
-    await page.evaluate(() => window.localStorage.setItem("arkiwatch-language", "en"));
+    await setPreference(page, "language", "en");
     await page.goto("/?view=overview", { waitUntil: "networkidle" });
     await page.locator("#overview-signal-search").fill("does-not-match");
     await expect(page.locator(".dashboard-empty-state-rich")).toHaveCount(0);
@@ -304,7 +304,7 @@ test.describe("deterministic demo", () => {
   test("keeps filled-control labels readable in the dark theme", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only contrast audit");
 
-    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "dark"));
+    await setPreference(page, "theme", "dark");
     await page.reload({ waitUntil: "networkidle" });
 
     // The badge paints on --red, which is a light pink in the dark theme. A
@@ -331,7 +331,7 @@ test.describe("deterministic demo", () => {
   test("switches the desktop theme through the visible control", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only theme control audit");
 
-    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "light"));
+    await setPreference(page, "theme", "light");
     await page.reload({ waitUntil: "networkidle" });
     const themeButton = page.getByRole("button", { name: "Switch to night theme" });
     await expect(themeButton).toBeVisible();
@@ -349,7 +349,7 @@ test.describe("deterministic demo", () => {
   test("switches the mobile theme from navigation preferences", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile-chromium", "mobile-only theme control audit");
 
-    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "light"));
+    await setPreference(page, "theme", "light");
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: "Open navigation" }).click();
 
@@ -382,7 +382,7 @@ test.describe("deterministic demo", () => {
   test("keeps filter states theme-safe in the dark theme", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only theme contrast audit");
 
-    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "dark"));
+    await setPreference(page, "theme", "dark");
 
     for (const [route, selector] of [
       ["/?view=mobility&mobilityTab=transit", ".transit-filter-chip-active"],
@@ -424,7 +424,7 @@ test.describe("deterministic demo", () => {
     await page.goto("/?view=events", { waitUntil: "networkidle" });
 
     for (const theme of ["light", "dark"] as const) {
-      await page.evaluate((theme) => localStorage.setItem("arkiwatch-theme", theme), theme);
+      await setPreference(page, "theme", theme);
       await page.reload({ waitUntil: "networkidle" });
       await expect(filter).toHaveCount(1);
       await page.mouse.move(0, 0);
@@ -670,7 +670,7 @@ test.describe("deterministic demo", () => {
   });
 
   test("localizes transit alert enum details", async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem("arkiwatch-language", "zh"));
+    await setPreference(page, "language", "zh");
     await page.goto("/?view=mobility&mobilityTab=transit&event=demo-alert-4", {
       waitUntil: "networkidle",
     });
@@ -746,7 +746,7 @@ test.describe("deterministic demo", () => {
   });
 
   test("localizes demo road locations", async ({ page }) => {
-    await page.evaluate(() => localStorage.setItem("arkiwatch-language", "zh"));
+    await setPreference(page, "language", "zh");
     await page.goto("/?view=mobility&mobilityTab=traffic&event=demo-road-1", {
       waitUntil: "networkidle",
     });
@@ -941,7 +941,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 280, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
       await page.reload({ waitUntil: "networkidle" });
 
       const layout = await page.locator(".mobile-bottom-nav").evaluate((element) => {
@@ -1007,7 +1007,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 280, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
       await page.reload({ waitUntil: "networkidle" });
 
       await page
@@ -1047,7 +1047,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 280, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
       await page.reload({ waitUntil: "networkidle" });
 
       const layout = await page.locator(".mobile-context-row").evaluate((row) => {
@@ -1110,7 +1110,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 280, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
       await page.reload({ waitUntil: "networkidle" });
 
       const layout = await page.locator(".mobile-context-row .city-scope-control").evaluate((control) => {
@@ -1136,7 +1136,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 280, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
       await page.reload({ waitUntil: "networkidle" });
 
       const dateControl = page.locator(".mobile-context-row .date-scope-control");
@@ -1192,7 +1192,7 @@ test.describe("deterministic demo", () => {
     for (const width of [280, 390] as const) {
       await page.setViewportSize({ width, height: 360 });
       for (const language of ["en", "zh"] as const) {
-        await page.evaluate((value) => window.localStorage.setItem("arkiwatch-language", value), language);
+        await setPreference(page, "language", language);
         await page.goto("/?view=overview", { waitUntil: "networkidle" });
 
         await page.locator(".date-scope-trigger:visible").first().click();
@@ -1813,7 +1813,7 @@ test.describe("deterministic demo", () => {
 
     await page.setViewportSize({ width: 320, height: 740 });
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((value) => window.localStorage.setItem("arkiwatch-language", value), language);
+      await setPreference(page, "language", language);
       await page.goto("/?view=regional_profile", { waitUntil: "networkidle" });
 
       const tableWrapper = page.locator(".regional-table-wrapper");
@@ -2128,7 +2128,7 @@ test.describe("deterministic demo", () => {
     await page.setViewportSize({ width: 280, height: 740 });
 
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((value) => window.localStorage.setItem("arkiwatch-language", value), language);
+      await setPreference(page, "language", language);
       for (const view of ["overview", "weather", "mobility", "events"] as const) {
         await page.goto(`/?view=${view}`, { waitUntil: "networkidle" });
 
@@ -2174,7 +2174,7 @@ test.describe("deterministic demo", () => {
     test.skip(testInfo.project.name !== "chromium", "desktop-only theme audit");
 
     await page.goto("/about", { waitUntil: "networkidle" });
-    await page.evaluate(() => localStorage.setItem("arkiwatch-theme", "dark"));
+    await setPreference(page, "theme", "dark");
     await page.reload({ waitUntil: "networkidle" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
@@ -2262,7 +2262,7 @@ test.describe("deterministic demo", () => {
     test.skip(testInfo.project.name !== "mobile-chromium", "mobile-only translated narrow layout audit");
 
     await page.setViewportSize({ width: 280, height: 740 });
-    await page.evaluate(() => window.localStorage.setItem("arkiwatch-language", "zh"));
+    await setPreference(page, "language", "zh");
 
     for (const [route, selectors] of [
       ["/?view=air", [".air-detail-page", ".air-detail-header", ".air-main-grid", ".air-pipeline-panel > div"]],
@@ -2449,7 +2449,7 @@ test.describe("deterministic demo", () => {
     ];
 
     for (const language of ["en", "zh"] as const) {
-      await page.evaluate((language) => localStorage.setItem("arkiwatch-language", language), language);
+      await setPreference(page, "language", language);
 
       for (const route of routes) {
         await page.goto(route, { waitUntil: "networkidle" });
@@ -2643,3 +2643,7 @@ test("adopts a language held only in localStorage on the next load", async ({ pa
   await page.reload({ waitUntil: "networkidle" });
   await expect(page).toHaveTitle("管理员登录 | ArkiWatch");
 });
+
+async function setPreference(page: Page, preference: "language" | "theme", value: string) {
+  await page.evaluate(({ preference, value }) => localStorage.setItem(`arkiwatch-${preference}`, value), { preference, value });
+}

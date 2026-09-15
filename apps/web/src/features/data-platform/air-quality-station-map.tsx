@@ -21,7 +21,6 @@ type AirQualityStationMapProps = {
     tKey: (key: string) => string,
     dataLabel: (value: string | null | undefined) => string
   ) => string;
-  scoreTone: (score: number | null | undefined) => AirTone;
   stationDisplayName: (station: AirQualityStation) => string;
   formatNumber: (value: number | null | undefined, maximumFractionDigits?: number) => string;
 };
@@ -46,7 +45,6 @@ export function AirQualityStationMap({
   tKey,
   dataLabel,
   scoreLabel,
-  scoreTone,
   stationDisplayName,
   formatNumber
 }: AirQualityStationMapProps) {
@@ -63,10 +61,10 @@ export function AirQualityStationMap({
           title,
           popupDetail: scoreLabel(station.score, station.label, language, tKey, dataLabel),
           popupId: station.station !== title ? station.station : undefined,
-          tone: scoreTone(station.score)
+          tone: (station.tone ?? "neutral") as AirTone
         };
       }),
-    [dataLabel, language, scoreLabel, scoreTone, stationDisplayName, stations, tKey]
+    [dataLabel, language, scoreLabel, stationDisplayName, stations, tKey]
   );
 
   return (

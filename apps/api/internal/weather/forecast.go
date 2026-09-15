@@ -13,19 +13,20 @@ import (
 )
 
 type ForecastPoint struct {
-	Timestamp        string   `json:"timestamp"`
-	TemperatureC     *float64 `json:"temperature_c"`
-	PrecipitationMM  *float64 `json:"precipitation_mm"`
-	WindSpeedMS      *float64 `json:"wind_speed_ms"`
-	WindGustMS       *float64 `json:"wind_gust_ms"`
-	WindDirectionDeg *float64 `json:"wind_direction_deg"`
-	CloudCoverPct    *float64 `json:"cloud_cover_pct"`
-	HumidityPct      *float64 `json:"humidity_pct"`
-	DewPointC        *float64 `json:"dew_point_c"`
-	PressureHPA      *float64 `json:"pressure_hpa"`
-	VisibilityM      *float64 `json:"visibility_m"`
-	WeatherSymbol    *int     `json:"weather_symbol"`
-	SmartSymbol      *int     `json:"smart_symbol"`
+	Assessment       PointAssessment `json:"assessment"`
+	Timestamp        string          `json:"timestamp"`
+	TemperatureC     *float64        `json:"temperature_c"`
+	PrecipitationMM  *float64        `json:"precipitation_mm"`
+	WindSpeedMS      *float64        `json:"wind_speed_ms"`
+	WindGustMS       *float64        `json:"wind_gust_ms"`
+	WindDirectionDeg *float64        `json:"wind_direction_deg"`
+	CloudCoverPct    *float64        `json:"cloud_cover_pct"`
+	HumidityPct      *float64        `json:"humidity_pct"`
+	DewPointC        *float64        `json:"dew_point_c"`
+	PressureHPA      *float64        `json:"pressure_hpa"`
+	VisibilityM      *float64        `json:"visibility_m"`
+	WeatherSymbol    *int            `json:"weather_symbol"`
+	SmartSymbol      *int            `json:"smart_symbol"`
 }
 
 type RainWindow struct {
@@ -81,6 +82,7 @@ type Quality struct {
 }
 
 type Warning struct {
+	Tone        string  `json:"tone"`
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	Link        *string `json:"link"`
@@ -89,6 +91,7 @@ type Warning struct {
 }
 
 type Forecast struct {
+	Advisories     []Advisory      `json:"advisories"`
 	CheckedAt      string          `json:"checked_at"`
 	TimeScope      map[string]any  `json:"time_scope"`
 	Status         string          `json:"status"`
@@ -108,7 +111,8 @@ type Forecast struct {
 	Warnings       []Warning       `json:"warnings"`
 }
 
-func Build(data observations.WeatherData, scope timescope.Scope, now time.Time) Forecast {
+func Build(data observations.WeatherData, scope timescope.Scope, now time.Time) (result Forecast) {
+	defer func() { EnrichDetail(&result) }()
 	now = now.UTC()
 	location := dataLocation(data.Outlook, scope)
 	warnings := parseWarnings(data.Raw["weather_warnings_cap"])
@@ -209,7 +213,8 @@ func Build(data observations.WeatherData, scope timescope.Scope, now time.Time) 
 	}
 }
 
-func Unavailable(scope timescope.Scope, now time.Time) Forecast {
+func Unavailable(scope timescope.Scope, now time.Time) (result Forecast) {
+	defer func() { EnrichDetail(&result) }()
 	return Forecast{
 		CheckedAt:  timescope.Format(now.UTC()),
 		TimeScope:  scope.Payload(),

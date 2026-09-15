@@ -22,9 +22,10 @@ import { formatHistoryDate } from "./workspace-datetime";
 describe("conditionForPoint", () => {
   const tKey = (key: string) => key;
 
-  it("does not infer snow from a missing temperature", () => {
+  it("renders the server rain condition", () => {
     const point = {
       timestamp: "2099-08-08T08:00:00Z",
+      assessment: { condition: "rain", apparent_temperature_c: null, gust_risk: false, low_visibility: false },
       precipitation_mm: 0.5,
       temperature_c: null,
       cloud_cover_pct: null,
@@ -139,6 +140,7 @@ describe("buildTimelineItems", () => {
         events: [
           {
             id: "snapshot-rain",
+            state: "active",
             category_key: "weather",
             event_type: "rain_risk",
             title: "Morning rain",
@@ -155,7 +157,6 @@ describe("buildTimelineItems", () => {
       (key) => key,
       null,
       "Europe/Helsinki",
-      "2099-08-08T08:30:00Z",
     );
 
     expect(items[0]).toMatchObject({

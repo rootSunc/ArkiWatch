@@ -2,257 +2,56 @@ import type { components } from "@/lib/api-contract";
 
 export type BriefingDecision = components["schemas"]["BriefingDecisionRead"];
 
-export type PlatformKeyDataItem = {
-  key: string;
-  label_key: string;
-};
+export type PlatformKeyDataItem = components["schemas"]["PlatformKeyDataItemRead"];
 
 export type PlatformTone = "good" | "warn" | "bad" | "neutral";
 
-export type SourceDataField = {
-  key: string;
-  label: string;
-  value_type: string;
-  description: string;
-  required: boolean;
-  unit: string | null;
-};
+export type SourceDataField = components["schemas"]["DataFieldRead"];
 
-export type SourceDatasetStructure = {
-  dataset: string;
-  label: string;
-  shape: string;
-  cadence: string;
-  spatial_grain: string;
-  temporal_field: string | null;
-  primary_keys: string[];
-  fields: SourceDataField[];
-};
+export type SourceDatasetStructure = components["schemas"]["SourceDatasetStructureRead"];
 
-export type SourceNormalizedEventStructure = {
-  event_type: string;
-  description: string;
-  location_type: string;
-  validity_window: string;
-  attributes: SourceDataField[];
-};
+export type SourceNormalizedEventStructure = components["schemas"]["SourceNormalizedEventStructureRead"];
 
-export type DashboardSource = {
-  id: string;
-  source_code: string;
-  source_name: string;
-  auth_type: string;
-  poll_interval_seconds: number;
-  operational_status: string;
-  stage: string;
-  categories?: string[];
-  datasets?: string[];
-  key_data_items?: string[];
-  data_structures?: SourceDatasetStructure[];
-  normalized_event_structures?: SourceNormalizedEventStructure[];
-  license_label?: string | null;
-  documentation_url?: string | null;
-  last_run_status: string | null;
-  last_run_started_at: string | null;
-  last_run_finished_at: string | null;
-  records_ingested: number | null;
-  error_message: string | null;
-};
+export type DashboardSource = components["schemas"]["DashboardSourceRead"];
 
-export type PlatformTimeScope = {
-  mode: "live" | "historical" | string;
-  /** Client-side fixture marker; live API responses omit this field. */
-  is_demo?: boolean;
-  date: string | null;
-  timezone: string;
-  /** Exact instant used by the API when evaluating this scope. */
-  reference_time: string;
-  window_start: string | null;
-  window_end: string | null;
-};
+export type PlatformTimeScope = components["schemas"]["TimeScopeRead"] & { is_demo?: boolean };
 
-export type PlatformMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  tone: PlatformTone | string;
-  unit: string | null;
-  detail: string | null;
-  updated_at: string | null;
-  source_codes: string[];
-};
+export type PlatformMetric = components["schemas"]["PlatformMetricRead"];
 
-export type PlatformEvent = {
-  notification?: boolean;
-  notification_priority?: number;
-  id: string;
-  category_key: string;
-  event_type: string;
-  title: string;
-  title_zh?: string | null;
-  body: string;
-  body_zh?: string | null;
-  severity: string;
-  starts_at: string;
-  ends_at: string;
-  source_codes: string[];
-  evidence: string[];
-  attributes?: Record<string, unknown>;
-};
+export type PlatformEvent = components["schemas"]["PlatformEventRead"];
 
-export type PlatformVisualizationPoint = {
-  label: string;
-  value: number;
-  tone?: PlatformTone | string;
-  detail?: string;
-  timestamp?: string;
-};
+export type PlatformVisualizationPoint = components["schemas"]["PlatformVisualizationPointRead"];
 
-export type PlatformVisualizationSeries = {
-  key: string;
-  label: string;
-  unit: string | null;
-  tone?: PlatformTone | string;
-  points: PlatformVisualizationPoint[];
-};
+export type PlatformVisualizationSeries = components["schemas"]["PlatformVisualizationSeriesRead"];
 
-export type PlatformVisualizationTimelineItem = {
-  id: string;
-  label: string;
-  detail: string;
-  severity: string;
-  tone?: PlatformTone | string;
-  starts_at: string;
-  ends_at: string;
-};
+export type PlatformVisualizationTimelineItem = components["schemas"]["PlatformVisualizationTimelineItemRead"];
 
-export type PlatformVisualizationData = {
-  points?: PlatformVisualizationPoint[];
-  series?: PlatformVisualizationSeries[];
-  items?: PlatformVisualizationTimelineItem[];
-  value?: number;
-  max?: number;
-  label?: string | null;
-  rain_windows?: Array<Record<string, unknown>>;
-  point_count?: number;
-};
+export type PlatformVisualizationData = components["schemas"]["PlatformVisualizationDataRead"];
 
-export type PlatformVisualization = {
-  id: string;
-  title: string;
-  type: "line" | "area" | "bar" | "heatmap" | "timeline" | "map" | "table" | "gauge" | string;
-  description: string;
-  status: string;
-  unit: string | null;
-  source_codes: string[];
-  updated_at: string | null;
-  data: PlatformVisualizationData;
-};
+export type PlatformVisualization = components["schemas"]["PlatformVisualizationRead"];
 
-export type PlatformCategory = {
-  key: string;
-  title: string;
-  description: string;
-  status: string;
-  stage: string;
-  priority: string;
-  source_codes: string[];
-  key_data_items?: PlatformKeyDataItem[];
-  summary_metrics: PlatformMetric[];
-  visualizations: PlatformVisualization[];
-  events: PlatformEvent[];
-  sources: DashboardSource[];
-};
+export type PlatformCategory = components["schemas"]["PlatformCategoryRead"];
 
-export type PlatformOverviewResponse = {
-  source_health?: BriefingDecision["source_health"];
-  checked_at: string;
+export type PlatformOverviewResponse = Omit<components["schemas"]["PlatformOverviewRead"], "time_scope"> & {
   time_scope?: PlatformTimeScope | null;
-  app_name: string;
-  timezone: string;
-  coverage_area: string;
-  health_status: string;
-  categories: PlatformCategory[];
-  recent_events: PlatformEvent[];
-  sources: DashboardSource[];
+  source_health?: BriefingDecision["source_health"];
 };
 
-export type WeatherForecastPoint = {
-  timestamp: string;
-  temperature_c: number | null;
-  precipitation_mm: number | null;
-  wind_speed_ms: number | null;
-  wind_gust_ms: number | null;
-  wind_direction_deg: number | null;
-  cloud_cover_pct: number | null;
-  humidity_pct: number | null;
-  dew_point_c: number | null;
-  pressure_hpa: number | null;
-  visibility_m: number | null;
-  weather_symbol: number | null;
-  smart_symbol: number | null;
-};
+export type WeatherForecastPoint = components["schemas"]["WeatherForecastPointRead"];
 
-export type WeatherRainWindow = {
-  starts_at: string;
-  ends_at: string;
-  peak_precip_mm: number;
-  peak_precip_at: string;
-  total_precip_mm: number;
-  hours: number;
-};
+export type WeatherRainWindow = components["schemas"]["WeatherRainWindowRead"];
 
-export type WeatherMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  unit: string | null;
-};
+export type WeatherMetric = components["schemas"]["WeatherMetricRead"];
 
-export type WeatherSourceLayer = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  updated_at: string | null;
-};
+export type WeatherSourceLayer = components["schemas"]["WeatherSourceLayerRead"];
 
-export type WeatherSourceRequest = {
-  key: string;
-  label: string;
-  status: string;
-  endpoint: string | null;
-  content_type: string | null;
-  fetched_at: string | null;
-};
+export type WeatherSourceRequest = components["schemas"]["WeatherSourceRequestRead"];
 
-export type WeatherDataStage = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  record_count: number | null;
-  updated_at: string | null;
-};
+export type WeatherDataStage = components["schemas"]["WeatherDataStageRead"];
 
-export type WeatherQuality = {
-  point_count: number;
-  forecast_hours: number;
-  field_coverage_pct: number;
-  rain_window_count: number;
-  missing_fields: string[];
-  notes: string[];
-};
+export type WeatherQuality = components["schemas"]["WeatherQualityRead"];
 
-export type WeatherWarning = {
-  title: string;
-  description: string | null;
-  link: string | null;
-  published_at: string | null;
-  severity: string | null;
-};
+export type WeatherWarning = components["schemas"]["WeatherWarningRead"];
 
 export type WeatherTimePreset = "day" | "next24h" | "next7d" | "custom";
 
@@ -266,329 +65,59 @@ export type WeatherTimeWindow = {
   isValid: boolean;
 };
 
-export type WeatherForecastResponse = {
-  checked_at: string;
-  time_scope?: PlatformTimeScope | null;
-  status: string;
-  location: string | null;
-  source_code: string;
-  generated_at: string | null;
-  valid_from: string | null;
-  valid_to: string | null;
-  summary: string | null;
-  metrics: WeatherMetric[];
-  points: WeatherForecastPoint[];
-  rain_windows: WeatherRainWindow[];
-  source_layers: WeatherSourceLayer[];
-  source_requests: WeatherSourceRequest[];
-  data_pipeline: WeatherDataStage[];
-  quality: WeatherQuality;
-  warnings: WeatherWarning[];
-};
+export type WeatherForecastResponse = components["schemas"]["WeatherForecastRead"];
 
-export type AirQualityStation = {
-  station: string;
-  label: string;
-  score: number | null;
-  european_aqi: number | null;
-  pm2_5: number | null;
-  pm10: number | null;
-  no2: number | null;
-  lat: number | null;
-  lon: number | null;
-};
+export type AirQualityStation = components["schemas"]["AirQualityStationRead"];
 
-export type AirQualityMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  unit: string | null;
-};
+export type AirQualityMetric = components["schemas"]["AirQualityMetricRead"];
 
-export type AirQualitySourceRequest = {
-  key: string;
-  label: string;
-  status: string;
-  endpoint: string | null;
-  content_type: string | null;
-  fetched_at: string | null;
-};
+export type AirQualitySourceRequest = components["schemas"]["AirQualitySourceRequestRead"];
 
-export type AirQualityDataStage = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  record_count: number | null;
-  updated_at: string | null;
-};
+export type AirQualityDataStage = components["schemas"]["AirQualityDataStageRead"];
 
-export type AirQualityQuality = {
-  station_count: number;
-  reporting_station_count: number;
-  field_coverage_pct: number;
-  missing_fields: string[];
-  notes: string[];
-};
+export type AirQualityQuality = components["schemas"]["AirQualityQualityRead"];
 
-export type AirQualityCurrentResponse = {
-  checked_at: string;
-  time_scope?: PlatformTimeScope | null;
-  status: string;
-  location: string | null;
-  source_code: string;
-  observed_at: string | null;
-  valid_to: string | null;
-  summary: string | null;
-  worst_station: string | null;
-  worst_label: string | null;
-  worst_score: number | null;
-  metrics: AirQualityMetric[];
-  stations: AirQualityStation[];
-  source_requests: AirQualitySourceRequest[];
-  data_pipeline: AirQualityDataStage[];
-  quality: AirQualityQuality;
-};
+export type AirQualityCurrentResponse = components["schemas"]["AirQualityCurrentRead"];
 
-export type TransitAlert = {
-  id: string;
-  title: string;
-  description: string;
-  severity: string;
-  event_type: string;
-  starts_at: string;
-  ends_at: string;
-  active: boolean;
-  cause: string | null;
-  effect: string | null;
-  route_ids: string[];
-  stop_ids: string[];
-  trip_ids: string[];
-};
+export type TransitAlert = components["schemas"]["TransitAlertRead"];
 
-export type TransitMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  unit: string | null;
-};
+export type TransitMetric = components["schemas"]["TransitMetricRead"];
 
-export type TransitSourceRequest = {
-  key: string;
-  label: string;
-  status: string;
-  endpoint: string | null;
-  content_type: string | null;
-  fetched_at: string | null;
-};
+export type TransitSourceRequest = components["schemas"]["TransitSourceRequestRead"];
 
-export type TransitDataStage = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  record_count: number | null;
-  updated_at: string | null;
-};
+export type TransitDataStage = components["schemas"]["TransitDataStageRead"];
 
-export type TransitQuality = {
-  raw_alert_count: number;
-  normalized_event_count: number;
-  active_alert_count: number;
-  route_alert_count: number;
-  stop_alert_count: number;
-  field_coverage_pct: number;
-  missing_fields: string[];
-  notes: string[];
-};
+export type TransitQuality = components["schemas"]["TransitQualityRead"];
 
-export type TransitCurrentResponse = {
-  checked_at: string;
-  time_scope?: PlatformTimeScope | null;
-  status: string;
-  location: string | null;
-  source_code: string;
-  observed_at: string | null;
-  summary: string | null;
-  metrics: TransitMetric[];
-  alerts: TransitAlert[];
-  source_requests: TransitSourceRequest[];
-  data_pipeline: TransitDataStage[];
-  quality: TransitQuality;
-};
+export type TransitCurrentResponse = components["schemas"]["TransitCurrentRead"];
 
-export type RoadRailIncident = {
-  id: string;
-  title: string;
-  description: string;
-  severity: string;
-  event_type: string;
-  starts_at: string;
-  ends_at: string;
-  active: boolean;
-  location_ref: string;
-  message_type: string | null;
-  situation_type: string | null;
-  location_description: string | null;
-  feature_names: string[];
-  geometry_bbox: number[] | null;
-};
+export type RoadRailIncident = components["schemas"]["RoadRailIncidentRead"];
 
-export type RoadRailCorridor = {
-  key: string;
-  label: string;
-  event_count: number;
-  active_event_count: number;
-  weather_risk_count: number;
-  severity: string;
-  latest_title: string;
-  latest_valid_to: string;
-  geometry_bbox: number[] | null;
-};
+export type RoadRailCorridor = components["schemas"]["RoadRailCorridorRead"];
 
-export type RoadRailMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  unit: string | null;
-};
+export type RoadRailMetric = components["schemas"]["RoadRailMetricRead"];
 
-export type RoadRailSourceRequest = {
-  key: string;
-  label: string;
-  status: string;
-  endpoint: string | null;
-  content_type: string | null;
-  fetched_at: string | null;
-  message_count: number;
-};
+export type RoadRailSourceRequest = components["schemas"]["RoadRailSourceRequestRead"];
 
-export type RoadRailDataStage = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  record_count: number | null;
-  updated_at: string | null;
-};
+export type RoadRailDataStage = components["schemas"]["RoadRailDataStageRead"];
 
-export type RoadRailQuality = {
-  raw_message_count: number;
-  normalized_event_count: number;
-  active_event_count: number;
-  road_event_count: number;
-  rail_event_count: number;
-  weather_risk_count: number;
-  corridor_count: number;
-  field_coverage_pct: number;
-  missing_fields: string[];
-  notes: string[];
-};
+export type RoadRailQuality = components["schemas"]["RoadRailQualityRead"];
 
-export type RoadRailCurrentResponse = {
-  checked_at: string;
-  time_scope?: PlatformTimeScope | null;
-  status: string;
-  location: string | null;
-  source_code: string;
-  observed_at: string | null;
-  summary: string | null;
-  metrics: RoadRailMetric[];
-  incidents: RoadRailIncident[];
-  corridors: RoadRailCorridor[];
-  source_requests: RoadRailSourceRequest[];
-  data_pipeline: RoadRailDataStage[];
-  quality: RoadRailQuality;
-};
+export type RoadRailCurrentResponse = components["schemas"]["RoadRailCurrentRead"];
 
-export type EnergyPoint = {
-  starts_at: string;
-  ends_at: string;
-  value: number;
-  unit: string | null;
-  estimated_cost_eur: number | null;
-};
+export type EnergyPoint = components["schemas"]["EnergyPointRead"];
 
-export type EnergyWindow = {
-  starts_at: string;
-  ends_at: string;
-  average_value: number;
-  minimum_value: number;
-  maximum_value: number;
-  unit: string | null;
-  point_count: number;
-  severity: string;
-  source: string;
-  estimated_cost_eur: number | null;
-  usage_kwh: number | null;
-  threshold_value: number | null;
-  horizon_average_value: number | null;
-  savings_vs_average_pct: number | null;
-  selection_strategy: string | null;
-};
+export type EnergyWindow = components["schemas"]["EnergyWindowRead"];
 
-export type EnergyMetric = {
-  key: string;
-  label: string;
-  label_key: string;
-  value: string;
-  unit: string | null;
-};
+export type EnergyMetric = components["schemas"]["EnergyMetricRead"];
 
-export type EnergySourceRequest = {
-  key: string;
-  label: string;
-  status: string;
-  endpoint: string | null;
-  content_type: string | null;
-  fetched_at: string | null;
-};
+export type EnergySourceRequest = components["schemas"]["EnergySourceRequestRead"];
 
-export type EnergyDataStage = {
-  key: string;
-  label: string;
-  status: string;
-  detail: string;
-  record_count: number | null;
-  updated_at: string | null;
-};
+export type EnergyDataStage = components["schemas"]["EnergyDataStageRead"];
 
-export type EnergyQuality = {
-  minimum_cost_eur?: number | null;
-  maximum_cost_eur?: number | null;
-  average_cost_eur?: number | null;
-  point_count: number;
-  window_point_count: number;
-  field_coverage_pct: number;
-  minimum_value: number | null;
-  maximum_value: number | null;
-  average_value: number | null;
-  missing_fields: string[];
-  notes: string[];
-};
+export type EnergyQuality = components["schemas"]["EnergyQualityRead"];
 
-export type EnergyCurrentResponse = {
-  checked_at: string;
-  time_scope?: PlatformTimeScope | null;
-  status: string;
-  location: string | null;
-  source_code: string;
-  provider_name: string | null;
-  observed_at: string | null;
-  valid_from: string | null;
-  valid_to: string | null;
-  summary: string | null;
-  unit: string | null;
-  current_window: EnergyWindow | null;
-  metrics: EnergyMetric[];
-  points: EnergyPoint[];
-  source_requests: EnergySourceRequest[];
-  data_pipeline: EnergyDataStage[];
-  quality: EnergyQuality;
-};
+export type EnergyCurrentResponse = components["schemas"]["EnergyCurrentRead"];
 
 export type PlatformHistoricalSnapshot<T> = {
   date: string;
@@ -614,84 +143,22 @@ export type PlatformHistoryApiResponse = {
   transit: PlatformHistoricalSnapshot<TransitCurrentResponse>[];
 };
 
-export type PlatformHistoryAvailabilityDay = {
-  date: string;
-  has_data: boolean;
-  record_count: number;
-  source_codes: string[];
-  categories: string[];
-  datasets: string[];
-};
+export type PlatformHistoryAvailabilityDay = components["schemas"]["PlatformHistoryAvailabilityDayRead"];
 
-export type PlatformHistoryAvailabilityResponse = {
-  checked_at: string;
-  city: string;
-  days: PlatformHistoryAvailabilityDay[];
-};
+export type PlatformHistoryAvailabilityResponse = components["schemas"]["PlatformHistoryAvailabilityRead"];
 
-export type PublicActionRead = {
-  eligible?: boolean;
-  id: string;
-  scenario_key: string;
-  title: string;
-  title_zh?: string | null;
-  body: string;
-  body_zh?: string | null;
-  severity: string;
-  area_scope: string;
-  freshness_state: string;
-  valid_from: string;
-  valid_to: string;
-  evidence: string[];
-};
+export type PublicActionRead = components["schemas"]["PublicActionRead"] & { eligible?: boolean };
 
-export type PublicScenarioSectionRead = {
-  key: string;
-  title: string;
-  title_zh?: string | null;
-  description: string;
-  description_zh?: string | null;
-  status_label: string;
-  status_label_zh?: string | null;
-  area_scope: string;
-  freshness_state: string;
-  valid_from: string;
-  valid_to: string;
-  evidence: string[];
-  source_codes: string[];
-  recommendation: PublicActionRead;
-};
+export type PublicScenarioSectionRead = Omit<components["schemas"]["PublicScenarioSectionRead"], "recommendation"> & { recommendation: PublicActionRead };
 
-export type PublicTimelineItemRead = {
-  scenario_key: string;
-  label: string;
-  label_zh?: string | null;
-  severity: string;
-  starts_at: string;
-  ends_at: string;
-};
+export type PublicTimelineItemRead = components["schemas"]["PublicTimelineItemRead"];
 
-export type ScenarioChannelRead = {
-  scenario_key: string;
-  title: string;
-  title_zh?: string | null;
-  description: string;
-  description_zh?: string | null;
-};
+export type ScenarioChannelRead = components["schemas"]["ScenarioChannelRead"];
 
-export type PublicDashboardRead = {
-  signals?: {weather: WeatherForecastResponse; airQuality: AirQualityCurrentResponse; transit: TransitCurrentResponse; roadRail: RoadRailCurrentResponse; energy: EnergyCurrentResponse; householdEnergy: EnergyCurrentResponse};
+export type PublicDashboardRead = Omit<components["schemas"]["PublicDashboardRead"], "top_actions" | "scenario_sections" | "broadcasts"> & {
+  signals?: components["schemas"]["PublicBriefingRead"]["signals"];
   decision?: BriefingDecision;
-  checked_at: string;
-  snapshot_date?: string | null;
-  snapshot_available?: boolean | null;
-  app_name: string;
-  timezone: string;
-  coverage_area: string;
   top_actions: PublicActionRead[];
-  scenario_channels: ScenarioChannelRead[];
   scenario_sections: PublicScenarioSectionRead[];
-  timeline: PublicTimelineItemRead[];
   broadcasts: PublicActionRead[];
-  sources: DashboardSource[];
 };

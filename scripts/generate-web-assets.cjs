@@ -34,6 +34,7 @@ try {
  for(const city of coverage.cities) for(const [kind,date] of [["live",null],["historical",DEMO_SNAPSHOT_DATE],["missing","2026-08-07"]]) {
   inputs[`${city.city_ref}:${kind}`] = { ...rawDemoFixtureForScope({city:city.city_ref,date}), city:city.city_ref,region:city.region };
  }
+ save("details.json",execFileSync(binary,["-details"],{input:JSON.stringify(inputs),encoding:"utf8",maxBuffer:32*1024*1024}));
  const rawEnergy={energy:inputs["helsinki:live"].energy, householdEnergy:inputs["helsinki:live"].householdEnergy};
  save("energy-costs.json",execFileSync(binary,["-energy-costs"],{input:JSON.stringify(rawEnergy),encoding:"utf8"}));
  const decisions=execFileSync(binary,["-briefings"],{input:JSON.stringify(inputs),encoding:"utf8",maxBuffer:16*1024*1024});

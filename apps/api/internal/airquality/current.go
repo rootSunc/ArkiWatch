@@ -13,15 +13,18 @@ import (
 )
 
 type Station struct {
-	Station     string   `json:"station"`
-	Label       string   `json:"label"`
-	Score       *int     `json:"score"`
-	EuropeanAQI *float64 `json:"european_aqi"`
-	PM25        *float64 `json:"pm2_5"`
-	PM10        *float64 `json:"pm10"`
-	NO2         *float64 `json:"no2"`
-	Lat         *float64 `json:"lat"`
-	Lon         *float64 `json:"lon"`
+	Index          *float64          `json:"index"`
+	Tone           string            `json:"tone"`
+	PollutantTones map[string]string `json:"pollutant_tones"`
+	Station        string            `json:"station"`
+	Label          string            `json:"label"`
+	Score          *int              `json:"score"`
+	EuropeanAQI    *float64          `json:"european_aqi"`
+	PM25           *float64          `json:"pm2_5"`
+	PM10           *float64          `json:"pm10"`
+	NO2            *float64          `json:"no2"`
+	Lat            *float64          `json:"lat"`
+	Lon            *float64          `json:"lon"`
 }
 
 type Metric struct {
@@ -59,6 +62,7 @@ type Quality struct {
 }
 
 type Current struct {
+	Detail         Detail          `json:"detail"`
 	CheckedAt      string          `json:"checked_at"`
 	TimeScope      map[string]any  `json:"time_scope"`
 	Status         string          `json:"status"`
@@ -100,7 +104,8 @@ var qualityWords = []struct {
 	{word: "poor", score: 4}, {word: "huono", score: 4}, {word: "very poor", score: 5}, {word: "erittain huono", score: 5}, {word: "erittäin huono", score: 5},
 }
 
-func Build(data Data, scope timescope.Scope, now time.Time, locationRef string) Current {
+func Build(data Data, scope timescope.Scope, now time.Time, locationRef string) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	now = now.UTC()
 	stations := stationsFromRaw(data.HSYRaw)
 	if station := openMeteoStation(data.OpenMeteoRaw); station != nil {
@@ -187,7 +192,8 @@ func Build(data Data, scope timescope.Scope, now time.Time, locationRef string) 
 	}
 }
 
-func Unavailable(scope timescope.Scope, now time.Time) Current {
+func Unavailable(scope timescope.Scope, now time.Time) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	return Current{
 		CheckedAt: timescope.Format(now.UTC()), TimeScope: scope.Payload(), Status: "unavailable", SourceCode: "hsy",
 		Summary: stringPointer("Air-quality data is temporarily unavailable."), Metrics: []Metric{}, Stations: []Station{}, SourceRequests: []SourceRequest{}, DataPipeline: []DataStage{},

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/detailstate"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
 )
 
@@ -188,6 +189,8 @@ func Curate(events []platform.Event, limit int, city string, now time.Time) []pl
 		if !active(e, now) && (start.Before(now.Add(-6*time.Hour)) || start.After(now.Add(48*time.Hour))) {
 			continue
 		}
+		e.State = detailstate.State(e.StartsAt, e.EndsAt, now)
+		e.DetailVisible = true
 		e.EventType = EventType(e)
 		e.Notification = notification(e)
 		e.NotificationPriority = int64(SeverityRank(e.Severity))*1000000000000 + start.Unix()

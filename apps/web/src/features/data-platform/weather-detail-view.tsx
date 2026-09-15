@@ -99,7 +99,6 @@ export function WeatherDetailView({
     tKey,
     highlightedEventId,
     dataTimezone,
-    referenceAt,
   );
   const activeChartConfig = chartConfig(chartMode);
   const chartData = chartPoints(points, chartMode, language, dataTimezone);

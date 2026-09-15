@@ -110,3 +110,46 @@ state. Moving those to Go would couple backend decisions to a particular UI.
   checks run unchanged through their root package scripts.
 - The live contract checker understands composed `allOf` response schemas.
 - Browser regressions cover both desktop and mobile Demo flows.
+
+## Detail read models and frontend consolidation
+
+Weather forecasts now include point `assessment` (apparent temperature, condition,
+wind and visibility risk) and `advisories`. Public briefing signals use the same
+Go advisory selection as the weather detail page. Provider warning tones are
+also evaluated in Go. Numeric formatting, chart sampling and coordinates remain
+in the browser.
+
+Air-quality responses include `detail`: pollutant averages, peaks, reporting
+counts, thresholds, field coverage, score distribution and ordered station IDs.
+Stations carry their individual risk tones. Missing values are excluded from
+averages; an authoritative worst score remains authoritative, with a station
+fallback only when it is absent. Thresholds retain the previous application
+policy; this migration does not introduce a new air-quality standard.
+
+Transit and road/rail responses include server-evaluated `state`, `filters` and
+`detail` summaries. Go owns priority, severity, weather/roadwork classification,
+active/upcoming risk, the next active interval end and transit scope counts.
+Intervals are evaluated against the response reference time, including historical
+snapshots. Critical events participate in high-severity counts; malformed or
+reversed intervals cannot become active or upcoming. A recorded boolean does not
+override a contradictory recorded interval. The frontend applies the selected
+filter and renders the server's result.
+
+`internal/readmodel` enriches legacy detail snapshots on read using their recorded
+time scope. It preserves top-level unknown fields and does not write snapshots.
+Database integration tests check both the derived historical state and the
+absence of database rewrites. An invalid detail snapshot becomes an explicit
+per-snapshot error without hiding unrelated history.
+
+The frontend imports API structures from the generated OpenAPI contract; only
+UI-specific shapes and extensions stay in `types.ts`. The contract now describes
+visualization payloads and the required fields already emitted by the Go builders.
+Traffic pages share event status/live-layer components and presentation utilities.
+The removed browser time classifier is covered by Go interval-boundary tests;
+browser tests continue to cover interaction, accessibility and localized copy.
+
+Demo source data is maintained in `demo/raw-fixture.json`. Its scope/date adapter
+is TypeScript; `generated/details.json`, `briefings.json` and `energy-costs.json`
+are produced by the production Go rules. The generation check catches stale
+assets. `.gitattributes` marks only generated bindings and generated assets as
+such; handwritten frontend and tests remain ordinary source files.

@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/readmodel"
 )
 
 type PlatformHistoryReader interface {
@@ -48,6 +49,12 @@ func (store *Store) LoadPlatformHistory(ctx context.Context, city string, target
 		var payload map[string]any
 		if err := json.Unmarshal(payloadBytes, &payload); err != nil {
 			continue
+		}
+		if data, ok := payload["data"].(map[string]any); ok {
+			if err := readmodel.Detail(category, data); err != nil {
+				payload["data"] = nil
+				payload["error"] = category + " history snapshot has invalid detail data."
+			}
 		}
 		if category == "energy" || category == "household_energy" {
 			energy.EnrichHistoricalCosts(payload)

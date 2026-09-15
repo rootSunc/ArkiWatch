@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "./workspace-format";
 import dynamic from "next/dynamic";
 import { formatHistoryDate } from "./workspace-datetime";
 import type { CSSProperties } from "react";
@@ -58,51 +59,25 @@ type PollutantProfile = {
   key: PollutantKey;
   labelKey: string;
   unit: string;
-  cautionValue: number;
-  severeValue: number;
 };
 
 const SCORE_LABEL_KEYS = ["na", "good", "fair", "moderate", "poor", "veryPoor"] as const;
 const SCORE_BUCKETS = [1, 2, 3, 4, 5];
 const POLLUTANT_PROFILES: PollutantProfile[] = [
-  { key: "european_aqi", labelKey: "europeanAqi", unit: "", cautionValue: 50, severeValue: 75 },
-  { key: "pm2_5", labelKey: "pm25", unit: "ug/m3", cautionValue: 10, severeValue: 25 },
-  { key: "pm10", labelKey: "pm10", unit: "ug/m3", cautionValue: 20, severeValue: 50 },
-  { key: "no2", labelKey: "no2", unit: "ug/m3", cautionValue: 40, severeValue: 100 }
+  { key: "european_aqi", labelKey: "europeanAqi", unit: "" },
+  { key: "pm2_5", labelKey: "pm25", unit: "ug/m3" },
+  { key: "pm10", labelKey: "pm10", unit: "ug/m3" },
+  { key: "no2", labelKey: "no2", unit: "ug/m3" }
 ];
-
-function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return UNAVAILABLE_DATA_VALUE;
-  }
-
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
-}
 
 function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
   const formatted = formatNumber(value);
   return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
 }
 
-function averageStationField(stations: AirQualityStation[], key: PollutantKey): number | null {
-  const values = stations.map((station) => station[key]).filter(hasNumber);
-  if (values.length === 0) {
-    return null;
-  }
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function cautionDetail(
-  value: number | null,
-  cautionValue: number,
-  tKey: (key: string) => string,
-): string {
-  if (!hasNumber(value)) {
-    return tKey("airQuality.noValue");
-  }
-  return value < cautionValue
-    ? `${tKey("airQuality.belowCaution")} (${cautionValue})`
-    : `${tKey("airQuality.aboveCaution")} (${cautionValue})`;
+function cautionDetail(summary: AirQualityCurrentResponse["detail"], key: string, tKey: (key: string) => string): string {
+  const value = summary?.pollutants[key];
+  return !value || value.average == null ? tKey("airQuality.noValue") : `${tKey(value.tone === "good" ? "airQuality.belowCaution" : "airQuality.aboveCaution")} (${value.caution})`;
 }
 
 function scoreLabel(
@@ -117,19 +92,6 @@ function scoreLabel(
   }
 
   return tKey(`airQuality.${SCORE_LABEL_KEYS[Math.min(Math.max(Math.round(score), 0), 5)] ?? "na"}`);
-}
-
-function scoreTone(score: number | null | undefined): AirTone {
-  if (score === null || score === undefined) {
-    return "neutral";
-  }
-  if (score >= 4) {
-    return "bad";
-  }
-  if (score === 3) {
-    return "warn";
-  }
-  return "good";
 }
 
 function stageTone(stage: Pick<AirQualityDataStage | AirQualitySourceRequest, "status">): AirTone {
@@ -149,19 +111,6 @@ function hasNumber(value: number | null | undefined): value is number {
   return value !== null && value !== undefined && !Number.isNaN(value);
 }
 
-function parseStationIndex(label: string | null | undefined): number | null {
-  if (!label) {
-    return null;
-  }
-
-  const value = Number.parseFloat(label.replace(",", "."));
-  return Number.isFinite(value) ? value : null;
-}
-
-function stationIndex(station: AirQualityStation): number | null {
-  return parseStationIndex(station.label);
-}
-
 function endpointLabel(request: AirQualitySourceRequest, tKey: (key: string) => string): string {
   if (!request.endpoint) {
     return tKey("airQuality.endpointNotRecorded");
@@ -175,79 +124,22 @@ function endpointLabel(request: AirQualitySourceRequest, tKey: (key: string) => 
   }
 }
 
-function fieldCoverage(stations: AirQualityStation[], field: keyof AirQualityStation): number {
-  if (stations.length === 0) {
-    return 0;
-  }
-
-  const present = stations.filter((station) => {
-    const value = station[field];
-    return value !== null && value !== undefined && value !== "";
-  }).length;
-  return Math.round((present / stations.length) * 100);
-}
-
-function fieldSignals(stations: AirQualityStation[], tKey: (key: string) => string): FieldSignal[] {
-  return [
-    {
-      key: "score",
-      label: tKey("airQuality.stationScore"),
-      ready: fieldCoverage(stations, "score") > 0,
-      detail: `${fieldCoverage(stations, "score")}% ${tKey("airQuality.populated")}`
-    },
-    {
-      key: "index",
-      label: tKey("airQuality.aqIndexLabel"),
-      ready: fieldCoverage(stations, "label") > 0,
-      detail: `${fieldCoverage(stations, "label")}% ${tKey("airQuality.populated")}`
-    },
-    {
-      key: "european_aqi",
-      label: tKey("airQuality.europeanAqi"),
-      ready: fieldCoverage(stations, "european_aqi") > 0,
-      detail: `${fieldCoverage(stations, "european_aqi")}% ${tKey("airQuality.populated")}`
-    },
-    {
-      key: "pm2_5",
-      label: tKey("airQuality.pm25"),
-      ready: fieldCoverage(stations, "pm2_5") > 0,
-      detail: `${fieldCoverage(stations, "pm2_5")}% ${tKey("airQuality.populated")}`
-    },
-    {
-      key: "pm10",
-      label: tKey("airQuality.pm10"),
-      ready: fieldCoverage(stations, "pm10") > 0,
-      detail: `${fieldCoverage(stations, "pm10")}% ${tKey("airQuality.populated")}`
-    },
-    {
-      key: "no2",
-      label: tKey("airQuality.no2"),
-      ready: fieldCoverage(stations, "no2") > 0,
-      detail: `${fieldCoverage(stations, "no2")}% ${tKey("airQuality.populated")}`
-    }
-  ];
-}
-
-function rankedStations(stations: AirQualityStation[]): AirQualityStation[] {
-  return [...stations].sort((left, right) => {
-    const scoreDelta = (right.score ?? -1) - (left.score ?? -1);
-    if (scoreDelta !== 0) {
-      return scoreDelta;
-    }
-
-    return (stationIndex(right) ?? -1) - (stationIndex(left) ?? -1);
-  });
+function fieldSignals(coverage: Record<string, number>, tKey: (key: string) => string): FieldSignal[] {
+  return [["score", "stationScore"], ["label", "aqIndexLabel"], ...POLLUTANT_PROFILES.map((profile) => [profile.key, profile.labelKey])].map(([key, label]) => ({
+    key, label: tKey(`airQuality.${label}`), ready: (coverage[key] ?? 0) > 0,
+    detail: `${coverage[key] ?? 0}% ${tKey("airQuality.populated")}`,
+  }));
 }
 
 function scoreDistribution(
-  stations: AirQualityStation[],
+  counts: Record<string, number>,
   language: LanguageMode,
   tKey: (key: string) => string,
   dataLabel: (value: string | null | undefined) => string,
 ) {
-  const max = Math.max(1, ...SCORE_BUCKETS.map((score) => stations.filter((station) => station.score === score).length));
+  const max = Math.max(1, ...Object.values(counts));
   return SCORE_BUCKETS.map((score) => {
-    const count = stations.filter((station) => station.score === score).length;
+    const count = counts[score] ?? 0;
     return {
       count,
       label: scoreLabel(score, null, language, tKey, dataLabel),
@@ -283,7 +175,7 @@ function pollutantProfile(key: PollutantKey): PollutantProfile {
 }
 
 function pollutantValue(station: AirQualityStation, key: PollutantKey): number | null {
-  return station[key];
+  return station[key] ?? null;
 }
 
 function formatPollutantValue(value: number | null, profile: PollutantProfile): string {
@@ -293,34 +185,6 @@ function formatPollutantValue(value: number | null, profile: PollutantProfile): 
 
   const formattedValue = formatNumber(value, profile.unit ? 1 : 0);
   return profile.unit ? `${formattedValue} ${profile.unit}` : formattedValue;
-}
-
-function pollutantTone(value: number | null, profile: PollutantProfile): AirTone {
-  if (value === null) {
-    return "neutral";
-  }
-  if (value >= profile.severeValue) {
-    return "bad";
-  }
-  if (value >= profile.cautionValue) {
-    return "warn";
-  }
-  return "good";
-}
-
-function pollutantStations(stations: AirQualityStation[], key: PollutantKey): AirQualityStation[] {
-  return [...stations]
-    .filter((station) => hasNumber(pollutantValue(station, key)))
-    .sort((left, right) => (pollutantValue(right, key) ?? -1) - (pollutantValue(left, key) ?? -1));
-}
-
-function averagePollutantValue(stations: AirQualityStation[], key: PollutantKey): number | null {
-  const values = stations.map((station) => pollutantValue(station, key)).filter(hasNumber);
-  if (values.length === 0) {
-    return null;
-  }
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function stationDisplayName(station: AirQualityStation): string {
@@ -352,18 +216,6 @@ function readyFieldCount(fields: FieldSignal[]): string {
   return `${fields.filter((field) => field.ready).length}/${fields.length}`;
 }
 
-function fallbackWorstScore(airQuality: AirQualityCurrentResponse): number | null {
-  const stationScores = airQuality.stations
-    .map((station) => station.score)
-    .filter(hasNumber);
-
-  if (airQuality.worst_score !== null && airQuality.worst_score !== undefined) {
-    return airQuality.worst_score;
-  }
-
-  return stationScores.length > 0 ? Math.max(...stationScores) : null;
-}
-
 function airHistoryPoints(
   history: PlatformHistoricalSnapshot<AirQualityCurrentResponse>[],
   tKey: (key: string) => string,
@@ -376,7 +228,7 @@ function airHistoryPoints(
       return [];
     }
 
-    const worstScore = fallbackWorstScore(data);
+    const worstScore = data.worst_score;
     if (worstScore === null) {
       return [];
     }
@@ -392,17 +244,20 @@ function airHistoryPoints(
 }
 
 function renderPollutantChart(
+  detail: AirQualityCurrentResponse["detail"],
   profile: PollutantProfile,
   stations: AirQualityStation[],
   language: LanguageMode,
   tKey: (key: string) => string,
   dataLabel: (value: string | null | undefined) => string,
 ) {
-  const rows = pollutantStations(stations, profile.key).slice(0, 8);
+  const summary = detail?.pollutants[profile.key];
+  const ordered = orderedStations(stations, summary?.station_order);
+  const rows = ordered.slice(0, 8);
   const values = rows.map((station) => pollutantValue(station, profile.key)).filter(hasNumber);
-  const maxValue = Math.max(profile.severeValue, ...values, 1);
-  const averageValue = averagePollutantValue(stations, profile.key);
-  const peakValue = values.length > 0 ? Math.max(...values) : null;
+  const maxValue = Math.max(summary?.severe ?? 1, ...values, 1);
+  const averageValue = summary?.average ?? null;
+  const peakValue = summary?.peak ?? null;
 
   return (
     <>
@@ -417,7 +272,7 @@ function renderPollutantChart(
         </article>
         <article>
           <span>{tKey("airQuality.reporting")}</span>
-          <strong>{pollutantStations(stations, profile.key).length}/{stations.length}</strong>
+          <strong>{summary?.reporting ?? 0}/{stations.length}</strong>
         </article>
       </div>
 
@@ -426,7 +281,7 @@ function renderPollutantChart(
           {rows.map((station) => {
             const value = pollutantValue(station, profile.key);
             const percent = Math.max(2, Math.min(100, ((value ?? 0) / maxValue) * 100));
-            const tone = pollutantTone(value, profile);
+            const tone = station.pollutant_tones?.[profile.key] ?? "neutral";
             return (
               <article className={`air-pollutant-row air-pollutant-row-${tone}`} key={station.station}>
                 <div>
@@ -461,7 +316,6 @@ function renderStationMap(
       formatNumber={formatNumber}
       language={language}
       scoreLabel={scoreLabel}
-      scoreTone={scoreTone}
       stationDisplayName={stationDisplayName}
       stations={stations}
       tKey={tKey}
@@ -491,12 +345,12 @@ export function AirQualityWorkspace({
   }
 
   const stations = airQuality.stations ?? [];
-  const ranked = rankedStations(stations);
+  const ranked = orderedStations(stations, airQuality.detail?.station_order);
   const topStations = ranked.slice(0, 8);
-  const fields = fieldSignals(stations, tKey);
+  const fields = fieldSignals(airQuality.detail?.coverage ?? {}, tKey);
   const currentScore = airQuality.worst_score;
   const dataTimezone = resolveDataTimezone(airQuality.time_scope?.timezone);
-  const currentTone = scoreTone(currentScore);
+  const currentTone = (airQuality.detail?.tone ?? "neutral") as AirTone;
   const historyPoints = airHistoryPoints(history, tKey, language, dataTimezone);
   const activePollutantProfile = pollutantProfile(activePollutantKey);
   const highlightedCategoryEvent =
@@ -588,8 +442,8 @@ export function AirQualityWorkspace({
             <strong>{stations.length}</strong>
           </header>
           <div className="air-score-bars">
-            {scoreDistribution(stations, language, tKey, dataLabel).map((bucket) => (
-              <div className={`air-score-row air-score-row-${scoreTone(bucket.score)}`} key={bucket.score}>
+            {scoreDistribution(airQuality.detail?.score_counts ?? {}, language, tKey, dataLabel).map((bucket) => (
+              <div className={`air-score-row air-score-row-${["neutral", "good", "good", "warn", "bad", "bad"][bucket.score]}`} key={bucket.score}>
                 <span>{bucket.label}</span>
                 <i aria-hidden="true">
                   <span style={{ width: `${bucket.width}%` }} />
@@ -627,7 +481,7 @@ export function AirQualityWorkspace({
 
       <section className="air-summary-strip" aria-label={tKey("airQuality.airQualitySummaryMetrics")}>
         {POLLUTANT_PROFILES.map((profile) => {
-          const value = averageStationField(stations, profile.key);
+          const value = airQuality.detail?.pollutants[profile.key]?.average ?? null;
           return (
             <article className="air-glass-panel" key={profile.key}>
               <DataLabelWithHelp
@@ -643,8 +497,8 @@ export function AirQualityWorkspace({
                 {hasNumber(value) ? formatNumber(value, profile.key === "european_aqi" ? 0 : 1) : tKey("airQuality.noValue")}
                 {hasNumber(value) && profile.unit ? <small>{profile.unit}</small> : null}
               </strong>
-              <span className={`air-metric-detail air-metric-detail-${scoreTone(value == null ? null : value >= profile.severeValue ? 4 : value >= profile.cautionValue ? 3 : 1)}`}>
-                {cautionDetail(value, profile.cautionValue, tKey)}
+              <span className={`air-metric-detail air-metric-detail-${airQuality.detail?.pollutants[profile.key]?.tone ?? "neutral"}`}>
+                {cautionDetail(airQuality.detail, profile.key, tKey)}
               </span>
             </article>
           );
@@ -677,7 +531,7 @@ export function AirQualityWorkspace({
         maximumFractionDigits={0}
         points={historyPoints}
         title={tKey("airQuality.worstStationScoreTrend")}
-        tone={scoreTone(currentScore)}
+        tone={(airQuality.detail?.tone ?? "neutral") as AirTone}
         unit="/5"
       />
 
@@ -711,7 +565,7 @@ export function AirQualityWorkspace({
               ))}
             </div>
           </header>
-          {renderPollutantChart(activePollutantProfile, stations, language, tKey, dataLabel)}
+          {renderPollutantChart(airQuality.detail, activePollutantProfile, stations, language, tKey, dataLabel)}
         </article>
 
         <article className="air-station-panel">
@@ -728,7 +582,7 @@ export function AirQualityWorkspace({
             </div>
             {topStations.length > 0 ? (
               topStations.map((station) => {
-                const tone = scoreTone(station.score);
+                const tone = (station.tone ?? "neutral") as AirTone;
                 const updatedClock = hasNumber(station.score) || hasNumber(station.pm2_5)
                   ? formatStationClock(airQuality.observed_at, dataTimezone)
                   : null;
@@ -881,4 +735,9 @@ export function AirQualityWorkspace({
       </p>
     </section>
   );
+}
+
+function orderedStations(stations: AirQualityStation[], order: string[] = []): AirQualityStation[] {
+  const byId = new Map(stations.map((station) => [station.station, station]));
+  return order.flatMap((id) => { const station = byId.get(id); return station ? [station] : []; });
 }

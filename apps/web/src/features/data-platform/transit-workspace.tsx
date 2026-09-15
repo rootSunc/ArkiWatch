@@ -1,5 +1,8 @@
 "use client";
 
+import { formatPercent, severityTone, statusTone, uniqueJoined, clampPercent, severityRows as buildSeverityRows, filterEvents } from "./workspace-format";
+
+import { MobilityEventStatus, MobilityEventLiveLayer } from "./mobility-event-status";
 import type { CSSProperties } from "react";
 import { formatCompactDateTime, formatHistoryDate } from "./workspace-datetime";
 import { useEffect, useMemo, useState } from "react";
@@ -28,7 +31,6 @@ import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
-import { scopedEventState } from "./event-time-state";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type TransitWorkspaceProps = {
@@ -67,7 +69,6 @@ type TransitScopeMetric = {
   width: number;
 };
 
-const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
 const ALERTS_PER_PAGE = INCIDENT_TIMELINE_PAGE_SIZE;
 const HSL_STOP_DETAILS: Record<string, { address: string; code: string; name: string; zone: string }> = {
   "4180227": {
@@ -85,19 +86,6 @@ const ALERT_FILTERS: Array<{ icon: string; key: TransitAlertFilter; labelKey: st
   { icon: "route", key: "scoped", labelKey: "scoped" },
   { icon: "view_list", key: "all", labelKey: "all" }
 ];
-
-function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return UNAVAILABLE_DATA_VALUE;
-  }
-
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
-}
-
-function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
-  const formatted = formatNumber(value);
-  return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
-}
 
 function formatClockTime(
   value: string | null | undefined,
@@ -131,28 +119,6 @@ function formatAlertWindow(
   return `${formatClockTime(alert.starts_at, language, tKey, timeZone)} - ${formatClockTime(alert.ends_at, language, tKey, timeZone)}`;
 }
 
-function uniqueJoined(values: string[]): string {
-  const unique = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-  return unique.length > 0 ? unique.slice(0, 4).join(" · ") : UNAVAILABLE_DATA_VALUE;
-}
-
-function clampPercent(value: number): number {
-  return Math.max(6, Math.min(100, value));
-}
-
-function statusTone(status: string): TransitTone {
-  if (status === "ready" || status === "fetched") {
-    return "good";
-  }
-  if (status === "empty" || status === "missing" || status === "not_collected" || status === "stale") {
-    return "warn";
-  }
-  if (status === "failed" || status === "error") {
-    return "bad";
-  }
-  return "neutral";
-}
-
 function exactObservedLabel(
   value: string | null,
   language: LanguageMode,
@@ -168,19 +134,6 @@ function exactObservedLabel(
     "transit.notObserved",
     timeZone,
   );
-}
-
-function severityTone(severity: string): TransitTone {
-  if (severity.toUpperCase() === "HIGH") {
-    return "bad";
-  }
-  if (severity.toUpperCase() === "MEDIUM") {
-    return "warn";
-  }
-  if (severity.toUpperCase() === "LOW") {
-    return "good";
-  }
-  return "neutral";
 }
 
 function eventTypeLabel(value: string, language: LanguageMode): string {
@@ -253,49 +206,33 @@ function transitReferenceTimestamp(transit: TransitCurrentResponse): number {
   return Number.isFinite(observedAt) ? observedAt : 0;
 }
 
-function severityDistribution(alerts: TransitAlert[]) {
-  const max = Math.max(1, ...SEVERITY_LABELS.map((severity) => alerts.filter((alert) => alert.severity === severity).length));
-  return SEVERITY_LABELS.map((severity) => {
-    const count = alerts.filter((alert) => alert.severity === severity).length;
-    return {
-      count,
-      severity,
-      width: Math.max(8, (count / max) * 100)
-    };
-  });
-}
-
-function uniqueScopeCount(alerts: TransitAlert[], field: "route_ids" | "stop_ids" | "trip_ids"): number {
-  return new Set(alerts.flatMap((alert) => alert[field])).size;
-}
-
-function transitScopeMetrics(alerts: TransitAlert[], tKey: (key: string) => string): TransitScopeMetric[] {
+function transitScopeMetrics(detail: TransitCurrentResponse["detail"], tKey: (key: string) => string): TransitScopeMetric[] {
   const rows = [
     {
       key: "routes",
       label: tKey("transit.routes"),
-      count: uniqueScopeCount(alerts, "route_ids"),
-      detail: `${alerts.filter((alert) => alert.route_ids.length > 0).length} ${tKey("transit.alerts")}`,
+      count: detail?.scopes?.routes?.count ?? 0,
+      detail: `${detail?.scopes?.routes?.alerts ?? 0} ${tKey("transit.alerts")}`,
       tone: "warn" as TransitTone
     },
     {
       key: "stops",
       label: tKey("transit.stops"),
-      count: uniqueScopeCount(alerts, "stop_ids"),
-      detail: `${alerts.filter((alert) => alert.stop_ids.length > 0).length} ${tKey("transit.alerts")}`,
+      count: detail?.scopes?.stops?.count ?? 0,
+      detail: `${detail?.scopes?.stops?.alerts ?? 0} ${tKey("transit.alerts")}`,
       tone: "bad" as TransitTone
     },
     {
       key: "trips",
       label: tKey("transit.trips"),
-      count: uniqueScopeCount(alerts, "trip_ids"),
-      detail: `${alerts.filter((alert) => alert.trip_ids.length > 0).length} ${tKey("transit.alerts")}`,
+      count: detail?.scopes?.trips?.count ?? 0,
+      detail: `${detail?.scopes?.trips?.alerts ?? 0} ${tKey("transit.alerts")}`,
       tone: "good" as TransitTone
     },
     {
       key: "network",
       label: tKey("transit.networkWide"),
-      count: alerts.filter((alert) => !isScopedAlert(alert)).length,
+      count: detail?.scopes?.network?.count ?? 0,
       detail: tKey("transit.noIdsAttached"),
       tone: "neutral" as TransitTone
     }
@@ -369,40 +306,6 @@ function stageProgress(stage: TransitDataStage): number {
   return 55;
 }
 
-function isHighSeverity(alert: TransitAlert): boolean {
-  return alert.severity.toUpperCase() === "HIGH";
-}
-
-function isScopedAlert(alert: TransitAlert): boolean {
-  return alert.route_ids.length > 0 || alert.stop_ids.length > 0 || alert.trip_ids.length > 0;
-}
-
-function filterAlerts(
-  alerts: TransitAlert[],
-  filter: TransitAlertFilter,
-  referenceTimestamp = Date.now(),
-): TransitAlert[] {
-  if (filter === "priority") {
-    return alerts.filter((alert) => alert.active || isHighSeverity(alert));
-  }
-  if (filter === "active") {
-    return alerts.filter((alert) => alert.active);
-  }
-  if (filter === "upcoming") {
-    return alerts.filter(
-      (alert) => scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming",
-    );
-  }
-  if (filter === "high") {
-    return alerts.filter(isHighSeverity);
-  }
-  if (filter === "scoped") {
-    return alerts.filter(isScopedAlert);
-  }
-
-  return alerts;
-}
-
 function filterEmptyMessage(
   filter: TransitAlertFilter,
   tKey: (key: string) => string,
@@ -435,52 +338,14 @@ function filterEmptyMessage(
   return tKey("transit.noTransitAlertsWereNormalizedFromTheLatestHslFeed");
 }
 
-function activeAlertTone(activeAlerts: TransitAlert[], allAlerts: TransitAlert[]): TransitTone {
-  if (activeAlerts.some(isHighSeverity)) {
-    return "bad";
-  }
-  if (activeAlerts.length > 0 || allAlerts.some(isHighSeverity)) {
-    return "warn";
-  }
-  return "good";
+function nextActiveEndLabel(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+ return value ? `${tKey("transit.until")} ${formatCompactDateTime(value, language, tKey("transit.notObserved"), timeZone)}` : tKey("transit.noActiveWindow");
 }
 
-function highestSeverityLabel(alerts: TransitAlert[]): string {
-  return SEVERITY_LABELS.find((severity) => alerts.some((alert) => alert.severity.toUpperCase() === severity)) ?? "NONE";
-}
-
-function nextActiveEndLabel(
-  activeAlerts: TransitAlert[],
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (activeAlerts.length === 0) {
-    return tKey("transit.noActiveWindow");
-  }
-
-  const nextEndingAlert = [...activeAlerts].sort(
-    (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
-  )[0];
-
-  return `${tKey("transit.until")} ${formatCompactDateTime(nextEndingAlert.ends_at, language, tKey("transit.notObserved"), timeZone)}`;
-}
-
-function transitRiskState(
-  activeAlerts: TransitAlert[],
-  allAlerts: TransitAlert[],
-  tKey: (key: string) => string,
-  historical = false,
-  referenceTimestamp = Date.now(),
-) {
-  const highActive = activeAlerts.filter(isHighSeverity).length;
-  const highUpcoming = allAlerts.filter(
-    (alert) =>
-      scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming" &&
-      isHighSeverity(alert),
-  ).length;
-
-  if (highActive > 0) {
+function transitRiskState(detail: TransitCurrentResponse["detail"], total: number, tKey: (key: string) => string, historical = false) {
+ const highActive = detail?.high_active ?? 0;
+ const highUpcoming = detail?.high_upcoming ?? 0;
+  if (detail?.risk === "high_active") {
     return {
       detail: tKey(
         historical
@@ -492,19 +357,19 @@ function transitRiskState(
     };
   }
 
-  if (activeAlerts.length > 0) {
+  if (detail?.risk === "active") {
     return {
       detail: tKey(
         historical
           ? "transit.activeAlertsAtSnapshotMayAffectTimingDetail"
           : "transit.activeAlertsMayAffectTimingDetail",
-      ).replace("{count}", String(activeAlerts.length)),
+      ).replace("{count}", String(detail?.active_count ?? 0)),
       icon: "directions_bus",
       title: tKey(historical ? "transit.serviceAlertsAtSnapshot" : "transit.serviceAlertsActive")
     };
   }
 
-  if (highUpcoming > 0) {
+  if (detail?.risk === "high_upcoming") {
     return {
       detail: tKey("transit.highSeverityAlertsUpcomingDetail").replace("{count}", String(highUpcoming)),
       icon: "schedule",
@@ -513,7 +378,7 @@ function transitRiskState(
   }
 
   return {
-    detail: allAlerts.length > 0
+    detail: total > 0
       ? tKey(
           historical
             ? "transit.noAlertsAtSnapshotMonitorUpcomingFeedItems"
@@ -657,99 +522,6 @@ function transitHistoryPoints(
   });
 }
 
-function TransitAlertStatusBadge({
-  alert,
-  historical,
-  referenceTimestamp,
-  language,
-  timeZone,
-  tKey,
-}: {
-  alert: TransitAlert;
-  historical: boolean;
-  referenceTimestamp: number;
-  language: LanguageMode;
-  timeZone?: string;
-  tKey: (key: string) => string;
-}) {
-  const state = scopedEventState(alert.active, alert.starts_at, referenceTimestamp);
-  return (
-    <span className={state === "active" ? "transit-alert-status transit-alert-status-active" : "transit-alert-status"}>
-      <span className="material-symbols-outlined" aria-hidden="true">
-        {state === "active" ? "radio_button_checked" : state === "upcoming" ? "schedule" : "history"}
-      </span>
-      <span>
-        {state === "active"
-          ? tKey(historical ? "transit.activeAtSnapshot" : "transit.activeNow")
-          : state === "ended"
-            ? tKey(historical ? "transit.endedAtSnapshot" : "transit.ended")
-            : formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)}
-      </span>
-    </span>
-  );
-}
-
-function TransitAlertLiveLayer({
-  alert,
-  historical,
-  referenceTimestamp,
-  language,
-  nowTimestamp,
-  timeZone,
-  tKey,
-}: {
-  alert: TransitAlert;
-  historical: boolean;
-  referenceTimestamp: number;
-  language: LanguageMode;
-  nowTimestamp: number;
-  timeZone?: string;
-  tKey: (key: string) => string;
-}) {
-  const progress = alertWindowProgress(alert, nowTimestamp);
-  const state = scopedEventState(alert.active, alert.starts_at, referenceTimestamp);
-
-  return (
-    <section
-      className={state === "active" ? "transit-alert-live-layer transit-alert-live-layer-active" : "transit-alert-live-layer"}
-      aria-label={tKey("transit.alertStatus")}
-    >
-      <div className="transit-alert-live-copy">
-        <TransitAlertStatusBadge alert={alert} historical={historical} referenceTimestamp={referenceTimestamp} language={language} timeZone={timeZone} tKey={tKey} />
-        <div>
-          <strong>
-            {state === "active"
-              ? tKey(historical ? "transit.inEffectAtSnapshot" : "transit.inEffect")
-              : state === "ended"
-                ? tKey(historical ? "transit.endedAtSnapshot" : "transit.ended")
-                : tKey("transit.scheduled")}
-          </strong>
-          <span>
-            {state === "active"
-              ? `${tKey("transit.until")} ${formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}`
-              : state === "ended"
-                ? `${tKey("transit.endedAt")} ${formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}`
-                : `${tKey("transit.starts")} ${formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)}`}
-          </span>
-        </div>
-      </div>
-      <span className="transit-alert-live-meter" aria-hidden="true">
-        <span style={{ width: `${progress}%` }} />
-      </span>
-      <dl className="transit-alert-live-facts">
-        <div>
-          <dt>{tKey("transit.window")}</dt>
-          <dd>{formatCompactDateTime(alert.starts_at, language, tKey("transit.notObserved"), timeZone)} - {formatCompactDateTime(alert.ends_at, language, tKey("transit.notObserved"), timeZone)}</dd>
-        </div>
-        <div>
-          <dt>{tKey("transit.impactScope")}</dt>
-          <dd>{scopeSummary(alert, tKey)}</dd>
-        </div>
-      </dl>
-    </section>
-  );
-}
-
 export function TransitWorkspace({
   category,
   highlightedEventId,
@@ -762,10 +534,9 @@ export function TransitWorkspace({
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const isHistorical = isHistoricalTimeScope(transit?.time_scope);
   const referenceTimestamp = transit ? transitReferenceTimestamp(transit) : 0;
-  const activeAlerts = useMemo(() => transit?.alerts.filter((alert) => alert.active) ?? [], [transit]);
   const filteredAlerts = useMemo(
-    () => filterAlerts(transit?.alerts ?? [], alertFilter, referenceTimestamp),
-    [alertFilter, referenceTimestamp, transit]
+    () => filterEvents(transit?.alerts ?? [], alertFilter),
+    [alertFilter, transit]
   );
 
   useEffect(() => {
@@ -806,8 +577,8 @@ export function TransitWorkspace({
   const dataTimezone = resolveDataTimezone(transit.time_scope?.timezone);
 
   const nowTimestamp = referenceTimestamp;
-  const activeTone = activeAlertTone(activeAlerts, transit.alerts);
-  const riskState = transitRiskState(activeAlerts, transit.alerts, tKey, isHistorical, referenceTimestamp);
+  const activeTone = (transit.detail?.tone ?? "neutral") as TransitTone;
+  const riskState = transitRiskState(transit.detail, transit.alerts.length, tKey, isHistorical);
   const {
     currentPage: currentAlertPage,
     pageCount: alertPageCount,
@@ -819,14 +590,14 @@ export function TransitWorkspace({
     : null) ?? pagedAlerts[0] ?? null;
   const timebandAlerts = pagedAlerts;
   const timebandBounds = alertTimelineBounds(timebandAlerts, nowTimestamp);
-  const severityRows = severityDistribution(transit.alerts);
-  const scopeRows = transitScopeMetrics(transit.alerts, tKey);
+  const severityRows = buildSeverityRows(transit.detail?.severity_counts);
+  const scopeRows = transitScopeMetrics(transit.detail, tKey);
   const readyPipelineCount = transit.data_pipeline.filter((stage) => stage.status === "ready").length;
   const fetchedSourceCount = transit.source_requests.filter((request) => request.status === "fetched").length;
   const historyPoints = transitHistoryPoints(history, tKey, language, dataTimezone);
-  const highSeverityCount = transit.alerts.filter((alert) => alert.severity.toUpperCase() === "HIGH").length;
+  const highSeverityCount = (transit.detail?.severity_counts.HIGH ?? 0) + (transit.detail?.severity_counts.CRITICAL ?? 0);
   const upcomingAlerts = transit.alerts.filter(
-    (alert) => scopedEventState(alert.active, alert.starts_at, referenceTimestamp) === "upcoming",
+    (alert) => (alert.state ?? "ended") === "upcoming",
   );
   const routePreview = uniqueJoined(transit.alerts.flatMap((alert) => alert.route_ids));
   const stopPreview = uniqueJoined(transit.alerts.flatMap((alert) => alert.stop_ids));
@@ -883,11 +654,11 @@ export function TransitWorkspace({
         <div className="transit-command-facts">
           <div>
             <span>{tKey("transit.highestSeverity")}</span>
-            <strong>{enumLabel(highestSeverityLabel(transit.alerts))}</strong>
+            <strong>{enumLabel(transit.detail?.highest_severity ?? "NONE")}</strong>
           </div>
           <div>
             <span>{tKey("transit.nextClear")}</span>
-            <strong>{nextActiveEndLabel(activeAlerts, language, tKey, dataTimezone)}</strong>
+            <strong>{nextActiveEndLabel(transit.detail?.next_active_end, language, tKey, dataTimezone)}</strong>
           </div>
           <div>
             <span>{tKey("transit.scopedImpact")}</span>
@@ -1001,7 +772,7 @@ export function TransitWorkspace({
                       const width = Math.max(4, right - left);
                       return (
                         <article className={`transit-timeband-row transit-timeband-row-${severityTone(alert.severity)}`} key={alert.id}>
-                          <TransitAlertStatusBadge alert={alert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <MobilityEventStatus namespace="transit" event={alert} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <i aria-hidden="true">
                             <span
                               style={
@@ -1040,7 +811,7 @@ export function TransitWorkspace({
                           {transit.source_code.toUpperCase()} · {alert.id} · {formatClockTime(alert.starts_at, language, tKey, dataTimezone)}
                         </small>
                         <div className="sr-only">
-                          <TransitAlertStatusBadge alert={alert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <MobilityEventStatus namespace="transit" event={alert} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <small className="transit-alert-scope-preview">{scopePreview(alert, tKey)}</small>
                           <em>{eventTypeLabel(alert.event_type, language)}</em>
                           <span>{causeLabel(alert.cause, language, tKey)}</span>
@@ -1072,13 +843,13 @@ export function TransitWorkspace({
                 <section className={`transit-alert-detail transit-alert-detail-${severityTone(selectedAlert.severity)}`}>
                   <header>
                     <div>
-                      <TransitAlertStatusBadge alert={selectedAlert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                      <MobilityEventStatus namespace="transit" event={selectedAlert} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                       <strong>{localizedPlatformCopy(selectedAlert.title, language) ?? selectedAlert.title}</strong>
                     </div>
                     <em>{enumLabel(selectedAlert.severity)}</em>
                   </header>
                   <p>{localizedPlatformCopy(selectedAlert.description, language) ?? selectedAlert.description}</p>
-                  <TransitAlertLiveLayer alert={selectedAlert} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} nowTimestamp={nowTimestamp} timeZone={dataTimezone} tKey={tKey} />
+                  <MobilityEventLiveLayer namespace="transit" event={selectedAlert} historical={isHistorical} language={language} progress={alertWindowProgress(selectedAlert, nowTimestamp)} scopeLabel={scopeSummary(selectedAlert, tKey)} timeZone={dataTimezone} tKey={tKey} />
                   <div className="transit-alert-detail-meta">
                     <div>
                       <span>{tKey("transit.type")}</span>

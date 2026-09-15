@@ -1,5 +1,8 @@
 "use client";
 
+import { formatPercent, severityTone, statusTone, uniqueJoined, clampPercent, severityRows as buildSeverityRows, filterEvents } from "./workspace-format";
+
+import { MobilityEventStatus, MobilityEventLiveLayer } from "./mobility-event-status";
 import type { CSSProperties } from "react";
 import { formatCompactDateTime, formatHistoryDate } from "./workspace-datetime";
 import { useEffect, useMemo, useState } from "react";
@@ -29,7 +32,6 @@ import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime, scopedStatusLabel } from "./data-time-scope";
-import { scopedEventState } from "./event-time-state";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "./workspace-ui";
 
 type RoadRailWorkspaceProps = {
@@ -67,7 +69,6 @@ type RoadRailTimelineBounds = {
   endsAt: number;
 };
 
-const SEVERITY_LABELS = ["HIGH", "MEDIUM", "LOW", "INFO"];
 const MIN_TIMELINE_WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_TIMELINE_WINDOW_MS = 60 * 60 * 1000;
 const INCIDENT_FILTERS: Array<{ icon: string; key: RoadRailIncidentFilter; labelKey: string }> = [
@@ -78,19 +79,6 @@ const INCIDENT_FILTERS: Array<{ icon: string; key: RoadRailIncidentFilter; label
   { icon: "thunderstorm", key: "weather", labelKey: "weather" },
   { icon: "view_list", key: "all", labelKey: "all" }
 ];
-
-function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return UNAVAILABLE_DATA_VALUE;
-  }
-
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
-}
-
-function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
-  const formatted = formatNumber(value);
-  return formatted === UNAVAILABLE_DATA_VALUE ? tKey("shell.nA") : `${formatted}%`;
-}
 
 function formatClockTime(
   value: string | null | undefined,
@@ -124,11 +112,6 @@ function formatIncidentWindow(
   return `${formatClockTime(incident.starts_at, language, tKey, timeZone)} - ${formatClockTime(incident.ends_at, language, tKey, timeZone)}`;
 }
 
-function uniqueJoined(values: string[]): string {
-  const unique = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-  return unique.length > 0 ? unique.slice(0, 4).join(" · ") : UNAVAILABLE_DATA_VALUE;
-}
-
 function formatTimelineBoundary(value: number, language: LanguageMode, timeZone = DEFAULT_DATA_TIME_ZONE): string {
   const parsedDate = parseValidDate(value);
   if (!parsedDate) {
@@ -148,27 +131,6 @@ function formatTimelineBoundary(value: number, language: LanguageMode, timeZone 
     .toUpperCase();
 }
 
-function clampPercent(value: number): number {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.min(100, Math.max(0, value));
-}
-
-function statusTone(status: string): RoadRailTone {
-  if (status === "ready" || status === "fetched") {
-    return "good";
-  }
-  if (status === "empty" || status === "missing" || status === "planned" || status === "stale") {
-    return "warn";
-  }
-  if (status === "failed" || status === "error") {
-    return "bad";
-  }
-  return "neutral";
-}
-
 function exactObservedLabel(
   value: string | null,
   language: LanguageMode,
@@ -184,69 +146,6 @@ function exactObservedLabel(
     "roadRail.notObserved",
     timeZone,
   );
-}
-
-function severityTone(severity: string): RoadRailTone {
-  if (severity === "HIGH") {
-    return "bad";
-  }
-  if (severity === "MEDIUM") {
-    return "warn";
-  }
-  if (severity === "LOW") {
-    return "good";
-  }
-  return "neutral";
-}
-
-function isHighSeverity(incident: RoadRailIncident): boolean {
-  return incident.severity.toUpperCase() === "HIGH";
-}
-
-function isRoadIncident(incident: RoadRailIncident): boolean {
-  return incident.event_type.startsWith("road_");
-}
-
-function isRailIncident(incident: RoadRailIncident): boolean {
-  return incident.event_type.startsWith("rail_");
-}
-
-function isWeatherIncident(incident: RoadRailIncident): boolean {
-  const searchableText = [
-    incident.event_type,
-    incident.message_type,
-    incident.situation_type,
-    incident.title,
-    incident.description
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return searchableText.includes("weather") || searchableText.includes("slippery") || searchableText.includes("icy");
-}
-
-function filterIncidents(
-  incidents: RoadRailIncident[],
-  filter: RoadRailIncidentFilter,
-): RoadRailIncident[] {
-  if (filter === "active") {
-    return incidents.filter((incident) => incident.active);
-  }
-  if (filter === "priority") {
-    return incidents.filter((incident) => incident.active || isHighSeverity(incident));
-  }
-  if (filter === "road") {
-    return incidents.filter(isRoadIncident);
-  }
-  if (filter === "rail") {
-    return incidents.filter(isRailIncident);
-  }
-  if (filter === "weather") {
-    return incidents.filter(isWeatherIncident);
-  }
-
-  return incidents;
 }
 
 function filterEmptyMessage(
@@ -326,23 +225,6 @@ function roadRailReferenceTimestamp(roadRail: RoadRailCurrentResponse): number {
   return Number.isFinite(observedAt) ? observedAt : 0;
 }
 
-function severityDistribution(incidents: RoadRailIncident[]) {
-  const max = Math.max(
-    1,
-    ...SEVERITY_LABELS.map(
-      (severity) => incidents.filter((incident) => incident.severity === severity).length
-    )
-  );
-  return SEVERITY_LABELS.map((severity) => {
-    const count = incidents.filter((incident) => incident.severity === severity).length;
-    return {
-      count,
-      severity,
-      width: Math.max(8, (count / max) * 100)
-    };
-  });
-}
-
 function sourceRequestHost(endpoint: string | null, tKey: (key: string) => string): string {
   if (!endpoint) {
     return tKey("roadRail.endpointNotRecorded");
@@ -365,53 +247,15 @@ function stageProgress(stage: RoadRailDataStage): number {
   return 55;
 }
 
-function activeConditionTone(roadRail: RoadRailCurrentResponse): RoadRailTone {
-  if (roadRail.incidents.some((incident) => incident.active && incident.severity === "HIGH")) {
-    return "bad";
-  }
-  if (roadRail.quality.active_event_count > 0) {
-    return "warn";
-  }
-  return "good";
+function nextActiveEndLabel(value: string | null | undefined, language: LanguageMode, tKey: (key: string) => string, timeZone = DEFAULT_DATA_TIME_ZONE): string {
+ return value ? `${tKey("roadRail.until")} ${formatCompactDateTime(value, language, tKey("roadRail.notObserved"), timeZone)}` : tKey("roadRail.noActiveWindow");
 }
 
-function highestSeverityLabel(incidents: RoadRailIncident[]): string {
-  return SEVERITY_LABELS.find((severity) => incidents.some((incident) => incident.severity.toUpperCase() === severity)) ?? "NONE";
-}
-
-function nextActiveEndLabel(
-  activeIncidents: RoadRailIncident[],
-  language: LanguageMode,
-  tKey: (key: string) => string,
-  timeZone = DEFAULT_DATA_TIME_ZONE,
-): string {
-  if (activeIncidents.length === 0) {
-    return tKey("roadRail.noActiveWindow");
-  }
-
-  const nextEndingIncident = [...activeIncidents].sort(
-    (left, right) => new Date(left.ends_at).getTime() - new Date(right.ends_at).getTime()
-  )[0];
-
-  return `${tKey("roadRail.until")} ${formatCompactDateTime(nextEndingIncident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`;
-}
-
-function roadRailRiskState(
-  activeIncidents: RoadRailIncident[],
-  allIncidents: RoadRailIncident[],
-  tKey: (key: string) => string,
-  historical = false,
-  referenceTimestamp = Date.now(),
-) {
-  const highActive = activeIncidents.filter(isHighSeverity).length;
-  const weatherActive = activeIncidents.filter(isWeatherIncident).length;
-  const highUpcoming = allIncidents.filter(
-    (incident) =>
-      scopedEventState(incident.active, incident.starts_at, referenceTimestamp) === "upcoming" &&
-      isHighSeverity(incident),
-  ).length;
-
-  if (highActive > 0) {
+function roadRailRiskState(detail: RoadRailCurrentResponse["detail"], total: number, tKey: (key: string) => string, historical = false) {
+ const highActive = detail?.high_active ?? 0;
+ const highUpcoming = detail?.high_upcoming ?? 0;
+ const weatherActive = detail?.weather_active ?? 0;
+  if (detail?.risk === "high_active") {
     return {
       detail: tKey(
         historical
@@ -423,7 +267,7 @@ function roadRailRiskState(
     };
   }
 
-  if (weatherActive > 0) {
+  if (detail?.risk === "weather_active") {
     return {
       detail: tKey(
         historical
@@ -435,19 +279,19 @@ function roadRailRiskState(
     };
   }
 
-  if (activeIncidents.length > 0) {
+  if (detail?.risk === "active") {
     return {
       detail: tKey(
         historical
           ? "roadRail.incidentsAtSnapshotMayAffectTimingDetail"
           : "roadRail.activeIncidentsMayAffectTimingDetail",
-      ).replace("{count}", String(activeIncidents.length)),
+      ).replace("{count}", String(detail?.active_count ?? 0)),
       icon: "traffic",
       title: tKey(historical ? "roadRail.corridorEventsAtSnapshot" : "roadRail.corridorEventsActive")
     };
   }
 
-  if (highUpcoming > 0) {
+  if (detail?.risk === "high_upcoming") {
     return {
       detail: tKey("roadRail.highSeverityIncidentsUpcomingDetail").replace("{count}", String(highUpcoming)),
       icon: "schedule",
@@ -456,7 +300,7 @@ function roadRailRiskState(
   }
 
   return {
-    detail: allIncidents.length > 0
+    detail: total > 0
       ? tKey(
           historical
             ? "roadRail.noIncidentsAtSnapshotMonitorUpcomingFeedItems"
@@ -703,99 +547,6 @@ function roadRailHistoryPoints(
   });
 }
 
-function RoadRailIncidentStatusBadge({
-  incident,
-  historical,
-  referenceTimestamp,
-  language,
-  timeZone,
-  tKey
-}: {
-  incident: RoadRailIncident;
-  historical: boolean;
-  referenceTimestamp: number;
-  language: LanguageMode;
-  timeZone?: string;
-  tKey: (key: string) => string;
-}) {
-  const state = scopedEventState(incident.active, incident.starts_at, referenceTimestamp);
-  return (
-    <span className={state === "active" ? "road-rail-incident-status road-rail-incident-status-active" : "road-rail-incident-status"}>
-      <span className="material-symbols-outlined" aria-hidden="true">
-        {state === "active" ? "radio_button_checked" : state === "upcoming" ? "schedule" : "history"}
-      </span>
-      <span>
-        {state === "active"
-          ? tKey(historical ? "roadRail.activeAtSnapshot" : "roadRail.activeNow")
-          : state === "ended"
-            ? tKey(historical ? "roadRail.endedAtSnapshot" : "roadRail.ended")
-            : formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)}
-      </span>
-    </span>
-  );
-}
-
-function RoadRailIncidentLiveLayer({
-  incident,
-  historical,
-  referenceTimestamp,
-  language,
-  nowTimestamp,
-  timeZone,
-  tKey
-}: {
-  incident: RoadRailIncident;
-  historical: boolean;
-  referenceTimestamp: number;
-  language: LanguageMode;
-  nowTimestamp: number;
-  timeZone?: string;
-  tKey: (key: string) => string;
-}) {
-  const progress = incidentWindowProgress(incident, nowTimestamp);
-  const state = scopedEventState(incident.active, incident.starts_at, referenceTimestamp);
-
-  return (
-    <section
-      className={state === "active" ? "road-rail-incident-live-layer road-rail-incident-live-layer-active" : "road-rail-incident-live-layer"}
-      aria-label={tKey("roadRail.incidentStatus")}
-    >
-      <div className="road-rail-incident-live-copy">
-        <RoadRailIncidentStatusBadge incident={incident} historical={historical} referenceTimestamp={referenceTimestamp} language={language} timeZone={timeZone} tKey={tKey} />
-        <div>
-          <strong>
-            {state === "active"
-              ? tKey(historical ? "roadRail.inEffectAtSnapshot" : "roadRail.inEffect")
-              : state === "ended"
-                ? tKey(historical ? "roadRail.endedAtSnapshot" : "roadRail.ended")
-                : tKey("roadRail.scheduled")}
-          </strong>
-          <span>
-            {state === "active"
-              ? `${tKey("roadRail.until")} ${formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`
-              : state === "ended"
-                ? `${tKey("roadRail.endedAt")} ${formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}`
-                : `${tKey("roadRail.starts")} ${formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)}`}
-          </span>
-        </div>
-      </div>
-      <span className="road-rail-incident-live-meter" aria-hidden="true">
-        <span style={{ width: `${progress}%` }} />
-      </span>
-      <dl className="road-rail-incident-live-facts">
-        <div>
-          <dt>{tKey("roadRail.window")}</dt>
-          <dd>{formatCompactDateTime(incident.starts_at, language, tKey("roadRail.notObserved"), timeZone)} - {formatCompactDateTime(incident.ends_at, language, tKey("roadRail.notObserved"), timeZone)}</dd>
-        </div>
-        <div>
-          <dt>{tKey("roadRail.location")}</dt>
-          <dd>{locationLabel(incident, language, tKey)}</dd>
-        </div>
-      </dl>
-    </section>
-  );
-}
-
 export function RoadRailWorkspace({
   category,
   highlightedEventId,
@@ -810,7 +561,7 @@ export function RoadRailWorkspace({
   const referenceTimestamp = roadRail ? roadRailReferenceTimestamp(roadRail) : 0;
   const timelineIncidents = useMemo(() => roadRail?.incidents ?? [], [roadRail?.incidents]);
   const filteredIncidents = useMemo(
-    () => filterIncidents(timelineIncidents, incidentFilter),
+    () => filterEvents(timelineIncidents, incidentFilter),
     [incidentFilter, timelineIncidents]
   );
 
@@ -849,11 +600,10 @@ export function RoadRailWorkspace({
     );
   }
 
-  const activeTone = activeConditionTone(roadRail);
+  const activeTone = (roadRail.detail?.tone ?? "neutral") as RoadRailTone;
   const dataTimezone = resolveDataTimezone(roadRail.time_scope?.timezone);
-  const activeIncidents = roadRail.incidents.filter((incident) => incident.active);
   const nowTimestamp = referenceTimestamp;
-  const riskState = roadRailRiskState(activeIncidents, roadRail.incidents, tKey, isHistorical, referenceTimestamp);
+  const riskState = roadRailRiskState(roadRail.detail, roadRail.incidents.length, tKey, isHistorical);
   const {
     currentPage: currentIncidentPage,
     pageCount: incidentPageCount,
@@ -866,7 +616,7 @@ export function RoadRailWorkspace({
   const topIncidents = timelineIncidents.slice(0, 5);
   const topCorridors = roadRail.corridors.slice(0, 5);
   const maxCorridorEvents = Math.max(1, ...topCorridors.map((corridor) => corridor.event_count));
-  const severityRows = severityDistribution(roadRail.incidents);
+  const severityRows = buildSeverityRows(roadRail.detail?.severity_counts);
   const networkRows = networkCompositionRows(roadRail, tKey);
   const historyPoints = roadRailHistoryPoints(history, tKey, language, dataTimezone);
   const timebandIncidents = pagedIncidents;
@@ -879,14 +629,10 @@ export function RoadRailWorkspace({
   const corridorPreview = uniqueJoined(
     roadRail.corridors.map((corridor) => localizedPlatformCopy(corridor.label, language) ?? corridor.label),
   );
-  const roadworkIncidents = roadRail.incidents.filter((incident) =>
-    /roadwork|construction|resurfac|maintenance/i.test(
-      `${incident.event_type} ${incident.situation_type ?? ""} ${incident.message_type ?? ""} ${incident.title}`,
-    ),
-  );
+  const roadworkIncidents = filterEvents(roadRail.incidents, "roadwork");
   const railPreview = uniqueJoined(
     roadRail.incidents
-      .filter((incident) => /rail/i.test(`${incident.event_type} ${incident.situation_type ?? ""} ${incident.title}`))
+      .filter((incident) => incident.filters?.includes("rail_context"))
       .map((incident) => {
         const rawLocation = incident.location_description || incident.location_ref;
         return localizedPlatformCopy(rawLocation, language) ?? rawLocation;
@@ -939,11 +685,11 @@ export function RoadRailWorkspace({
         <div className="road-rail-command-facts">
           <div>
             <span>{tKey("roadRail.highestSeverity")}</span>
-            <strong>{enumLabel(highestSeverityLabel(roadRail.incidents))}</strong>
+            <strong>{enumLabel(roadRail.detail?.highest_severity ?? "NONE")}</strong>
           </div>
           <div>
             <span>{tKey("roadRail.nextClear")}</span>
-            <strong>{nextActiveEndLabel(activeIncidents, language, tKey)}</strong>
+            <strong>{nextActiveEndLabel(roadRail.detail?.next_active_end, language, tKey)}</strong>
           </div>
           <div>
             <span>{tKey("roadRail.corridorFocus")}</span>
@@ -1072,7 +818,7 @@ export function RoadRailWorkspace({
                           className={`road-rail-timeband-row road-rail-timeband-row-${severityTone(incident.severity)}`}
                           key={incident.id}
                         >
-                          <RoadRailIncidentStatusBadge incident={incident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <MobilityEventStatus namespace="roadRail" event={incident} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <i aria-hidden="true">
                             <span style={bandStyle} />
                           </i>
@@ -1104,7 +850,7 @@ export function RoadRailWorkspace({
                           {roadRail.source_code.toUpperCase()} · {formatClockTime(incident.starts_at, language, tKey, dataTimezone)}
                         </small>
                         <div className="sr-only">
-                          <RoadRailIncidentStatusBadge incident={incident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                          <MobilityEventStatus namespace="roadRail" event={incident} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                           <span>{enumLabel(incident.severity)}</span>
                           <small className="road-rail-incident-scope-preview">{scopePreview(incident, language, tKey)}</small>
                           <span>{messageTypeLabel(incident.message_type, language, tKey)}</span>
@@ -1134,13 +880,13 @@ export function RoadRailWorkspace({
                 <section className={`road-rail-incident-detail road-rail-incident-detail-${severityTone(selectedIncident.severity)}`}>
                   <header>
                     <div>
-                      <RoadRailIncidentStatusBadge incident={selectedIncident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} timeZone={dataTimezone} tKey={tKey} />
+                      <MobilityEventStatus namespace="roadRail" event={selectedIncident} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
                       <strong>{localizedPlatformCopy(selectedIncident.title, language) ?? selectedIncident.title}</strong>
                     </div>
                     <em>{enumLabel(selectedIncident.severity)}</em>
                   </header>
                   <p>{localizedPlatformCopy(selectedIncident.description, language) ?? selectedIncident.description}</p>
-                  <RoadRailIncidentLiveLayer incident={selectedIncident} historical={isHistorical} referenceTimestamp={referenceTimestamp} language={language} nowTimestamp={nowTimestamp} timeZone={dataTimezone} tKey={tKey} />
+                  <MobilityEventLiveLayer namespace="roadRail" event={selectedIncident} historical={isHistorical} language={language} progress={incidentWindowProgress(selectedIncident, nowTimestamp)} scopeLabel={locationLabel(selectedIncident, language, tKey)} timeZone={dataTimezone} tKey={tKey} />
                   <div className="road-rail-incident-detail-meta">
                     <div>
                       <span>{tKey("roadRail.type")}</span>

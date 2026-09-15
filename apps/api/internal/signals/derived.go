@@ -3,7 +3,6 @@ package signals
 import (
 	"crypto/sha256"
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 	"time"
@@ -111,56 +110,41 @@ func WeatherEvents(w *weather.Forecast, city string, now time.Time) []platform.E
 	if !Available(w.Status) {
 		return result
 	}
-	var gustPoint, visibilityPoint *weather.ForecastPoint
-	gust, visibility := -1., math.Inf(1)
-	for i := range w.Points {
-		p := &w.Points[i]
-		value := p.WindGustMS
-		if value == nil {
-			value = p.WindSpeedMS
-		}
-		if value != nil && *value > gust {
-			gust = *value
-			gustPoint = p
-		}
-		if p.VisibilityM != nil && *p.VisibilityM < visibility {
-			visibility = *p.VisibilityM
-			visibilityPoint = p
-		}
-	}
-	if gustPoint != nil && gust >= 14 {
+	// The detail page and public briefing share the same advisory selection.
+	copy := *w
+	copy.Points = append([]weather.ForecastPoint{}, w.Points...)
+	copy.Warnings = append([]weather.Warning{}, w.Warnings...)
+	weather.EnrichDetail(&copy)
+	for _, alert := range copy.Advisories {
 		severity := "MEDIUM"
-		if gust >= 20 {
-			severity = "HIGH"
+		var kind, title, body string
+		attributes := map[string]any{"provider": "FMI"}
+		switch alert.Kind {
+		case "gust":
+			if alert.Value >= 20 {
+				severity = "HIGH"
+			}
+			kind, title = "high_wind", "High Wind Advisory"
+			body = fmt.Sprintf("Forecast gusts may reach %g m/s. Outdoor movement and exposed routes may need extra margin.", alert.Value)
+			attributes["peak_gust_ms"] = alert.Value
+		case "visibility":
+			if alert.Value < 1000 {
+				severity = "HIGH"
+			}
+			kind, title = "reduced_visibility", "Reduced Visibility"
+			body = fmt.Sprintf("Forecast visibility may drop to %g km. Leave more time for outdoor movement.", alert.Value/1000)
+			attributes["visibility_m"] = alert.Value
+		case "rain":
+			if alert.Total >= 30 {
+				severity = "HIGH"
+			}
+			kind, title = "heavy_rain", "Heavy Rain Advisory"
+			body = fmt.Sprintf("Forecast rain may peak near %g mm/h with %g mm total.", alert.Value, alert.Total)
+			attributes["peak_precip_mm"], attributes["total_precip_mm"] = alert.Value, alert.Total
 		}
-		start := fallbackTime(gustPoint.Timestamp, checked)
-		result = append(result, advisory("high_wind", "High Wind Advisory", fmt.Sprintf("Forecast gusts may reach %g m/s. Outdoor movement and exposed routes may need extra margin.", gust), severity, city, "fmi", start, start.Add(3*time.Hour), map[string]any{"peak_gust_ms": gust, "provider": "FMI"}))
+		result = append(result, advisory(kind, title, body, severity, city, "fmi", ParseTime(alert.StartsAt), ParseTime(alert.EndsAt), attributes))
 	}
-	if visibilityPoint != nil && visibility < 5000 {
-		severity := "MEDIUM"
-		if visibility < 1000 {
-			severity = "HIGH"
-		}
-		start := fallbackTime(visibilityPoint.Timestamp, checked)
-		result = append(result, advisory("reduced_visibility", "Reduced Visibility", fmt.Sprintf("Forecast visibility may drop to %g km. Leave more time for outdoor movement.", visibility/1000), severity, city, "fmi", start, start.Add(3*time.Hour), map[string]any{"visibility_m": visibility, "provider": "FMI"}))
-	}
-	var rain *weather.RainWindow
-	weight := -1.
-	for i := range w.RainWindows {
-		r := &w.RainWindows[i]
-		v := math.Max(r.PeakPrecipMM, r.TotalPrecipMM/math.Max(float64(r.Hours), 1))
-		if v > weight {
-			rain = r
-			weight = v
-		}
-	}
-	if rain != nil && (rain.PeakPrecipMM >= 5 || rain.TotalPrecipMM >= 15) {
-		severity := "MEDIUM"
-		if rain.TotalPrecipMM >= 30 {
-			severity = "HIGH"
-		}
-		result = append(result, advisory("heavy_rain", "Heavy Rain Advisory", fmt.Sprintf("Forecast rain may peak near %g mm/h with %g mm total.", rain.PeakPrecipMM, rain.TotalPrecipMM), severity, city, "fmi", fallbackTime(rain.StartsAt, checked), fallbackTime(rain.EndsAt, end), map[string]any{"peak_precip_mm": rain.PeakPrecipMM, "total_precip_mm": rain.TotalPrecipMM, "provider": "FMI"}))
-	}
+
 	return result
 }
 func AirEvents(a *airquality.Current, city string, now time.Time) []platform.Event {

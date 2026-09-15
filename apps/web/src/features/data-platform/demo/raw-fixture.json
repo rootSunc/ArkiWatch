@@ -1,0 +1,3200 @@
+{
+  "airQuality": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "ready",
+    "location": "Helsinki",
+    "source_code": "hsy",
+    "observed_at": "2026-08-09T04:00:00.000Z",
+    "valid_to": "2026-08-09T07:00:00.000Z",
+    "summary": "Good air quality across the example station network.",
+    "worst_station": "kallio",
+    "worst_label": "Good",
+    "worst_score": 1,
+    "metrics": [
+      {
+        "key": "european_aqi",
+        "label": "European AQI",
+        "label_key": "european_aqi",
+        "value": "1.2",
+        "tone": "good",
+        "unit": null,
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ]
+      },
+      {
+        "key": "pm2_5",
+        "label": "PM2.5",
+        "label_key": "pm2_5",
+        "value": "5.4",
+        "tone": "good",
+        "unit": "µg/m³",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ]
+      },
+      {
+        "key": "pm10",
+        "label": "PM10",
+        "label_key": "pm10",
+        "value": "9.8",
+        "tone": "good",
+        "unit": "µg/m³",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ]
+      }
+    ],
+    "stations": [
+      {
+        "station": "kallio",
+        "label": "Kallio",
+        "score": 1,
+        "european_aqi": 1.2,
+        "pm2_5": 5.4,
+        "pm10": 9.8,
+        "no2": 18,
+        "lat": 60.184,
+        "lon": 24.95
+      },
+      {
+        "station": "leppavaara",
+        "label": "Leppävaara",
+        "score": 1,
+        "european_aqi": 0.8,
+        "pm2_5": 3.9,
+        "pm10": 7.1,
+        "no2": 12,
+        "lat": 60.218,
+        "lon": 24.813
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "hsy",
+        "label": "HSY air quality",
+        "status": "fetched",
+        "endpoint": "https://kartta.hsy.fi/geoserver/ilmanlaatu/wfs",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "normalized",
+        "label": "Normalized station readings",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 2,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "station_count": 2,
+      "reporting_station_count": 2,
+      "field_coverage_pct": 100,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live station reading."
+      ]
+    }
+  },
+  "energy": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "ready",
+    "location": "Finland",
+    "source_code": "fingrid",
+    "provider_name": "Fingrid",
+    "observed_at": "2026-08-09T04:00:00.000Z",
+    "valid_from": "2026-08-09T04:00:00.000Z",
+    "valid_to": "2026-08-09T16:00:00.000Z",
+    "summary": "Grid load is moderate in the example morning window.",
+    "unit": "MW",
+    "current_window": {
+      "starts_at": "2026-08-09T09:00:00.000Z",
+      "ends_at": "2026-08-09T11:00:00.000Z",
+      "average_value": 980,
+      "minimum_value": 890,
+      "maximum_value": 1050,
+      "unit": "MW",
+      "point_count": 1,
+      "severity": "LOW",
+      "source": "fingrid",
+      "estimated_cost_eur": null,
+      "usage_kwh": null,
+      "threshold_value": null,
+      "horizon_average_value": 965,
+      "savings_vs_average_pct": null,
+      "selection_strategy": "demo-low-window"
+    },
+    "metrics": [
+      {
+        "key": "low_energy_window",
+        "label": "Low-energy window",
+        "label_key": "low_energy_window",
+        "value": "890",
+        "tone": "good",
+        "unit": "MW",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fingrid"
+        ]
+      },
+      {
+        "key": "average",
+        "label": "Average",
+        "label_key": "average",
+        "value": "965",
+        "tone": "neutral",
+        "unit": "MW",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fingrid"
+        ]
+      }
+    ],
+    "points": [
+      {
+        "starts_at": "2026-08-09T04:00:00.000Z",
+        "ends_at": "2026-08-09T06:00:00.000Z",
+        "value": 890,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      },
+      {
+        "starts_at": "2026-08-09T06:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z",
+        "value": 920,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      },
+      {
+        "starts_at": "2026-08-09T08:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z",
+        "value": 980,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      },
+      {
+        "starts_at": "2026-08-09T10:00:00.000Z",
+        "ends_at": "2026-08-09T12:00:00.000Z",
+        "value": 1050,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      },
+      {
+        "starts_at": "2026-08-09T12:00:00.000Z",
+        "ends_at": "2026-08-09T14:00:00.000Z",
+        "value": 1010,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      },
+      {
+        "starts_at": "2026-08-09T14:00:00.000Z",
+        "ends_at": "2026-08-09T16:00:00.000Z",
+        "value": 940,
+        "unit": "MW",
+        "estimated_cost_eur": null
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "fingrid",
+        "label": "Fingrid",
+        "status": "fetched",
+        "endpoint": "https://data.fingrid.fi/en/",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "normalized",
+        "label": "Normalized energy curve",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 6,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "point_count": 6,
+      "window_point_count": 1,
+      "field_coverage_pct": 100,
+      "minimum_value": 890,
+      "maximum_value": 1050,
+      "average_value": 965,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live market or grid reading."
+      ]
+    }
+  },
+  "householdEnergy": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "ready",
+    "location": "Finland",
+    "source_code": "porssisahko",
+    "provider_name": "Pörssisähkö API",
+    "observed_at": "2026-08-09T04:00:00.000Z",
+    "valid_from": "2026-08-09T04:00:00.000Z",
+    "valid_to": "2026-08-09T16:00:00.000Z",
+    "summary": "The example household price is lowest around noon.",
+    "unit": "c/kWh",
+    "current_window": {
+      "starts_at": "2026-08-09T09:00:00.000Z",
+      "ends_at": "2026-08-09T11:00:00.000Z",
+      "average_value": 9.6,
+      "minimum_value": 7.8,
+      "maximum_value": 12.2,
+      "unit": "c/kWh",
+      "point_count": 1,
+      "severity": "LOW",
+      "source": "porssisahko",
+      "estimated_cost_eur": 0.16,
+      "usage_kwh": 2,
+      "threshold_value": 9,
+      "horizon_average_value": 9.433333333333334,
+      "savings_vs_average_pct": 18,
+      "selection_strategy": "demo-low-window"
+    },
+    "metrics": [
+      {
+        "key": "low_energy_window",
+        "label": "Low-energy window",
+        "label_key": "low_energy_window",
+        "value": "7.80",
+        "tone": "good",
+        "unit": "c/kWh",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "porssisahko"
+        ]
+      },
+      {
+        "key": "average",
+        "label": "Average",
+        "label_key": "average",
+        "value": "9.50",
+        "tone": "neutral",
+        "unit": "c/kWh",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "porssisahko"
+        ]
+      }
+    ],
+    "points": [
+      {
+        "starts_at": "2026-08-09T04:00:00.000Z",
+        "ends_at": "2026-08-09T06:00:00.000Z",
+        "value": 7.8,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.16
+      },
+      {
+        "starts_at": "2026-08-09T06:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z",
+        "value": 8.1,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.16
+      },
+      {
+        "starts_at": "2026-08-09T08:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z",
+        "value": 9.6,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.19
+      },
+      {
+        "starts_at": "2026-08-09T10:00:00.000Z",
+        "ends_at": "2026-08-09T12:00:00.000Z",
+        "value": 12.2,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.24
+      },
+      {
+        "starts_at": "2026-08-09T12:00:00.000Z",
+        "ends_at": "2026-08-09T14:00:00.000Z",
+        "value": 10.4,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.21
+      },
+      {
+        "starts_at": "2026-08-09T14:00:00.000Z",
+        "ends_at": "2026-08-09T16:00:00.000Z",
+        "value": 8.5,
+        "unit": "c/kWh",
+        "estimated_cost_eur": 0.17
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "porssisahko",
+        "label": "Pörssisähkö API",
+        "status": "fetched",
+        "endpoint": "https://api.porssisahko.net/",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "normalized",
+        "label": "Normalized energy curve",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 6,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "point_count": 6,
+      "window_point_count": 1,
+      "field_coverage_pct": 100,
+      "minimum_value": 7.8,
+      "maximum_value": 12.2,
+      "average_value": 9.433333333333334,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live market or grid reading."
+      ]
+    }
+  },
+  "history": {
+    "weather": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "ready",
+          "location": "Helsinki",
+          "source_code": "fmi",
+          "generated_at": "2026-08-09T04:00:00.000Z",
+          "valid_from": "2026-08-09T04:00:00.000Z",
+          "valid_to": "2026-08-09T22:00:00.000Z",
+          "summary": "Mild and mostly clear, with a brief late-morning rain window.",
+          "metrics": [
+            {
+              "key": "temperature",
+              "label": "Temperature",
+              "label_key": "temperature",
+              "value": "16",
+              "tone": "good",
+              "unit": "C",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fmi"
+              ]
+            },
+            {
+              "key": "wind",
+              "label": "Wind",
+              "label_key": "wind",
+              "value": "3.4",
+              "tone": "good",
+              "unit": "m/s",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fmi"
+              ]
+            },
+            {
+              "key": "precipitation",
+              "label": "Precipitation",
+              "label_key": "precipitation",
+              "value": "1.8",
+              "tone": "warn",
+              "unit": "mm",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fmi"
+              ]
+            },
+            {
+              "key": "humidity",
+              "label": "Humidity",
+              "label_key": "humidity",
+              "value": "72",
+              "tone": "good",
+              "unit": "%",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fmi"
+              ]
+            }
+          ],
+          "points": [
+            {
+              "timestamp": "2026-08-09T04:00:00.000Z",
+              "temperature_c": 16,
+              "precipitation_mm": 0,
+              "wind_speed_ms": 3.4,
+              "wind_gust_ms": 6.2,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 72,
+              "dew_point_c": 11,
+              "pressure_hpa": 1011,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            },
+            {
+              "timestamp": "2026-08-09T07:00:00.000Z",
+              "temperature_c": 17,
+              "precipitation_mm": 1.8,
+              "wind_speed_ms": 3.6,
+              "wind_gust_ms": 6.5,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 78,
+              "humidity_pct": 70,
+              "dew_point_c": 11.4,
+              "pressure_hpa": 1012,
+              "visibility_m": 12000,
+              "weather_symbol": 9,
+              "smart_symbol": 9
+            },
+            {
+              "timestamp": "2026-08-09T10:00:00.000Z",
+              "temperature_c": 18,
+              "precipitation_mm": 0.6,
+              "wind_speed_ms": 3.8,
+              "wind_gust_ms": 6.8,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 68,
+              "dew_point_c": 11.8,
+              "pressure_hpa": 1013,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            },
+            {
+              "timestamp": "2026-08-09T13:00:00.000Z",
+              "temperature_c": 19,
+              "precipitation_mm": 0,
+              "wind_speed_ms": 4,
+              "wind_gust_ms": 7.1,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 66,
+              "dew_point_c": 12.2,
+              "pressure_hpa": 1014,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            },
+            {
+              "timestamp": "2026-08-09T16:00:00.000Z",
+              "temperature_c": 20,
+              "precipitation_mm": 0,
+              "wind_speed_ms": 4.2,
+              "wind_gust_ms": 7.4,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 64,
+              "dew_point_c": 12.6,
+              "pressure_hpa": 1015,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            },
+            {
+              "timestamp": "2026-08-09T19:00:00.000Z",
+              "temperature_c": 21,
+              "precipitation_mm": 0,
+              "wind_speed_ms": 4.4,
+              "wind_gust_ms": 7.7,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 62,
+              "dew_point_c": 13,
+              "pressure_hpa": 1016,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            },
+            {
+              "timestamp": "2026-08-09T22:00:00.000Z",
+              "temperature_c": 22,
+              "precipitation_mm": 0,
+              "wind_speed_ms": 4.6,
+              "wind_gust_ms": 8,
+              "wind_direction_deg": 210,
+              "cloud_cover_pct": 46,
+              "humidity_pct": 60,
+              "dew_point_c": 13.4,
+              "pressure_hpa": 1017,
+              "visibility_m": 12000,
+              "weather_symbol": 2,
+              "smart_symbol": 2
+            }
+          ],
+          "rain_windows": [
+            {
+              "starts_at": "2026-08-09T07:00:00.000Z",
+              "ends_at": "2026-08-09T10:00:00.000Z",
+              "peak_precip_mm": 1.8,
+              "peak_precip_at": "2026-08-09T08:00:00.000Z",
+              "total_precip_mm": 2.4,
+              "hours": 3
+            }
+          ],
+          "source_layers": [
+            {
+              "key": "fmi_forecast",
+              "label": "FMI forecast",
+              "status": "ready",
+              "detail": "Static demo layer",
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "fmi",
+              "label": "Finnish Meteorological Institute",
+              "status": "fetched",
+              "endpoint": "https://opendata.fmi.fi",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "raw",
+              "label": "Raw observation",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 7,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            },
+            {
+              "key": "normalized",
+              "label": "Normalized forecast",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 7,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "point_count": 7,
+            "forecast_hours": 18,
+            "field_coverage_pct": 98,
+            "rain_window_count": 1,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live forecast."
+            ]
+          },
+          "warnings": []
+        },
+        "error": null
+      }
+    ],
+    "air_quality": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "ready",
+          "location": "Helsinki",
+          "source_code": "hsy",
+          "observed_at": "2026-08-09T04:00:00.000Z",
+          "valid_to": "2026-08-09T07:00:00.000Z",
+          "summary": "Good air quality across the example station network.",
+          "worst_station": "kallio",
+          "worst_label": "Good",
+          "worst_score": 1,
+          "metrics": [
+            {
+              "key": "european_aqi",
+              "label": "European AQI",
+              "label_key": "european_aqi",
+              "value": "1.2",
+              "tone": "good",
+              "unit": null,
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "hsy"
+              ]
+            },
+            {
+              "key": "pm2_5",
+              "label": "PM2.5",
+              "label_key": "pm2_5",
+              "value": "5.4",
+              "tone": "good",
+              "unit": "µg/m³",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "hsy"
+              ]
+            },
+            {
+              "key": "pm10",
+              "label": "PM10",
+              "label_key": "pm10",
+              "value": "9.8",
+              "tone": "good",
+              "unit": "µg/m³",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "hsy"
+              ]
+            }
+          ],
+          "stations": [
+            {
+              "station": "kallio",
+              "label": "Kallio",
+              "score": 1,
+              "european_aqi": 1.2,
+              "pm2_5": 5.4,
+              "pm10": 9.8,
+              "no2": 18,
+              "lat": 60.184,
+              "lon": 24.95
+            },
+            {
+              "station": "leppavaara",
+              "label": "Leppävaara",
+              "score": 1,
+              "european_aqi": 0.8,
+              "pm2_5": 3.9,
+              "pm10": 7.1,
+              "no2": 12,
+              "lat": 60.218,
+              "lon": 24.813
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "hsy",
+              "label": "HSY air quality",
+              "status": "fetched",
+              "endpoint": "https://kartta.hsy.fi/geoserver/ilmanlaatu/wfs",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "normalized",
+              "label": "Normalized station readings",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 2,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "station_count": 2,
+            "reporting_station_count": 2,
+            "field_coverage_pct": 100,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live station reading."
+            ]
+          }
+        },
+        "error": null
+      }
+    ],
+    "energy": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "ready",
+          "location": "Finland",
+          "source_code": "fingrid",
+          "provider_name": "Fingrid",
+          "observed_at": "2026-08-09T04:00:00.000Z",
+          "valid_from": "2026-08-09T04:00:00.000Z",
+          "valid_to": "2026-08-09T16:00:00.000Z",
+          "summary": "Grid load is moderate in the example morning window.",
+          "unit": "MW",
+          "current_window": {
+            "starts_at": "2026-08-09T09:00:00.000Z",
+            "ends_at": "2026-08-09T11:00:00.000Z",
+            "average_value": 980,
+            "minimum_value": 890,
+            "maximum_value": 1050,
+            "unit": "MW",
+            "point_count": 1,
+            "severity": "LOW",
+            "source": "fingrid",
+            "estimated_cost_eur": null,
+            "usage_kwh": null,
+            "threshold_value": null,
+            "horizon_average_value": 965,
+            "savings_vs_average_pct": null,
+            "selection_strategy": "demo-low-window"
+          },
+          "metrics": [
+            {
+              "key": "low_energy_window",
+              "label": "Low-energy window",
+              "label_key": "low_energy_window",
+              "value": "890",
+              "tone": "good",
+              "unit": "MW",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fingrid"
+              ]
+            },
+            {
+              "key": "average",
+              "label": "Average",
+              "label_key": "average",
+              "value": "965",
+              "tone": "neutral",
+              "unit": "MW",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "fingrid"
+              ]
+            }
+          ],
+          "points": [
+            {
+              "starts_at": "2026-08-09T04:00:00.000Z",
+              "ends_at": "2026-08-09T06:00:00.000Z",
+              "value": 890,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            },
+            {
+              "starts_at": "2026-08-09T06:00:00.000Z",
+              "ends_at": "2026-08-09T08:00:00.000Z",
+              "value": 920,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            },
+            {
+              "starts_at": "2026-08-09T08:00:00.000Z",
+              "ends_at": "2026-08-09T10:00:00.000Z",
+              "value": 980,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            },
+            {
+              "starts_at": "2026-08-09T10:00:00.000Z",
+              "ends_at": "2026-08-09T12:00:00.000Z",
+              "value": 1050,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            },
+            {
+              "starts_at": "2026-08-09T12:00:00.000Z",
+              "ends_at": "2026-08-09T14:00:00.000Z",
+              "value": 1010,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            },
+            {
+              "starts_at": "2026-08-09T14:00:00.000Z",
+              "ends_at": "2026-08-09T16:00:00.000Z",
+              "value": 940,
+              "unit": "MW",
+              "estimated_cost_eur": null
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "fingrid",
+              "label": "Fingrid",
+              "status": "fetched",
+              "endpoint": "https://data.fingrid.fi/en/",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "normalized",
+              "label": "Normalized energy curve",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 6,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "point_count": 6,
+            "window_point_count": 1,
+            "field_coverage_pct": 100,
+            "minimum_value": 890,
+            "maximum_value": 1050,
+            "average_value": 965,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live market or grid reading."
+            ]
+          }
+        },
+        "error": null
+      }
+    ],
+    "household_energy": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "ready",
+          "location": "Finland",
+          "source_code": "porssisahko",
+          "provider_name": "Pörssisähkö API",
+          "observed_at": "2026-08-09T04:00:00.000Z",
+          "valid_from": "2026-08-09T04:00:00.000Z",
+          "valid_to": "2026-08-09T16:00:00.000Z",
+          "summary": "The example household price is lowest around noon.",
+          "unit": "c/kWh",
+          "current_window": {
+            "starts_at": "2026-08-09T09:00:00.000Z",
+            "ends_at": "2026-08-09T11:00:00.000Z",
+            "average_value": 9.6,
+            "minimum_value": 7.8,
+            "maximum_value": 12.2,
+            "unit": "c/kWh",
+            "point_count": 1,
+            "severity": "LOW",
+            "source": "porssisahko",
+            "estimated_cost_eur": 0.16,
+            "usage_kwh": 2,
+            "threshold_value": 9,
+            "horizon_average_value": 9.433333333333334,
+            "savings_vs_average_pct": 18,
+            "selection_strategy": "demo-low-window"
+          },
+          "metrics": [
+            {
+              "key": "low_energy_window",
+              "label": "Low-energy window",
+              "label_key": "low_energy_window",
+              "value": "7.80",
+              "tone": "good",
+              "unit": "c/kWh",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "porssisahko"
+              ]
+            },
+            {
+              "key": "average",
+              "label": "Average",
+              "label_key": "average",
+              "value": "9.50",
+              "tone": "neutral",
+              "unit": "c/kWh",
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "porssisahko"
+              ]
+            }
+          ],
+          "points": [
+            {
+              "starts_at": "2026-08-09T04:00:00.000Z",
+              "ends_at": "2026-08-09T06:00:00.000Z",
+              "value": 7.8,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.16
+            },
+            {
+              "starts_at": "2026-08-09T06:00:00.000Z",
+              "ends_at": "2026-08-09T08:00:00.000Z",
+              "value": 8.1,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.16
+            },
+            {
+              "starts_at": "2026-08-09T08:00:00.000Z",
+              "ends_at": "2026-08-09T10:00:00.000Z",
+              "value": 9.6,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.19
+            },
+            {
+              "starts_at": "2026-08-09T10:00:00.000Z",
+              "ends_at": "2026-08-09T12:00:00.000Z",
+              "value": 12.2,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.24
+            },
+            {
+              "starts_at": "2026-08-09T12:00:00.000Z",
+              "ends_at": "2026-08-09T14:00:00.000Z",
+              "value": 10.4,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.21
+            },
+            {
+              "starts_at": "2026-08-09T14:00:00.000Z",
+              "ends_at": "2026-08-09T16:00:00.000Z",
+              "value": 8.5,
+              "unit": "c/kWh",
+              "estimated_cost_eur": 0.17
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "porssisahko",
+              "label": "Pörssisähkö API",
+              "status": "fetched",
+              "endpoint": "https://api.porssisahko.net/",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "normalized",
+              "label": "Normalized energy curve",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 6,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "point_count": 6,
+            "window_point_count": 1,
+            "field_coverage_pct": 100,
+            "minimum_value": 7.8,
+            "maximum_value": 12.2,
+            "average_value": 9.433333333333334,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live market or grid reading."
+            ]
+          }
+        },
+        "error": null
+      }
+    ],
+    "road_rail": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "watch",
+          "location": "Finland",
+          "source_code": "digitraffic",
+          "observed_at": "2026-08-09T04:00:00.000Z",
+          "summary": "One example road-weather event is worth allowing extra space for.",
+          "metrics": [
+            {
+              "key": "active_events",
+              "label": "Active events",
+              "label_key": "active_events",
+              "value": "1",
+              "tone": "warn",
+              "unit": null,
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "digitraffic"
+              ]
+            }
+          ],
+          "incidents": [
+            {
+              "id": "demo-road-1",
+              "title": "Wet road surface risk",
+              "description": "Road surfaces may be slippery after the rain window.",
+              "severity": "MEDIUM",
+              "event_type": "road_weather_risk",
+              "starts_at": "2026-08-09T09:00:00.000Z",
+              "ends_at": "2026-08-09T12:00:00.000Z",
+              "active": true,
+              "location_ref": "helsinki-west",
+              "message_type": "WEATHER",
+              "situation_type": "SLIPPERY_ROAD",
+              "location_description": "Helsinki westbound approach",
+              "feature_names": [
+                "Road weather"
+              ],
+              "geometry_bbox": null
+            }
+          ],
+          "corridors": [
+            {
+              "key": "helsinki-west",
+              "label": "Helsinki westbound",
+              "event_count": 1,
+              "active_event_count": 1,
+              "weather_risk_count": 1,
+              "severity": "MEDIUM",
+              "latest_title": "Wet road surface risk",
+              "latest_valid_to": "2026-08-09T12:00:00.000Z",
+              "geometry_bbox": null
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "digitraffic",
+              "label": "Digitraffic road events",
+              "status": "fetched",
+              "endpoint": "https://tie.digitraffic.fi",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z",
+              "message_count": 2
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "normalized",
+              "label": "Normalized road events",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 1,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "raw_message_count": 2,
+            "normalized_event_count": 1,
+            "active_event_count": 1,
+            "road_event_count": 1,
+            "rail_event_count": 0,
+            "weather_risk_count": 1,
+            "corridor_count": 1,
+            "field_coverage_pct": 100,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live road event."
+            ]
+          }
+        },
+        "error": null
+      }
+    ],
+    "transit": [
+      {
+        "date": "2026-08-08",
+        "data": {
+          "checked_at": "2026-08-09T04:00:00.000Z",
+          "time_scope": {
+            "mode": "live",
+            "is_demo": true,
+            "date": null,
+            "timezone": "Europe/Helsinki",
+            "reference_time": "2026-08-09T04:00:00.000Z",
+            "window_start": "2026-08-09T04:00:00.000Z",
+            "window_end": "2026-08-09T22:00:00.000Z"
+          },
+          "status": "watch",
+          "location": "Helsinki",
+          "source_code": "digitransit",
+          "observed_at": "2026-08-09T04:00:00.000Z",
+          "summary": "One example service alert may affect the westbound tram corridor.",
+          "metrics": [
+            {
+              "key": "active_alerts",
+              "label": "Active alerts",
+              "label_key": "active_alerts",
+              "value": "1",
+              "tone": "warn",
+              "unit": null,
+              "detail": null,
+              "updated_at": "2026-08-09T04:00:00.000Z",
+              "source_codes": [
+                "digitransit"
+              ]
+            }
+          ],
+          "alerts": [
+            {
+              "id": "demo-alert-4",
+              "title": "Westbound tram service is slower",
+              "description": "Allow a few extra minutes during the morning peak.",
+              "severity": "HIGH",
+              "event_type": "transit_delay",
+              "starts_at": "2026-08-09T05:00:00.000Z",
+              "ends_at": "2026-08-09T08:00:00.000Z",
+              "active": true,
+              "cause": "TRAFFIC_JAM",
+              "effect": "SIGNIFICANT_DELAYS",
+              "route_ids": [
+                "4",
+                "10"
+              ],
+              "stop_ids": [],
+              "trip_ids": []
+            }
+          ],
+          "source_requests": [
+            {
+              "key": "digitransit",
+              "label": "Digitransit alerts",
+              "status": "fetched",
+              "endpoint": "https://api.digitransit.fi",
+              "content_type": "application/json",
+              "fetched_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "data_pipeline": [
+            {
+              "key": "normalized",
+              "label": "Normalized transit alerts",
+              "status": "ready",
+              "detail": "Static demo fixture",
+              "record_count": 1,
+              "updated_at": "2026-08-09T04:00:00.000Z"
+            }
+          ],
+          "quality": {
+            "raw_alert_count": 3,
+            "normalized_event_count": 1,
+            "active_alert_count": 1,
+            "route_alert_count": 1,
+            "stop_alert_count": 0,
+            "field_coverage_pct": 100,
+            "missing_fields": [],
+            "notes": [
+              "Static demo fixture; not a live service alert."
+            ]
+          }
+        },
+        "error": null
+      }
+    ]
+  },
+  "historyAvailability": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "city": "helsinki",
+    "days": [
+      {
+        "date": "2026-08-08",
+        "has_data": true,
+        "record_count": 42,
+        "source_codes": [
+          "fmi",
+          "hsy",
+          "digitransit",
+          "digitraffic",
+          "fingrid",
+          "porssisahko",
+          "syke",
+          "servicemap",
+          "linkedevents"
+        ],
+        "categories": [
+          "weather",
+          "air",
+          "energy",
+          "transit",
+          "traffic"
+        ],
+        "datasets": [
+          "demo_snapshot"
+        ]
+      }
+    ]
+  },
+  "overview": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "app_name": "ArkiWatch",
+    "timezone": "Europe/Helsinki",
+    "coverage_area": "Helsinki / Uusimaa",
+    "health_status": "healthy",
+    "categories": [
+      {
+        "key": "weather",
+        "title": "Weather",
+        "description": "Forecast and rain timing.",
+        "status": "healthy",
+        "stage": "connected",
+        "priority": "P0",
+        "source_codes": [
+          "fmi"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "fmi"
+            ]
+          },
+          {
+            "key": "rain_window",
+            "label": "Rain windows",
+            "label_key": "rain_window",
+            "value": "1",
+            "tone": "warn",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "fmi"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [
+          {
+            "id": "demo-rain-risk",
+            "category_key": "weather",
+            "event_type": "rain_risk",
+            "title": "Brief rain may affect the late morning",
+            "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+            "body": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+            "body_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+            "severity": "MEDIUM",
+            "starts_at": "2026-08-09T07:00:00.000Z",
+            "ends_at": "2026-08-09T10:00:00.000Z",
+            "source_codes": [
+              "fmi"
+            ],
+            "evidence": [
+              "FMI"
+            ],
+            "attributes": {
+              "peak_precip_mm": 1.8
+            }
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-fmi",
+            "source_code": "fmi",
+            "source_name": "Finnish Meteorological Institute",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "weather"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "air",
+        "title": "Air quality",
+        "description": "Station-level outdoor air quality.",
+        "status": "healthy",
+        "stage": "connected",
+        "priority": "P0",
+        "source_codes": [
+          "hsy"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "hsy"
+            ]
+          },
+          {
+            "key": "european_aqi",
+            "label": "European AQI",
+            "label_key": "european_aqi",
+            "value": "1.2",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "hsy"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [
+          {
+            "id": "demo-air-status",
+            "category_key": "air",
+            "event_type": "air_quality_status",
+            "title": "Air quality is suitable for normal outdoor activity",
+            "title_zh": "空气质量适合正常户外活动",
+            "body": "Station readings are in the good range across the Helsinki example network.",
+            "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+            "severity": "LOW",
+            "starts_at": "2026-08-09T03:00:00.000Z",
+            "ends_at": "2026-08-09T16:00:00.000Z",
+            "source_codes": [
+              "hsy"
+            ],
+            "evidence": [
+              "HSY"
+            ],
+            "attributes": {}
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-hsy",
+            "source_code": "hsy",
+            "source_name": "Helsinki Region Environmental Services",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "air"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "energy",
+        "title": "Energy",
+        "description": "Grid load and household price signals.",
+        "status": "healthy",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "fingrid",
+          "porssisahko"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "fingrid",
+              "porssisahko"
+            ]
+          },
+          {
+            "key": "low_energy_window",
+            "label": "Low-energy window",
+            "label_key": "low_energy_window",
+            "value": "7.80",
+            "tone": "good",
+            "unit": "c/kWh",
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "porssisahko"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [
+          {
+            "id": "demo-cheap-energy",
+            "category_key": "energy",
+            "event_type": "cheap_energy_window",
+            "title": "A lower-cost household energy window starts at noon",
+            "title_zh": "中午开始进入较低成本的家庭用电时段",
+            "body": "The example price curve is most favourable between 12:00 and 14:00.",
+            "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+            "severity": "LOW",
+            "starts_at": "2026-08-09T09:00:00.000Z",
+            "ends_at": "2026-08-09T11:00:00.000Z",
+            "source_codes": [
+              "porssisahko"
+            ],
+            "evidence": [
+              "PORSSISAHKO"
+            ],
+            "attributes": {
+              "average_value": 7.8,
+              "unit": "c/kWh"
+            }
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-fingrid",
+            "source_code": "fingrid",
+            "source_name": "Fingrid",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "energy"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://data.fingrid.fi/en/",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          },
+          {
+            "id": "demo-porssisahko",
+            "source_code": "porssisahko",
+            "source_name": "Pörssisähkö API",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "energy"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://api.porssisahko.net/",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "transit",
+        "title": "Transit",
+        "description": "Public transport service alerts.",
+        "status": "watch",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "digitransit"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "digitransit"
+            ]
+          },
+          {
+            "key": "active_events",
+            "label": "Active events",
+            "label_key": "active_events",
+            "value": "1",
+            "tone": "warn",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "digitransit"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [
+          {
+            "id": "demo-transit-delay",
+            "category_key": "transit",
+            "event_type": "transit_delay",
+            "title": "Allow a few extra minutes on the westbound tram",
+            "title_zh": "乘坐西向有轨电车请预留几分钟",
+            "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+            "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+            "severity": "HIGH",
+            "starts_at": "2026-08-09T05:00:00.000Z",
+            "ends_at": "2026-08-09T08:00:00.000Z",
+            "source_codes": [
+              "digitransit"
+            ],
+            "evidence": [
+              "DIGITRANSIT"
+            ],
+            "attributes": {
+              "alert_id": "demo-alert-4",
+              "route_ids": [
+                "4",
+                "10"
+              ]
+            }
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-digitransit",
+            "source_code": "digitransit",
+            "source_name": "Digitransit / HSL",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "transit"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://digitransit.fi/en/developers/",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "traffic",
+        "title": "Road & Rail",
+        "description": "Road and rail operational events.",
+        "status": "healthy",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "digitraffic"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "digitraffic"
+            ]
+          },
+          {
+            "key": "active_events",
+            "label": "Active events",
+            "label_key": "active_events",
+            "value": "1",
+            "tone": "warn",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "digitraffic"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [
+          {
+            "id": "demo-road-weather",
+            "category_key": "traffic",
+            "event_type": "road_weather_risk",
+            "title": "Road surfaces may be slippery after the rain window",
+            "title_zh": "降雨后路面可能湿滑",
+            "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+            "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+            "severity": "MEDIUM",
+            "starts_at": "2026-08-09T09:00:00.000Z",
+            "ends_at": "2026-08-09T12:00:00.000Z",
+            "source_codes": [
+              "digitraffic"
+            ],
+            "evidence": [
+              "DIGITRAFFIC"
+            ],
+            "attributes": {
+              "location_description": "Helsinki westbound approach",
+              "situation_id": "demo-road-1"
+            }
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-digitraffic",
+            "source_code": "digitraffic",
+            "source_name": "Digitraffic",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "traffic"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://www.digitraffic.fi/en/",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "water",
+        "title": "Water and snow",
+        "description": "Hydrology and seasonal conditions.",
+        "status": "empty",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "syke"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "syke"
+            ]
+          },
+          {
+            "key": "coverage",
+            "label": "Coverage",
+            "label_key": "coverage",
+            "value": "Helsinki region",
+            "tone": "neutral",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "syke"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [],
+        "sources": [
+          {
+            "id": "demo-syke",
+            "source_code": "syke",
+            "source_name": "Finnish Environment Institute",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "water"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://www.syke.fi/en-US/Open_information",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "events",
+        "title": "Linked Events",
+        "description": "Public events and activities.",
+        "status": "empty",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "linkedevents"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "linkedevents"
+            ]
+          },
+          {
+            "key": "active_events",
+            "label": "Upcoming events",
+            "label_key": "active_events",
+            "value": "12",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "linkedevents"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [],
+        "sources": [
+          {
+            "id": "demo-linkedevents",
+            "source_code": "linkedevents",
+            "source_name": "Helsinki Linked Events",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "events"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "city_services",
+        "title": "City services",
+        "description": "Public service locations and opening information.",
+        "status": "empty",
+        "stage": "connected",
+        "priority": "P1",
+        "source_codes": [
+          "servicemap"
+        ],
+        "summary_metrics": [
+          {
+            "key": "source_status",
+            "label": "Source status",
+            "label_key": "source_status",
+            "value": "healthy",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "servicemap"
+            ]
+          },
+          {
+            "key": "service_units",
+            "label": "Service units",
+            "label_key": "service_units",
+            "value": "24",
+            "tone": "good",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": [
+              "servicemap"
+            ]
+          }
+        ],
+        "visualizations": [],
+        "events": [],
+        "sources": [
+          {
+            "id": "demo-servicemap",
+            "source_code": "servicemap",
+            "source_name": "Helsinki Service Map",
+            "auth_type": "public",
+            "poll_interval_seconds": 600,
+            "operational_status": "healthy",
+            "stage": "connected",
+            "categories": [
+              "city_services"
+            ],
+            "datasets": [],
+            "key_data_items": [],
+            "license_label": "Public data · see provider terms",
+            "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
+            "last_run_status": "success",
+            "last_run_started_at": "2026-08-09T03:00:00.000Z",
+            "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+            "records_ingested": 42,
+            "error_message": null
+          }
+        ]
+      },
+      {
+        "key": "geospatial",
+        "title": "Geospatial base",
+        "description": "Location context for public signals.",
+        "status": "background",
+        "stage": "background",
+        "priority": "P1",
+        "source_codes": [],
+        "summary_metrics": [
+          {
+            "key": "catalog_stage",
+            "label": "Catalog stage",
+            "label_key": "catalog_stage",
+            "value": "background",
+            "tone": "neutral",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": []
+          }
+        ],
+        "visualizations": [],
+        "events": [],
+        "sources": []
+      },
+      {
+        "key": "regional_profile",
+        "title": "Regional profile",
+        "description": "Regional coverage and context.",
+        "status": "background",
+        "stage": "background",
+        "priority": "P1",
+        "source_codes": [],
+        "summary_metrics": [
+          {
+            "key": "catalog_stage",
+            "label": "Catalog stage",
+            "label_key": "catalog_stage",
+            "value": "background",
+            "tone": "neutral",
+            "unit": null,
+            "detail": null,
+            "updated_at": "2026-08-09T04:00:00.000Z",
+            "source_codes": []
+          }
+        ],
+        "visualizations": [],
+        "events": [],
+        "sources": []
+      }
+    ],
+    "recent_events": [
+      {
+        "id": "demo-rain-risk",
+        "category_key": "weather",
+        "event_type": "rain_risk",
+        "title": "Brief rain may affect the late morning",
+        "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+        "body": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+        "body_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-09T07:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ],
+        "evidence": [
+          "FMI"
+        ],
+        "attributes": {
+          "peak_precip_mm": 1.8
+        }
+      },
+      {
+        "id": "demo-transit-delay",
+        "category_key": "transit",
+        "event_type": "transit_delay",
+        "title": "Allow a few extra minutes on the westbound tram",
+        "title_zh": "乘坐西向有轨电车请预留几分钟",
+        "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+        "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+        "severity": "HIGH",
+        "starts_at": "2026-08-09T05:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z",
+        "source_codes": [
+          "digitransit"
+        ],
+        "evidence": [
+          "DIGITRANSIT"
+        ],
+        "attributes": {
+          "alert_id": "demo-alert-4",
+          "route_ids": [
+            "4",
+            "10"
+          ]
+        }
+      },
+      {
+        "id": "demo-road-weather",
+        "category_key": "traffic",
+        "event_type": "road_weather_risk",
+        "title": "Road surfaces may be slippery after the rain window",
+        "title_zh": "降雨后路面可能湿滑",
+        "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+        "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T12:00:00.000Z",
+        "source_codes": [
+          "digitraffic"
+        ],
+        "evidence": [
+          "DIGITRAFFIC"
+        ],
+        "attributes": {
+          "location_description": "Helsinki westbound approach",
+          "situation_id": "demo-road-1"
+        }
+      },
+      {
+        "id": "demo-cheap-energy",
+        "category_key": "energy",
+        "event_type": "cheap_energy_window",
+        "title": "A lower-cost household energy window starts at noon",
+        "title_zh": "中午开始进入较低成本的家庭用电时段",
+        "body": "The example price curve is most favourable between 12:00 and 14:00.",
+        "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+        "severity": "LOW",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T11:00:00.000Z",
+        "source_codes": [
+          "porssisahko"
+        ],
+        "evidence": [
+          "PORSSISAHKO"
+        ],
+        "attributes": {
+          "average_value": 7.8,
+          "unit": "c/kWh"
+        }
+      },
+      {
+        "id": "demo-air-status",
+        "category_key": "air",
+        "event_type": "air_quality_status",
+        "title": "Air quality is suitable for normal outdoor activity",
+        "title_zh": "空气质量适合正常户外活动",
+        "body": "Station readings are in the good range across the Helsinki example network.",
+        "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+        "severity": "LOW",
+        "starts_at": "2026-08-09T03:00:00.000Z",
+        "ends_at": "2026-08-09T16:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ],
+        "evidence": [
+          "HSY"
+        ],
+        "attributes": {}
+      }
+    ],
+    "sources": [
+      {
+        "id": "demo-fmi",
+        "source_code": "fmi",
+        "source_name": "Finnish Meteorological Institute",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "weather"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-hsy",
+        "source_code": "hsy",
+        "source_name": "Helsinki Region Environmental Services",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "air"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-digitransit",
+        "source_code": "digitransit",
+        "source_name": "Digitransit / HSL",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "transit"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://digitransit.fi/en/developers/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-digitraffic",
+        "source_code": "digitraffic",
+        "source_name": "Digitraffic",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "traffic"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.digitraffic.fi/en/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-fingrid",
+        "source_code": "fingrid",
+        "source_name": "Fingrid",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "energy"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://data.fingrid.fi/en/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-porssisahko",
+        "source_code": "porssisahko",
+        "source_name": "Pörssisähkö API",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "energy"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://api.porssisahko.net/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-syke",
+        "source_code": "syke",
+        "source_name": "Finnish Environment Institute",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "water"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.syke.fi/en-US/Open_information",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-servicemap",
+        "source_code": "servicemap",
+        "source_name": "Helsinki Service Map",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "city_services"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-linkedevents",
+        "source_code": "linkedevents",
+        "source_name": "Helsinki Linked Events",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "events"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      }
+    ]
+  },
+  "publicDashboard": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "snapshot_date": "2026-08-08",
+    "snapshot_available": true,
+    "app_name": "ArkiWatch",
+    "timezone": "Europe/Helsinki",
+    "coverage_area": "Helsinki / Uusimaa",
+    "top_actions": [
+      {
+        "id": "demo-action-commute",
+        "scenario_key": "commute",
+        "title": "Leave a few minutes earlier",
+        "title_zh": "提前几分钟出发",
+        "body": "The westbound tram example has a service alert during the morning peak.",
+        "body_zh": "西向有轨电车示例线路在早高峰期间有服务提醒，建议留出一些缓冲时间。",
+        "severity": "HIGH",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T05:00:00.000Z",
+        "valid_to": "2026-08-09T08:00:00.000Z",
+        "evidence": [
+          "Digitransit · routes 4 and 10"
+        ]
+      },
+      {
+        "id": "demo-action-outdoor",
+        "scenario_key": "outdoor",
+        "title": "Carry a light rain layer",
+        "title_zh": "带上一件轻便防雨外套",
+        "body": "A short shower may cross the late-morning commute. Keep a light shell handy.",
+        "body_zh": "上午晚些时候可能有一阵短时阵雨，随身准备轻便外套即可。",
+        "severity": "MEDIUM",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T07:00:00.000Z",
+        "valid_to": "2026-08-09T10:00:00.000Z",
+        "evidence": [
+          "FMI · rain risk · 1.8 mm peak"
+        ]
+      },
+      {
+        "id": "demo-action-energy",
+        "scenario_key": "energy",
+        "title": "Run flexible appliances around noon",
+        "title_zh": "中午安排可灵活调整的家务用电",
+        "body": "The example household price window is most favourable between 12:00 and 14:00.",
+        "body_zh": "示例家庭电价在 12:00 至 14:00 最有利，可将洗衣等用电安排在这段时间。",
+        "severity": "LOW",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T09:00:00.000Z",
+        "valid_to": "2026-08-09T11:00:00.000Z",
+        "evidence": [
+          "Pörssisähkö · 7.80 c/kWh example window"
+        ]
+      }
+    ],
+    "scenario_channels": [
+      {
+        "scenario_key": "outdoor",
+        "title": "Outdoor",
+        "title_zh": "户外",
+        "description": "Weather timing for the next useful decision.",
+        "description_zh": "帮助你安排下一步出行的天气时段。"
+      },
+      {
+        "scenario_key": "commute",
+        "title": "Commute",
+        "title_zh": "通勤",
+        "description": "Transit and road signals that may change your route.",
+        "description_zh": "可能影响路线选择的公共交通和道路信号。"
+      },
+      {
+        "scenario_key": "home_air",
+        "title": "Home air",
+        "title_zh": "室内空气",
+        "description": "Outdoor air conditions for ventilation and activity.",
+        "description_zh": "帮助安排通风和户外活动的空气状况。"
+      },
+      {
+        "scenario_key": "energy",
+        "title": "Energy",
+        "title_zh": "能源",
+        "description": "A practical window for flexible household use.",
+        "description_zh": "适合安排可灵活调整家庭用电的时间段。"
+      }
+    ],
+    "scenario_sections": [
+      {
+        "key": "outdoor",
+        "title": "Outdoor",
+        "title_zh": "户外",
+        "description": "Weather timing for the next useful decision.",
+        "description_zh": "帮助你安排下一步出行的天气时段。",
+        "status_label": "Watch",
+        "status_label_zh": "留意",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T07:00:00.000Z",
+        "valid_to": "2026-08-09T10:00:00.000Z",
+        "evidence": [
+          "FMI · rain risk · 1.8 mm peak"
+        ],
+        "source_codes": [
+          "fmi"
+        ],
+        "recommendation": {
+          "id": "demo-action-outdoor",
+          "scenario_key": "outdoor",
+          "title": "Carry a light rain layer",
+          "title_zh": "带上一件轻便防雨外套",
+          "body": "A short shower may cross the late-morning commute. Keep a light shell handy.",
+          "body_zh": "上午晚些时候可能有一阵短时阵雨，随身准备轻便外套即可。",
+          "severity": "MEDIUM",
+          "area_scope": "Helsinki",
+          "freshness_state": "fresh",
+          "valid_from": "2026-08-09T07:00:00.000Z",
+          "valid_to": "2026-08-09T10:00:00.000Z",
+          "evidence": [
+            "FMI · rain risk · 1.8 mm peak"
+          ]
+        }
+      },
+      {
+        "key": "commute",
+        "title": "Commute",
+        "title_zh": "通勤",
+        "description": "Transit and road signals that may change your route.",
+        "description_zh": "可能影响路线选择的公共交通和道路信号。",
+        "status_label": "Needs attention",
+        "status_label_zh": "需要留意",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T05:00:00.000Z",
+        "valid_to": "2026-08-09T08:00:00.000Z",
+        "evidence": [
+          "Digitransit · routes 4 and 10"
+        ],
+        "source_codes": [
+          "digitransit",
+          "digitraffic"
+        ],
+        "recommendation": {
+          "id": "demo-action-commute",
+          "scenario_key": "commute",
+          "title": "Leave a few minutes earlier",
+          "title_zh": "提前几分钟出发",
+          "body": "The westbound tram example has a service alert during the morning peak.",
+          "body_zh": "西向有轨电车示例线路在早高峰期间有服务提醒，建议留出一些缓冲时间。",
+          "severity": "HIGH",
+          "area_scope": "Helsinki",
+          "freshness_state": "fresh",
+          "valid_from": "2026-08-09T05:00:00.000Z",
+          "valid_to": "2026-08-09T08:00:00.000Z",
+          "evidence": [
+            "Digitransit · routes 4 and 10"
+          ]
+        }
+      },
+      {
+        "key": "home_air",
+        "title": "Home air",
+        "title_zh": "室内空气",
+        "description": "Outdoor air conditions for ventilation and activity.",
+        "description_zh": "帮助安排通风和户外活动的空气状况。",
+        "status_label": "Good",
+        "status_label_zh": "良好",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T03:00:00.000Z",
+        "valid_to": "2026-08-09T16:00:00.000Z",
+        "evidence": [
+          "HSY · two reporting stations"
+        ],
+        "source_codes": [
+          "hsy"
+        ],
+        "recommendation": {
+          "id": "demo-action-air",
+          "scenario_key": "home_air",
+          "title": "Normal outdoor activity is fine",
+          "title_zh": "可以正常进行户外活动",
+          "body": "Example station readings are in the good range. Ventilate when convenient.",
+          "body_zh": "示例监测站读数均处于良好范围，方便时开窗通风即可。",
+          "severity": "LOW",
+          "area_scope": "Helsinki",
+          "freshness_state": "fresh",
+          "valid_from": "2026-08-09T03:00:00.000Z",
+          "valid_to": "2026-08-09T16:00:00.000Z",
+          "evidence": [
+            "HSY · two reporting stations"
+          ]
+        }
+      },
+      {
+        "key": "energy",
+        "title": "Energy",
+        "title_zh": "能源",
+        "description": "A practical window for flexible household use.",
+        "description_zh": "适合安排可灵活调整家庭用电的时间段。",
+        "status_label": "Good window",
+        "status_label_zh": "合适时段",
+        "area_scope": "Finland",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T09:00:00.000Z",
+        "valid_to": "2026-08-09T11:00:00.000Z",
+        "evidence": [
+          "Pörssisähkö · 7.80 c/kWh example window"
+        ],
+        "source_codes": [
+          "porssisahko",
+          "fingrid"
+        ],
+        "recommendation": {
+          "id": "demo-action-energy",
+          "scenario_key": "energy",
+          "title": "Run flexible appliances around noon",
+          "title_zh": "中午安排可灵活调整的家务用电",
+          "body": "The example household price window is most favourable between 12:00 and 14:00.",
+          "body_zh": "示例家庭电价在 12:00 至 14:00 最有利，可将洗衣等用电安排在这段时间。",
+          "severity": "LOW",
+          "area_scope": "Helsinki",
+          "freshness_state": "fresh",
+          "valid_from": "2026-08-09T09:00:00.000Z",
+          "valid_to": "2026-08-09T11:00:00.000Z",
+          "evidence": [
+            "Pörssisähkö · 7.80 c/kWh example window"
+          ]
+        }
+      }
+    ],
+    "timeline": [
+      {
+        "scenario_key": "commute",
+        "label": "Morning peak · westbound tram alert",
+        "label_zh": "早高峰 · 西向有轨电车提醒",
+        "severity": "HIGH",
+        "starts_at": "2026-08-09T05:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z"
+      },
+      {
+        "scenario_key": "outdoor",
+        "label": "Late morning · brief rain window",
+        "label_zh": "上午晚些时候 · 短时降雨",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-09T07:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z"
+      },
+      {
+        "scenario_key": "energy",
+        "label": "Noon · lower-cost household window",
+        "label_zh": "中午 · 较低成本家庭用电时段",
+        "severity": "LOW",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T11:00:00.000Z"
+      }
+    ],
+    "broadcasts": [
+      {
+        "id": "demo-action-air",
+        "scenario_key": "home_air",
+        "title": "Normal outdoor activity is fine",
+        "title_zh": "可以正常进行户外活动",
+        "body": "Example station readings are in the good range. Ventilate when convenient.",
+        "body_zh": "示例监测站读数均处于良好范围，方便时开窗通风即可。",
+        "severity": "LOW",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T03:00:00.000Z",
+        "valid_to": "2026-08-09T16:00:00.000Z",
+        "evidence": [
+          "HSY · two reporting stations"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "demo-fmi",
+        "source_code": "fmi",
+        "source_name": "Finnish Meteorological Institute",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "weather"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-hsy",
+        "source_code": "hsy",
+        "source_name": "Helsinki Region Environmental Services",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "air"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-digitransit",
+        "source_code": "digitransit",
+        "source_name": "Digitransit / HSL",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "transit"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://digitransit.fi/en/developers/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-digitraffic",
+        "source_code": "digitraffic",
+        "source_name": "Digitraffic",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "traffic"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.digitraffic.fi/en/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-fingrid",
+        "source_code": "fingrid",
+        "source_name": "Fingrid",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "energy"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://data.fingrid.fi/en/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-porssisahko",
+        "source_code": "porssisahko",
+        "source_name": "Pörssisähkö API",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "energy"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://api.porssisahko.net/",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-syke",
+        "source_code": "syke",
+        "source_name": "Finnish Environment Institute",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "water"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.syke.fi/en-US/Open_information",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-servicemap",
+        "source_code": "servicemap",
+        "source_name": "Helsinki Service Map",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "city_services"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      },
+      {
+        "id": "demo-linkedevents",
+        "source_code": "linkedevents",
+        "source_name": "Helsinki Linked Events",
+        "auth_type": "public",
+        "poll_interval_seconds": 600,
+        "operational_status": "healthy",
+        "stage": "connected",
+        "categories": [
+          "events"
+        ],
+        "datasets": [],
+        "key_data_items": [],
+        "license_label": "Public data · see provider terms",
+        "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
+        "last_run_status": "success",
+        "last_run_started_at": "2026-08-09T03:00:00.000Z",
+        "last_run_finished_at": "2026-08-09T04:00:00.000Z",
+        "records_ingested": 42,
+        "error_message": null
+      }
+    ]
+  },
+  "roadRail": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "watch",
+    "location": "Finland",
+    "source_code": "digitraffic",
+    "observed_at": "2026-08-09T04:00:00.000Z",
+    "summary": "One example road-weather event is worth allowing extra space for.",
+    "metrics": [
+      {
+        "key": "active_events",
+        "label": "Active events",
+        "label_key": "active_events",
+        "value": "1",
+        "tone": "warn",
+        "unit": null,
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "digitraffic"
+        ]
+      }
+    ],
+    "incidents": [
+      {
+        "id": "demo-road-1",
+        "title": "Wet road surface risk",
+        "description": "Road surfaces may be slippery after the rain window.",
+        "severity": "MEDIUM",
+        "event_type": "road_weather_risk",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T12:00:00.000Z",
+        "active": true,
+        "location_ref": "helsinki-west",
+        "message_type": "WEATHER",
+        "situation_type": "SLIPPERY_ROAD",
+        "location_description": "Helsinki westbound approach",
+        "feature_names": [
+          "Road weather"
+        ],
+        "geometry_bbox": null
+      }
+    ],
+    "corridors": [
+      {
+        "key": "helsinki-west",
+        "label": "Helsinki westbound",
+        "event_count": 1,
+        "active_event_count": 1,
+        "weather_risk_count": 1,
+        "severity": "MEDIUM",
+        "latest_title": "Wet road surface risk",
+        "latest_valid_to": "2026-08-09T12:00:00.000Z",
+        "geometry_bbox": null
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "digitraffic",
+        "label": "Digitraffic road events",
+        "status": "fetched",
+        "endpoint": "https://tie.digitraffic.fi",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z",
+        "message_count": 2
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "normalized",
+        "label": "Normalized road events",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 1,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "raw_message_count": 2,
+      "normalized_event_count": 1,
+      "active_event_count": 1,
+      "road_event_count": 1,
+      "rail_event_count": 0,
+      "weather_risk_count": 1,
+      "corridor_count": 1,
+      "field_coverage_pct": 100,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live road event."
+      ]
+    }
+  },
+  "transit": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "watch",
+    "location": "Helsinki",
+    "source_code": "digitransit",
+    "observed_at": "2026-08-09T04:00:00.000Z",
+    "summary": "One example service alert may affect the westbound tram corridor.",
+    "metrics": [
+      {
+        "key": "active_alerts",
+        "label": "Active alerts",
+        "label_key": "active_alerts",
+        "value": "1",
+        "tone": "warn",
+        "unit": null,
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "digitransit"
+        ]
+      }
+    ],
+    "alerts": [
+      {
+        "id": "demo-alert-4",
+        "title": "Westbound tram service is slower",
+        "description": "Allow a few extra minutes during the morning peak.",
+        "severity": "HIGH",
+        "event_type": "transit_delay",
+        "starts_at": "2026-08-09T05:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z",
+        "active": true,
+        "cause": "TRAFFIC_JAM",
+        "effect": "SIGNIFICANT_DELAYS",
+        "route_ids": [
+          "4",
+          "10"
+        ],
+        "stop_ids": [],
+        "trip_ids": []
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "digitransit",
+        "label": "Digitransit alerts",
+        "status": "fetched",
+        "endpoint": "https://api.digitransit.fi",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "normalized",
+        "label": "Normalized transit alerts",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 1,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "raw_alert_count": 3,
+      "normalized_event_count": 1,
+      "active_alert_count": 1,
+      "route_alert_count": 1,
+      "stop_alert_count": 0,
+      "field_coverage_pct": 100,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live service alert."
+      ]
+    }
+  },
+  "weather": {
+    "checked_at": "2026-08-09T04:00:00.000Z",
+    "time_scope": {
+      "mode": "live",
+      "is_demo": true,
+      "date": null,
+      "timezone": "Europe/Helsinki",
+      "reference_time": "2026-08-09T04:00:00.000Z",
+      "window_start": "2026-08-09T04:00:00.000Z",
+      "window_end": "2026-08-09T22:00:00.000Z"
+    },
+    "status": "ready",
+    "location": "Helsinki",
+    "source_code": "fmi",
+    "generated_at": "2026-08-09T04:00:00.000Z",
+    "valid_from": "2026-08-09T04:00:00.000Z",
+    "valid_to": "2026-08-09T22:00:00.000Z",
+    "summary": "Mild and mostly clear, with a brief late-morning rain window.",
+    "metrics": [
+      {
+        "key": "temperature",
+        "label": "Temperature",
+        "label_key": "temperature",
+        "value": "16",
+        "tone": "good",
+        "unit": "C",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ]
+      },
+      {
+        "key": "wind",
+        "label": "Wind",
+        "label_key": "wind",
+        "value": "3.4",
+        "tone": "good",
+        "unit": "m/s",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ]
+      },
+      {
+        "key": "precipitation",
+        "label": "Precipitation",
+        "label_key": "precipitation",
+        "value": "1.8",
+        "tone": "warn",
+        "unit": "mm",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ]
+      },
+      {
+        "key": "humidity",
+        "label": "Humidity",
+        "label_key": "humidity",
+        "value": "72",
+        "tone": "good",
+        "unit": "%",
+        "detail": null,
+        "updated_at": "2026-08-09T04:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ]
+      }
+    ],
+    "points": [
+      {
+        "timestamp": "2026-08-09T04:00:00.000Z",
+        "temperature_c": 16,
+        "precipitation_mm": 0,
+        "wind_speed_ms": 3.4,
+        "wind_gust_ms": 6.2,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 72,
+        "dew_point_c": 11,
+        "pressure_hpa": 1011,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      },
+      {
+        "timestamp": "2026-08-09T07:00:00.000Z",
+        "temperature_c": 17,
+        "precipitation_mm": 1.8,
+        "wind_speed_ms": 3.6,
+        "wind_gust_ms": 6.5,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 78,
+        "humidity_pct": 70,
+        "dew_point_c": 11.4,
+        "pressure_hpa": 1012,
+        "visibility_m": 12000,
+        "weather_symbol": 9,
+        "smart_symbol": 9
+      },
+      {
+        "timestamp": "2026-08-09T10:00:00.000Z",
+        "temperature_c": 18,
+        "precipitation_mm": 0.6,
+        "wind_speed_ms": 3.8,
+        "wind_gust_ms": 6.8,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 68,
+        "dew_point_c": 11.8,
+        "pressure_hpa": 1013,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      },
+      {
+        "timestamp": "2026-08-09T13:00:00.000Z",
+        "temperature_c": 19,
+        "precipitation_mm": 0,
+        "wind_speed_ms": 4,
+        "wind_gust_ms": 7.1,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 66,
+        "dew_point_c": 12.2,
+        "pressure_hpa": 1014,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      },
+      {
+        "timestamp": "2026-08-09T16:00:00.000Z",
+        "temperature_c": 20,
+        "precipitation_mm": 0,
+        "wind_speed_ms": 4.2,
+        "wind_gust_ms": 7.4,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 64,
+        "dew_point_c": 12.6,
+        "pressure_hpa": 1015,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      },
+      {
+        "timestamp": "2026-08-09T19:00:00.000Z",
+        "temperature_c": 21,
+        "precipitation_mm": 0,
+        "wind_speed_ms": 4.4,
+        "wind_gust_ms": 7.7,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 62,
+        "dew_point_c": 13,
+        "pressure_hpa": 1016,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      },
+      {
+        "timestamp": "2026-08-09T22:00:00.000Z",
+        "temperature_c": 22,
+        "precipitation_mm": 0,
+        "wind_speed_ms": 4.6,
+        "wind_gust_ms": 8,
+        "wind_direction_deg": 210,
+        "cloud_cover_pct": 46,
+        "humidity_pct": 60,
+        "dew_point_c": 13.4,
+        "pressure_hpa": 1017,
+        "visibility_m": 12000,
+        "weather_symbol": 2,
+        "smart_symbol": 2
+      }
+    ],
+    "rain_windows": [
+      {
+        "starts_at": "2026-08-09T07:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z",
+        "peak_precip_mm": 1.8,
+        "peak_precip_at": "2026-08-09T08:00:00.000Z",
+        "total_precip_mm": 2.4,
+        "hours": 3
+      }
+    ],
+    "source_layers": [
+      {
+        "key": "fmi_forecast",
+        "label": "FMI forecast",
+        "status": "ready",
+        "detail": "Static demo layer",
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "source_requests": [
+      {
+        "key": "fmi",
+        "label": "Finnish Meteorological Institute",
+        "status": "fetched",
+        "endpoint": "https://opendata.fmi.fi",
+        "content_type": "application/json",
+        "fetched_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "data_pipeline": [
+      {
+        "key": "raw",
+        "label": "Raw observation",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 7,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      },
+      {
+        "key": "normalized",
+        "label": "Normalized forecast",
+        "status": "ready",
+        "detail": "Static demo fixture",
+        "record_count": 7,
+        "updated_at": "2026-08-09T04:00:00.000Z"
+      }
+    ],
+    "quality": {
+      "point_count": 7,
+      "forecast_hours": 18,
+      "field_coverage_pct": 98,
+      "rain_window_count": 1,
+      "missing_fields": [],
+      "notes": [
+        "Static demo fixture; not a live forecast."
+      ]
+    },
+    "warnings": []
+  }
+}

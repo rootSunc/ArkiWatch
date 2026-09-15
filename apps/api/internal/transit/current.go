@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/detailstate"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/timescope"
 )
 
 type Alert struct {
+	State       string   `json:"state"`
+	Filters     []string `json:"filters"`
 	ID          string   `json:"id"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
@@ -60,21 +63,23 @@ type Quality struct {
 	Notes                []string `json:"notes"`
 }
 type Current struct {
-	CheckedAt      string          `json:"checked_at"`
-	TimeScope      map[string]any  `json:"time_scope"`
-	Status         string          `json:"status"`
-	Location       *string         `json:"location"`
-	SourceCode     string          `json:"source_code"`
-	ObservedAt     *string         `json:"observed_at"`
-	Summary        *string         `json:"summary"`
-	Metrics        []Metric        `json:"metrics"`
-	Alerts         []Alert         `json:"alerts"`
-	SourceRequests []SourceRequest `json:"source_requests"`
-	DataPipeline   []DataStage     `json:"data_pipeline"`
-	Quality        Quality         `json:"quality"`
+	Detail         detailstate.Summary `json:"detail"`
+	CheckedAt      string              `json:"checked_at"`
+	TimeScope      map[string]any      `json:"time_scope"`
+	Status         string              `json:"status"`
+	Location       *string             `json:"location"`
+	SourceCode     string              `json:"source_code"`
+	ObservedAt     *string             `json:"observed_at"`
+	Summary        *string             `json:"summary"`
+	Metrics        []Metric            `json:"metrics"`
+	Alerts         []Alert             `json:"alerts"`
+	SourceRequests []SourceRequest     `json:"source_requests"`
+	DataPipeline   []DataStage         `json:"data_pipeline"`
+	Quality        Quality             `json:"quality"`
 }
 
-func Build(data observations.TransitData, scope timescope.Scope, now time.Time, location string) Current {
+func Build(data observations.TransitData, scope timescope.Scope, now time.Time, location string) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	rawAlerts := rawAlerts(data.Raw.Payload["body"])
 	active, routes, stops := 0, 0, 0
 	alerts := make([]Alert, 0, len(data.Events))
@@ -132,7 +137,8 @@ func Build(data observations.TransitData, scope timescope.Scope, now time.Time, 
 	return Current{CheckedAt: timescope.Format(now), TimeScope: scope.Payload(), Status: status, Location: locationPtr, SourceCode: "digitransit", ObservedAt: optionalTime(data.Raw.ObservedAt), Summary: &summary, Metrics: []Metric{metric("raw_alerts", "Raw alerts", len(rawAlerts)), metric("active_alerts", "Active alerts", active), metric("disruptions", "Disruptions", countEvents(data.Events, "transit_disruption")), metric("delays", "Delays", countEvents(data.Events, "transit_delay")), metric("high_severity", "High severity", countSeverity(data.Events, "HIGH")), metric("route_scoped", "Route scoped", routes), metric("stop_scoped", "Stop scoped", stops)}, Alerts: alerts, SourceRequests: []SourceRequest{{Key: "service_alerts", Label: "HSL service alerts", Status: map[bool]string{true: "fetched", false: "missing"}[!data.Raw.ObservedAt.IsZero()], Endpoint: textPointer(data.Raw.Payload["request_url"]), ContentType: textPointer(data.Raw.Payload["content_type"]), FetchedAt: optionalTime(data.Raw.ObservedAt)}}, DataPipeline: pipeline(len(rawAlerts), len(alerts)), Quality: quality}
 }
 
-func Unavailable(scope timescope.Scope, now time.Time) Current {
+func Unavailable(scope timescope.Scope, now time.Time) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	summary := "Transit data is temporarily unavailable."
 	return Current{CheckedAt: timescope.Format(now), TimeScope: scope.Payload(), Status: "unavailable", SourceCode: "digitransit", Summary: &summary, Metrics: []Metric{}, Alerts: []Alert{}, SourceRequests: []SourceRequest{}, DataPipeline: []DataStage{}}
 }

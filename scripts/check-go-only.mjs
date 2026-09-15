@@ -43,7 +43,7 @@ if (!fs.existsSync(path.join(root, "contracts/openapi.json"))) {
 // These decision functions were deliberately removed from the browser. Keep
 // regression fixtures and UI adapters, but reject a second production engine.
 const webSource = path.join(root, "apps/web/src");
-const migratedDecision = /\b(?:function|const)\s+(curatedRecentEvents|buildWeatherRecentEvents|buildAirQualityRecentEvents|buildPlanItems|estimatedCostFromPrice)\b/;
+const migratedDecision = /\b(?:function|const)\s+(curatedRecentEvents|buildWeatherRecentEvents|buildAirQualityRecentEvents|buildPlanItems|estimatedCostFromPrice|scopedEventState|averageStationField|averagePollutantValue|fallbackWorstScore|rankedStations|peakGustPoint|strongestRainWindow)\b/;
 for (const relative of fs.readdirSync(webSource, { recursive: true })) {
   if (typeof relative !== "string" || !/\.tsx?$/.test(relative) || /\.(test|spec)\./.test(relative)) continue;
   const source = fs.readFileSync(path.join(webSource, relative), "utf8");

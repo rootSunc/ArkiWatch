@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/detailstate"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/timescope"
 )
@@ -16,6 +17,8 @@ var railEventTypes = map[string]struct{}{"rail_delay": {}}
 var messageLabels = []struct{ key, label string }{{"traffic_announcements", "Traffic announcements"}, {"roadworks", "Roadworks"}, {"weight_restrictions", "Weight restrictions"}, {"exempted_transports", "Exempted transports"}}
 
 type Incident struct {
+	State               string    `json:"state"`
+	Filters             []string  `json:"filters"`
 	ID                  string    `json:"id"`
 	Title               string    `json:"title"`
 	Description         string    `json:"description"`
@@ -85,19 +88,20 @@ type Quality struct {
 }
 
 type Current struct {
-	CheckedAt      string          `json:"checked_at"`
-	TimeScope      map[string]any  `json:"time_scope"`
-	Status         string          `json:"status"`
-	Location       *string         `json:"location"`
-	SourceCode     string          `json:"source_code"`
-	ObservedAt     *string         `json:"observed_at"`
-	Summary        *string         `json:"summary"`
-	Metrics        []Metric        `json:"metrics"`
-	Incidents      []Incident      `json:"incidents"`
-	Corridors      []Corridor      `json:"corridors"`
-	SourceRequests []SourceRequest `json:"source_requests"`
-	DataPipeline   []DataStage     `json:"data_pipeline"`
-	Quality        Quality         `json:"quality"`
+	Detail         detailstate.Summary `json:"detail"`
+	CheckedAt      string              `json:"checked_at"`
+	TimeScope      map[string]any      `json:"time_scope"`
+	Status         string              `json:"status"`
+	Location       *string             `json:"location"`
+	SourceCode     string              `json:"source_code"`
+	ObservedAt     *string             `json:"observed_at"`
+	Summary        *string             `json:"summary"`
+	Metrics        []Metric            `json:"metrics"`
+	Incidents      []Incident          `json:"incidents"`
+	Corridors      []Corridor          `json:"corridors"`
+	SourceRequests []SourceRequest     `json:"source_requests"`
+	DataPipeline   []DataStage         `json:"data_pipeline"`
+	Quality        Quality             `json:"quality"`
 }
 
 type Data struct {
@@ -112,7 +116,8 @@ type Query struct {
 	Historical  bool
 }
 
-func Build(data Data, scope timescope.Scope, now time.Time, location string) Current {
+func Build(data Data, scope timescope.Scope, now time.Time, location string) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	now = now.UTC()
 	features := rawFeatures(data.Raw)
 	requests := sourceRequests(data.Raw)
@@ -150,7 +155,8 @@ func Build(data Data, scope timescope.Scope, now time.Time, location string) Cur
 	}
 }
 
-func Unavailable(scope timescope.Scope, now time.Time) Current {
+func Unavailable(scope timescope.Scope, now time.Time) (result Current) {
+	defer func() { EnrichDetail(&result) }()
 	return Current{CheckedAt: timescope.Format(now.UTC()), TimeScope: scope.Payload(), Status: "unavailable", SourceCode: "digitraffic", Summary: stringPointer("Road and rail data is temporarily unavailable."), Metrics: []Metric{}, Incidents: []Incident{}, Corridors: []Corridor{}, SourceRequests: []SourceRequest{}, DataPipeline: []DataStage{}}
 }
 

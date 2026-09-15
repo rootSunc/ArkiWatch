@@ -133,11 +133,27 @@
               }
             ],
             "title": "Worst Station"
+          },
+          "detail": {
+            "$ref": "#/components/schemas/AirQualityDetailRead"
           }
         },
         "required": [
           "checked_at",
-          "status"
+          "status",
+          "location",
+          "source_code",
+          "observed_at",
+          "valid_to",
+          "summary",
+          "worst_station",
+          "worst_label",
+          "worst_score",
+          "metrics",
+          "stations",
+          "source_requests",
+          "data_pipeline",
+          "quality"
         ],
         "title": "AirQualityCurrentRead",
         "type": "object"
@@ -187,7 +203,9 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "record_count",
+          "updated_at"
         ],
         "title": "AirQualityDataStageRead",
         "type": "object"
@@ -260,7 +278,8 @@
           "key",
           "label",
           "label_key",
-          "value"
+          "value",
+          "unit"
         ],
         "title": "AirQualityMetricRead",
         "type": "object"
@@ -298,7 +317,14 @@
           }
         },
         "title": "AirQualityQualityRead",
-        "type": "object"
+        "type": "object",
+        "required": [
+          "station_count",
+          "reporting_station_count",
+          "field_coverage_pct",
+          "missing_fields",
+          "notes"
+        ]
       },
       "AirQualitySourceRequestRead": {
         "properties": {
@@ -351,7 +377,10 @@
         "required": [
           "key",
           "label",
-          "status"
+          "status",
+          "endpoint",
+          "content_type",
+          "fetched_at"
         ],
         "title": "AirQualitySourceRequestRead",
         "type": "object"
@@ -442,11 +471,31 @@
           "station": {
             "title": "Station",
             "type": "string"
+          },
+          "index": {
+            "type": "number",
+            "nullable": true
+          },
+          "tone": {
+            "type": "string"
+          },
+          "pollutant_tones": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "station",
-          "label"
+          "label",
+          "score",
+          "european_aqi",
+          "pm2_5",
+          "pm10",
+          "no2",
+          "lat",
+          "lon"
         ],
         "title": "AirQualityStationRead",
         "type": "object"
@@ -1117,7 +1166,13 @@
           "source_name",
           "auth_type",
           "poll_interval_seconds",
-          "operational_status"
+          "operational_status",
+          "stage",
+          "last_run_status",
+          "last_run_started_at",
+          "last_run_finished_at",
+          "records_ingested",
+          "error_message"
         ],
         "title": "DashboardSourceRead",
         "type": "object"
@@ -1247,7 +1302,9 @@
           "key",
           "label",
           "value_type",
-          "description"
+          "description",
+          "required",
+          "unit"
         ],
         "title": "DataFieldRead",
         "type": "object"
@@ -1490,7 +1547,21 @@
         },
         "required": [
           "checked_at",
-          "status"
+          "status",
+          "location",
+          "source_code",
+          "provider_name",
+          "observed_at",
+          "valid_from",
+          "valid_to",
+          "summary",
+          "unit",
+          "current_window",
+          "metrics",
+          "points",
+          "source_requests",
+          "data_pipeline",
+          "quality"
         ],
         "title": "EnergyCurrentRead",
         "type": "object"
@@ -1540,7 +1611,9 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "record_count",
+          "updated_at"
         ],
         "title": "EnergyDataStageRead",
         "type": "object"
@@ -1613,7 +1686,8 @@
           "key",
           "label",
           "label_key",
-          "value"
+          "value",
+          "unit"
         ],
         "title": "EnergyMetricRead",
         "type": "object"
@@ -1658,7 +1732,9 @@
         "required": [
           "starts_at",
           "ends_at",
-          "value"
+          "value",
+          "unit",
+          "estimated_cost_eur"
         ],
         "title": "EnergyPointRead",
         "type": "object"
@@ -1756,7 +1832,17 @@
           }
         },
         "title": "EnergyQualityRead",
-        "type": "object"
+        "type": "object",
+        "required": [
+          "point_count",
+          "window_point_count",
+          "field_coverage_pct",
+          "minimum_value",
+          "maximum_value",
+          "average_value",
+          "missing_fields",
+          "notes"
+        ]
       },
       "EnergySourceRequestRead": {
         "properties": {
@@ -1809,7 +1895,10 @@
         "required": [
           "key",
           "label",
-          "status"
+          "status",
+          "endpoint",
+          "content_type",
+          "fetched_at"
         ],
         "title": "EnergySourceRequestRead",
         "type": "object"
@@ -1934,7 +2023,16 @@
           "average_value",
           "minimum_value",
           "maximum_value",
-          "point_count"
+          "point_count",
+          "unit",
+          "severity",
+          "source",
+          "estimated_cost_eur",
+          "usage_kwh",
+          "threshold_value",
+          "horizon_average_value",
+          "savings_vs_average_pct",
+          "selection_strategy"
         ],
         "title": "EnergyWindowRead",
         "type": "object"
@@ -2311,7 +2409,9 @@
           "summary_metrics",
           "visualizations",
           "events",
-          "sources"
+          "sources",
+          "stage",
+          "priority"
         ],
         "title": "PlatformCategoryRead",
         "type": "object"
@@ -2407,6 +2507,12 @@
           },
           "notification_priority": {
             "type": "integer"
+          },
+          "state": {
+            "type": "string"
+          },
+          "detail_visible": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2640,7 +2746,10 @@
           "label_key",
           "value",
           "tone",
-          "source_codes"
+          "source_codes",
+          "unit",
+          "detail",
+          "updated_at"
         ],
         "title": "PlatformMetricRead",
         "type": "object"
@@ -2715,9 +2824,7 @@
       "PlatformVisualizationRead": {
         "properties": {
           "data": {
-            "additionalProperties": true,
-            "title": "Data",
-            "type": "object"
+            "$ref": "#/components/schemas/PlatformVisualizationDataRead"
           },
           "description": {
             "title": "Description",
@@ -2776,7 +2883,9 @@
           "description",
           "status",
           "source_codes",
-          "data"
+          "data",
+          "unit",
+          "updated_at"
         ],
         "title": "PlatformVisualizationRead",
         "type": "object"
@@ -3006,6 +3115,36 @@
           "valid_to": {
             "title": "Valid To",
             "type": "string"
+          },
+          "title_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status_label_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3045,6 +3184,16 @@
           "starts_at": {
             "title": "Starts At",
             "type": "string"
+          },
+          "label_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3194,7 +3343,8 @@
           "weather_risk_count",
           "severity",
           "latest_title",
-          "latest_valid_to"
+          "latest_valid_to",
+          "geometry_bbox"
         ],
         "title": "RoadRailCorridorRead",
         "type": "object"
@@ -3294,11 +3444,24 @@
                 "type": "null"
               }
             ]
+          },
+          "detail": {
+            "$ref": "#/components/schemas/MobilityDetailRead"
           }
         },
         "required": [
           "checked_at",
-          "status"
+          "status",
+          "location",
+          "source_code",
+          "observed_at",
+          "summary",
+          "metrics",
+          "incidents",
+          "corridors",
+          "source_requests",
+          "data_pipeline",
+          "quality"
         ],
         "title": "RoadRailCurrentRead",
         "type": "object"
@@ -3348,7 +3511,9 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "record_count",
+          "updated_at"
         ],
         "title": "RoadRailDataStageRead",
         "type": "object"
@@ -3478,6 +3643,15 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -3489,7 +3663,12 @@
           "starts_at",
           "ends_at",
           "active",
-          "location_ref"
+          "location_ref",
+          "message_type",
+          "situation_type",
+          "location_description",
+          "feature_names",
+          "geometry_bbox"
         ],
         "title": "RoadRailIncidentRead",
         "type": "object"
@@ -3528,7 +3707,8 @@
           "key",
           "label",
           "label_key",
-          "value"
+          "value",
+          "unit"
         ],
         "title": "RoadRailMetricRead",
         "type": "object"
@@ -3591,7 +3771,19 @@
           }
         },
         "title": "RoadRailQualityRead",
-        "type": "object"
+        "type": "object",
+        "required": [
+          "raw_message_count",
+          "normalized_event_count",
+          "active_event_count",
+          "road_event_count",
+          "rail_event_count",
+          "weather_risk_count",
+          "corridor_count",
+          "field_coverage_pct",
+          "missing_fields",
+          "notes"
+        ]
       },
       "RoadRailSourceRequestRead": {
         "properties": {
@@ -3649,7 +3841,11 @@
         "required": [
           "key",
           "label",
-          "status"
+          "status",
+          "endpoint",
+          "content_type",
+          "fetched_at",
+          "message_count"
         ],
         "title": "RoadRailSourceRequestRead",
         "type": "object"
@@ -3667,6 +3863,26 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "title_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4122,7 +4338,10 @@
         "required": [
           "mode",
           "timezone",
-          "reference_time"
+          "reference_time",
+          "date",
+          "window_start",
+          "window_end"
         ],
         "title": "TimeScopeRead",
         "type": "object"
@@ -4305,6 +4524,15 @@
             },
             "title": "Trip Ids",
             "type": "array"
+          },
+          "state": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -4315,7 +4543,12 @@
           "event_type",
           "starts_at",
           "ends_at",
-          "active"
+          "active",
+          "cause",
+          "effect",
+          "route_ids",
+          "stop_ids",
+          "trip_ids"
         ],
         "title": "TransitAlertRead",
         "type": "object"
@@ -4408,11 +4641,23 @@
                 "type": "null"
               }
             ]
+          },
+          "detail": {
+            "$ref": "#/components/schemas/MobilityDetailRead"
           }
         },
         "required": [
           "checked_at",
-          "status"
+          "status",
+          "location",
+          "source_code",
+          "observed_at",
+          "summary",
+          "metrics",
+          "alerts",
+          "source_requests",
+          "data_pipeline",
+          "quality"
         ],
         "title": "TransitCurrentRead",
         "type": "object"
@@ -4462,7 +4707,9 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "record_count",
+          "updated_at"
         ],
         "title": "TransitDataStageRead",
         "type": "object"
@@ -4535,7 +4782,8 @@
           "key",
           "label",
           "label_key",
-          "value"
+          "value",
+          "unit"
         ],
         "title": "TransitMetricRead",
         "type": "object"
@@ -4588,7 +4836,17 @@
           }
         },
         "title": "TransitQualityRead",
-        "type": "object"
+        "type": "object",
+        "required": [
+          "raw_alert_count",
+          "normalized_event_count",
+          "active_alert_count",
+          "route_alert_count",
+          "stop_alert_count",
+          "field_coverage_pct",
+          "missing_fields",
+          "notes"
+        ]
       },
       "TransitSourceRequestRead": {
         "properties": {
@@ -4641,7 +4899,10 @@
         "required": [
           "key",
           "label",
-          "status"
+          "status",
+          "endpoint",
+          "content_type",
+          "fetched_at"
         ],
         "title": "TransitSourceRequestRead",
         "type": "object"
@@ -5303,7 +5564,9 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "record_count",
+          "updated_at"
         ],
         "title": "WeatherDataStageRead",
         "type": "object"
@@ -5445,10 +5708,25 @@
               }
             ],
             "title": "Wind Speed Ms"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/WeatherPointAssessmentRead"
           }
         },
         "required": [
-          "timestamp"
+          "timestamp",
+          "temperature_c",
+          "precipitation_mm",
+          "wind_speed_ms",
+          "wind_gust_ms",
+          "wind_direction_deg",
+          "cloud_cover_pct",
+          "humidity_pct",
+          "dew_point_c",
+          "pressure_hpa",
+          "visibility_m",
+          "weather_symbol",
+          "smart_symbol"
         ],
         "title": "WeatherForecastPointRead",
         "type": "object"
@@ -5584,11 +5862,31 @@
             },
             "title": "Warnings",
             "type": "array"
+          },
+          "advisories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeatherAdvisoryRead"
+            }
           }
         },
         "required": [
           "checked_at",
-          "status"
+          "status",
+          "location",
+          "source_code",
+          "generated_at",
+          "valid_from",
+          "valid_to",
+          "summary",
+          "metrics",
+          "points",
+          "rain_windows",
+          "source_layers",
+          "source_requests",
+          "data_pipeline",
+          "quality",
+          "warnings"
         ],
         "title": "WeatherForecastRead",
         "type": "object"
@@ -5661,7 +5959,8 @@
           "key",
           "label",
           "label_key",
-          "value"
+          "value",
+          "unit"
         ],
         "title": "WeatherMetricRead",
         "type": "object"
@@ -5704,7 +6003,15 @@
           }
         },
         "title": "WeatherQualityRead",
-        "type": "object"
+        "type": "object",
+        "required": [
+          "point_count",
+          "forecast_hours",
+          "field_coverage_pct",
+          "rain_window_count",
+          "missing_fields",
+          "notes"
+        ]
       },
       "WeatherRainWindowRead": {
         "properties": {
@@ -5778,7 +6085,8 @@
           "key",
           "label",
           "status",
-          "detail"
+          "detail",
+          "updated_at"
         ],
         "title": "WeatherSourceLayerRead",
         "type": "object"
@@ -5834,7 +6142,10 @@
         "required": [
           "key",
           "label",
-          "status"
+          "status",
+          "endpoint",
+          "content_type",
+          "fetched_at"
         ],
         "title": "WeatherSourceRequestRead",
         "type": "object"
@@ -5888,10 +6199,17 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "tone": {
+            "type": "string"
           }
         },
         "required": [
-          "title"
+          "title",
+          "description",
+          "link",
+          "published_at",
+          "severity"
         ],
         "title": "WeatherWarningRead",
         "type": "object"
@@ -6240,6 +6558,341 @@
           "resource",
           "payload"
         ]
+      },
+      "WeatherPointAssessmentRead": {
+        "type": "object",
+        "properties": {
+          "apparent_temperature_c": {
+            "type": "number",
+            "nullable": true
+          },
+          "condition": {
+            "type": "string"
+          },
+          "gust_risk": {
+            "type": "boolean"
+          },
+          "low_visibility": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "apparent_temperature_c",
+          "condition",
+          "gust_risk",
+          "low_visibility"
+        ]
+      },
+      "WeatherAdvisoryRead": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": "string"
+          },
+          "ends_at": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "starts_at",
+          "ends_at",
+          "state",
+          "value",
+          "total"
+        ]
+      },
+      "AirPollutantSummaryRead": {
+        "type": "object",
+        "properties": {
+          "average": {
+            "type": "number",
+            "nullable": true
+          },
+          "peak": {
+            "type": "number",
+            "nullable": true
+          },
+          "reporting": {
+            "type": "number"
+          },
+          "caution": {
+            "type": "number"
+          },
+          "severe": {
+            "type": "number"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "station_order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "average",
+          "peak",
+          "reporting",
+          "caution",
+          "severe",
+          "tone",
+          "station_order"
+        ]
+      },
+      "AirQualityDetailRead": {
+        "type": "object",
+        "properties": {
+          "tone": {
+            "type": "string"
+          },
+          "station_order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "score_counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "coverage": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "pollutants": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AirPollutantSummaryRead"
+            }
+          }
+        },
+        "required": [
+          "tone",
+          "station_order",
+          "score_counts",
+          "coverage",
+          "pollutants"
+        ]
+      },
+      "MobilityDetailRead": {
+        "type": "object",
+        "properties": {
+          "severity_counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "highest_severity": {
+            "type": "string"
+          },
+          "next_active_end": {
+            "type": "string",
+            "nullable": true
+          },
+          "active_count": {
+            "type": "number"
+          },
+          "high_active": {
+            "type": "number"
+          },
+          "high_upcoming": {
+            "type": "number"
+          },
+          "weather_active": {
+            "type": "number"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "risk": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "alerts": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "count",
+                "alerts"
+              ]
+            }
+          }
+        },
+        "required": [
+          "severity_counts",
+          "highest_severity",
+          "next_active_end",
+          "active_count",
+          "high_active",
+          "high_upcoming",
+          "weather_active",
+          "tone",
+          "risk"
+        ]
+      },
+      "PlatformVisualizationPointRead": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ]
+      },
+      "PlatformVisualizationSeriesRead": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tone": {
+            "type": "string"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformVisualizationPointRead"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "points"
+        ]
+      },
+      "PlatformVisualizationTimelineItemRead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": "string"
+          },
+          "ends_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "detail",
+          "severity",
+          "starts_at",
+          "ends_at"
+        ]
+      },
+      "PlatformVisualizationDataRead": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformVisualizationPointRead"
+            }
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformVisualizationSeriesRead"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformVisualizationTimelineItemRead"
+            }
+          },
+          "value": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rain_windows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "point_count": {
+            "type": "number"
+          }
+        },
+        "required": []
       }
     },
     "securitySchemes": {

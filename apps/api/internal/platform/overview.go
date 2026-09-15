@@ -83,6 +83,8 @@ type Visualization struct {
 }
 
 type Event struct {
+	State                string         `json:"state"`
+	DetailVisible        bool           `json:"detail_visible"`
 	Notification         bool           `json:"notification"`
 	NotificationPriority int64          `json:"notification_priority"`
 	TitleZH              *string        `json:"title_zh,omitempty"`
@@ -170,7 +172,8 @@ var catalogSources = []catalogSource{
 	{Code: "thl_sotkanet", Name: "THL Sotkanet", Auth: "NONE", Stage: "background", Poll: 86400, Categories: []string{"regional_profile"}, Datasets: []string{"indicators", "municipal_health", "welfare_regions"}, KeyItems: []string{"indicator_id", "area", "year", "value"}, Endpoint: "https://sotkanet.fi/rest/1.1", License: "CC BY 4.0", Docs: "https://sotkanet.fi/sotkanet/en/ohje/74"},
 }
 
-func BuildOverview(data PlatformData, scope timescope.Scope, cfg config.Config, statusItems []sources.Status, locationRef string) Overview {
+func BuildOverview(data PlatformData, scope timescope.Scope, cfg config.Config, statusItems []sources.Status, locationRef string) (result Overview) {
+	defer func() { EnrichDetail(&result) }()
 	sourceItems := buildSources(cfg, statusItems, scope.ReferenceTime)
 	bySource := map[string]Source{}
 	for _, item := range sourceItems {

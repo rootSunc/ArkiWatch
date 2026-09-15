@@ -1,3 +1,5 @@
+import { formatNumber } from "./workspace-format";
+export { formatNumber } from "./workspace-format";
 import { localizedContent } from "./content-localization";
 import { formatHistoryDate } from "./workspace-datetime";
 import { localizedPlatformCopy } from "./platform-copy";
@@ -15,27 +17,11 @@ import type {
   WeatherForecastPoint,
   WeatherForecastResponse,
   WeatherRainWindow,
-  WeatherWarning,
 } from "./types";
 import type { CurrentMetricCard, TimelineItem } from "./weather-detail-types";
 import { DEFAULT_DATA_TIME_ZONE, resolveDataTimezone } from "./data-timezone";
 import { isHistoricalTimeScope, scopedDataTimestamp } from "./data-time-scope";
-import { scopedEventState, type ScopedEventState } from "./event-time-state";
-
-const OUTDOOR_MAX_GUST_MS = 14;
-const OUTDOOR_MIN_VISIBILITY_M = 5000;
-const HEAVY_RAIN_PEAK_MM = 5;
-const HEAVY_RAIN_TOTAL_MM = 15;
-
-export function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return UNAVAILABLE_DATA_VALUE;
-  }
-
-  return new Intl.NumberFormat("en-GB", {
-    maximumFractionDigits
-  }).format(value);
-}
+import { type ScopedEventState } from "./event-time-state";
 
 export function displayRegion(value: string | null | undefined, tKey: (key: string) => string): string {
   const location = value?.trim();
@@ -215,55 +201,18 @@ export function pointThreeHoursLater(
 }
 
 export function apparentTemperature(point: WeatherForecastPoint | null): number | null {
-  const temp = point?.temperature_c;
-  if (temp === null || temp === undefined) {
-    return null;
-  }
-
-  const windKmh = (point?.wind_speed_ms ?? 0) * 3.6;
-  if (temp <= 10 && windKmh > 4.8) {
-    return (
-      13.12 +
-      0.6215 * temp -
-      11.37 * Math.pow(windKmh, 0.16) +
-      0.3965 * temp * Math.pow(windKmh, 0.16)
-    );
-  }
-
-  return temp;
+  return point?.assessment?.apparent_temperature_c ?? null;
 }
 
 export function conditionForPoint(point: WeatherForecastPoint | null, tKey: (key: string) => string): { icon: string; label: string } {
-  if (!point) {
-    return { icon: "cloud_sync", label: tKey("weather.awaitingForecast") };
-  }
-
-  const precipitation = point.precipitation_mm;
-  const temperature = point.temperature_c;
-  const cloud = point.cloud_cover_pct;
-  const gust = point.wind_gust_ms ?? point.wind_speed_ms;
-
-  if (hasNumber(precipitation) && precipitation >= 0.3 && hasNumber(temperature) && temperature <= 1) {
-    return { icon: "cloudy_snowing", label: tKey("weather.lightSnowOvercast") };
-  }
-  if (hasNumber(precipitation) && precipitation >= 0.3) {
-    return { icon: "rainy", label: tKey("weather.rainLowCloud") };
-  }
-  if (hasNumber(gust) && gust >= OUTDOOR_MAX_GUST_MS) {
-    return { icon: "air", label: tKey("weather.windAdvisoryConditions") };
-  }
-  if (hasNumber(cloud) && cloud >= 75) {
-    return { icon: "cloud", label: tKey("weather.overcast") };
-  }
-  if (hasNumber(cloud) && cloud <= 30) {
-    return { icon: "clear_day", label: tKey("weather.clearSpell") };
-  }
-
-  if (!hasNumber(precipitation) && !hasNumber(gust) && !hasNumber(cloud)) {
-    return { icon: "cloud_sync", label: tKey("weather.awaitingForecast") };
-  }
-
-  return { icon: "partly_cloudy_day", label: tKey("weather.partlyCloudy") };
+  const options: Record<string, [string, string]> = {
+    snow: ["cloudy_snowing", "lightSnowOvercast"], rain: ["rainy", "rainLowCloud"],
+    wind: ["air", "windAdvisoryConditions"], overcast: ["cloud", "overcast"],
+    clear: ["clear_day", "clearSpell"], partly_cloudy: ["partly_cloudy_day", "partlyCloudy"],
+    unavailable: ["cloud_sync", "awaitingForecast"],
+  };
+  const [icon, key] = options[point?.assessment?.condition ?? "unavailable"] ?? options.unavailable;
+  return { icon, label: tKey(`weather.${key}`) };
 }
 
 export function hasNumber(value: number | null | undefined): value is number {
@@ -296,17 +245,6 @@ export function compassDirection(degrees: number | null | undefined): string {
   return directions[Math.round(degrees / 22.5) % directions.length];
 }
 
-function warningTone(warning: WeatherWarning): TimelineItem["tone"] {
-  const severity = warning.severity?.toLowerCase() ?? "";
-  if (severity.includes("high") || severity.includes("severe") || severity.includes("red")) {
-    return "bad";
-  }
-  if (severity.includes("medium") || severity.includes("yellow") || severity.includes("warn")) {
-    return "warn";
-  }
-  return "neutral";
-}
-
 export function eventTone(event: PlatformEvent): TimelineItem["tone"] {
   if (event.severity.toUpperCase() === "HIGH") {
     return "bad";
@@ -320,40 +258,6 @@ export function eventTone(event: PlatformEvent): TimelineItem["tone"] {
   return "neutral";
 }
 
-function peakGustPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
-  return (
-    [...points]
-      .filter((point) => point.wind_gust_ms !== null || point.wind_speed_ms !== null)
-      .sort(
-        (left, right) =>
-          (right.wind_gust_ms ?? right.wind_speed_ms ?? 0) -
-          (left.wind_gust_ms ?? left.wind_speed_ms ?? 0),
-      )[0] ?? null
-  );
-}
-
-export function lowestVisibilityPoint(points: WeatherForecastPoint[]): WeatherForecastPoint | null {
-  return (
-    [...points]
-      .filter((point) => point.visibility_m !== null)
-      .sort(
-        (left, right) =>
-          (left.visibility_m ?? Number.MAX_SAFE_INTEGER) -
-          (right.visibility_m ?? Number.MAX_SAFE_INTEGER),
-      )[0] ?? null
-  );
-}
-
-export function strongestRainWindow(windows: WeatherRainWindow[]): WeatherRainWindow | null {
-  return (
-    [...windows].sort(
-      (left, right) =>
-        Math.max(right.peak_precip_mm, right.total_precip_mm / Math.max(right.hours, 1)) -
-        Math.max(left.peak_precip_mm, left.total_precip_mm / Math.max(left.hours, 1)),
-    )[0] ?? null
-  );
-}
-
 export function buildTimelineItems(
   weather: WeatherForecastResponse | null,
   category: PlatformCategory | null,
@@ -361,9 +265,7 @@ export function buildTimelineItems(
   tKey: (key: string) => string,
   highlightedEventId?: string | null,
   timeZone = DEFAULT_DATA_TIME_ZONE,
-  referenceAt?: string | number | null,
 ): TimelineItem[] {
-  const reference = referenceTimestamp(referenceAt);
   const isHistorical = isHistoricalTimeScope(weather?.time_scope);
   const stateLabel = (state: ScopedEventState): string => {
     if (state === "active") {
@@ -380,11 +282,6 @@ export function buildTimelineItems(
       ? status
       : `${status} · ${formatTimelineTime(startsAt, language, timeZone)}`;
   };
-  const isActiveWindow = (startsAt: string, endsAt: string): boolean => {
-    const startTime = new Date(startsAt).getTime();
-    const endTime = new Date(endsAt).getTime();
-    return Number.isFinite(startTime) && Number.isFinite(endTime) && startTime <= reference && endTime >= reference;
-  };
   const warningItems =
     weather?.warnings.map((warning, index) => ({
       id: `warning-${index}-${warning.title}`,
@@ -393,21 +290,15 @@ export function buildTimelineItems(
         : tKey("weather.activeNow"),
       title: warning.title,
       body: warning.description ?? tKey("weather.weatherWarningFromTheProviderFeed"),
-      tone: warningTone(warning),
+      tone: (warning.tone ?? "neutral") as TimelineItem["tone"],
       active: !isHistorical,
     })) ?? [];
 
   const eventItems =
     category?.events
-      .filter((event) => !/no active outdoor conditions|data will appear/i.test(`${event.title} ${event.body}`))
+      .filter((event) => event.detail_visible !== false)
       .map((event) => {
-        const startsAt = new Date(event.starts_at).getTime();
-        const endsAt = new Date(event.ends_at).getTime();
-        const state = scopedEventState(
-          Number.isFinite(startsAt) && Number.isFinite(endsAt) && startsAt <= reference && endsAt >= reference,
-          event.starts_at,
-          reference,
-        );
+        const state = (event.state ?? "ended") as ScopedEventState;
         return {
           id: event.id,
           time: eventTimeLabel(state, event.starts_at),
@@ -419,55 +310,16 @@ export function buildTimelineItems(
         };
       }) ?? [];
 
-  const syntheticItems: TimelineItem[] = [];
-  const gustPoint = peakGustPoint(weather?.points ?? []);
-  const peakGust = gustPoint?.wind_gust_ms ?? gustPoint?.wind_speed_ms ?? null;
-  const visibilityPoint = lowestVisibilityPoint(weather?.points ?? []);
-  const minVisibility = visibilityPoint?.visibility_m ?? null;
-  const rainWindow = strongestRainWindow(weather?.rain_windows ?? []);
-
-  if (gustPoint && peakGust !== null && peakGust >= OUTDOOR_MAX_GUST_MS) {
-    const gustEndsAt = new Date(new Date(gustPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
-    const state = scopedEventState(isActiveWindow(gustPoint.timestamp, gustEndsAt), gustPoint.timestamp, reference);
-    syntheticItems.push({
-      id: "gust-advisory",
-      time: eventTimeLabel(state, gustPoint.timestamp),
-      title: tKey("weather.highWindAdvisory"),
-      body: `${tKey("weather.gustsNear")} ${formatNumber(peakGust)} m/s ${tKey("weather.acrossTheForecastWindow")}`,
-      tone: "warn",
-      active: state === "active",
-      state,
-    });
-  }
-  if (visibilityPoint && minVisibility !== null && minVisibility < OUTDOOR_MIN_VISIBILITY_M) {
-    const visibilityEndsAt = new Date(new Date(visibilityPoint.timestamp).getTime() + 3 * 60 * 60 * 1000).toISOString();
-    const state = scopedEventState(isActiveWindow(visibilityPoint.timestamp, visibilityEndsAt), visibilityPoint.timestamp, reference);
-    syntheticItems.push({
-      id: "visibility-advisory",
-      time: eventTimeLabel(state, visibilityPoint.timestamp),
-      title: tKey("weather.reducedVisibility"),
-      body: `${tKey("weather.visibilityIs")} ${formatNumber(minVisibility / 1000)} km. ${tKey("weather.slowMovementWindowsMayNeedExtraMargin")}`,
-      tone: "bad",
-      active: state === "active",
-      state,
-    });
-  }
-  if (
-    rainWindow &&
-    (rainWindow.peak_precip_mm >= HEAVY_RAIN_PEAK_MM ||
-      rainWindow.total_precip_mm >= HEAVY_RAIN_TOTAL_MM)
-  ) {
-    const state = scopedEventState(isActiveWindow(rainWindow.starts_at, rainWindow.ends_at), rainWindow.starts_at, reference);
-    syntheticItems.push({
-      id: "rain-advisory",
-      time: eventTimeLabel(state, rainWindow.starts_at),
-      title: tKey("weather.heavyRainAdvisory"),
-      body: `${tKey("weather.peakRain")} ${formatNumber(rainWindow.peak_precip_mm)} mm/h · ${tKey("weather.rainTotal")} ${formatNumber(rainWindow.total_precip_mm)} mm.`,
-      tone: "warn",
-      active: state === "active",
-      state,
-    });
-  }
+  const syntheticItems: TimelineItem[] = (weather?.advisories ?? []).map((advisory) => {
+    const state = advisory.state as ScopedEventState;
+    const copy: Record<string, { title: string; body: string; tone: TimelineItem["tone"] }> = {
+      gust: { title: "highWindAdvisory", body: `${tKey("weather.gustsNear")} ${formatNumber(advisory.value)} m/s ${tKey("weather.acrossTheForecastWindow")}`, tone: "warn" },
+      visibility: { title: "reducedVisibility", body: `${tKey("weather.visibilityIs")} ${formatNumber(advisory.value / 1000)} km. ${tKey("weather.slowMovementWindowsMayNeedExtraMargin")}`, tone: "bad" },
+      rain: { title: "heavyRainAdvisory", body: `${tKey("weather.peakRain")} ${formatNumber(advisory.value)} mm/h · ${tKey("weather.rainTotal")} ${formatNumber(advisory.total)} mm.`, tone: "warn" },
+    };
+    const item = copy[advisory.kind];
+    return { id: `${advisory.kind}-advisory`, time: eventTimeLabel(state, advisory.starts_at), title: tKey(`weather.${item.title}`), body: item.body, tone: item.tone, active: state === "active", state };
+  });
 
   if (warningItems.length + eventItems.length + syntheticItems.length === 0) {
     syntheticItems.push({
@@ -599,7 +451,7 @@ export function currentMetricCards(
           unit: "m/s",
           detail: `${tKey("weather.peak")}: ${formatCompactTime(current.timestamp, language, timeZone)}`,
           progress: Math.min(100, (current.wind_gust_ms / 26) * 100),
-          tone: current.wind_gust_ms >= OUTDOOR_MAX_GUST_MS ? "warn" : "primary"
+          tone: current.assessment?.gust_risk ? "warn" : "primary"
         }
       : null,
     hasNumber(current.humidity_pct)
@@ -633,9 +485,9 @@ export function currentMetricCards(
           label: tKey("weather.visibility"),
           value: formatNumber(current.visibility_m / 1000, 1),
           unit: "km",
-          detail: current.visibility_m < OUTDOOR_MIN_VISIBILITY_M ? tKey("weather.reduced") : tKey("weather.operational"),
+          detail: current.assessment?.low_visibility ? tKey("weather.reduced") : tKey("weather.operational"),
           progress: Math.max(8, Math.min(100, (current.visibility_m / 30000) * 100)),
-          tone: current.visibility_m < OUTDOOR_MIN_VISIBILITY_M ? "warn" : "visibility"
+          tone: current.assessment?.low_visibility ? "warn" : "visibility"
         }
       : null,
     hasNumber(current.cloud_cover_pct)

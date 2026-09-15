@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/readmodel"
 	"os"
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/briefing"
@@ -14,11 +15,50 @@ import (
 )
 
 func main() {
+	details := flag.Bool("details", false, "enrich offline detail models")
 	decisions := flag.Bool("briefings", false, "read fixture inputs and emit Go decisions")
 	costs := flag.Bool("energy-costs", false, "derive cost summaries from recorded fixture assumptions")
 	flag.Parse()
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
+	if *details {
+		var inputs map[string]map[string]any
+		if err := json.NewDecoder(os.Stdin).Decode(&inputs); err != nil {
+			panic(err)
+		}
+		result := map[string]map[string]any{}
+		for key, fixture := range inputs {
+			output := map[string]any{}
+			for _, category := range []string{"weather", "airQuality", "transit", "roadRail", "overview"} {
+				data, _ := fixture[category].(map[string]any)
+				if err := readmodel.Detail(category, data); err != nil {
+					panic(err)
+				}
+				fields := map[string][]string{"weather": {"points", "advisories", "warnings"}, "airQuality": {"stations", "detail", "worst_score"}, "transit": {"alerts", "detail"}, "roadRail": {"incidents", "detail"}, "overview": {"categories", "recent_events"}}
+				patch := map[string]any{}
+				for _, field := range fields[category] {
+					patch[field] = data[field]
+				}
+				output[category] = patch
+			}
+			history, _ := fixture["history"].(map[string]any)
+			for category, snapshots := range history {
+				for _, raw := range snapshots.([]any) {
+					snapshot := raw.(map[string]any)
+					data, _ := snapshot["data"].(map[string]any)
+					if err := readmodel.Detail(category, data); err != nil {
+						panic(err)
+					}
+				}
+			}
+			output["history"] = history
+			result[key] = output
+		}
+		if err := encoder.Encode(result); err != nil {
+			panic(err)
+		}
+		return
+	}
 	if *costs {
 		var inputs map[string]map[string]any
 		if err := json.NewDecoder(os.Stdin).Decode(&inputs); err != nil {
