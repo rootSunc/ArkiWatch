@@ -80,7 +80,7 @@ export const platformKeys = {
       normalizeSourceDateValue(scope.date),
     ), "overview"] as const,
   publicDashboard: (scope: PlatformQueryScope) =>
-    [...platformKeys.regional(normalizeSourceDateValue(scope.date)), "public-dashboard"] as const,
+    [...platformKeys.scope(normalizeCityValue(scope.city), normalizeSourceDateValue(scope.date)), "public-dashboard"] as const,
   weather: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
@@ -204,8 +204,8 @@ export async function fetchPublicDashboard(scope: PlatformQueryScope, signal?: A
 
   const resolved = resolvePlatformScope(scope);
   return platformClient(resolved, signal).get<PublicDashboardRead>(
-    "/public/dashboard",
-    withOptionalDate(resolved.date, {}),
+    "/public/briefing",
+    withOptionalDate(resolved.date, { city: resolved.city }),
   );
 }
 
@@ -388,14 +388,14 @@ export async function fetchPlatformHome(
     defaultUserId: resolved.userId,
     overview: overviewResult.data,
     publicDashboard: publicDashboardResult.data,
-    weather: weatherResult.data,
-    airQuality: airQualityResult.data,
-    energy: energyResult.data,
-    householdEnergy: householdEnergyResult.data,
+    weather: weatherResult.data ?? publicDashboardResult.data?.signals?.weather ?? null,
+    airQuality: airQualityResult.data ?? publicDashboardResult.data?.signals?.airQuality ?? null,
+    energy: energyResult.data ?? publicDashboardResult.data?.signals?.energy ?? null,
+    householdEnergy: householdEnergyResult.data ?? publicDashboardResult.data?.signals?.householdEnergy ?? null,
     history: historyResult.data ?? emptyHistory(),
     historyAvailability: historyAvailabilityResult.data,
-    roadRail: roadRailResult.data,
-    transit: transitResult.data,
+    roadRail: roadRailResult.data ?? publicDashboardResult.data?.signals?.roadRail ?? null,
+    transit: transitResult.data ?? publicDashboardResult.data?.signals?.transit ?? null,
     error:
       overviewResult.error ??
       publicDashboardResult.error ??

@@ -1,0 +1,14 @@
+{
+  "energy": {
+    "average_cost_eur": null,
+    "cost_status": "not_price_series",
+    "maximum_cost_eur": null,
+    "minimum_cost_eur": null
+  },
+  "householdEnergy": {
+    "average_cost_eur": 0.189,
+    "cost_status": "ready",
+    "maximum_cost_eur": 0.244,
+    "minimum_cost_eur": 0.156
+  }
+}

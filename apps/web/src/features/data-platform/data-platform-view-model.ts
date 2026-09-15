@@ -581,6 +581,7 @@ export function eventTimeLabel(
 
 function eventSeverityRank(event: PlatformEvent): number {
   switch (event.severity.toUpperCase()) {
+    case "CRITICAL":
     case "HIGH":
       return 3;
     case "MEDIUM":
@@ -592,44 +593,15 @@ function eventSeverityRank(event: PlatformEvent): number {
   }
 }
 
-const NOTIFICATION_EVENT_TYPES = new Set([
-  "air_quality_poor",
-  "air_quality_status",
-  "blue_green_algae",
-  "cheap_energy_window",
-  "drought_risk",
-  "flood_warning",
-  "rain_risk",
-  "rail_delay",
-  "road_disruption",
-  "road_weather_risk",
-  "service_closure",
-  "snow_load",
-  "transit_delay",
-  "transit_disruption",
-  "weather_outlook",
-]);
-
 export function isNotificationEvent(event: PlatformEvent): boolean {
-  return (
-    NOTIFICATION_EVENT_TYPES.has(event.event_type) ||
-    eventSeverityRank(event) > 0
-  );
+  return event.notification === true;
 }
 
+// Search/reading state can hide events locally. Choose the greatest server
+// priority among those still visible without recomputing a business score.
 export function pickPriorityEvent(events: PlatformEvent[]): PlatformEvent | null {
-  return (
-    [...events].sort((left, right) => {
-      const severityDiff = eventSeverityRank(right) - eventSeverityRank(left);
-      if (severityDiff !== 0) {
-        return severityDiff;
-      }
-
-      return (
-        new Date(right.starts_at).getTime() - new Date(left.starts_at).getTime()
-      );
-    })[0] ?? null
-  );
+  return events.reduce<PlatformEvent | null>((best, event) =>
+    best === null || (event.notification_priority ?? 0) > (best.notification_priority ?? 0) ? event : best, null);
 }
 
 export function notificationToneForEvents(

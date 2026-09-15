@@ -285,29 +285,11 @@ export function formatEstimatedCost(value: number | null | undefined, tKey: (key
   return `EUR ${value.toFixed(2)}`;
 }
 
-function isPriceUnit(unit: string | null | undefined): boolean {
-  return unit !== null && unit !== undefined && unit.toLowerCase().includes("kwh");
-}
-
-function estimatedCostFromPrice(
-  priceValue: number | null | undefined,
-  unit: string | null | undefined,
-  usageKwh: number | null | undefined
-): number | null {
-  if (priceValue === null || priceValue === undefined || usageKwh === null || usageKwh === undefined || !isPriceUnit(unit)) {
-    return null;
-  }
-
-  return (priceValue * usageKwh) / 100;
-}
-
 function priceDisplayPoint(
   point: EnergyPoint,
-  fallbackUnit: string | null | undefined,
-  usageKwh: number | null | undefined
 ): EnergyDisplayPoint | null {
   const displayValue =
-    point.estimated_cost_eur ?? estimatedCostFromPrice(point.value, energyPointUnit(point, fallbackUnit), usageKwh);
+    point.estimated_cost_eur ?? null;
 
   if (displayValue === null || !Number.isFinite(displayValue)) {
     return null;
@@ -326,15 +308,13 @@ function priceDisplayPoint(
 export function chartDisplayPoints(
   points: EnergyPoint[],
   isPricePanel: boolean,
-  fallbackUnit: string | null | undefined,
-  usageKwh: number | null | undefined
 ): EnergyDisplayPoint[] {
   if (!isPricePanel) {
     return points.map((point) => ({ raw: point, display: point }));
   }
 
   return points.flatMap((point) => {
-    const displayPoint = priceDisplayPoint(point, fallbackUnit, usageKwh);
+    const displayPoint = priceDisplayPoint(point);
     return displayPoint ? [displayPoint] : [];
   });
 }
@@ -427,14 +407,6 @@ export function isNoActiveWindowLabel(value: string): boolean {
   return normalizedValue.startsWith("no active") || normalizedValue.includes("not available yet");
 }
 
-function averagePointValue(points: EnergyPoint[]): number | null {
-  if (points.length === 0) {
-    return null;
-  }
-
-  return points.reduce((sum, point) => sum + point.value, 0) / points.length;
-}
-
 export function energyHistoryPoints(
   history: PlatformHistoricalSnapshot<EnergyCurrentResponse>[],
   tKey: (key: string) => string,
@@ -448,10 +420,9 @@ export function energyHistoryPoints(
       return [];
     }
 
-    const averageRawValue = data.quality.average_value ?? averagePointValue(data.points);
-    const usageKwh = data.current_window?.usage_kwh ?? null;
+    const averageRawValue = data.quality.average_value;
     const averageValue = showEstimatedCost
-      ? data.current_window?.estimated_cost_eur ?? estimatedCostFromPrice(averageRawValue, data.unit, usageKwh)
+      ? data.quality.average_cost_eur ?? null
       : averageRawValue;
     if (averageValue === null || !Number.isFinite(averageValue)) {
       return [];
@@ -462,10 +433,10 @@ export function energyHistoryPoints(
     const maximumRawValue =
       data.quality.maximum_value ?? (data.points.length > 0 ? pointValueRange(data.points).max : null);
     const minimumValue = showEstimatedCost
-      ? estimatedCostFromPrice(minimumRawValue, data.unit, usageKwh)
+      ? data.quality.minimum_cost_eur ?? null
       : minimumRawValue;
     const maximumValue = showEstimatedCost
-      ? estimatedCostFromPrice(maximumRawValue, data.unit, usageKwh)
+      ? data.quality.maximum_cost_eur ?? null
       : maximumRawValue;
     const historyFractionDigits = showEstimatedCost ? 2 : 1;
     const rangeDetail =
@@ -738,3 +709,6 @@ export function energyHighlightRows(options: {
   });
 }
 
+
+// Unit recognition here only selects a display label; conversion belongs to Go.
+function isPriceUnit(unit: string | null | undefined): boolean { return unit?.toLowerCase().includes("kwh") ?? false; }

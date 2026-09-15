@@ -1,3 +1,7 @@
+import type { components } from "@/lib/api-contract";
+
+export type BriefingDecision = components["schemas"]["BriefingDecisionRead"];
+
 export type PlatformKeyDataItem = {
   key: string;
   label_key: string;
@@ -80,6 +84,8 @@ export type PlatformMetric = {
 };
 
 export type PlatformEvent = {
+  notification?: boolean;
+  notification_priority?: number;
   id: string;
   category_key: string;
   event_type: string;
@@ -160,6 +166,7 @@ export type PlatformCategory = {
 };
 
 export type PlatformOverviewResponse = {
+  source_health?: BriefingDecision["source_health"];
   checked_at: string;
   time_scope?: PlatformTimeScope | null;
   app_name: string;
@@ -550,6 +557,9 @@ export type EnergyDataStage = {
 };
 
 export type EnergyQuality = {
+  minimum_cost_eur?: number | null;
+  maximum_cost_eur?: number | null;
+  average_cost_eur?: number | null;
   point_count: number;
   window_point_count: number;
   field_coverage_pct: number;
@@ -620,6 +630,7 @@ export type PlatformHistoryAvailabilityResponse = {
 };
 
 export type PublicActionRead = {
+  eligible?: boolean;
   id: string;
   scenario_key: string;
   title: string;
@@ -669,6 +680,8 @@ export type ScenarioChannelRead = {
 };
 
 export type PublicDashboardRead = {
+  signals?: {weather: WeatherForecastResponse; airQuality: AirQualityCurrentResponse; transit: TransitCurrentResponse; roadRail: RoadRailCurrentResponse; energy: EnergyCurrentResponse; householdEnergy: EnergyCurrentResponse};
+  decision?: BriefingDecision;
   checked_at: string;
   snapshot_date?: string | null;
   snapshot_available?: boolean | null;

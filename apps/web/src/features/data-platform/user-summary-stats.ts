@@ -1,6 +1,7 @@
 import type { LanguageMode } from "./i18n";
 import { translateDataLabel, translateMessageKey } from "./i18n";
 import type {
+  BriefingDecision,
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
   RoadRailCurrentResponse,
@@ -50,15 +51,14 @@ export function buildUserSummaryTiles(
     systemEnergy?: EnergyCurrentResponse | null;
   },
   language: LanguageMode,
+  summary?: BriefingDecision["summary"],
 ): UserSummaryTile[] {
   const weather = signals.weather && !isEmptyStatus(signals.weather.status) ? signals.weather : null;
   const airQuality = signals.airQuality && !isEmptyStatus(signals.airQuality.status)
     ? signals.airQuality
     : null;
-  const transit = signals.transit && !isEmptyStatus(signals.transit.status) ? signals.transit : null;
-  const roadRail = signals.roadRail && !isEmptyStatus(signals.roadRail.status)
-    ? signals.roadRail
-    : null;
+
+
   const householdEnergy = signals.householdEnergy && !isEmptyStatus(signals.householdEnergy.status)
     ? signals.householdEnergy
     : null;
@@ -66,15 +66,13 @@ export function buildUserSummaryTiles(
     ? signals.systemEnergy
     : null;
 
-  const weatherWarnings = weather?.warnings.length ?? 0;
   const weatherValue = weather
     ? weatherSnapshotHeadline(weather, language)
     : translateMessageKey(language, "shell.na");
   const weatherDetail = weather
     ? weatherSnapshotDetail(weather, language)
     : translateMessageKey(language, "shell.noWeatherFeed");
-  const weatherTone: UserSummaryTile["tone"] =
-    weatherWarnings > 0 ? "warn" : weather ? "good" : "neutral";
+  const weatherTone = summary?.tones.outdoor ?? "neutral";
 
   const airScore = airQuality?.worst_score;
   const airStation = airQuality?.stations.find(
@@ -84,31 +82,21 @@ export function buildUserSummaryTiles(
     airScore !== null && airScore !== undefined
       ? `${scoreLabel(airScore, airQuality?.worst_label, language)}`
       : translateMessageKey(language, "shell.na");
-  const airTone: UserSummaryTile["tone"] =
-    airScore !== null && airScore !== undefined && airScore >= 4
-      ? "bad"
-      : airScore !== null && airScore !== undefined && airScore >= 3
-        ? "warn"
-        : airQuality
-          ? "good"
-          : "neutral";
-
-  const transitAlerts = transit?.quality.active_alert_count ?? 0;
-  const roadEvents = roadRail?.quality.active_event_count ?? 0;
-  const commuteAvailable = Boolean(transit || roadRail);
-  const commuteTotal = transitAlerts + roadEvents;
-  const commuteTone: UserSummaryTile["tone"] =
-    commuteTotal > 0 ? "warn" : commuteAvailable ? "good" : "neutral";
+  const airTone = summary?.tones.air ?? "neutral";
+  const transitAlerts = summary?.transit_alerts ?? 0;
+  const roadEvents = summary?.road_events ?? 0;
+  const commuteAvailable = summary?.commute_available ?? false;
+  const commuteTotal = summary?.commute_total ?? 0;
+  const commuteTone = summary?.tones.commute ?? "neutral";
 
   const priceWindow = householdEnergy?.current_window;
   const systemWindow = systemEnergy?.current_window;
-  const energyWindow = priceWindow ?? systemWindow;
   const energyValue = priceWindow
     ? `${priceWindow.average_value.toFixed(2)}${priceWindow.unit ? ` ${priceWindow.unit}` : ""}`
     : systemWindow
       ? `${systemWindow.average_value.toFixed(2)}${systemWindow.unit ? ` ${systemWindow.unit}` : ""}`
     : translateMessageKey(language, "shell.na");
-  const energyTone: UserSummaryTile["tone"] = energyWindow ? "good" : "neutral";
+  const energyTone = summary?.tones.energy ?? "neutral";
 
   return [
     {

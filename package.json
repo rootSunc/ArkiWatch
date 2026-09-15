@@ -18,7 +18,7 @@
     "build": "pnpm run build:web",
     "build:web": "pnpm --filter @arkiwatch/web run build",
     "contracts:generate": "pnpm --filter @arkiwatch/web run generate:api-types",
-    "contracts:check": "node scripts/check-contracts.mjs",
+    "contracts:check": "node scripts/check-contracts.mjs && pnpm run domain:check",
     "version:check": "node scripts/check-version.mjs",
     "architecture:check": "node scripts/check-go-only.mjs",
     "config:check": "pnpm run architecture:check && node scripts/check-env-examples.mjs",
@@ -41,7 +41,9 @@
     "ops:health": "deploy/scripts/healthcheck.sh",
     "audit:api": "go -C apps/api run golang.org/x/vuln/cmd/govulncheck@latest ./...",
     "fmt:api": "test -z \"$(gofmt -l apps/api)\" || (gofmt -l apps/api && echo \"Run gofmt -w apps/api\" && exit 1)",
-    "contracts:check:live": "scripts/check-live-contract.sh"
+    "contracts:check:live": "scripts/check-live-contract.sh",
+    "domain:generate": "node scripts/generate-web-assets.cjs",
+    "domain:check": "node scripts/generate-web-assets.cjs --check"
   },
   "pnpm": {
     "overrides": {

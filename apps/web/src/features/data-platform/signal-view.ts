@@ -12,11 +12,11 @@ import {
 } from "./data-platform-view-model";
 import type { LanguageMode } from "./language";
 import { isEmptyStatus } from "./platform-status";
-import { curatedRecentEvents, RECENT_EVENT_LIMIT } from "./recent-events";
 import type { DashboardTone } from "./data-platform-shell";
 import type { PlatformCategory, PlatformEvent } from "./types";
 
 type SignalViewInput = {
+  categoryEvents?: Record<string, PlatformEvent[]>;
   /** Non-null when a single workspace is in view rather than the whole catalogue. */
   selectedCategory: PlatformCategory | null;
   displayCategories: PlatformCategory[];
@@ -61,8 +61,7 @@ export function buildSignalView({
   searchValue,
   language,
   readRecentEventIds,
-  selectedCity,
-  eventReferenceAt,
+  categoryEvents,
   tKey,
 }: SignalViewInput): SignalView {
   const scopedCategories = selectedCategory ? [selectedCategory] : displayCategories;
@@ -71,10 +70,7 @@ export function buildSignalView({
   );
 
   const scopedEvents = selectedCategory
-    ? curatedRecentEvents(selectedCategory.events, RECENT_EVENT_LIMIT, {
-        city: selectedCity,
-        referenceAt: eventReferenceAt,
-      })
+    ? categoryEvents?.[selectedCategory.key] ?? []
     : recentEvents;
   const visibleEvents = scopedEvents.filter((event) =>
     eventMatchesSearch(event, searchValue, language),

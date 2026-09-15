@@ -1,12 +1,13 @@
 "use client";
 
+import { useCityCoverage } from "./hooks/use-city-coverage";
+
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
 import { MaterialIcon } from "@/features/shared/material-icon";
 
 import {
-  CITY_OPTIONS,
   CITY_STORAGE_KEY,
   cityLabel,
   normalizeCityValue,
@@ -293,6 +294,7 @@ export function CityScopeSelector({
   language: LanguageMode;
   onCityChange: (city: string) => void;
 }) {
+  const coverage = useCityCoverage();
   const label = translateMessageKey(language, "shell.city");
   const selectedCityLabel = cityLabel(city);
 
@@ -317,8 +319,8 @@ export function CityScopeSelector({
         onChange={(event) => onCityChange(event.currentTarget.value)}
         value={city}
       >
-        {CITY_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
+        {coverage.cities.map((option) => (
+          <option key={option.city_ref} value={option.city_ref}>
             {option.label}
           </option>
         ))}

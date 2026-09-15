@@ -26,7 +26,6 @@ export function TodayActionCard({
   language,
   liveSignals,
   disabled = false,
-  now,
   onAskAssistant,
   onOpen,
   recommendationMode = "live",
@@ -40,8 +39,7 @@ export function TodayActionCard({
     language,
     recommendationMode,
     timezone,
-    now,
-  );
+    );
   const rowTitle = localizedContent(language, section.title, section.title_zh);
   const assistantQuestion = tKey("assistant.analyzeCategory").replace(
     "{category}",

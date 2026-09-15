@@ -1,3 +1,6 @@
+import generatedEnergyCosts from "../generated/energy-costs.json";
+import generatedDecisions from "../generated/briefings.json";
+import type { BriefingDecision } from "../types";
 import { cityCoverageArea, cityLabel, normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
 import type {
@@ -533,7 +536,7 @@ function buildAirQuality(): AirQualityCurrentResponse {
     summary: "Good air quality across the example station network.",
     worst_station: "kallio",
     worst_label: "Good",
-    worst_score: 1.2,
+    worst_score: 1,
     metrics: [
       metric("european_aqi", "European AQI", "1.2", "good", ["hsy"]),
       metric("pm2_5", "PM2.5", "5.4", "good", ["hsy"], "µg/m³"),
@@ -543,7 +546,7 @@ function buildAirQuality(): AirQualityCurrentResponse {
       {
         station: "kallio",
         label: "Kallio",
-        score: 1.2,
+        score: 1,
         european_aqi: 1.2,
         pm2_5: 5.4,
         pm10: 9.8,
@@ -554,7 +557,7 @@ function buildAirQuality(): AirQualityCurrentResponse {
       {
         station: "leppavaara",
         label: "Leppävaara",
-        score: 0.8,
+        score: 1,
         european_aqi: 0.8,
         pm2_5: 3.9,
         pm10: 7.1,
@@ -1034,7 +1037,7 @@ function withScope<T>(value: T, date: string | null): T & { time_scope: Platform
   return { ...value, time_scope: timeScope(date) };
 }
 
-export function demoFixtureForScope(scope: {
+export function rawDemoFixtureForScope(scope: {
   city?: string | null;
   date?: string | null;
 } = {}): DemoFixture {
@@ -1079,6 +1082,7 @@ export function demoFixtureForScope(scope: {
     weather: {
       ...withScope(emptyDemoResponse(scopedBaseFixture.weather, unavailableScopedData), date),
       location: city,
+      warnings: unavailableScopedData ? [] : scopedBaseFixture.weather.warnings,
     },
     airQuality: {
       ...withScope(emptyDemoResponse(scopedBaseFixture.airQuality, unavailableScopedData), date),
@@ -1120,4 +1124,29 @@ export function demoFixtureForScope(scope: {
       days: unavailableCityScope ? [] : scopedBaseFixture.historyAvailability.days,
     },
   };
+}
+
+// Generated Go decisions are shifted with the fixture's timestamps. Selecting a
+// fixture is presentation plumbing; no business rules run in the browser.
+export function demoFixtureForScope(scope: { city?: string | null; date?: string | null } = {}): DemoFixture {
+ const fixture = rawDemoFixtureForScope(scope);
+ const city = normalizeCityValue(scope.city);
+ const date = normalizeSourceDateValue(scope.date);
+ const kind = date === null ? "live" : date === DEMO_SNAPSHOT_DATE ? "historical" : "missing";
+ const key = `${city}:${kind}` as keyof typeof generatedDecisions;
+ const baseDate = kind === "missing" ? "2026-08-07" : kind === "historical" ? DEMO_SNAPSHOT_DATE : null;
+ const decision = shiftDemoTimestamps(generatedDecisions[key], demoSnapshotShift(date) - demoSnapshotShift(baseDate)) as BriefingDecision;
+ const energyQuality = { ...fixture.energy.quality, ...generatedEnergyCosts.energy };
+ const householdQuality = { ...fixture.householdEnergy.quality, ...generatedEnergyCosts.householdEnergy };
+ return {
+  ...fixture,
+  energy: { ...fixture.energy, quality: energyQuality },
+  householdEnergy: { ...fixture.householdEnergy, quality: householdQuality },
+  history: {
+   ...fixture.history,
+   energy: fixture.history.energy.map((snapshot) => ({ ...snapshot, data: snapshot.data ? { ...snapshot.data, quality: { ...snapshot.data.quality, ...generatedEnergyCosts.energy } } : null })),
+   household_energy: fixture.history.household_energy.map((snapshot) => ({ ...snapshot, data: snapshot.data ? { ...snapshot.data, quality: { ...snapshot.data.quality, ...generatedEnergyCosts.householdEnergy } } : null })),
+  },
+  publicDashboard: { ...fixture.publicDashboard, decision },
+ };
 }

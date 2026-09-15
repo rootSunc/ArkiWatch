@@ -1,0 +1,1777 @@
+{
+  "espoo:historical": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "espoo:live": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "stale",
+    "historical_snapshot_available": true,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "espoo:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "helsinki:historical": {
+    "action_eligibility": {
+      "demo-action-air": false,
+      "demo-action-commute": false,
+      "demo-action-energy": false,
+      "demo-action-outdoor": false
+    },
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": true,
+    "has_scoped_data": true,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [
+      {
+        "id": "event-demo-air-status",
+        "kind": "event",
+        "title": "Air quality is suitable for normal outdoor activity",
+        "title_zh": "空气质量适合正常户外活动",
+        "detail": "Station readings are in the good range across the Helsinki example network.",
+        "detail_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+        "severity": "LOW",
+        "startsAt": "2026-08-08T03:00:00.000Z",
+        "endsAt": "2026-08-08T16:00:00.000Z",
+        "categoryKey": "air",
+        "state": "active",
+        "event": {
+          "notification": true,
+          "notification_priority": 1001786158000,
+          "title_zh": "空气质量适合正常户外活动",
+          "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+          "id": "demo-air-status",
+          "category_key": "air",
+          "event_type": "air_quality_status",
+          "title": "Air quality is suitable for normal outdoor activity",
+          "body": "Station readings are in the good range across the Helsinki example network.",
+          "severity": "LOW",
+          "starts_at": "2026-08-08T03:00:00.000Z",
+          "ends_at": "2026-08-08T16:00:00.000Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": [
+            "HSY"
+          ],
+          "attributes": {}
+        }
+      },
+      {
+        "id": "event-demo-road-weather",
+        "kind": "event",
+        "title": "Road surfaces may be slippery after the rain window",
+        "title_zh": "降雨后路面可能湿滑",
+        "detail": "Keep a little extra distance if you are driving after the late-morning shower.",
+        "detail_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-08T09:00:00.000Z",
+        "endsAt": "2026-08-08T12:00:00.000Z",
+        "categoryKey": "traffic",
+        "state": "ended",
+        "event": {
+          "notification": true,
+          "notification_priority": 2001786179600,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-08T09:00:00.000Z",
+          "ends_at": "2026-08-08T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      },
+      {
+        "id": "event-demo-cheap-energy",
+        "kind": "event",
+        "title": "A lower-cost household energy window starts at noon",
+        "title_zh": "中午开始进入较低成本的家庭用电时段",
+        "detail": "The example price curve is most favourable between 12:00 and 14:00.",
+        "detail_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+        "severity": "LOW",
+        "startsAt": "2026-08-08T09:00:00.000Z",
+        "endsAt": "2026-08-08T11:00:00.000Z",
+        "categoryKey": "energy",
+        "state": "ended",
+        "event": {
+          "notification": true,
+          "notification_priority": 1001786179600,
+          "title_zh": "中午开始进入较低成本的家庭用电时段",
+          "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+          "id": "demo-cheap-energy",
+          "category_key": "energy",
+          "event_type": "cheap_energy_window",
+          "title": "A lower-cost household energy window starts at noon",
+          "body": "The example price curve is most favourable between 12:00 and 14:00.",
+          "severity": "LOW",
+          "starts_at": "2026-08-08T09:00:00.000Z",
+          "ends_at": "2026-08-08T11:00:00.000Z",
+          "source_codes": [
+            "porssisahko"
+          ],
+          "evidence": [
+            "PORSSISAHKO"
+          ],
+          "attributes": {
+            "average_value": 7.8,
+            "unit": "c/kWh"
+          }
+        }
+      },
+      {
+        "id": "scenario-energy-2026-08-08T09:00:00.000Z",
+        "kind": "scenario",
+        "title": "Noon · lower-cost household window",
+        "title_zh": "中午 · 较低成本家庭用电时段",
+        "detail": "A practical window for flexible household use.",
+        "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
+        "severity": "LOW",
+        "startsAt": "2026-08-08T09:00:00.000Z",
+        "endsAt": "2026-08-08T11:00:00.000Z",
+        "categoryKey": "energy",
+        "state": "ended",
+        "scenarioKey": "energy"
+      },
+      {
+        "id": "scenario-outdoor-2026-08-08T07:00:00.000Z",
+        "kind": "scenario",
+        "title": "Late morning · brief rain window",
+        "title_zh": "上午晚些时候 · 短时降雨",
+        "detail": "Weather timing for the next useful decision.",
+        "detail_zh": "帮助你安排下一步出行的天气时段。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-08T07:00:00.000Z",
+        "endsAt": "2026-08-08T10:00:00.000Z",
+        "categoryKey": "weather",
+        "state": "ended",
+        "scenarioKey": "outdoor"
+      },
+      {
+        "id": "scenario-commute-2026-08-08T05:00:00.000Z",
+        "kind": "scenario",
+        "title": "Morning peak · westbound tram alert",
+        "title_zh": "早高峰 · 西向有轨电车提醒",
+        "detail": "Transit and road signals that may change your route.",
+        "detail_zh": "可能影响路线选择的公共交通和道路信号。",
+        "severity": "HIGH",
+        "startsAt": "2026-08-08T05:00:00.000Z",
+        "endsAt": "2026-08-08T08:00:00.000Z",
+        "categoryKey": "mobility",
+        "state": "ended",
+        "scenarioKey": "commute"
+      }
+    ],
+    "recent_events": [
+      {
+        "notification": true,
+        "notification_priority": 2001786179600,
+        "title_zh": "降雨后路面可能湿滑",
+        "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+        "id": "demo-road-weather",
+        "category_key": "traffic",
+        "event_type": "road_weather_risk",
+        "title": "Road surfaces may be slippery after the rain window",
+        "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-08T09:00:00.000Z",
+        "ends_at": "2026-08-08T12:00:00.000Z",
+        "source_codes": [
+          "digitraffic"
+        ],
+        "evidence": [
+          "DIGITRAFFIC"
+        ],
+        "attributes": {
+          "location_description": "Helsinki westbound approach",
+          "situation_id": "demo-road-1"
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 1001786179600,
+        "title_zh": "中午开始进入较低成本的家庭用电时段",
+        "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+        "id": "demo-cheap-energy",
+        "category_key": "energy",
+        "event_type": "cheap_energy_window",
+        "title": "A lower-cost household energy window starts at noon",
+        "body": "The example price curve is most favourable between 12:00 and 14:00.",
+        "severity": "LOW",
+        "starts_at": "2026-08-08T09:00:00.000Z",
+        "ends_at": "2026-08-08T11:00:00.000Z",
+        "source_codes": [
+          "porssisahko"
+        ],
+        "evidence": [
+          "PORSSISAHKO"
+        ],
+        "attributes": {
+          "average_value": 7.8,
+          "unit": "c/kWh"
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 1001786158000,
+        "title_zh": "空气质量适合正常户外活动",
+        "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+        "id": "demo-air-status",
+        "category_key": "air",
+        "event_type": "air_quality_status",
+        "title": "Air quality is suitable for normal outdoor activity",
+        "body": "Station readings are in the good range across the Helsinki example network.",
+        "severity": "LOW",
+        "starts_at": "2026-08-08T03:00:00.000Z",
+        "ends_at": "2026-08-08T16:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ],
+        "evidence": [
+          "HSY"
+        ],
+        "attributes": {}
+      }
+    ],
+    "category_events": {
+      "air": [
+        {
+          "notification": true,
+          "notification_priority": 1001786158000,
+          "title_zh": "空气质量适合正常户外活动",
+          "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+          "id": "demo-air-status",
+          "category_key": "air",
+          "event_type": "air_quality_status",
+          "title": "Air quality is suitable for normal outdoor activity",
+          "body": "Station readings are in the good range across the Helsinki example network.",
+          "severity": "LOW",
+          "starts_at": "2026-08-08T03:00:00.000Z",
+          "ends_at": "2026-08-08T16:00:00.000Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": [
+            "HSY"
+          ],
+          "attributes": {}
+        }
+      ],
+      "city_services": [],
+      "energy": [
+        {
+          "notification": true,
+          "notification_priority": 1001786179600,
+          "title_zh": "中午开始进入较低成本的家庭用电时段",
+          "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+          "id": "demo-cheap-energy",
+          "category_key": "energy",
+          "event_type": "cheap_energy_window",
+          "title": "A lower-cost household energy window starts at noon",
+          "body": "The example price curve is most favourable between 12:00 and 14:00.",
+          "severity": "LOW",
+          "starts_at": "2026-08-08T09:00:00.000Z",
+          "ends_at": "2026-08-08T11:00:00.000Z",
+          "source_codes": [
+            "porssisahko"
+          ],
+          "evidence": [
+            "PORSSISAHKO"
+          ],
+          "attributes": {
+            "average_value": 7.8,
+            "unit": "c/kWh"
+          }
+        }
+      ],
+      "events": [],
+      "geospatial": [],
+      "mobility": [
+        {
+          "notification": true,
+          "notification_priority": 2001786179600,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-08T09:00:00.000Z",
+          "ends_at": "2026-08-08T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      ],
+      "regional_profile": [],
+      "traffic": [
+        {
+          "notification": true,
+          "notification_priority": 2001786179600,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-08T09:00:00.000Z",
+          "ends_at": "2026-08-08T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      ],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "good",
+        "commute": "warn",
+        "energy": "good",
+        "outdoor": "good"
+      },
+      "transit_alerts": 1,
+      "road_events": 1,
+      "commute_total": 2,
+      "commute_available": true,
+      "headline_summary_key": "commute"
+    }
+  },
+  "helsinki:live": {
+    "action_eligibility": {
+      "demo-action-air": true,
+      "demo-action-commute": true,
+      "demo-action-energy": true,
+      "demo-action-outdoor": true
+    },
+    "headline_action_id": "demo-action-commute",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "live",
+    "historical_snapshot_available": true,
+    "has_scoped_data": true,
+    "top_actions": [
+      {
+        "id": "demo-action-commute",
+        "scenario_key": "commute",
+        "title": "Leave a few minutes earlier",
+        "title_zh": "提前几分钟出发",
+        "body": "The westbound tram example has a service alert during the morning peak.",
+        "body_zh": "西向有轨电车示例线路在早高峰期间有服务提醒，建议留出一些缓冲时间。",
+        "severity": "HIGH",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T05:00:00.000Z",
+        "valid_to": "2026-08-09T08:00:00.000Z",
+        "evidence": [
+          "Digitransit · routes 4 and 10"
+        ]
+      },
+      {
+        "id": "demo-action-outdoor",
+        "scenario_key": "outdoor",
+        "title": "Carry a light rain layer",
+        "title_zh": "带上一件轻便防雨外套",
+        "body": "A short shower may cross the late-morning commute. Keep a light shell handy.",
+        "body_zh": "上午晚些时候可能有一阵短时阵雨，随身准备轻便外套即可。",
+        "severity": "MEDIUM",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T07:00:00.000Z",
+        "valid_to": "2026-08-09T10:00:00.000Z",
+        "evidence": [
+          "FMI · rain risk · 1.8 mm peak"
+        ]
+      },
+      {
+        "id": "demo-action-energy",
+        "scenario_key": "energy",
+        "title": "Run flexible appliances around noon",
+        "title_zh": "中午安排可灵活调整的家务用电",
+        "body": "The example household price window is most favourable between 12:00 and 14:00.",
+        "body_zh": "示例家庭电价在 12:00 至 14:00 最有利，可将洗衣等用电安排在这段时间。",
+        "severity": "LOW",
+        "area_scope": "Helsinki",
+        "freshness_state": "fresh",
+        "valid_from": "2026-08-09T09:00:00.000Z",
+        "valid_to": "2026-08-09T11:00:00.000Z",
+        "evidence": [
+          "Pörssisähkö · 7.80 c/kWh example window"
+        ]
+      }
+    ],
+    "plan_items": [
+      {
+        "id": "scenario-outdoor-2026-08-09T07:00:00.000Z",
+        "kind": "scenario",
+        "title": "Late morning · brief rain window",
+        "title_zh": "上午晚些时候 · 短时降雨",
+        "detail": "Weather timing for the next useful decision.",
+        "detail_zh": "帮助你安排下一步出行的天气时段。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T07:00:00.000Z",
+        "endsAt": "2026-08-09T10:00:00.000Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      },
+      {
+        "id": "scenario-energy-2026-08-09T09:00:00.000Z",
+        "kind": "scenario",
+        "title": "Noon · lower-cost household window",
+        "title_zh": "中午 · 较低成本家庭用电时段",
+        "detail": "A practical window for flexible household use.",
+        "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
+        "severity": "LOW",
+        "startsAt": "2026-08-09T09:00:00.000Z",
+        "endsAt": "2026-08-09T11:00:00.000Z",
+        "categoryKey": "energy",
+        "state": "upcoming",
+        "scenarioKey": "energy"
+      }
+    ],
+    "timeline": [
+      {
+        "id": "event-demo-air-status",
+        "kind": "event",
+        "title": "Air quality is suitable for normal outdoor activity",
+        "title_zh": "空气质量适合正常户外活动",
+        "detail": "Station readings are in the good range across the Helsinki example network.",
+        "detail_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+        "severity": "LOW",
+        "startsAt": "2026-08-09T03:00:00.000Z",
+        "endsAt": "2026-08-09T16:00:00.000Z",
+        "categoryKey": "air",
+        "state": "active",
+        "event": {
+          "notification": true,
+          "notification_priority": 1001786244400,
+          "title_zh": "空气质量适合正常户外活动",
+          "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+          "id": "demo-air-status",
+          "category_key": "air",
+          "event_type": "air_quality_status",
+          "title": "Air quality is suitable for normal outdoor activity",
+          "body": "Station readings are in the good range across the Helsinki example network.",
+          "severity": "LOW",
+          "starts_at": "2026-08-09T03:00:00.000Z",
+          "ends_at": "2026-08-09T16:00:00.000Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": [
+            "HSY"
+          ],
+          "attributes": {}
+        }
+      },
+      {
+        "id": "event-demo-transit-delay",
+        "kind": "event",
+        "title": "Allow a few extra minutes on the westbound tram",
+        "title_zh": "乘坐西向有轨电车请预留几分钟",
+        "detail": "A service alert may slow the westbound tram corridor during the morning peak.",
+        "detail_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+        "severity": "HIGH",
+        "startsAt": "2026-08-09T05:00:00.000Z",
+        "endsAt": "2026-08-09T08:00:00.000Z",
+        "categoryKey": "transit",
+        "state": "upcoming",
+        "event": {
+          "notification": true,
+          "notification_priority": 3001786251600,
+          "title_zh": "乘坐西向有轨电车请预留几分钟",
+          "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+          "id": "demo-transit-delay",
+          "category_key": "transit",
+          "event_type": "transit_delay",
+          "title": "Allow a few extra minutes on the westbound tram",
+          "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+          "severity": "HIGH",
+          "starts_at": "2026-08-09T05:00:00.000Z",
+          "ends_at": "2026-08-09T08:00:00.000Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": [
+            "DIGITRANSIT"
+          ],
+          "attributes": {
+            "alert_id": "demo-alert-4",
+            "route_ids": [
+              "4",
+              "10"
+            ]
+          }
+        }
+      },
+      {
+        "id": "scenario-commute-2026-08-09T05:00:00.000Z",
+        "kind": "scenario",
+        "title": "Morning peak · westbound tram alert",
+        "title_zh": "早高峰 · 西向有轨电车提醒",
+        "detail": "Transit and road signals that may change your route.",
+        "detail_zh": "可能影响路线选择的公共交通和道路信号。",
+        "severity": "HIGH",
+        "startsAt": "2026-08-09T05:00:00.000Z",
+        "endsAt": "2026-08-09T08:00:00.000Z",
+        "categoryKey": "mobility",
+        "state": "upcoming",
+        "scenarioKey": "commute"
+      },
+      {
+        "id": "event-demo-rain-risk",
+        "kind": "event",
+        "title": "Brief rain may affect the late morning",
+        "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+        "detail": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+        "detail_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T07:00:00.000Z",
+        "endsAt": "2026-08-09T10:00:00.000Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "event": {
+          "notification": true,
+          "notification_priority": 2001786258800,
+          "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+          "body_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+          "id": "demo-rain-risk",
+          "category_key": "weather",
+          "event_type": "rain_risk",
+          "title": "Brief rain may affect the late morning",
+          "body": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-09T07:00:00.000Z",
+          "ends_at": "2026-08-09T10:00:00.000Z",
+          "source_codes": [
+            "fmi"
+          ],
+          "evidence": [
+            "FMI"
+          ],
+          "attributes": {
+            "peak_precip_mm": 1.8
+          }
+        }
+      },
+      {
+        "id": "scenario-outdoor-2026-08-09T07:00:00.000Z",
+        "kind": "scenario",
+        "title": "Late morning · brief rain window",
+        "title_zh": "上午晚些时候 · 短时降雨",
+        "detail": "Weather timing for the next useful decision.",
+        "detail_zh": "帮助你安排下一步出行的天气时段。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T07:00:00.000Z",
+        "endsAt": "2026-08-09T10:00:00.000Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      },
+      {
+        "id": "event-demo-road-weather",
+        "kind": "event",
+        "title": "Road surfaces may be slippery after the rain window",
+        "title_zh": "降雨后路面可能湿滑",
+        "detail": "Keep a little extra distance if you are driving after the late-morning shower.",
+        "detail_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T09:00:00.000Z",
+        "endsAt": "2026-08-09T12:00:00.000Z",
+        "categoryKey": "traffic",
+        "state": "upcoming",
+        "event": {
+          "notification": true,
+          "notification_priority": 2001786266000,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-09T09:00:00.000Z",
+          "ends_at": "2026-08-09T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      },
+      {
+        "id": "event-demo-cheap-energy",
+        "kind": "event",
+        "title": "A lower-cost household energy window starts at noon",
+        "title_zh": "中午开始进入较低成本的家庭用电时段",
+        "detail": "The example price curve is most favourable between 12:00 and 14:00.",
+        "detail_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+        "severity": "LOW",
+        "startsAt": "2026-08-09T09:00:00.000Z",
+        "endsAt": "2026-08-09T11:00:00.000Z",
+        "categoryKey": "energy",
+        "state": "upcoming",
+        "event": {
+          "notification": true,
+          "notification_priority": 1001786266000,
+          "title_zh": "中午开始进入较低成本的家庭用电时段",
+          "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+          "id": "demo-cheap-energy",
+          "category_key": "energy",
+          "event_type": "cheap_energy_window",
+          "title": "A lower-cost household energy window starts at noon",
+          "body": "The example price curve is most favourable between 12:00 and 14:00.",
+          "severity": "LOW",
+          "starts_at": "2026-08-09T09:00:00.000Z",
+          "ends_at": "2026-08-09T11:00:00.000Z",
+          "source_codes": [
+            "porssisahko"
+          ],
+          "evidence": [
+            "PORSSISAHKO"
+          ],
+          "attributes": {
+            "average_value": 7.8,
+            "unit": "c/kWh"
+          }
+        }
+      },
+      {
+        "id": "scenario-energy-2026-08-09T09:00:00.000Z",
+        "kind": "scenario",
+        "title": "Noon · lower-cost household window",
+        "title_zh": "中午 · 较低成本家庭用电时段",
+        "detail": "A practical window for flexible household use.",
+        "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
+        "severity": "LOW",
+        "startsAt": "2026-08-09T09:00:00.000Z",
+        "endsAt": "2026-08-09T11:00:00.000Z",
+        "categoryKey": "energy",
+        "state": "upcoming",
+        "scenarioKey": "energy"
+      }
+    ],
+    "recent_events": [
+      {
+        "notification": true,
+        "notification_priority": 3001786251600,
+        "title_zh": "乘坐西向有轨电车请预留几分钟",
+        "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+        "id": "demo-transit-delay",
+        "category_key": "transit",
+        "event_type": "transit_delay",
+        "title": "Allow a few extra minutes on the westbound tram",
+        "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+        "severity": "HIGH",
+        "starts_at": "2026-08-09T05:00:00.000Z",
+        "ends_at": "2026-08-09T08:00:00.000Z",
+        "source_codes": [
+          "digitransit"
+        ],
+        "evidence": [
+          "DIGITRANSIT"
+        ],
+        "attributes": {
+          "alert_id": "demo-alert-4",
+          "route_ids": [
+            "4",
+            "10"
+          ]
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 2001786258800,
+        "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+        "body_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+        "id": "demo-rain-risk",
+        "category_key": "weather",
+        "event_type": "rain_risk",
+        "title": "Brief rain may affect the late morning",
+        "body": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-09T07:00:00.000Z",
+        "ends_at": "2026-08-09T10:00:00.000Z",
+        "source_codes": [
+          "fmi"
+        ],
+        "evidence": [
+          "FMI"
+        ],
+        "attributes": {
+          "peak_precip_mm": 1.8
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 2001786266000,
+        "title_zh": "降雨后路面可能湿滑",
+        "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+        "id": "demo-road-weather",
+        "category_key": "traffic",
+        "event_type": "road_weather_risk",
+        "title": "Road surfaces may be slippery after the rain window",
+        "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+        "severity": "MEDIUM",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T12:00:00.000Z",
+        "source_codes": [
+          "digitraffic"
+        ],
+        "evidence": [
+          "DIGITRAFFIC"
+        ],
+        "attributes": {
+          "location_description": "Helsinki westbound approach",
+          "situation_id": "demo-road-1"
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 1001786266000,
+        "title_zh": "中午开始进入较低成本的家庭用电时段",
+        "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+        "id": "demo-cheap-energy",
+        "category_key": "energy",
+        "event_type": "cheap_energy_window",
+        "title": "A lower-cost household energy window starts at noon",
+        "body": "The example price curve is most favourable between 12:00 and 14:00.",
+        "severity": "LOW",
+        "starts_at": "2026-08-09T09:00:00.000Z",
+        "ends_at": "2026-08-09T11:00:00.000Z",
+        "source_codes": [
+          "porssisahko"
+        ],
+        "evidence": [
+          "PORSSISAHKO"
+        ],
+        "attributes": {
+          "average_value": 7.8,
+          "unit": "c/kWh"
+        }
+      },
+      {
+        "notification": true,
+        "notification_priority": 1001786244400,
+        "title_zh": "空气质量适合正常户外活动",
+        "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+        "id": "demo-air-status",
+        "category_key": "air",
+        "event_type": "air_quality_status",
+        "title": "Air quality is suitable for normal outdoor activity",
+        "body": "Station readings are in the good range across the Helsinki example network.",
+        "severity": "LOW",
+        "starts_at": "2026-08-09T03:00:00.000Z",
+        "ends_at": "2026-08-09T16:00:00.000Z",
+        "source_codes": [
+          "hsy"
+        ],
+        "evidence": [
+          "HSY"
+        ],
+        "attributes": {}
+      }
+    ],
+    "category_events": {
+      "air": [
+        {
+          "notification": true,
+          "notification_priority": 1001786244400,
+          "title_zh": "空气质量适合正常户外活动",
+          "body_zh": "赫尔辛基示例网络中的监测站读数均处于良好范围。",
+          "id": "demo-air-status",
+          "category_key": "air",
+          "event_type": "air_quality_status",
+          "title": "Air quality is suitable for normal outdoor activity",
+          "body": "Station readings are in the good range across the Helsinki example network.",
+          "severity": "LOW",
+          "starts_at": "2026-08-09T03:00:00.000Z",
+          "ends_at": "2026-08-09T16:00:00.000Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": [
+            "HSY"
+          ],
+          "attributes": {}
+        }
+      ],
+      "city_services": [],
+      "energy": [
+        {
+          "notification": true,
+          "notification_priority": 1001786266000,
+          "title_zh": "中午开始进入较低成本的家庭用电时段",
+          "body_zh": "示例价格曲线显示，12:00 至 14:00 最适合安排可灵活调整的用电。",
+          "id": "demo-cheap-energy",
+          "category_key": "energy",
+          "event_type": "cheap_energy_window",
+          "title": "A lower-cost household energy window starts at noon",
+          "body": "The example price curve is most favourable between 12:00 and 14:00.",
+          "severity": "LOW",
+          "starts_at": "2026-08-09T09:00:00.000Z",
+          "ends_at": "2026-08-09T11:00:00.000Z",
+          "source_codes": [
+            "porssisahko"
+          ],
+          "evidence": [
+            "PORSSISAHKO"
+          ],
+          "attributes": {
+            "average_value": 7.8,
+            "unit": "c/kWh"
+          }
+        }
+      ],
+      "events": [],
+      "geospatial": [],
+      "mobility": [
+        {
+          "notification": true,
+          "notification_priority": 3001786251600,
+          "title_zh": "乘坐西向有轨电车请预留几分钟",
+          "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+          "id": "demo-transit-delay",
+          "category_key": "transit",
+          "event_type": "transit_delay",
+          "title": "Allow a few extra minutes on the westbound tram",
+          "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+          "severity": "HIGH",
+          "starts_at": "2026-08-09T05:00:00.000Z",
+          "ends_at": "2026-08-09T08:00:00.000Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": [
+            "DIGITRANSIT"
+          ],
+          "attributes": {
+            "alert_id": "demo-alert-4",
+            "route_ids": [
+              "4",
+              "10"
+            ]
+          }
+        },
+        {
+          "notification": true,
+          "notification_priority": 2001786266000,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-09T09:00:00.000Z",
+          "ends_at": "2026-08-09T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      ],
+      "regional_profile": [],
+      "traffic": [
+        {
+          "notification": true,
+          "notification_priority": 2001786266000,
+          "title_zh": "降雨后路面可能湿滑",
+          "body_zh": "上午晚些时候阵雨过后驾车，请适当拉大跟车距离。",
+          "id": "demo-road-weather",
+          "category_key": "traffic",
+          "event_type": "road_weather_risk",
+          "title": "Road surfaces may be slippery after the rain window",
+          "body": "Keep a little extra distance if you are driving after the late-morning shower.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-09T09:00:00.000Z",
+          "ends_at": "2026-08-09T12:00:00.000Z",
+          "source_codes": [
+            "digitraffic"
+          ],
+          "evidence": [
+            "DIGITRAFFIC"
+          ],
+          "attributes": {
+            "location_description": "Helsinki westbound approach",
+            "situation_id": "demo-road-1"
+          }
+        }
+      ],
+      "transit": [
+        {
+          "notification": true,
+          "notification_priority": 3001786251600,
+          "title_zh": "乘坐西向有轨电车请预留几分钟",
+          "body_zh": "早高峰期间，西向有轨电车示例线路可能因服务提醒而减速。",
+          "id": "demo-transit-delay",
+          "category_key": "transit",
+          "event_type": "transit_delay",
+          "title": "Allow a few extra minutes on the westbound tram",
+          "body": "A service alert may slow the westbound tram corridor during the morning peak.",
+          "severity": "HIGH",
+          "starts_at": "2026-08-09T05:00:00.000Z",
+          "ends_at": "2026-08-09T08:00:00.000Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": [
+            "DIGITRANSIT"
+          ],
+          "attributes": {
+            "alert_id": "demo-alert-4",
+            "route_ids": [
+              "4",
+              "10"
+            ]
+          }
+        }
+      ],
+      "water": [],
+      "weather": [
+        {
+          "notification": true,
+          "notification_priority": 2001786258800,
+          "title_zh": "短时降雨可能影响上午晚些时候的通勤",
+          "body_zh": "上午晚些时候可能有一阵短时降雨。随身带一件轻便防雨外套即可。",
+          "id": "demo-rain-risk",
+          "category_key": "weather",
+          "event_type": "rain_risk",
+          "title": "Brief rain may affect the late morning",
+          "body": "A short rain window is likely around the late-morning commute. A light shell is enough.",
+          "severity": "MEDIUM",
+          "starts_at": "2026-08-09T07:00:00.000Z",
+          "ends_at": "2026-08-09T10:00:00.000Z",
+          "source_codes": [
+            "fmi"
+          ],
+          "evidence": [
+            "FMI"
+          ],
+          "attributes": {
+            "peak_precip_mm": 1.8
+          }
+        }
+      ]
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "good",
+        "commute": "warn",
+        "energy": "good",
+        "outdoor": "good"
+      },
+      "transit_alerts": 1,
+      "road_events": 1,
+      "commute_total": 2,
+      "commute_available": true,
+      "headline_summary_key": "commute"
+    }
+  },
+  "helsinki:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "oulu:historical": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "oulu:live": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "out_of_scope",
+    "historical_snapshot_available": true,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "oulu:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "tampere:historical": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "tampere:live": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "out_of_scope",
+    "historical_snapshot_available": true,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "tampere:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "turku:historical": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "turku:live": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "out_of_scope",
+    "historical_snapshot_available": true,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "turku:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "vantaa:historical": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-08T15:00:00+00:00",
+    "valid_until": "2026-08-08T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "vantaa:live": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-09T04:00:00+00:00",
+    "valid_until": "2026-08-09T04:05:00+00:00",
+    "recommendation_mode": "stale",
+    "historical_snapshot_available": true,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": false
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  },
+  "vantaa:missing": {
+    "action_eligibility": {},
+    "headline_action_id": "",
+    "evaluated_at": "2026-08-07T15:00:00+00:00",
+    "valid_until": "2026-08-07T15:05:00+00:00",
+    "recommendation_mode": "historical",
+    "historical_snapshot_available": false,
+    "has_scoped_data": false,
+    "top_actions": [],
+    "plan_items": [],
+    "timeline": [],
+    "recent_events": [],
+    "category_events": {
+      "air": [],
+      "city_services": [],
+      "energy": [],
+      "events": [],
+      "geospatial": [],
+      "mobility": [],
+      "regional_profile": [],
+      "traffic": [],
+      "transit": [],
+      "water": [],
+      "weather": []
+    },
+    "source_health": {
+      "catalog_source_ids": [],
+      "tracked": 9,
+      "healthy": 9,
+      "issues": 0,
+      "catalog": 0,
+      "historical": true
+    },
+    "summary": {
+      "tones": {
+        "air": "neutral",
+        "commute": "neutral",
+        "energy": "neutral",
+        "outdoor": "neutral"
+      },
+      "transit_alerts": 0,
+      "road_events": 0,
+      "commute_total": 0,
+      "commute_available": false,
+      "headline_summary_key": ""
+    }
+  }
+}

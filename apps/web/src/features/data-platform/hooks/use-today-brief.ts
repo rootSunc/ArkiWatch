@@ -2,13 +2,9 @@
 
 import { useMemo } from "react";
 
-import { CROSS_TIMELINE_LIMIT } from "../data-platform-nav-utils";
-import { buildCrossDomainTimeline } from "../cross-domain-timeline";
 import type { LanguageMode } from "../language";
-import { curatedRecentEvents } from "../recent-events";
 import { buildSignalSystemTiles } from "../signals-console";
-import { sourceIssueCountForScope } from "../source-health";
-import { buildTodayBrief, todayBriefEvaluationTime } from "../today/today-brief";
+import { buildTodayBrief } from "../today/today-brief";
 import { buildUserSummaryTiles } from "../user-summary-stats";
 import type {
   AirQualityCurrentResponse,
@@ -56,7 +52,6 @@ export function useTodayBrief({
   displayCategories,
   sources,
   recentEvents,
-  recentEventCandidates,
   weather,
   airQuality,
   transit,
@@ -64,10 +59,7 @@ export function useTodayBrief({
   householdEnergy,
   systemEnergy,
   language,
-  selectedCity,
-  eventReferenceAt,
   isHistorical,
-  isDemo,
 }: TodayBriefInput) {
   const userSummaryTiles = useMemo(
     () =>
@@ -81,27 +73,13 @@ export function useTodayBrief({
           systemEnergy: systemEnergy ?? null,
         },
         language,
+        publicDashboard?.decision?.summary,
       ),
-    [airQuality, householdEnergy, language, roadRail, systemEnergy, transit, weather],
+    [airQuality, householdEnergy, language, roadRail, systemEnergy, transit, weather, publicDashboard],
   );
 
-  const crossDomainTimeline = useMemo(
-    () =>
-      buildCrossDomainTimeline(
-        curatedRecentEvents(recentEventCandidates, CROSS_TIMELINE_LIMIT, {
-          city: selectedCity,
-          referenceAt: eventReferenceAt,
-        }),
-        publicDashboard ?? null,
-        CROSS_TIMELINE_LIMIT,
-        eventReferenceAt,
-      ),
-    [eventReferenceAt, publicDashboard, recentEventCandidates, selectedCity],
-  );
-
-  // A demo snapshot is evaluated against its own checked-at instant, so the
-  // fixture stays coherent after the calendar moves on.
-  const evaluationTime = todayBriefEvaluationTime(isDemo, eventReferenceAt);
+  const crossDomainTimeline = useMemo(() => publicDashboard?.decision?.timeline ?? [], [publicDashboard]);
+  const evaluationTime = Date.parse(publicDashboard?.decision?.evaluated_at ?? "") || 0;
 
   const todayBrief = useMemo(
     () =>
@@ -125,10 +103,7 @@ export function useTodayBrief({
     ],
   );
 
-  const todaySourceIssueCount = useMemo(
-    () => sourceIssueCountForScope(visibleOverview?.sources ?? [], isHistorical),
-    [isHistorical, visibleOverview],
-  );
+  const todaySourceIssueCount = publicDashboard?.decision?.source_health.issues ?? 0;
 
   const signalSystemTiles = useMemo(
     () =>
@@ -138,8 +113,9 @@ export function useTodayBrief({
         sources,
         recentEvents,
         language,
+        sourceHealth: publicDashboard?.decision?.source_health,
       }),
-    [displayCategories, language, recentEvents, sources, visibleOverview],
+    [displayCategories, language, recentEvents, sources, visibleOverview, publicDashboard],
   );
 
   return {

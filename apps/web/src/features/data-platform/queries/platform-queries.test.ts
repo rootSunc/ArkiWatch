@@ -20,7 +20,7 @@ describe("platform query scope forwarding", () => {
     ).resolves.toMatchObject({ status: 200, error: null });
 
     expect(fetch).toHaveBeenCalledWith(
-      new URL("http://127.0.0.1:8000/api/public/dashboard?date=2026-04-11"),
+      new URL("http://127.0.0.1:8000/api/public/briefing?city=helsinki&date=2026-04-11"),
       expect.objectContaining({ cache: "no-store" }),
     );
   });
@@ -75,10 +75,11 @@ describe("platform query scope forwarding", () => {
     const helsinkiScope = { city: "helsinki", date: "2026-04-11" };
     const tampereScope = { city: "tampere", date: "2026-04-11" };
 
-    for (const key of ["publicDashboard", "energy", "householdEnergy", "roadRail"] as const) {
+    for (const key of ["energy", "householdEnergy", "roadRail"] as const) {
       expect(platformKeys[key](helsinkiScope)).toEqual(platformKeys[key](tampereScope));
     }
 
+    expect(platformKeys.publicDashboard(helsinkiScope)).not.toEqual(platformKeys.publicDashboard(tampereScope));
     expect(platformKeys.weather(helsinkiScope)).not.toEqual(platformKeys.weather(tampereScope));
     expect(platformKeys.transit(helsinkiScope)).not.toEqual(platformKeys.transit(tampereScope));
   });

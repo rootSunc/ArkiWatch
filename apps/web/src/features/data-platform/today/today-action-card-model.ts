@@ -8,8 +8,6 @@ import {
 import { localizedContent } from "../content-localization";
 import type { PublicScenarioSectionRead } from "../types";
 import {
-  isPlaceholderRecommendation,
-  isRecommendationExpired,
   type TodayRecommendationMode,
 } from "./today-brief";
 import { isEmptyStatus } from "../platform-status";
@@ -216,12 +214,9 @@ export function buildTodayActionCardView(
   language: LanguageMode,
   recommendationMode: TodayRecommendationMode = "live",
   timeZone = DEFAULT_TIME_ZONE,
-  now = Date.now(),
 ): TodayActionCardView {
   const recommendation = section.recommendation;
-  const isPlaceholder = isPlaceholderRecommendation(recommendation.id, recommendation.body);
-  const isExpired = recommendationMode === "live" && isRecommendationExpired(recommendation, now);
-  const recommendationUnavailable = isPlaceholder || isExpired;
+  const recommendationUnavailable = recommendation.eligible !== true;
   const liveHint = buildScenarioLiveHint(section.key, signals, language);
   const isScopeLimited = recommendationMode !== "live";
   const isSignalFallback = isScopeLimited

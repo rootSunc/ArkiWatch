@@ -231,3 +231,10 @@ timestamps, and explains what it fetched. Most feeds are CC BY 4.0 and need
 crediting — [docs/data-sources.md](docs/data-sources.md) lists each provider's
 licence, access requirement, and attribution string. Confirm those terms are
 still current before deploying a city pack.
+
+### Business logic ownership
+
+Public event selection, Today advice, action validity, source health and energy
+costs are owned by Go. Next.js consumes `/api/public/briefing` and handles
+presentation and session transport. See [the Go business boundary](docs/go-business-boundary.md)
+for the API contract, offline generation workflow and historical compatibility.

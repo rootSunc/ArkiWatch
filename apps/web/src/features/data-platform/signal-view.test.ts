@@ -9,6 +9,8 @@ const tKey = (key: string) => translateMessageKey("en", key);
 function event(overrides: Partial<PlatformEvent> = {}): PlatformEvent {
   return {
     id: "transit-delay",
+    notification: true,
+    notification_priority: 3000000000000,
     category_key: "transit",
     event_type: "transit_delay",
     title: "Transit delay",
@@ -91,7 +93,7 @@ describe("buildSignalView", () => {
 
   it("scopes to a single workspace's own events when one is selected", () => {
     const scoped = category({ events: [event({ id: "scoped", title: "Scoped alert" })] });
-    const result = view({ selectedCategory: scoped });
+    const result = view({ selectedCategory: scoped, categoryEvents: { [scoped.key]: scoped.events } });
 
     expect(result.visibleEvents.map((item) => item.id)).toEqual(["scoped"]);
     expect(result.overallNotificationTitle).toContain("Transit");

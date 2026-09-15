@@ -2,10 +2,10 @@ import type { DashboardTone } from "./data-platform-shell";
 import type { LanguageMode } from "./i18n";
 import { translateMessageKey } from "./i18n";
 import { isCatalogCategoryKey } from "./data-platform-nav-utils";
-import { healthySourceCount, isCatalogOnlySource, isSourceTrackedForHealth } from "./source-health";
 import { isEmptyStatus } from "./platform-status";
 import { isHistoricalTimeScope } from "./data-time-scope";
 import type {
+  BriefingDecision,
   DashboardSource,
   PlatformCategory,
   PlatformEvent,
@@ -29,21 +29,22 @@ function severeEventCount(events: PlatformEvent[]): number {
 export function buildSignalSystemTiles({
   overview,
   categories,
-  sources,
   recentEvents,
   language,
+  sourceHealth,
 }: {
   overview: PlatformOverviewResponse | null;
   categories: PlatformCategory[];
   sources: DashboardSource[];
   recentEvents: PlatformEvent[];
   language: LanguageMode;
+  sourceHealth?: BriefingDecision["source_health"];
 }): SignalSystemTile[] {
 
-  const trackedSources = sources.filter(isSourceTrackedForHealth);
-  const catalogSourceCount = sources.filter(isCatalogOnlySource).length;
-  const healthySources = healthySourceCount(sources);
-  const issueSources = Math.max(0, trackedSources.length - healthySources);
+  const trackedSourceCount = sourceHealth?.tracked ?? 0;
+  const catalogSourceCount = sourceHealth?.catalog ?? 0;
+  const healthySources = sourceHealth?.healthy ?? 0;
+  const issueSources = sourceHealth?.issues ?? 0;
   const severeEvents = severeEventCount(recentEvents);
   const catalogCategoryCount = categories.filter((category) =>
     isCatalogCategoryKey(category.key),
@@ -84,14 +85,14 @@ export function buildSignalSystemTiles({
     {
       key: "source_health",
       label: translateMessageKey(language, "shell.sourceHealth"),
-      value: trackedSources.length > 0 ? `${healthySources}/${trackedSources.length}` : translateMessageKey(language, "shell.na"),
+      value: trackedSourceCount > 0 ? `${healthySources}/${trackedSourceCount}` : translateMessageKey(language, "shell.na"),
       detail:
         issueSources > 0
           ? `${issueSources} ${translateMessageKey(language, "shell.sourcesNeedAttention")}`
           : catalogSourceCount > 0
             ? `${catalogSourceCount} ${translateMessageKey(language, "shell.catalogOnlySources")}`
           : translateMessageKey(language, "shell.noSourceIssuesDetected"),
-      tone: issueSources > 0 ? "warn" : trackedSources.length > 0 ? "good" : "neutral",
+      tone: issueSources > 0 ? "warn" : trackedSourceCount > 0 ? "good" : "neutral",
       icon: "database",
       valueStyle: "emphasis",
     },

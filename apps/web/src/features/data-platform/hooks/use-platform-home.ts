@@ -24,6 +24,8 @@ import {
   platformDataNeedsForView,
   platformQueryRefreshOptions,
 } from "../queries/platform-data-needs";
+import { briefingCacheRemaining } from "../queries/briefing-cache";
+import type { PublicDashboardRead } from "../types";
 import { appEnv } from "@/lib/env";
 import { normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
@@ -99,6 +101,9 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
         queryFn: async ({ signal }) =>
           unwrapApiResult(await fetchPublicDashboard(normalizedScope, signal)),
         ...queryOptions,
+        refetchInterval: (query: { state: { data: unknown; dataUpdatedAt: number } }) => appEnv.demoMode || isHistoricalScope
+          ? false
+          : Math.max(1000, briefingCacheRemaining(query.state.data as PublicDashboardRead | undefined, query.state.dataUpdatedAt) || 300000),
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
@@ -204,15 +209,17 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     apiBaseUrl: resolveApiBaseUrl(),
     defaultUserId: userId,
     overview: overviewQuery.data ?? null,
-    publicDashboard: publicDashboardQuery.data ?? null,
-    weather: weatherQuery.data ?? null,
-    airQuality: airQualityQuery.data ?? null,
-    energy: energyQuery.data ?? null,
-    householdEnergy: householdEnergyQuery.data ?? null,
+    publicDashboard: publicDashboardQuery.isError || publicDashboardQuery.isPlaceholderData
+      || (!appEnv.demoMode && !isHistoricalScope && briefingCacheRemaining(publicDashboardQuery.data, publicDashboardQuery.dataUpdatedAt) === 0)
+      ? null : publicDashboardQuery.data ?? null,
+    weather: weatherQuery.data ?? publicDashboardQuery.data?.signals?.weather ?? null,
+    airQuality: airQualityQuery.data ?? publicDashboardQuery.data?.signals?.airQuality ?? null,
+    energy: energyQuery.data ?? publicDashboardQuery.data?.signals?.energy ?? null,
+    householdEnergy: householdEnergyQuery.data ?? publicDashboardQuery.data?.signals?.householdEnergy ?? null,
     history: historyQuery.data ?? emptyHistory(),
     historyAvailability: historyAvailabilityQuery.data ?? null,
-    roadRail: roadRailQuery.data ?? null,
-    transit: transitQuery.data ?? null,
+    roadRail: roadRailQuery.data ?? publicDashboardQuery.data?.signals?.roadRail ?? null,
+    transit: transitQuery.data ?? publicDashboardQuery.data?.signals?.transit ?? null,
     error: queryErrors[0] ?? null,
   };
 }

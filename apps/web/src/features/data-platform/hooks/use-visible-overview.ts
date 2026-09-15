@@ -6,14 +6,9 @@ import { categoryVisibleToCurrentUser } from "../category-access";
 import { categoryByKey } from "../data-platform-nav-utils";
 import { buildMobilityCategory, mergeMobilityCategories } from "../data-platform-view-model";
 import { scopedReferenceTime } from "../data-time-scope";
-import {
-  buildAirQualityRecentEvents,
-  buildWeatherRecentEvents,
-  curatedRecentEvents,
-  RECENT_EVENT_LIMIT,
-} from "../recent-events";
 import type {
   AirQualityCurrentResponse,
+  BriefingDecision,
   PlatformOverviewResponse,
   PlatformTimeScope,
   RoadRailCurrentResponse,
@@ -22,6 +17,7 @@ import type {
 } from "../types";
 
 type VisibleOverviewInput = {
+  decision?: BriefingDecision;
   overview: PlatformOverviewResponse | null | undefined;
   weather: WeatherForecastResponse | null | undefined;
   airQuality: AirQualityCurrentResponse | null | undefined;
@@ -41,11 +37,9 @@ type VisibleOverviewInput = {
  */
 export function useVisibleOverview({
   overview,
-  weather,
-  airQuality,
+  decision,
   transit,
   roadRail,
-  selectedCity,
   activeTimeScope,
 }: VisibleOverviewInput) {
   const categories = useMemo(
@@ -67,25 +61,8 @@ export function useVisibleOverview({
 
   const eventReferenceAt = scopedReferenceTime(activeTimeScope, overview?.checked_at ?? null);
 
-  const recentEventCandidates = useMemo(
-    () =>
-      [
-        ...buildWeatherRecentEvents(weather ?? null, { city: selectedCity }),
-        ...buildAirQualityRecentEvents(airQuality ?? null),
-        ...categories.flatMap((category) => category.events),
-        ...(overview?.recent_events ?? []),
-      ].filter((event) => categoryVisibleToCurrentUser(event.category_key)),
-    [airQuality, categories, overview, selectedCity, weather],
-  );
-
-  const recentEvents = useMemo(
-    () =>
-      curatedRecentEvents(recentEventCandidates, RECENT_EVENT_LIMIT, {
-        city: selectedCity,
-        referenceAt: eventReferenceAt,
-      }),
-    [eventReferenceAt, recentEventCandidates, selectedCity],
-  );
+  const recentEvents = useMemo(() => decision?.recent_events ?? [], [decision]);
+  const recentEventCandidates = recentEvents;
 
   const sources = useMemo(
     () =>
@@ -99,9 +76,9 @@ export function useVisibleOverview({
   const visibleOverview = useMemo(
     () =>
       overview
-        ? { ...overview, categories: displayCategories, recent_events: recentEvents, sources }
+        ? { ...overview, categories: displayCategories, recent_events: recentEvents, sources, source_health: decision?.source_health }
         : null,
-    [displayCategories, overview, recentEvents, sources],
+    [displayCategories, overview, recentEvents, sources, decision],
   );
 
   return {

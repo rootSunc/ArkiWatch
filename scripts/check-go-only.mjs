@@ -40,4 +40,13 @@ if (!fs.existsSync(path.join(root, "contracts/openapi.json"))) {
   throw new Error("The static OpenAPI contract is missing.");
 }
 
-console.log("Go-only backend boundary is intact.");
+// These decision functions were deliberately removed from the browser. Keep
+// regression fixtures and UI adapters, but reject a second production engine.
+const webSource = path.join(root, "apps/web/src");
+const migratedDecision = /\b(?:function|const)\s+(curatedRecentEvents|buildWeatherRecentEvents|buildAirQualityRecentEvents|buildPlanItems|estimatedCostFromPrice)\b/;
+for (const relative of fs.readdirSync(webSource, { recursive: true })) {
+  if (typeof relative !== "string" || !/\.tsx?$/.test(relative) || /\.(test|spec)\./.test(relative)) continue;
+  const source = fs.readFileSync(path.join(webSource, relative), "utf8");
+  if (migratedDecision.test(source)) throw new Error(`Business decisions must stay in Go: ${relative}`);
+}
+console.log("Go backend and browser decision boundaries are intact.");

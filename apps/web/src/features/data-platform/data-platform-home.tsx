@@ -365,6 +365,7 @@ export function DataPlatformHome({
     sources,
     visibleOverview,
   } = useVisibleOverview({
+    decision: publicDashboard?.decision,
     overview,
     weather,
     airQuality,
@@ -522,6 +523,7 @@ export function DataPlatformHome({
     overallNotificationBody,
     overallNotificationDetail,
   } = buildSignalView({
+    categoryEvents: publicDashboard?.decision?.category_events,
     selectedCategory,
     displayCategories,
     categories,

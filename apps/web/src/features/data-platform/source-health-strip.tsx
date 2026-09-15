@@ -7,9 +7,6 @@ import { formatTimestamp } from "@/features/shared/format";
 import { scopedDataAge } from "./data-time-scope";
 import { useI18n } from "./i18n";
 import {
-  healthySourceCount,
-  isCatalogOnlySource,
-  isSourceTrackedForHealth,
   sourceHealthTone,
 } from "./source-health";
 import { PlatformOverviewResponse } from "./types";
@@ -26,13 +23,14 @@ export function SourceHealthStrip({
   const { language, tKey, enumLabel } = useI18n();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const hasSources = overview.sources.length > 0;
-  const trackedSources = overview.sources.filter(isSourceTrackedForHealth);
-  const healthyCount = healthySourceCount(overview.sources);
-  const issueCount = trackedSources.length - healthyCount;
+  const trackedCount = overview.source_health?.tracked ?? 0;
+  const healthyCount = overview.source_health?.healthy ?? 0;
+  const issueCount = overview.source_health?.issues ?? 0;
+  const isCatalogOnlySource = (source: {id: string}) => overview.source_health?.catalog_source_ids.includes(source.id) === true;
   const timezone = overview.time_scope?.timezone ?? overview.timezone;
   const lastProbe = formatTimestamp(overview.checked_at, "time", language, timezone);
   const lead = [
-    `${trackedSources.length} ${tKey("shell.dataSources")}`,
+    `${trackedCount} ${tKey("shell.dataSources")}`,
     `${healthyCount} ${tKey("shell.healthyCount")}`,
     issueCount > 0 ? `${issueCount} ${tKey("shell.needAttentionShort")}` : null,
     overview.checked_at ? `${tKey("shell.lastProbe")} ${lastProbe}` : null,

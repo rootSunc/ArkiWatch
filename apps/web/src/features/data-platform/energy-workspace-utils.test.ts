@@ -1,7 +1,9 @@
+import { demoFixtureForScope } from "./demo/demo-data";
 import { describe, expect, it } from "vitest";
 
 import {
   energyHighlightRows,
+  energyHistoryPoints,
   householdChromeTiles,
   sourceRecordsMetric,
   systemChromeTiles,
@@ -173,5 +175,19 @@ describe("energy chrome tiles", () => {
     expect(tiles[0]?.value).toBe("8 420");
     expect(tiles[1]?.value).toBe("7 180\n8 420");
     expect(tiles[3]?.value).toBe("3 min");
+  });
+});
+
+describe("Go-provided historical costs", () => {
+  it("uses the server cost summary even when raw prices suggest another value", () => {
+    const data = demoFixtureForScope().householdEnergy;
+    data.quality = { ...data.quality, average_value: 999, average_cost_eur: 0.321, minimum_cost_eur: 0.1, maximum_cost_eur: 0.5 };
+    const points = energyHistoryPoints([{ date: "2026-08-08", data, error: null }], (key) => key, true);
+    expect(points[0].value).toBe(0.321);
+  });
+  it("does not invent a cost when the API says it cannot calculate one", () => {
+    const data = demoFixtureForScope().householdEnergy;
+    data.quality = { ...data.quality, average_cost_eur: null };
+    expect(energyHistoryPoints([{ date: "2026-08-08", data, error: null }], (key) => key, true)).toEqual([]);
   });
 });

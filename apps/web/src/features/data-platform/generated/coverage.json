@@ -1,0 +1,113 @@
+{
+  "default_city": "helsinki",
+  "cities": [
+    {
+      "city_ref": "helsinki",
+      "label": "Helsinki",
+      "region": "Uusimaa",
+      "coverage_area": "Helsinki/Uusimaa",
+      "latitude": 60.1699,
+      "longitude": 24.9384,
+      "signals": {
+        "air": "live",
+        "city_services": "live",
+        "events": "live",
+        "transit": "live",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional",
+      "configured": true
+    },
+    {
+      "city_ref": "espoo",
+      "label": "Espoo",
+      "region": "Uusimaa",
+      "coverage_area": "Espoo/Uusimaa",
+      "latitude": 60.2055,
+      "longitude": 24.6559,
+      "signals": {
+        "air": "live",
+        "city_services": "planned",
+        "events": "live",
+        "transit": "live",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional",
+      "configured": false
+    },
+    {
+      "city_ref": "vantaa",
+      "label": "Vantaa",
+      "region": "Uusimaa",
+      "coverage_area": "Vantaa/Uusimaa",
+      "latitude": 60.2934,
+      "longitude": 25.0378,
+      "signals": {
+        "air": "live",
+        "city_services": "planned",
+        "events": "planned",
+        "transit": "live",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional",
+      "configured": false
+    },
+    {
+      "city_ref": "tampere",
+      "label": "Tampere",
+      "region": "Pirkanmaa",
+      "coverage_area": "Tampere/Pirkanmaa",
+      "latitude": 61.4978,
+      "longitude": 23.761,
+      "signals": {
+        "air": "live",
+        "city_services": "planned",
+        "events": "planned",
+        "transit": "planned",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional-only",
+      "configured": false
+    },
+    {
+      "city_ref": "turku",
+      "label": "Turku",
+      "region": "Southwest Finland",
+      "coverage_area": "Turku/Southwest Finland",
+      "latitude": 60.4518,
+      "longitude": 22.2666,
+      "signals": {
+        "air": "live",
+        "city_services": "planned",
+        "events": "planned",
+        "transit": "planned",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional-only",
+      "configured": false
+    },
+    {
+      "city_ref": "oulu",
+      "label": "Oulu",
+      "region": "North Ostrobothnia",
+      "coverage_area": "Oulu/North Ostrobothnia",
+      "latitude": 65.0121,
+      "longitude": 25.4651,
+      "signals": {
+        "air": "live",
+        "city_services": "planned",
+        "events": "planned",
+        "transit": "planned",
+        "water": "live",
+        "weather": "live"
+      },
+      "recommendation_scope": "regional-only",
+      "configured": false
+    }
+  ]
+}

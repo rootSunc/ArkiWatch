@@ -105,6 +105,7 @@ describe("buildSignalSystemTiles", () => {
 
   it("keeps catalog-only sources out of live health ratios", () => {
     const tiles = buildSignalSystemTiles({
+      sourceHealth: {tracked: 0, healthy: 0, issues: 0, catalog: 1, historical: false, catalog_source_ids: ["catalog-fmi"]},
       overview: null,
       categories: [],
       sources: [

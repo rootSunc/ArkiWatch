@@ -152,6 +152,7 @@ describe("buildTodayActionCardView", () => {
         source_codes: ["digitransit"],
         recommendation: {
           id: "commute-action",
+          eligible: true,
           scenario_key: "commute",
           title: "Leave a few minutes earlier",
           title_zh: "提前几分钟出发",
@@ -176,7 +177,6 @@ describe("buildTodayActionCardView", () => {
       "zh",
       "live",
       "Europe/Helsinki",
-      Date.parse("2026-08-09T08:30:00Z"),
     );
 
     expect(view.title).toBe("需要留意");
@@ -264,7 +264,6 @@ describe("buildTodayActionCardView", () => {
       "en",
       "live",
       "Europe/Helsinki",
-      Date.parse("2026-08-09T09:00:00Z"),
     );
 
     expect(view.title).toBe("No current recommendation");

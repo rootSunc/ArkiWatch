@@ -210,7 +210,7 @@ export function EnergyWorkspace({
   const sourceChartPoints = points.slice(0, 96);
   const chartPointPairs = isPricePanel
     ? sourceChartPoints.map((point) => ({ raw: point, display: point }))
-    : chartDisplayPoints(sourceChartPoints, false, activeEnergy?.unit, householdWindowUsage);
+    : chartDisplayPoints(sourceChartPoints, false);
   const chartPoints = chartPointPairs.map((point) => point.display);
   const chartUnit = activeEnergy?.unit;
   const chartRange = chartPoints.length > 0 ? pointValueRange(chartPoints) : null;
