@@ -148,7 +148,9 @@ func New(cfg config.Config, db database.HealthChecker) *Server {
 	handle(cfg.APIPrefix+"/today", server.todaySummary)
 	handle(cfg.APIPrefix+"/dashboard", server.publicDashboardHandler)
 	handle(cfg.APIPrefix+"/public/dashboard", server.publicDashboardHandler)
+	handle(cfg.APIPrefix+"/public/briefing", server.publicBriefing)
 	handle(cfg.APIPrefix+"/personal/dashboard", server.personalDashboardHandler)
+	handle(cfg.APIPrefix+"/me/context", server.personalContext)
 	handle(cfg.APIPrefix+"/assistant/chat", server.assistantChat)
 	handle(cfg.APIPrefix+"/assistant/chat/stream", server.assistantChatStream)
 	handle(cfg.APIPrefix+"/assistant/translate", server.assistantTranslate)
@@ -491,6 +493,10 @@ func (s *Server) platformOverview(writer http.ResponseWriter, request *http.Requ
 }
 
 func (s *Server) loadPlatformOverview(request *http.Request) (string, *time.Time, platform.Overview, error) {
+	return s.loadPlatformOverviewAt(request, s.now().UTC())
+}
+
+func (s *Server) loadPlatformOverviewAt(request *http.Request, now time.Time) (string, *time.Time, platform.Overview, error) {
 	cityRef := platform.NormalizeCityRef(request.URL.Query().Get("city"), s.cfg.DefaultPlace)
 	if !containsString(platform.SupportedCityRefs(s.cfg), cityRef) {
 		return "", nil, platform.Overview{}, fmt.Errorf("City is not configured for city-scoped data.")
@@ -503,7 +509,6 @@ func (s *Server) loadPlatformOverview(request *http.Request) (string, *time.Time
 		}
 		targetDate = &parsed
 	}
-	now := s.now().UTC()
 	scope, err := timescope.DefaultScope(targetDate, now, s.cfg)
 	if err != nil {
 		return "", nil, platform.Overview{}, fmt.Errorf("Configured timezone is invalid.")

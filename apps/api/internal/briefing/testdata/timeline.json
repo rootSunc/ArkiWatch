@@ -1,0 +1,256 @@
+[
+  {
+    "args": [
+      [
+        {
+          "id": "event-1",
+          "category_key": "transit",
+          "event_type": "alert",
+          "title": "Tram alert",
+          "title_zh": "\u6709\u8f68\u7535\u8f66\u63d0\u9192",
+          "body": "Leave a little earlier.",
+          "body_zh": "\u63d0\u524d\u4e00\u70b9\u51fa\u53d1\u3002",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T08:00:00Z",
+          "ends_at": "2099-08-09T09:00:00Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": [
+            "DIGITRANSIT"
+          ]
+        }
+      ],
+      {
+        "checked_at": "2099-08-09T07:00:00Z",
+        "app_name": "ArkiWatch",
+        "timezone": "Europe/Helsinki",
+        "coverage_area": "Helsinki/Uusimaa",
+        "top_actions": [],
+        "scenario_channels": [],
+        "scenario_sections": [
+          {
+            "key": "outdoor",
+            "title": "Outdoor",
+            "description": "Weather timing.",
+            "description_zh": "\u5929\u6c14\u65f6\u6bb5\u3002",
+            "status_label": "Watch",
+            "area_scope": "Helsinki",
+            "freshness_state": "fresh",
+            "valid_from": "2099-08-09T08:00:00Z",
+            "valid_to": "2099-08-09T09:00:00Z",
+            "evidence": [
+              "FMI"
+            ],
+            "source_codes": [
+              "fmi"
+            ],
+            "recommendation": {
+              "id": "outdoor-1",
+              "scenario_key": "outdoor",
+              "title": "Carry a layer",
+              "body": "Keep a layer handy.",
+              "severity": "MEDIUM",
+              "area_scope": "Helsinki",
+              "freshness_state": "fresh",
+              "valid_from": "2099-08-09T08:00:00Z",
+              "valid_to": "2099-08-09T09:00:00Z",
+              "evidence": [
+                "FMI"
+              ]
+            }
+          }
+        ],
+        "timeline": [
+          {
+            "scenario_key": "outdoor",
+            "label": "Late morning rain",
+            "label_zh": "\u4e0a\u5348\u665a\u4e9b\u65f6\u5019\u964d\u96e8",
+            "severity": "MEDIUM",
+            "starts_at": "2099-08-09T08:00:00Z",
+            "ends_at": "2099-08-09T09:00:00Z"
+          }
+        ],
+        "broadcasts": [],
+        "sources": []
+      }
+    ],
+    "now": 1789509400657,
+    "result": [
+      {
+        "id": "event-event-1",
+        "kind": "event",
+        "title": "Tram alert",
+        "title_zh": "\u6709\u8f68\u7535\u8f66\u63d0\u9192",
+        "detail": "Leave a little earlier.",
+        "detail_zh": "\u63d0\u524d\u4e00\u70b9\u51fa\u53d1\u3002",
+        "severity": "HIGH",
+        "startsAt": "2099-08-09T08:00:00Z",
+        "endsAt": "2099-08-09T09:00:00Z",
+        "categoryKey": "transit",
+        "state": "upcoming",
+        "event": {
+          "id": "event-1",
+          "category_key": "transit",
+          "event_type": "alert",
+          "title": "Tram alert",
+          "title_zh": "\u6709\u8f68\u7535\u8f66\u63d0\u9192",
+          "body": "Leave a little earlier.",
+          "body_zh": "\u63d0\u524d\u4e00\u70b9\u51fa\u53d1\u3002",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T08:00:00Z",
+          "ends_at": "2099-08-09T09:00:00Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": [
+            "DIGITRANSIT"
+          ]
+        }
+      },
+      {
+        "id": "scenario-outdoor-2099-08-09T08:00:00Z",
+        "kind": "scenario",
+        "title": "Late morning rain",
+        "title_zh": "\u4e0a\u5348\u665a\u4e9b\u65f6\u5019\u964d\u96e8",
+        "detail": "Weather timing.",
+        "detail_zh": "\u5929\u6c14\u65f6\u6bb5\u3002",
+        "severity": "MEDIUM",
+        "startsAt": "2099-08-09T08:00:00Z",
+        "endsAt": "2099-08-09T09:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      }
+    ]
+  },
+  {
+    "args": [
+      [
+        {
+          "id": "ended",
+          "category_key": "weather",
+          "event_type": "rain_risk",
+          "title": "Morning rain",
+          "body": "Rain has passed.",
+          "severity": "MEDIUM",
+          "starts_at": "2099-08-09T08:00:00Z",
+          "ends_at": "2099-08-09T09:00:00Z",
+          "source_codes": [
+            "fmi"
+          ],
+          "evidence": []
+        },
+        {
+          "id": "upcoming",
+          "category_key": "transit",
+          "event_type": "transit_delay",
+          "title": "Evening delay",
+          "body": "A delay is expected.",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T18:00:00Z",
+          "ends_at": "2099-08-09T19:00:00Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": []
+        },
+        {
+          "id": "active",
+          "category_key": "air",
+          "event_type": "air_quality_poor",
+          "title": "Poor air",
+          "body": "Air quality is poor.",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T11:00:00Z",
+          "ends_at": "2099-08-09T13:00:00Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": []
+        }
+      ],
+      null,
+      10,
+      "2099-08-09T12:00:00Z"
+    ],
+    "now": 1789509400658,
+    "result": [
+      {
+        "id": "event-active",
+        "kind": "event",
+        "title": "Poor air",
+        "detail": "Air quality is poor.",
+        "severity": "HIGH",
+        "startsAt": "2099-08-09T11:00:00Z",
+        "endsAt": "2099-08-09T13:00:00Z",
+        "categoryKey": "air",
+        "state": "active",
+        "event": {
+          "id": "active",
+          "category_key": "air",
+          "event_type": "air_quality_poor",
+          "title": "Poor air",
+          "body": "Air quality is poor.",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T11:00:00Z",
+          "ends_at": "2099-08-09T13:00:00Z",
+          "source_codes": [
+            "hsy"
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "id": "event-upcoming",
+        "kind": "event",
+        "title": "Evening delay",
+        "detail": "A delay is expected.",
+        "severity": "HIGH",
+        "startsAt": "2099-08-09T18:00:00Z",
+        "endsAt": "2099-08-09T19:00:00Z",
+        "categoryKey": "transit",
+        "state": "upcoming",
+        "event": {
+          "id": "upcoming",
+          "category_key": "transit",
+          "event_type": "transit_delay",
+          "title": "Evening delay",
+          "body": "A delay is expected.",
+          "severity": "HIGH",
+          "starts_at": "2099-08-09T18:00:00Z",
+          "ends_at": "2099-08-09T19:00:00Z",
+          "source_codes": [
+            "digitransit"
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "id": "event-ended",
+        "kind": "event",
+        "title": "Morning rain",
+        "detail": "Rain has passed.",
+        "severity": "MEDIUM",
+        "startsAt": "2099-08-09T08:00:00Z",
+        "endsAt": "2099-08-09T09:00:00Z",
+        "categoryKey": "weather",
+        "state": "ended",
+        "event": {
+          "id": "ended",
+          "category_key": "weather",
+          "event_type": "rain_risk",
+          "title": "Morning rain",
+          "body": "Rain has passed.",
+          "severity": "MEDIUM",
+          "starts_at": "2099-08-09T08:00:00Z",
+          "ends_at": "2099-08-09T09:00:00Z",
+          "source_codes": [
+            "fmi"
+          ],
+          "evidence": []
+        }
+      }
+    ]
+  }
+]

@@ -1726,6 +1726,33 @@
             "default": 0,
             "title": "Window Point Count",
             "type": "integer"
+          },
+          "minimum_cost_eur": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maximum_cost_eur": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "average_cost_eur": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cost_status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "not_price_series",
+              "missing_price_data",
+              "missing_usage"
+            ]
           }
         },
         "title": "EnergyQualityRead",
@@ -2362,6 +2389,24 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "title_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "body_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notification": {
+            "type": "boolean"
+          },
+          "notification_priority": {
+            "type": "integer"
           }
         },
         "required": [
@@ -2780,6 +2825,18 @@
           "valid_to": {
             "title": "Valid To",
             "type": "string"
+          },
+          "title_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "body_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -2879,6 +2936,9 @@
             },
             "title": "Top Actions",
             "type": "array"
+          },
+          "coverage_region": {
+            "type": "string"
           }
         },
         "required": [
@@ -5835,6 +5895,351 @@
         ],
         "title": "WeatherWarningRead",
         "type": "object"
+      },
+      "BriefingTimelineItemRead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "event",
+              "scenario"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "upcoming",
+              "ended"
+            ]
+          },
+          "title_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detail_zh": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scenarioKey": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/PlatformEventRead"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "detail",
+          "severity",
+          "startsAt",
+          "endsAt",
+          "categoryKey",
+          "kind",
+          "state"
+        ]
+      },
+      "BriefingSourceHealthRead": {
+        "type": "object",
+        "properties": {
+          "tracked": {
+            "type": "integer"
+          },
+          "healthy": {
+            "type": "integer"
+          },
+          "issues": {
+            "type": "integer"
+          },
+          "catalog": {
+            "type": "integer"
+          },
+          "historical": {
+            "type": "boolean"
+          },
+          "catalog_source_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tracked",
+          "healthy",
+          "issues",
+          "catalog",
+          "historical",
+          "catalog_source_ids"
+        ]
+      },
+      "BriefingSummaryRead": {
+        "type": "object",
+        "properties": {
+          "tones": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "good",
+                "warn",
+                "bad",
+                "neutral"
+              ]
+            }
+          },
+          "transit_alerts": {
+            "type": "integer"
+          },
+          "road_events": {
+            "type": "integer"
+          },
+          "commute_total": {
+            "type": "integer"
+          },
+          "commute_available": {
+            "type": "boolean"
+          },
+          "headline_summary_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tones",
+          "transit_alerts",
+          "road_events",
+          "commute_total",
+          "commute_available",
+          "headline_summary_key"
+        ]
+      },
+      "BriefingDecisionRead": {
+        "type": "object",
+        "properties": {
+          "evaluated_at": {
+            "type": "string"
+          },
+          "valid_until": {
+            "type": "string"
+          },
+          "recommendation_mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "historical",
+              "stale",
+              "out_of_scope"
+            ]
+          },
+          "historical_snapshot_available": {
+            "type": "boolean"
+          },
+          "has_scoped_data": {
+            "type": "boolean"
+          },
+          "top_actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicActionRead"
+            }
+          },
+          "plan_items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BriefingTimelineItemRead"
+            }
+          },
+          "timeline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BriefingTimelineItemRead"
+            }
+          },
+          "recent_events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformEventRead"
+            }
+          },
+          "category_events": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PlatformEventRead"
+              }
+            }
+          },
+          "source_health": {
+            "$ref": "#/components/schemas/BriefingSourceHealthRead"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BriefingSummaryRead"
+          },
+          "action_eligibility": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "headline_action_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluated_at",
+          "valid_until",
+          "recommendation_mode",
+          "historical_snapshot_available",
+          "has_scoped_data",
+          "top_actions",
+          "plan_items",
+          "timeline",
+          "recent_events",
+          "category_events",
+          "source_health",
+          "summary",
+          "action_eligibility",
+          "headline_action_id"
+        ]
+      },
+      "PublicBriefingRead": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PublicDashboardRead"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "$ref": "#/components/schemas/BriefingDecisionRead"
+              },
+              "signals": {
+                "type": "object",
+                "properties": {
+                  "weather": {
+                    "$ref": "#/components/schemas/WeatherForecastRead"
+                  },
+                  "airQuality": {
+                    "$ref": "#/components/schemas/AirQualityCurrentRead"
+                  },
+                  "transit": {
+                    "$ref": "#/components/schemas/TransitCurrentRead"
+                  },
+                  "roadRail": {
+                    "$ref": "#/components/schemas/RoadRailCurrentRead"
+                  },
+                  "energy": {
+                    "$ref": "#/components/schemas/EnergyCurrentRead"
+                  },
+                  "householdEnergy": {
+                    "$ref": "#/components/schemas/EnergyCurrentRead"
+                  }
+                },
+                "required": [
+                  "weather",
+                  "airQuality",
+                  "transit",
+                  "roadRail",
+                  "energy",
+                  "householdEnergy"
+                ]
+              }
+            },
+            "required": [
+              "decision",
+              "signals"
+            ]
+          }
+        ]
+      },
+      "PersonalContextRead": {
+        "type": "object",
+        "properties": {
+          "locations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserLocationRead"
+            }
+          },
+          "preferences": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserPreferenceRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commuteProfiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserCommuteProfileRead"
+            }
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationChannelRead"
+            }
+          }
+        },
+        "required": [
+          "locations",
+          "preferences",
+          "commuteProfiles",
+          "channels"
+        ]
+      },
+      "PersonalContextWrite": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "enum": [
+              "locations",
+              "preferences",
+              "commuteProfiles",
+              "channels"
+            ]
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "resource",
+          "payload"
+        ]
       }
     },
     "securitySchemes": {
@@ -8064,6 +8469,117 @@
         "tags": [
           "weather"
         ]
+      }
+    },
+    "/api/public/briefing": {
+      "get": {
+        "operationId": "public_briefing",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicBriefingRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public decisions for one city and reference time",
+        "tags": [
+          "public-dashboard"
+        ]
+      }
+    },
+    "/api/me/context": {
+      "get": {
+        "operationId": "personal_context_read",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated personal context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalContextRead"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "personal_context_write",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalContextWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated resource"
+          },
+          "201": {
+            "description": "Saved resource"
+          },
+          "403": {
+            "description": "Ownership mismatch"
+          },
+          "422": {
+            "description": "Invalid resource values"
+          }
+        }
       }
     }
   }

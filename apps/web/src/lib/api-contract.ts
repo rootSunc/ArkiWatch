@@ -698,6 +698,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/briefing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public decisions for one city and reference time */
+        get: operations["public_briefing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["personal_context_read"];
+        put?: never;
+        post: operations["personal_context_write"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1232,6 +1265,11 @@ export interface components {
              * @default 0
              */
             window_point_count: number;
+            minimum_cost_eur?: number | null;
+            maximum_cost_eur?: number | null;
+            average_cost_eur?: number | null;
+            /** @enum {string} */
+            cost_status?: "ready" | "not_price_series" | "missing_price_data" | "missing_usage";
         };
         /** EnergySourceRequestRead */
         EnergySourceRequestRead: {
@@ -1459,6 +1497,10 @@ export interface components {
             starts_at: string;
             /** Title */
             title: string;
+            title_zh?: string | null;
+            body_zh?: string | null;
+            notification?: boolean;
+            notification_priority?: number;
         };
         /** PlatformHistoryAvailabilityDayRead */
         PlatformHistoryAvailabilityDayRead: {
@@ -1592,6 +1634,8 @@ export interface components {
             valid_from: string;
             /** Valid To */
             valid_to: string;
+            title_zh?: string | null;
+            body_zh?: string | null;
         };
         /** PublicDashboardRead */
         PublicDashboardRead: {
@@ -1619,6 +1663,7 @@ export interface components {
             timezone: string;
             /** Top Actions */
             top_actions: components["schemas"]["PublicActionRead"][];
+            coverage_region?: string;
         };
         /** PublicScenarioSectionRead */
         PublicScenarioSectionRead: {
@@ -2639,6 +2684,86 @@ export interface components {
             severity?: string | null;
             /** Title */
             title: string;
+        };
+        BriefingTimelineItemRead: {
+            id: string;
+            title: string;
+            detail: string;
+            severity: string;
+            startsAt: string;
+            endsAt: string;
+            categoryKey: string;
+            /** @enum {string} */
+            kind: "event" | "scenario";
+            /** @enum {string} */
+            state: "active" | "upcoming" | "ended";
+            title_zh?: string | null;
+            detail_zh?: string | null;
+            scenarioKey?: string;
+            event?: components["schemas"]["PlatformEventRead"];
+        };
+        BriefingSourceHealthRead: {
+            tracked: number;
+            healthy: number;
+            issues: number;
+            catalog: number;
+            historical: boolean;
+            catalog_source_ids: string[];
+        };
+        BriefingSummaryRead: {
+            tones: {
+                [key: string]: "good" | "warn" | "bad" | "neutral";
+            };
+            transit_alerts: number;
+            road_events: number;
+            commute_total: number;
+            commute_available: boolean;
+            headline_summary_key: string;
+        };
+        BriefingDecisionRead: {
+            evaluated_at: string;
+            valid_until: string;
+            /** @enum {string} */
+            recommendation_mode: "live" | "historical" | "stale" | "out_of_scope";
+            historical_snapshot_available: boolean;
+            has_scoped_data: boolean;
+            top_actions: components["schemas"]["PublicActionRead"][];
+            plan_items: components["schemas"]["BriefingTimelineItemRead"][];
+            timeline: components["schemas"]["BriefingTimelineItemRead"][];
+            recent_events: components["schemas"]["PlatformEventRead"][];
+            category_events: {
+                [key: string]: components["schemas"]["PlatformEventRead"][];
+            };
+            source_health: components["schemas"]["BriefingSourceHealthRead"];
+            summary: components["schemas"]["BriefingSummaryRead"];
+            action_eligibility: {
+                [key: string]: boolean;
+            };
+            headline_action_id: string;
+        };
+        PublicBriefingRead: components["schemas"]["PublicDashboardRead"] & {
+            decision: components["schemas"]["BriefingDecisionRead"];
+            signals: {
+                weather: components["schemas"]["WeatherForecastRead"];
+                airQuality: components["schemas"]["AirQualityCurrentRead"];
+                transit: components["schemas"]["TransitCurrentRead"];
+                roadRail: components["schemas"]["RoadRailCurrentRead"];
+                energy: components["schemas"]["EnergyCurrentRead"];
+                householdEnergy: components["schemas"]["EnergyCurrentRead"];
+            };
+        };
+        PersonalContextRead: {
+            locations: components["schemas"]["UserLocationRead"][];
+            preferences: components["schemas"]["UserPreferenceRead"] | null;
+            commuteProfiles: components["schemas"]["UserCommuteProfileRead"][];
+            channels: components["schemas"]["NotificationChannelRead"][];
+        };
+        PersonalContextWrite: {
+            /** @enum {string} */
+            resource: "locations" | "preferences" | "commuteProfiles" | "channels";
+            payload: {
+                [key: string]: unknown;
+            };
         };
     };
     responses: never;
@@ -3981,6 +4106,101 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    public_briefing: {
+        parameters: {
+            query?: {
+                date?: string | null;
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicBriefingRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    personal_context_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authenticated personal context */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonalContextRead"];
+                };
+            };
+        };
+    };
+    personal_context_write: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonalContextWrite"];
+            };
+        };
+        responses: {
+            /** @description Updated resource */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Saved resource */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ownership mismatch */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid resource values */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

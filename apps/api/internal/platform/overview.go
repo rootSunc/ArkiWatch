@@ -83,17 +83,21 @@ type Visualization struct {
 }
 
 type Event struct {
-	ID          string         `json:"id"`
-	CategoryKey string         `json:"category_key"`
-	EventType   string         `json:"event_type"`
-	Title       string         `json:"title"`
-	Body        string         `json:"body"`
-	Severity    string         `json:"severity"`
-	StartsAt    string         `json:"starts_at"`
-	EndsAt      string         `json:"ends_at"`
-	SourceCodes []string       `json:"source_codes"`
-	Evidence    []string       `json:"evidence"`
-	Attributes  map[string]any `json:"attributes"`
+	Notification         bool           `json:"notification"`
+	NotificationPriority int64          `json:"notification_priority"`
+	TitleZH              *string        `json:"title_zh,omitempty"`
+	BodyZH               *string        `json:"body_zh,omitempty"`
+	ID                   string         `json:"id"`
+	CategoryKey          string         `json:"category_key"`
+	EventType            string         `json:"event_type"`
+	Title                string         `json:"title"`
+	Body                 string         `json:"body"`
+	Severity             string         `json:"severity"`
+	StartsAt             string         `json:"starts_at"`
+	EndsAt               string         `json:"ends_at"`
+	SourceCodes          []string       `json:"source_codes"`
+	Evidence             []string       `json:"evidence"`
+	Attributes           map[string]any `json:"attributes"`
 }
 
 type Category struct {

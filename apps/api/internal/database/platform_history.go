@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
 )
 
 type PlatformHistoryReader interface {
@@ -47,6 +48,9 @@ func (store *Store) LoadPlatformHistory(ctx context.Context, city string, target
 		var payload map[string]any
 		if err := json.Unmarshal(payloadBytes, &payload); err != nil {
 			continue
+		}
+		if category == "energy" || category == "household_energy" {
+			energy.EnrichHistoricalCosts(payload)
 		}
 		if payloads[category] == nil {
 			payloads[category] = map[string]map[string]any{}

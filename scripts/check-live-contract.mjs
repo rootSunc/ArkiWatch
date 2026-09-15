@@ -20,6 +20,14 @@ function resolveSchema(schema, depth = 0) {
     const name = schema.$ref.split("/").pop();
     return resolveSchema(schemas[name], depth + 1);
   }
+  if (Array.isArray(schema.allOf)) {
+    const parts = schema.allOf.map((part) => resolveSchema(part, depth + 1));
+    return {
+      type: "object",
+      properties: Object.assign({}, ...parts.map((part) => part?.properties ?? {})),
+      required: [...new Set(parts.flatMap((part) => part?.required ?? []))],
+    };
+  }
   return schema;
 }
 

@@ -81,6 +81,10 @@ type DataStage struct {
 }
 
 type Quality struct {
+	CostStatus       string   `json:"cost_status"`
+	MinimumCostEUR   *float64 `json:"minimum_cost_eur"`
+	MaximumCostEUR   *float64 `json:"maximum_cost_eur"`
+	AverageCostEUR   *float64 `json:"average_cost_eur"`
 	PointCount       int      `json:"point_count"`
 	WindowPointCount int      `json:"window_point_count"`
 	FieldCoveragePct float64  `json:"field_coverage_pct"`
@@ -172,6 +176,16 @@ func Build(data Data, scope timescope.Scope, now time.Time, sourceCode string, c
 		responseSource, raw, unit, points, sourceLabel, window, sourceRequests, selectedRequest = GridSourceCode, data.Grid, nonEmpty(gridUnit, PriceUnit), gridPoints, "Fingrid", gridWindow, []SourceRequest{gridRequest}, gridRequest
 	}
 	quality := qualityFrom(raw, points, window, unit, sourceLabel)
+	quality.CostStatus = "not_price_series"
+	if isPriceUnit(unit) {
+		quality.MinimumCostEUR = estimatedCost(quality.MinimumValue, cfg.HouseholdUsageKWh)
+		quality.MaximumCostEUR = estimatedCost(quality.MaximumValue, cfg.HouseholdUsageKWh)
+		quality.AverageCostEUR = estimatedCost(quality.AverageValue, cfg.HouseholdUsageKWh)
+		quality.CostStatus = "missing_price_data"
+		if quality.AverageCostEUR != nil {
+			quality.CostStatus = "ready"
+		}
+	}
 	provider := (*string)(nil)
 	if responseSource == PriceSourceCode {
 		provider = stringPointer(cfg.HouseholdElectricityProvider)
@@ -844,4 +858,12 @@ func choose(condition bool, yes, no string) string {
 		return yes
 	}
 	return no
+}
+
+func estimatedCost(value *float64, usage float64) *float64 {
+	if value == nil {
+		return nil
+	}
+	cost := round(*value*usage/100, 3)
+	return &cost
 }

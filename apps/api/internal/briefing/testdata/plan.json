@@ -1,0 +1,331 @@
+[
+  {
+    "args": [
+      [
+        {
+          "id": "low",
+          "kind": "scenario",
+          "title": "low",
+          "detail": "low detail",
+          "severity": "LOW",
+          "startsAt": "2026-08-09T08:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        },
+        {
+          "id": "high-later",
+          "kind": "scenario",
+          "title": "high-later",
+          "detail": "high-later detail",
+          "severity": "HIGH",
+          "startsAt": "2026-08-09T10:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        },
+        {
+          "id": "medium",
+          "kind": "scenario",
+          "title": "medium",
+          "detail": "medium detail",
+          "severity": "MEDIUM",
+          "startsAt": "2026-08-09T07:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        },
+        {
+          "id": "high-sooner",
+          "kind": "scenario",
+          "title": "high-sooner",
+          "detail": "high-sooner detail",
+          "severity": "HIGH",
+          "startsAt": "2026-08-09T09:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        }
+      ],
+      1786264200000
+    ],
+    "now": 1789509400807,
+    "result": [
+      {
+        "id": "high-sooner",
+        "kind": "scenario",
+        "title": "high-sooner",
+        "detail": "high-sooner detail",
+        "severity": "HIGH",
+        "startsAt": "2026-08-09T09:00:00Z",
+        "endsAt": "2026-08-09T12:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      },
+      {
+        "id": "high-later",
+        "kind": "scenario",
+        "title": "high-later",
+        "detail": "high-later detail",
+        "severity": "HIGH",
+        "startsAt": "2026-08-09T10:00:00Z",
+        "endsAt": "2026-08-09T12:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      },
+      {
+        "id": "medium",
+        "kind": "scenario",
+        "title": "medium",
+        "detail": "medium detail",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T07:00:00Z",
+        "endsAt": "2026-08-09T12:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      }
+    ]
+  },
+  {
+    "args": [
+      [
+        {
+          "id": "event-info",
+          "kind": "event",
+          "title": "event-info",
+          "detail": "event-info detail",
+          "severity": "INFO",
+          "startsAt": "2026-08-09T08:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming"
+        },
+        {
+          "id": "scenario-info",
+          "kind": "scenario",
+          "title": "scenario-info",
+          "detail": "scenario-info detail",
+          "severity": "INFO",
+          "startsAt": "2026-08-09T09:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        }
+      ],
+      1786264200000
+    ],
+    "now": 1789509400808,
+    "result": [
+      {
+        "id": "scenario-info",
+        "kind": "scenario",
+        "title": "scenario-info",
+        "detail": "scenario-info detail",
+        "severity": "INFO",
+        "startsAt": "2026-08-09T09:00:00Z",
+        "endsAt": "2026-08-09T12:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      }
+    ]
+  },
+  {
+    "args": [
+      [
+        {
+          "id": "transit-event",
+          "kind": "event",
+          "title": "transit-event",
+          "detail": "transit-event detail",
+          "severity": "HIGH",
+          "startsAt": "2026-08-09T08:00:00Z",
+          "endsAt": "2026-08-09T11:00:00Z",
+          "categoryKey": "transit",
+          "state": "upcoming"
+        },
+        {
+          "id": "commute-scenario",
+          "kind": "scenario",
+          "title": "commute-scenario",
+          "detail": "commute-scenario detail",
+          "severity": "HIGH",
+          "startsAt": "2026-08-09T08:00:00Z",
+          "endsAt": "2026-08-09T11:00:00Z",
+          "categoryKey": "mobility",
+          "state": "upcoming",
+          "scenarioKey": "commute"
+        }
+      ],
+      1786264200000
+    ],
+    "now": 1789509400808,
+    "result": [
+      {
+        "id": "commute-scenario",
+        "kind": "scenario",
+        "title": "commute-scenario",
+        "detail": "commute-scenario detail",
+        "severity": "HIGH",
+        "startsAt": "2026-08-09T08:00:00Z",
+        "endsAt": "2026-08-09T11:00:00Z",
+        "categoryKey": "mobility",
+        "state": "upcoming",
+        "scenarioKey": "commute"
+      }
+    ]
+  },
+  {
+    "args": [
+      [
+        {
+          "id": "commute-scenario",
+          "kind": "scenario",
+          "title": "commute-scenario",
+          "detail": "commute-scenario detail",
+          "severity": "HIGH",
+          "startsAt": "2026-08-09T08:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "commute"
+        },
+        {
+          "id": "outdoor-scenario",
+          "kind": "scenario",
+          "title": "outdoor-scenario",
+          "detail": "outdoor-scenario detail",
+          "severity": "MEDIUM",
+          "startsAt": "2026-08-09T09:00:00Z",
+          "endsAt": "2026-08-09T12:00:00Z",
+          "categoryKey": "weather",
+          "state": "upcoming",
+          "scenarioKey": "outdoor"
+        }
+      ],
+      1786264200000,
+      {
+        "excludeScenarioKey": "commute"
+      }
+    ],
+    "now": 1789509400809,
+    "result": [
+      {
+        "id": "outdoor-scenario",
+        "kind": "scenario",
+        "title": "outdoor-scenario",
+        "detail": "outdoor-scenario detail",
+        "severity": "MEDIUM",
+        "startsAt": "2026-08-09T09:00:00Z",
+        "endsAt": "2026-08-09T12:00:00Z",
+        "categoryKey": "weather",
+        "state": "upcoming",
+        "scenarioKey": "outdoor"
+      }
+    ]
+  },
+  {
+    "args": [
+      [],
+      1786248000000,
+      {
+        "excludeScenarioKey": "commute"
+      }
+    ],
+    "now": 1789509400810,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1789509400810,
+      {}
+    ],
+    "now": 1789509400810,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1789509400811,
+      {}
+    ],
+    "now": 1789509400811,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1789509400811,
+      {}
+    ],
+    "now": 1789509400811,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1786264200000,
+      {
+        "excludeScenarioKey": "commute"
+      }
+    ],
+    "now": 1789509400811,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1789509400811,
+      {}
+    ],
+    "now": 1789509400811,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1786435200000,
+      {}
+    ],
+    "now": 1789509400811,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1789509400812,
+      {}
+    ],
+    "now": 1789509400812,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1786264200000,
+      {
+        "excludeScenarioKey": "commute"
+      }
+    ],
+    "now": 1789509400812,
+    "result": []
+  },
+  {
+    "args": [
+      [],
+      1786266000000,
+      {}
+    ],
+    "now": 1789509400812,
+    "result": []
+  }
+]
