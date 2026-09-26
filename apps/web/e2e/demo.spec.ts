@@ -14,8 +14,8 @@ test.describe("deterministic demo", () => {
     await expect(page.getByRole("heading", { name: "Signal observatory" })).toBeVisible();
     await expect(page.locator(".demo-mode-banner")).toContainText("static example data");
     await expect(page.getByRole("combobox", { name: "City" })).toHaveValue("helsinki");
-    await expect(page.getByRole("region", { name: "Source health" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /9 data sources, 9 healthy/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Collector status" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /9 data sources, 9 recent successful collections/ })).toBeVisible();
     const catalog = page.locator(".overview-catalog");
     await expect(catalog).not.toHaveAttribute("open", "");
     await expect(catalog.locator(".overview-signal-grid-catalog")).not.toBeVisible();
@@ -32,6 +32,21 @@ test.describe("deterministic demo", () => {
     await expect(page.locator(".demo-mode-banner-link")).toHaveAttribute("href", "/about");
   });
 
+  test("keeps Helsinki capability separate from collection and data", async ({ page }) => {
+    await page.goto("/about", { waitUntil: "networkidle" });
+    const helsinki = page.locator(".about-coverage-row").filter({ has: page.locator(".about-coverage-city strong", { hasText: "Helsinki" }) });
+    await expect(helsinki.getByRole("cell", { name: "Supported" })).toHaveCount(6);
+    await expect(page.locator(".about-coverage .about-section-heading p")).toContainText(
+      "does not confirm a configured feed, available reading, or fresh data",
+    );
+
+    await page.goto("/?view=overview&city=helsinki", { waitUntil: "networkidle" });
+    const collector = page.getByRole("region", { name: "Collector status" });
+    await collector.getByRole("button").click();
+    await expect(collector.getByText("Recent collection succeeded").first()).toBeVisible();
+    await expect(page.locator(".demo-mode-banner")).toContainText("static example data");
+  });
+
   test("explains an unavailable overview scope without confusing it with a search miss", async ({ page }, testInfo) => {
     const width = testInfo.project.name === "mobile-chromium" ? 280 : 1440;
     await page.setViewportSize({ width, height: 740 });
@@ -43,12 +58,12 @@ test.describe("deterministic demo", () => {
       const empty = page.locator(".dashboard-empty-state-rich");
       await expect(empty).toHaveCount(1);
       await expect(empty).toContainText(
-        language === "en" ? "No signal data is available for this scope." : "当前范围暂无信号数据。",
+        language === "en" ? "No usable signal data for this scope." : "当前范围暂无可用的信号数据。",
       );
       await expect(empty).toContainText(
         language === "en"
-          ? "Choose a supported city or date, or connect the live API to inspect current signals."
-          : "请选择有数据的城市或日期，或连接实时 API 查看当前信号。",
+          ? "Sources may be missing, stale, or outside the selected city and date."
+          : "数据可能缺失、过期，或不属于所选城市与日期。",
       );
 
       const layout = await page.evaluate(() => ({

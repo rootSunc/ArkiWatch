@@ -719,6 +719,7 @@
             "type": "string"
           },
           "configured": {
+            "description": "At least one city-specific source is configured; this does not describe every signal or current data availability.",
             "title": "Configured",
             "type": "boolean"
           },
@@ -750,6 +751,7 @@
             "additionalProperties": {
               "type": "string"
             },
+            "description": "Static adapter capability by signal: supported or planned. This is not a live data status.",
             "title": "Signals",
             "type": "object"
           }
@@ -7564,7 +7566,7 @@
     },
     "/api/platform/coverage": {
       "get": {
-        "description": "Describe configured city capabilities without implying source health.",
+        "description": "Describe static city signal capabilities; configured means at least one city-specific source, not current data health.",
         "operationId": "get_platform_coverage_api_platform_coverage_get",
         "responses": {
           "200": {

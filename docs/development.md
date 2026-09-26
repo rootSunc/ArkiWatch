@@ -1,6 +1,6 @@
 # Development
 
-This page covers the full local stack. If you only want to evaluate ArkiWatch, use the zero-credential [`pnpm demo`](../README.md#try-it-in-one-command) first.
+This page covers the full local stack. If you only want to evaluate ArkiWatch, use the zero-credential [`pnpm demo`](../README.md#try-the-demo) first.
 
 ## Requirements
 
@@ -20,6 +20,8 @@ pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 
+# Before continuing, edit apps/api/.env for your local PostgreSQL credentials.
+# Create the database with the same PostgreSQL role used by DATABASE_URL.
 createdb arkiwatch
 pnpm run migrate:api
 pnpm run bootstrap:api
@@ -73,6 +75,15 @@ The durable scheduler persists job state in PostgreSQL. External providers are n
 
 Start from `apps/api/.env.example` and `apps/web/.env.example`; do not commit `.env` files, tokens, provider credentials, or personal data. The live API needs PostgreSQL, while the demo does not.
 
-If the web app cannot reach the API, check the API health URL first and then compare `NEXT_PUBLIC_API_BASE_URL` in `apps/web/.env.local` with the API address. If a provider is empty or stale, inspect `/api/health/data-quality` and the configured source scope before treating it as an application error.
+If the web app cannot reach the API, check the API health URL first and then compare `API_PUBLIC_BASE_URL` (browser runtime address) and `NEXT_PUBLIC_API_BASE_URL` (fallback) in `apps/web/.env.local` with the API address. If a provider is empty or stale, inspect `/api/health/data-quality` and the configured source scope before treating it as an application error.
 
 The [`deploy/`](../deploy/README.md) directory contains an optional single-VPS recipe. It is not needed for local development or for publishing the project source.
+
+See [Public and private records](publication-boundary.md) for configuration
+visibility and private notes. The example files are complete references; most
+provider, scheduler, and retention settings can keep their defaults.
+
+CI runs API checks with PostgreSQL, frontend checks, generated contract/asset
+checks, and a web build. E2E, live contract, configuration, version, and
+vulnerability checks are available commands but are not all run by the current
+workflow. Choose the checks needed for the behavior you changed.

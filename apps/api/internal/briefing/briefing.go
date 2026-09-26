@@ -330,16 +330,30 @@ func Build(in Input) Decision {
 	case (d.SnapshotAvailable != nil && !*d.SnapshotAvailable) || checked.IsZero() || now.Sub(checked) > 6*time.Hour || checked.Sub(now) > 5*time.Minute:
 		result.RecommendationMode = "stale"
 	}
-	result.HasScopedData = result.HistoricalSnapshotAvailable && (len(d.TopActions) > 0 || len(d.ScenarioSections) > 0 || len(result.Timeline) > 0)
+	// A configured scenario section or placeholder is not evidence that a
+	// reading exists for this city and time. Only observed signals, curated
+	// events, or an eligible action can establish scoped data.
+	result.HasScopedData = result.HistoricalSnapshotAvailable && len(result.RecentEvents) > 0
+	if result.HistoricalSnapshotAvailable {
+		for _, action := range d.TopActions {
+			if eligible(action, now) {
+				result.HasScopedData = true
+				break
+			}
+		}
+	}
 	for _, tone := range result.Summary.Tones {
 		if result.HistoricalSnapshotAvailable && tone != "neutral" {
 			result.HasScopedData = true
 		}
 	}
-	for _, section := range d.ScenarioSections {
-		result.ActionEligibility[section.Recommendation.ID] = result.RecommendationMode == "live" && eligible(section.Recommendation, now)
+	if !result.HasScopedData {
+		result.Timeline = []TimelineItem{}
 	}
-	if result.RecommendationMode == "live" {
+	for _, section := range d.ScenarioSections {
+		result.ActionEligibility[section.Recommendation.ID] = result.HasScopedData && result.RecommendationMode == "live" && eligible(section.Recommendation, now)
+	}
+	if result.HasScopedData && result.RecommendationMode == "live" {
 		for _, a := range d.TopActions {
 			end := signals.ParseTime(a.ValidTo)
 			if !eligible(a, now) {

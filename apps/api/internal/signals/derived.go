@@ -15,7 +15,7 @@ import (
 
 func Available(status string) bool {
 	switch strings.ToLower(status) {
-	case "", "empty", "missing", "not_collected", "unavailable", "failed", "error":
+	case "", "empty", "missing", "not_collected", "unavailable", "failed", "error", "stale":
 		return false
 	}
 	return true

@@ -20,3 +20,10 @@ htmlcov
 *.log
 logs
 deploy/runbooks/*.local.md
+
+# Personal tooling and operator records are not build inputs.
+.agents
+.claude
+skills-lock.json
+docs/private
+deploy/ansible/inventory.ini

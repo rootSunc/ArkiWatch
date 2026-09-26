@@ -17,11 +17,12 @@
 </p>
 
 <p align="center">
-  <a href="#try-it-in-one-command">Try it</a> ·
+  <a href="#try-the-demo">Try it</a> ·
   <a href="#the-interface">Interface</a> ·
   <a href="#coverage">Coverage</a> ·
   <a href="#architecture">Architecture</a> ·
-  <a href="#run-it-yourself">Run it</a>
+  <a href="#run-it-yourself">Run it</a> ·
+  <a href="docs/README.md">Docs</a>
 </p>
 
 <p align="center">
@@ -54,9 +55,11 @@ personal context — saved places, commute, Telegram — when you self-host.
 
 Finland is the current product context, and Helsinki is the most complete city.
 
-## Try it in one command
+## Try the demo
 
-The demo needs no database, API keys, or provider accounts.
+The demo needs Node.js 20+ and Corepack / pnpm, but no database, API keys,
+or provider accounts. Its data and assistant responses use fixtures; map views
+can still request external map tiles.
 
 ```bash
 corepack enable
@@ -117,17 +120,18 @@ HSL, Digitraffic, Fingrid, SYKE, Helsinki Service Map, Helsinki Linked Events,
 and electricity-price APIs. [docs/data-sources.md](docs/data-sources.md) covers
 boundaries and operational assumptions.
 
-`live` means the feed is configured for that city. `regional` follows the
-provider, not the city picker. `planned` is visible but not claimed as live.
+The table describes adapter capabilities, not current service health. `supported` means an adapter exists for that city; it does not establish
+that a deployment has credentials, a successful fetch, or fresh data. `planned`
+means unsupported today. Check collector status, returned readings, and timestamps in the running instance.
 
 | City | Weather | Air | Transit | Water | City services | Events |
 | --- | --- | --- | --- | --- | --- | --- |
-| Helsinki | live | live | live | live | live | live |
-| Espoo | live | live | live | live | planned | live |
-| Vantaa | live | live | live | live | planned | planned |
-| Tampere | live | live | planned | live | planned | planned |
-| Turku | live | live | planned | live | planned | planned |
-| Oulu | live | live | planned | live | planned | planned |
+| Helsinki | supported | supported | supported | supported | supported | supported |
+| Espoo | supported | supported | supported | supported | planned | supported |
+| Vantaa | supported | supported | supported | supported | planned | planned |
+| Tampere | supported | supported | planned | supported | planned | planned |
+| Turku | supported | supported | planned | supported | planned | planned |
+| Oulu | supported | supported | planned | supported | planned | planned |
 
 Energy and road/rail are national or provider-defined, so picking a city does
 not imply a city-specific observation, and Tampere, Turku, and Oulu
@@ -154,7 +158,7 @@ static API contract, and it generates the frontend types.
 | Data | PostgreSQL, Go-owned idempotent schema lifecycle |
 | Jobs | Collectors, normalizer, rules, scheduler, backfill, dispatch |
 | Quality | `go vet`, `go test`, Vitest, Playwright, accessibility smoke tests |
-| Operations | Docker, health checks, structured logs, request IDs, optional OpenTelemetry |
+| Operations | Docker, health checks, structured logs, request IDs, source-health metrics |
 
 Source layout: `apps/api` holds the Go API, collectors, normalizer, scheduler and
 schema; `apps/web` the Next.js workspaces and assistant; then `contracts`,
@@ -162,57 +166,26 @@ schema; `apps/web` the Next.js workspaces and assistant; then `contracts`,
 
 ## Run it yourself
 
-For real provider data and the full backend you need Node.js 20+, Corepack /
-pnpm, Go 1.25+, and PostgreSQL.
+Follow [Development](docs/development.md) for prerequisites, environment setup,
+database initialization, collection, and checks. Start with the public data path;
+configure personal accounts, Telegram, and the model-backed assistant only when
+you need them. [Deployment](deploy/README.md) covers the optional single-VPS recipe.
 
-```bash
-corepack enable
-pnpm install
+Go owns recommendations, validity, source health, and energy calculations;
+Next.js handles presentation and session transport. See the
+[business boundary](docs/go-business-boundary.md) before changing these rules.
 
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-
-createdb arkiwatch
-pnpm run migrate:api
-pnpm run bootstrap:api
-pnpm dev
-```
-
-That serves the web app on [:3000](http://localhost:3000) and the API on
-[:8000/api](http://localhost:8000/api), with health at
-[`/api/health`](http://localhost:8000/api/health). Go commands load
-`apps/api/.env` when run from the repository root. Never commit `.env` files,
-tokens, or personal data.
-
-To pull data once, by hand:
-
-```bash
-pnpm run dev:collector -- all
-pnpm run dev:normalize -- -hours 24
-pnpm run dev:scheduler -- --once
-```
-
-| Command | Purpose |
-| --- | --- |
-| `pnpm demo` | Zero-credential deterministic product tour |
-| `pnpm dev` | Go API and Next.js together |
-| `pnpm check` | Backend and frontend quality gates |
-| `pnpm run test:e2e` | Browser and accessibility smoke tests |
-| `pnpm run contracts:check` | OpenAPI vs generated frontend types |
-| `pnpm run audit:api` | `govulncheck` on the Go module graph |
-
-Schema or contract changes move together: the Go reconciler,
-`contracts/openapi.json`, the generated frontend types, and the tests. Full local
-notes are in [docs/development.md](docs/development.md), and an optional
-single-VPS recipe in [`deploy/`](deploy/README.md).
+The [documentation index](docs/README.md) separates product, contributor, and
+operator reading paths. [Public and private records](docs/publication-boundary.md)
+explains which examples belong in Git and which instance values stay private.
 
 ## Status
 
-Pre-release. The main product paths and engineering foundations are in place;
+Pre-release. The main product paths are implemented;
 provider availability, geographic coverage, external API limits, and UI details
-can still change. Current focus is strengthening the six city packs without
-overstating them, keeping demo / historical / live semantics visibly separate,
-and improving how evidence is presented.
+can still change. See [Product scope](docs/product-scope.md) for the assumptions still to validate
+and recommended completion criteria. Implemented features and passing tests
+alone do not establish user value or deployment readiness.
 
 If something is unclear, wrong, or over-claimed,
 [open an issue](https://github.com/rootSunc/ArkiWatch/issues/new/choose). A new
@@ -231,10 +204,3 @@ timestamps, and explains what it fetched. Most feeds are CC BY 4.0 and need
 crediting — [docs/data-sources.md](docs/data-sources.md) lists each provider's
 licence, access requirement, and attribution string. Confirm those terms are
 still current before deploying a city pack.
-
-### Business logic ownership
-
-Public event selection, Today advice, action validity, source health and energy
-costs are owned by Go. Next.js consumes `/api/public/briefing` and handles
-presentation and session transport. See [the Go business boundary](docs/go-business-boundary.md)
-for the API contract, offline generation workflow and historical compatibility.

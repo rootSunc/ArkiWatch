@@ -9,12 +9,12 @@
       "latitude": 60.1699,
       "longitude": 24.9384,
       "signals": {
-        "air": "live",
-        "city_services": "live",
-        "events": "live",
-        "transit": "live",
-        "water": "live",
-        "weather": "live"
+        "air": "supported",
+        "city_services": "supported",
+        "events": "supported",
+        "transit": "supported",
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional",
       "configured": true
@@ -27,12 +27,12 @@
       "latitude": 60.2055,
       "longitude": 24.6559,
       "signals": {
-        "air": "live",
+        "air": "supported",
         "city_services": "planned",
-        "events": "live",
-        "transit": "live",
-        "water": "live",
-        "weather": "live"
+        "events": "supported",
+        "transit": "supported",
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional",
       "configured": false
@@ -45,12 +45,12 @@
       "latitude": 60.2934,
       "longitude": 25.0378,
       "signals": {
-        "air": "live",
+        "air": "supported",
         "city_services": "planned",
         "events": "planned",
-        "transit": "live",
-        "water": "live",
-        "weather": "live"
+        "transit": "supported",
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional",
       "configured": false
@@ -63,12 +63,12 @@
       "latitude": 61.4978,
       "longitude": 23.761,
       "signals": {
-        "air": "live",
+        "air": "supported",
         "city_services": "planned",
         "events": "planned",
         "transit": "planned",
-        "water": "live",
-        "weather": "live"
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional-only",
       "configured": false
@@ -81,12 +81,12 @@
       "latitude": 60.4518,
       "longitude": 22.2666,
       "signals": {
-        "air": "live",
+        "air": "supported",
         "city_services": "planned",
         "events": "planned",
         "transit": "planned",
-        "water": "live",
-        "weather": "live"
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional-only",
       "configured": false
@@ -99,12 +99,12 @@
       "latitude": 65.0121,
       "longitude": 25.4651,
       "signals": {
-        "air": "live",
+        "air": "supported",
         "city_services": "planned",
         "events": "planned",
         "transit": "planned",
-        "water": "live",
-        "weather": "live"
+        "water": "supported",
+        "weather": "supported"
       },
       "recommendation_scope": "regional-only",
       "configured": false

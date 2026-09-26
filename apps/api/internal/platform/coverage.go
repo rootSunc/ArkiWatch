@@ -16,7 +16,7 @@ type CityPack struct {
 	Longitude           float64           `json:"longitude"`
 	Signals             map[string]string `json:"signals"`
 	RecommendationScope string            `json:"recommendation_scope"`
-	Configured          bool              `json:"configured"`
+	Configured          bool              `json:"configured"` // At least one city-specific feed is configured; not every signal.
 }
 
 type Coverage struct {
@@ -37,27 +37,27 @@ type cityPackDefinition struct {
 var cityPackDefinitions = []cityPackDefinition{
 	{
 		cityRef: "helsinki", label: "Helsinki", region: "Uusimaa", latitude: 60.1699, longitude: 24.9384,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "live", "water": "live", "city_services": "live", "events": "live"}, recommendationScope: "regional",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "supported", "water": "supported", "city_services": "supported", "events": "supported"}, recommendationScope: "regional",
 	},
 	{
 		cityRef: "espoo", label: "Espoo", region: "Uusimaa", latitude: 60.2055, longitude: 24.6559,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "live", "water": "live", "city_services": "planned", "events": "live"}, recommendationScope: "regional",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "supported", "water": "supported", "city_services": "planned", "events": "supported"}, recommendationScope: "regional",
 	},
 	{
 		cityRef: "vantaa", label: "Vantaa", region: "Uusimaa", latitude: 60.2934, longitude: 25.0378,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "live", "water": "live", "city_services": "planned", "events": "planned"}, recommendationScope: "regional",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "supported", "water": "supported", "city_services": "planned", "events": "planned"}, recommendationScope: "regional",
 	},
 	{
 		cityRef: "tampere", label: "Tampere", region: "Pirkanmaa", latitude: 61.4978, longitude: 23.761,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "planned", "water": "live", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "planned", "water": "supported", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
 	},
 	{
 		cityRef: "turku", label: "Turku", region: "Southwest Finland", latitude: 60.4518, longitude: 22.2666,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "planned", "water": "live", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "planned", "water": "supported", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
 	},
 	{
 		cityRef: "oulu", label: "Oulu", region: "North Ostrobothnia", latitude: 65.0121, longitude: 25.4651,
-		signals: map[string]string{"weather": "live", "air": "live", "transit": "planned", "water": "live", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
+		signals: map[string]string{"weather": "supported", "air": "supported", "transit": "planned", "water": "supported", "city_services": "planned", "events": "planned"}, recommendationScope: "regional-only",
 	},
 }
 

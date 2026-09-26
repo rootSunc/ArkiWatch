@@ -30,6 +30,6 @@ describe("city scope helpers", () => {
 
   it("keeps city capabilities explicit instead of inferring them from a city name", () => {
     expect(cityPackFor("tampere").signals.transit).toBe("planned");
-    expect(cityPackFor("helsinki").signals.city_services).toBe("live");
+    expect(cityPackFor("helsinki").signals.city_services).toBe("supported");
   });
 });

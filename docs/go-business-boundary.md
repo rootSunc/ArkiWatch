@@ -29,7 +29,7 @@ merging, action validity, plan overlap removal, summary states and source health
 Existing `normalizer`, `publicrules`, `rules`, `energy` and `timescope` remain the
 owners of their existing ingest, recommendation and calculation responsibilities.
 
-The old `/api/public/dashboard` remains compatible. The web client uses the new
+`/api/public/dashboard` remains compatible. The web client uses the
 briefing route and keys its cache by **city and date**. Regional energy reads
 continue sharing cache entries across cities.
 
@@ -45,7 +45,7 @@ Historical views are read-only. Missing historical snapshots do not acquire
 live actions from other data. Action eligibility and notification selection no
 longer depend on English placeholder sentences in the UI.
 
-Behavior corrections made during migration:
+Decision invariants:
 
 - Critical events participate in severity ranking.
 - Empty air-quality payloads do not emit advisory events.
@@ -103,7 +103,7 @@ state. Moving those to Go would couple backend decisions to a particular UI.
 
 ## Validation
 
-- Go unit tests include 21 captured pre-migration event/timeline/plan cases.
+- Go unit tests cover captured event/timeline/plan behavior.
 - Additional Go cases cover severity boundaries, stable identity, missing data,
   regional scope, expiry, source health, energy history and profile ownership.
 - Existing API/web checks, generated asset drift checks and contract generation
@@ -113,7 +113,7 @@ state. Moving those to Go would couple backend decisions to a particular UI.
 
 ## Detail read models and frontend consolidation
 
-Weather forecasts now include point `assessment` (apparent temperature, condition,
+Weather forecasts include point `assessment` (apparent temperature, condition,
 wind and visibility risk) and `advisories`. Public briefing signals use the same
 Go advisory selection as the weather detail page. Provider warning tones are
 also evaluated in Go. Numeric formatting, chart sampling and coordinates remain
@@ -124,7 +124,7 @@ counts, thresholds, field coverage, score distribution and ordered station IDs.
 Stations carry their individual risk tones. Missing values are excluded from
 averages; an authoritative worst score remains authoritative, with a station
 fallback only when it is absent. Thresholds retain the previous application
-policy; this migration does not introduce a new air-quality standard.
+policy; these thresholds are application policy rather than a new air-quality standard.
 
 Transit and road/rail responses include server-evaluated `state`, `filters` and
 `detail` summaries. Go owns priority, severity, weather/roadwork classification,

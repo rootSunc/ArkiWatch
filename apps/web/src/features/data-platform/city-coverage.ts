@@ -1,7 +1,7 @@
 import coverage from "./generated/coverage.json";
 
 export type CitySignalKey = "weather" | "air" | "transit" | "water" | "city_services" | "events";
-export type CitySignalAvailability = "live" | "regional" | "planned";
+export type CitySignalAvailability = "supported" | "regional" | "planned";
 
 export type CityPack = {
   value: string;

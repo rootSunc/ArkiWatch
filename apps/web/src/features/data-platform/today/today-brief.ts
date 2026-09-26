@@ -37,14 +37,12 @@ export function buildTodayBrief({ publicDashboard, overviewCoverageArea, summary
  if (!publicDashboard || !decision) return null;
  const mode = decision.recommendation_mode;
  const action = decision.top_actions.find((item) => item.id === decision.headline_action_id);
- const tile = summaryTiles.find((item) => item.key === decision.summary.headline_summary_key);
  const modeKeys = { historical: "shell.historicalRecommendationsReadOnly", out_of_scope: "shell.recommendationsUnavailableForScope", stale: "shell.staleRecommendations" } as const;
  const headline = !decision.has_scoped_data
    ? translateMessageKey(language, "shell.noSignalDataForScope")
    : mode !== "live" ? translateMessageKey(language, modeKeys[mode])
    : action ? localizedContent(language, action.title, action.title_zh)
-   : tile ? `${tile.label}: ${tile.value}`
-   : translateMessageKey(language, "shell.coreDailyScenariosClear");
+   : translateMessageKey(language, "shell.noCurrentRecommendation");
  return {
   checkedAt: decision.historical_snapshot_available ? publicDashboard.checked_at : null,
   coverageArea: overviewCoverageArea ?? publicDashboard.coverage_area,

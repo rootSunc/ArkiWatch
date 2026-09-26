@@ -1,60 +1,40 @@
-# ArkiWatch Deployment
+# Deployment
 
-This directory contains an optional single-VPS self-hosting recipe. It is not
-required for the deterministic demo, local development, or publishing the source
-repository. A personal deployment can ignore this directory until a real server
-is needed.
+This is an optional single-VPS self-hosting recipe. The demo and local development
+do not require it. Templates and generic runbooks are public; actual credentials,
+inventory, and operating records follow the
+[public/private boundary](../docs/publication-boundary.md).
 
-The production model is intentionally split by responsibility:
+## Responsibilities
 
-```text
-MacBook:          development, image builds, and operator commands
-GitHub Actions:  API and web checks
-VPS:             Docker Compose runtime, Caddy, PostgreSQL, backups
-```
+| Component | Responsibility |
+| --- | --- |
+| Operator workstation | Build and publish images, sync configuration, invoke release |
+| GitHub Actions | API/web checks, generated contract/asset checks, web build |
+| VPS | Docker Compose, Caddy, PostgreSQL, scheduler, backups |
 
-The VPS does not clone the repository and does not build application images. It only stores runtime files, environment files, persistent data, logs, and backups.
+The repository has no automated image-publishing or production-release workflow.
+Pushing `main` runs CI; it does not deploy. The VPS pulls prebuilt images and
+does not clone or build the repository.
 
-## Runtime Layout On The VPS
+The current topology uses one API replica: login and assistant rate limits are
+process-local. The release script rejects multiple API containers. Add a shared
+limiter before horizontal scaling.
 
-```text
-/srv/arkiwatch/
-  runtime/
-    compose/docker-compose.prod.yml
-    caddy/Caddyfile
-    scripts/release.sh
-    scripts/backup-db.sh
-    scripts/restore-db-copy.sh
-    scripts/logs.sh
-  env/
-    api.env
-    web.env
-    postgres.env
-    caddy.env
-    images.env
-    restic.env
-  backups/postgres/
-  logs/
-```
+## Prerequisites
 
-## Mac Setup
+The operator workstation needs Git, Docker with Buildx for image publishing,
+SSH, and Ansible for provisioning/configuration sync. A registry account is
+needed to publish images. `Brewfile` is an optional macOS convenience bundle;
+its editor, terminal, and monitoring choices are not product requirements.
 
-Install the core local tools:
-
-```bash
-brew install git gh jq ripgrep btop ansible rsync restic direnv tmux
-brew install --cask orbstack tailscale visual-studio-code
-```
-
-Install Ansible collections used by the bootstrap playbook:
+Install the Ansible collections:
 
 ```bash
 ansible-galaxy collection install -r deploy/ansible/requirements.yml
 ```
 
-## Create Local Deployment Files
-
-The real deployment files are intentionally ignored by Git.
+Create private instance files:
 
 ```bash
 cp deploy/env/api.env.example deploy/env/api.env
@@ -66,167 +46,45 @@ cp deploy/ansible/inventory.example.ini deploy/ansible/inventory.ini
 cp deploy/ansible/group_vars/prod.yml.example deploy/ansible/group_vars/prod.yml
 ```
 
-Edit every `CHANGE_ME`, domain, email, and image placeholder.
+Replace credentials, domains, email, registry account, and host placeholders.
+Use matching PostgreSQL credentials in `api.env` and `postgres.env`. Point the
+web and API domain DNS records at the VPS; Caddy needs ports 80/443 reachable to
+serve HTTPS. If off-server backups are enabled, also copy and configure
+`deploy/env/restic.env.example` as `deploy/env/restic.env`.
 
-For GHCR, `deploy/env/images.env` should look like this:
-
-```env
-ARKIWATCH_API_IMAGE=ghcr.io/YOUR_ACCOUNT/arkiwatch-api
-ARKIWATCH_WEB_IMAGE=ghcr.io/YOUR_ACCOUNT/arkiwatch-web
-ARKIWATCH_IMAGE_TAG=latest
-```
-
-If you want encrypted off-server backups:
-
-```bash
-cp deploy/env/restic.env.example deploy/env/restic.env
-```
-
-## DNS
-
-Point both domains to the VPS:
+## Runtime layout
 
 ```text
-arkiwatch.example.com      A/AAAA  <VPS IP>
-api.arkiwatch.example.com  A/AAAA  <VPS IP>
+/srv/arkiwatch/
+  runtime/
+    compose/docker-compose.prod.yml
+    caddy/Caddyfile
+    scripts/                 # release, backup, restore-copy, logs
+  env/                       # private runtime configuration
+  backups/postgres/
+  logs/
 ```
 
-Caddy will request HTTPS certificates when the stack starts. Ports `80` and `443` must be reachable.
+Bootstrap installs Docker, Compose, UFW, restic, a deploy user, and runtime
+directories. The deployment playbook syncs runtime files and installs the daily
+database backup cron. See the [deploy runbook](runbooks/deploy.md) for the ordered
+bootstrap, publish, release, and verification steps.
 
-## Bootstrap A Fresh VPS
+## Operating an instance
 
-Use this once, usually as `root` or a sudo-capable initial user:
+| Task | Runbook |
+| --- | --- |
+| First deployment or a new version | [Deploy](runbooks/deploy.md) |
+| Inspect a failure | [Incident](runbooks/incident.md) |
+| Restore a previous image | [Rollback](runbooks/rollback.md) |
+| Back up or verify a restored database copy | [Backup and restore](runbooks/backup-restore.md) |
 
-```bash
-INVENTORY=deploy/ansible/inventory.ini deploy/scripts/bootstrap-vps.sh
-```
+A release backs up the database before changing images, runs migration and
+bootstrap, and checks health. If an existing deployment fails its health check,
+it attempts to restore the previous application image tag. That is not a database
+rollback; verify schema compatibility before rolling across a schema change.
 
-The bootstrap playbook installs Docker, Docker Compose, UFW, restic, creates the `deploy` user, and creates `/srv/arkiwatch` runtime directories.
-
-After bootstrap, make sure `deploy/ansible/inventory.ini` uses the deploy user:
-
-```ini
-[arkiwatch]
-arkiwatch-prod ansible_host=YOUR_VPS_IP_OR_TAILSCALE_NAME ansible_user=deploy ansible_port=22
-```
-
-## Sync Runtime Files
-
-Use Ansible when runtime files or environment files change:
-
-```bash
-ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/playbooks/deploy.yml \
-  -e arkiwatch_run_release=false
-```
-
-To sync files and release a specific image tag in one command:
-
-```bash
-ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/playbooks/deploy.yml \
-  -e arkiwatch_image_tag=<git-sha>
-```
-
-If GHCR images are private, configure registry credentials in `deploy/ansible/group_vars/prod.yml` before the first release, or log in manually on the VPS as `deploy`.
-
-## Daily Deployment
-
-Normal deployment is handled by GitHub Actions:
-
-```text
-push main
-  -> run checks
-  -> build api/web images
-  -> push ghcr.io/YOUR_ACCOUNT/arkiwatch-api:<git-sha>
-  -> push ghcr.io/YOUR_ACCOUNT/arkiwatch-web:<git-sha>
-  -> ssh to VPS
-  -> /srv/arkiwatch/runtime/scripts/release.sh <git-sha>
-```
-
-Required GitHub Actions secrets:
-
-```text
-PROD_SSH_HOST
-PROD_SSH_USER
-PROD_SSH_KEY
-PROD_SSH_KNOWN_HOSTS
-PROD_SSH_PORT optional, defaults to 22
-```
-
-`PROD_SSH_KNOWN_HOSTS` must contain the pinned `known_hosts` line(s) for the VPS.
-Do not replace this with `StrictHostKeyChecking=accept-new` in production. Rotate
-the deploy key and host entries together when a server is rebuilt.
-
-Image publishing and VPS releases are operator commands, not CI jobs.
-
-Each release waits for PostgreSQL and application health checks, creates a
-database backup before changing images, and attempts to restore the previously
-running API/Web image tag if an existing deployment fails its health check.
-Image tags are Git SHAs in normal deployments. The root `VERSION` file is only a
-package-metadata placeholder until the first release is decided.
-The release script runs `/app/arkiwatch-migrate` and `/app/arkiwatch-bootstrap`
-before starting the Go API and scheduler. Do not roll back an image across a
-schema migration until the restore procedure has been validated.
-The current Compose topology intentionally runs one API replica because the
-assistant and login sliding-window limiters are process-local; add a shared
-Redis/edge limiter before scaling the API horizontally.
-The release script also fails closed if more than one API container is running,
-so an accidental `docker compose --scale api=2` cannot be treated as a healthy release.
-
-Manual release from your Mac:
-
-```bash
-ARKIWATCH_HOST=arkiwatch-prod deploy/scripts/deploy.sh <git-sha>
-```
-
-## Manual VPS Commands
-
-```bash
-/srv/arkiwatch/runtime/scripts/release.sh <git-sha>
-/srv/arkiwatch/runtime/scripts/logs.sh api scheduler web caddy
-/srv/arkiwatch/runtime/scripts/backup-db.sh
-```
-
-## Post-Deploy Checks
-
-From your Mac:
-
-```bash
-API_HEALTH_URL=https://YOUR_API_DOMAIN/api/health \
-WEB_URL=https://YOUR_WEB_DOMAIN/login \
-deploy/scripts/healthcheck.sh
-```
-
-## Protected API Paths
-
-The Caddyfile blocks these paths from public networks:
-
-```text
-/api/metrics
-/api/scheduler*
-/api/sources/refresh*
-```
-
-They remain reachable from private address ranges and Tailscale `100.64.0.0/10`.
-
-## Backup And Restore
-
-Backups are stored under:
-
-```text
-/srv/arkiwatch/backups/postgres
-```
-
-Run one manually:
-
-```bash
-ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/playbooks/backup.yml
-```
-
-Restore safely into a new database copy:
-
-```bash
-ssh deploy@YOUR_VPS
-/srv/arkiwatch/runtime/scripts/restore-db-copy.sh /srv/arkiwatch/backups/postgres/arkiwatch-YYYYMMDDTHHMMSSZ.sql.gz
-```
-
-This script does not overwrite production. It creates a separate restore database so you can inspect it before any manual cutover.
+The example Caddy configuration restricts `/api/metrics`, `/api/scheduler*`, and
+`/api/sources/refresh*` to private address ranges, including Tailscale's
+`100.64.0.0/10`. Check that boundary against the actual proxy/network topology.
+Keep actual host access instructions and restore-drill records in private notes.

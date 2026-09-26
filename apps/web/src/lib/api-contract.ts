@@ -254,7 +254,7 @@ export interface paths {
         };
         /**
          * Get Platform Coverage
-         * @description Describe configured city capabilities without implying source health.
+         * @description Describe static city signal capabilities; configured means at least one city-specific source, not current data health.
          */
         get: operations["get_platform_coverage_api_platform_coverage_get"];
         put?: never;
@@ -950,7 +950,10 @@ export interface components {
         CityPackRead: {
             /** City Ref */
             city_ref: string;
-            /** Configured */
+            /**
+             * Configured
+             * @description At least one city-specific source is configured; this does not describe every signal or current data availability.
+             */
             configured: boolean;
             /** Coverage Area */
             coverage_area: string;
@@ -964,7 +967,10 @@ export interface components {
             recommendation_scope: string;
             /** Region */
             region: string;
-            /** Signals */
+            /**
+             * Signals
+             * @description Static adapter capability by signal: supported or planned. This is not a live data status.
+             */
             signals: {
                 [key: string]: string;
             };

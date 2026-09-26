@@ -13,7 +13,7 @@ life assistant is a secondary, on-demand surface layered on top of it:
 
 The shell always exposes a small workspace switcher, with Data listed first.
 Data is the default, evidence-oriented landing surface: it opens the signal
-overview and then the category workspaces. Source health, event history, and
+overview and then the category workspaces. Collector status, event history, and
 catalog views remain available from Data, but are intentionally secondary to
 the signal overview.
 
@@ -47,7 +47,7 @@ The current implementation follows a deliberately small visual grammar:
   never beside it as competing headlines.
 - `Data` uses a cool blue accent, a single signal observatory summary, and a
   three-column signal grid on wide screens. The summary prioritizes category
-  coverage, event volume, and source health; the last checked timestamp stays
+  coverage, event volume, and collector status; the last checked timestamp stays
   in the observatory header. Cross-signal history is collapsed by default so
   the latest evidence remains the first read.
 - The shell uses a white/neutral surface, 16px content cards, 10–12px controls,
@@ -63,15 +63,11 @@ The current implementation follows a deliberately small visual grammar:
 
 ### About the `!important` declarations
 
-There are 89, and they are not decoration. `styles/responsive.css` loads before
-the layers that would otherwise override it, so its breakpoint rules need the
-flag to win. `e2e/tools/important-audit.mjs` replays the cascade for every
-element with and without the flag and reports which ones decide a winner: 46 do,
-and removing the rest was measured at 3,000+ rendering differences because the
-audit cannot see states that are absent from a captured page (`.active`, hover).
-
-They go away with the same work that would let the cascade be reordered — see
-the note at the top of `styles/components.css` — not before.
+Some breakpoint and state rules use `!important` because later styles would
+otherwise override them. Treat that as cascade debt, not a permanent design
+requirement. The audit tool can identify winners in captured states, but cannot
+establish that a declaration is unused across hover, active, loading, and error
+states. Review those states when simplifying the cascade.
 
 ### Verifying a stylesheet change
 
@@ -80,14 +76,15 @@ order. `apps/web/e2e/tools/` records the computed styling of every element on
 every route, in both themes, at two viewports:
 
 ```bash
+cd apps/web
 node e2e/tools/style-snapshot.mjs before.json   # against a running build
 # …make the change, rebuild, restart…
 node e2e/tools/style-snapshot.mjs after.json
 node e2e/tools/style-diff.mjs before.json after.json
 ```
 
-A pure reorganisation must diff to zero. Anything else is a rendering change
-you did not intend.
+A pure reorganisation should produce no computed-style differences in captured
+states. Investigate any differences and check interaction states separately.
 
 The spacing scale is based on 4px units (`4, 8, 12, 16, 24, 32`). Content is
 limited to a readable 1280px frame. Interactive controls use a minimum 36px
@@ -102,14 +99,17 @@ does not change the meaning of a data value:
 | Surface | Primary readout | Supporting evidence |
 | --- | --- | --- |
 | Today | One lead recommendation and a compact plan | Scenario context, source issues, and linked events below the decision |
-| Signal observatory | Categories, recent events, and tracked-source health | Checked timestamp, category cards, catalog disclosure, and source-health detail |
+| Signal observatory | Categories, recent events, and collector status | View check time, category cards, catalog disclosure, and collector-run detail |
 | Event panel | Overall notification plus the current unread count | Read/unread events, structured attributes, evidence chips, and workspace link |
 | Energy card | Household best price in `c/kWh` when available | System-only current grid load in `MW`, source and scope metadata |
 
 `live`, `historical`, and static demo scopes are never interchangeable in copy:
 historical and demo timestamps are absolute, while live timestamps may include
 relative age. Empty data means the source returned no usable value for the
-selected scope; it is not silently promoted to healthy or live.
+selected scope; it is not silently promoted to healthy or live. A recent
+successful collector run does not prove that a usable reading exists for the
+selected city and date. The coverage catalog marks adapter support, not live
+availability.
 
 The event surface is intentionally progressive: the timeline is opt-in from
 the notification control, event details are opt-in from a timeline item, and

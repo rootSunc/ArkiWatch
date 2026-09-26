@@ -147,7 +147,7 @@ export function TodayOverview({
               :
               (isRecommendationLimited
                 ? limitedModeDetail
-                : tKey("shell.coreDailyScenariosClear"))}
+                : tKey("shell.noCurrentRecommendationDetail"))}
           </p>
           <div className="today-focus-footer">
             <div className="today-focus-actions">

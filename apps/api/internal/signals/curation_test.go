@@ -95,3 +95,12 @@ func TestDerivedThresholdsAndStableIdentity(t *testing.T) {
 		t.Fatal("empty response must not generate advisory")
 	}
 }
+
+func TestStaleSignalIsNotAvailableForCurrentAdvice(t *testing.T) {
+	if Available("stale") {
+		t.Fatal("a stale reading must not support current advice")
+	}
+	if !Available("ready") {
+		t.Fatal("a ready reading should remain usable")
+	}
+}

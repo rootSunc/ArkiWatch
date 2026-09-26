@@ -23,6 +23,9 @@ func TestBuildCoverageMirrorsConfiguredCitySemantics(t *testing.T) {
 	if byRef["helsinki"].CoverageArea != "Helsinki/Uusimaa" {
 		t.Fatalf("Helsinki coverage area = %q", byRef["helsinki"].CoverageArea)
 	}
+	if byRef["helsinki"].Signals["weather"] != "supported" {
+		t.Fatalf("Helsinki weather capability = %q", byRef["helsinki"].Signals["weather"])
+	}
 	if byRef["tampere"].Signals["transit"] != "planned" {
 		t.Fatalf("Tampere transit signal = %q", byRef["tampere"].Signals["transit"])
 	}

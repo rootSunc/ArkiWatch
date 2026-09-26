@@ -24,16 +24,17 @@ export function SourceHealthStrip({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const hasSources = overview.sources.length > 0;
   const trackedCount = overview.source_health?.tracked ?? 0;
-  const healthyCount = overview.source_health?.healthy ?? 0;
+  const recentSuccessCount = overview.source_health?.healthy ?? 0;
   const issueCount = overview.source_health?.issues ?? 0;
-  const isCatalogOnlySource = (source: {id: string}) => overview.source_health?.catalog_source_ids.includes(source.id) === true;
+  const isCatalogOnlySource = (source: { id: string }) => overview.source_health?.catalog_source_ids.includes(source.id) === true;
+  const collectionLabel = (status: string) => status === "healthy" ? tKey("shell.recentCollection") : enumLabel(status);
   const timezone = overview.time_scope?.timezone ?? overview.timezone;
   const lastProbe = formatTimestamp(overview.checked_at, "time", language, timezone);
   const lead = [
     `${trackedCount} ${tKey("shell.dataSources")}`,
-    `${healthyCount} ${tKey("shell.healthyCount")}`,
+    `${recentSuccessCount} ${tKey("shell.recentCollectionCount")}`,
     issueCount > 0 ? `${issueCount} ${tKey("shell.needAttentionShort")}` : null,
-    overview.checked_at ? `${tKey("shell.lastProbe")} ${lastProbe}` : null,
+    overview.checked_at ? `${tKey("shell.viewChecked")} ${lastProbe}` : null,
   ]
     .filter(Boolean)
     .join(", ");
@@ -69,7 +70,7 @@ export function SourceHealthStrip({
         <div className="source-health-list">
           {overview.sources.map((source) => (
             <article
-              aria-label={`${source.source_name} · ${isCatalogOnlySource(source) ? tKey("shell.catalogOnlySources") : enumLabel(source.operational_status)}`}
+              aria-label={`${source.source_name} · ${isCatalogOnlySource(source) ? tKey("shell.catalogOnlySources") : collectionLabel(source.operational_status)}`}
               className={`source-health-row source-health-row-${isCatalogOnlySource(source) ? "unknown" : sourceHealthTone(source.operational_status)}`}
               key={source.id}
             >
@@ -77,7 +78,7 @@ export function SourceHealthStrip({
               <strong>
                 {isCatalogOnlySource(source)
                   ? tKey("shell.catalogOnlySources")
-                  : enumLabel(source.operational_status)}
+                  : collectionLabel(source.operational_status)}
               </strong>
               <small>
                 {scopedDataAge(

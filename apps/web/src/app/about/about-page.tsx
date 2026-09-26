@@ -32,7 +32,7 @@ const COPY = {
     heroSecondary: "View on GitHub",
     heroNote: "Demo data is clearly labelled. Connect the API for live public feeds.",
     proofCities: "cities mapped",
-    proofLive: "live signal capabilities",
+    proofSupported: "supported signal capabilities",
     proofWorkspaces: "focused workspaces",
     coverageCity: "City",
     workspaceTitle: "Start with a decision. Keep the evidence.",
@@ -47,11 +47,11 @@ const COPY = {
     dataPoints: ["Clear source health", "City and date scope", "Evidence before interpretation"],
     dataCta: "Explore the data",
     coverageTitle: "Every city has an honest capability map.",
-    coverageLead: "Live means the feed is configured; planned means the city is visible but that source pack is not claimed as live yet.",
+    coverageLead: "Supported means an adapter exists for this city. It does not confirm a configured feed, available reading, or fresh data. Check the running workspace for those.",
     coverageScrollHint: "Swipe horizontally to view all columns.",
     coverageRecommendation: "Recommendations",
     coverageColumns: ["Weather", "Air", "Transit", "Water", "City services", "Events"],
-    coverageLive: "Live",
+    coverageSupported: "Supported",
     coveragePlanned: "Planned",
     coverageRegional: "Regional",
     flowTitle: "From signal to next step in three moves.",
@@ -86,7 +86,7 @@ const COPY = {
     heroSecondary: "在 GitHub 查看",
     heroNote: "演示数据会明确标注；连接 API 后即可使用实时公共数据。",
     proofCities: "座城市已覆盖",
-    proofLive: "项信号能力已接入",
+    proofSupported: "项信号能力受支持",
     proofWorkspaces: "个专注工作区",
     coverageCity: "城市",
     workspaceTitle: "从一个决定开始，把证据留在手边。",
@@ -100,11 +100,11 @@ const COPY = {
     dataPoints: ["清晰的来源健康度", "城市与日期范围", "先看证据，再看解释"],
     dataCta: "探索数据",
     coverageTitle: "每座城市都有诚实的能力地图。",
-    coverageLead: "实时表示已配置数据流；规划中表示城市可选择，但该数据源还没有被标记为实时覆盖。",
+    coverageLead: "受支持表示这个城市已有数据接入能力，不代表当前部署已配置、已有数据或数据仍然新鲜。请在运行中的工作区查看实际状态。",
     coverageScrollHint: "在表格内横向滑动，以查看全部列。",
     coverageRecommendation: "建议范围",
     coverageColumns: ["天气", "空气", "出行", "水文", "城市服务", "活动"],
-    coverageLive: "实时",
+    coverageSupported: "受支持",
     coveragePlanned: "规划中",
     coverageRegional: "区域级",
     flowTitle: "三步，从信号走到下一步行动。",
@@ -130,13 +130,13 @@ function coverageStateLabel(
   state: CitySignalAvailability,
   copy: (typeof COPY)[keyof typeof COPY],
 ): string {
-  return state === "live" ? copy.coverageLive : state === "regional" ? copy.coverageRegional : copy.coveragePlanned;
+  return state === "supported" ? copy.coverageSupported : state === "regional" ? copy.coverageRegional : copy.coveragePlanned;
 }
 
 const totalSignalCapabilityCount = CITY_PACKS.length * COVERAGE_KEYS.length;
-const liveSignalCapabilityCount = CITY_PACKS.reduce(
+const supportedSignalCapabilityCount = CITY_PACKS.reduce(
   (total, pack) =>
-    total + COVERAGE_KEYS.filter((key) => pack.signals[key] === "live").length,
+    total + COVERAGE_KEYS.filter((key) => pack.signals[key] === "supported").length,
   0,
 );
 
@@ -198,9 +198,9 @@ export default function AboutPage() {
           <div><strong>{CITY_PACKS.length}</strong><span>{copy.proofCities}</span></div>
           <div>
             <strong>
-              {liveSignalCapabilityCount} / {totalSignalCapabilityCount}
+              {supportedSignalCapabilityCount} / {totalSignalCapabilityCount}
             </strong>
-            <span>{copy.proofLive}</span>
+            <span>{copy.proofSupported}</span>
           </div>
           <div><strong>2</strong><span>{copy.proofWorkspaces}</span></div>
         </section>

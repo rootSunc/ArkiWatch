@@ -34,6 +34,7 @@ deploy/ansible/group_vars/*.yml
 !deploy/ansible/group_vars/*.yml.example
 deploy/ansible/inventory.ini
 deploy/runbooks/*.local.md
+/docs/private/
 
 # Local runtime data
 *.db

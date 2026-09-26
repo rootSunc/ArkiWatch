@@ -21,6 +21,19 @@ describe("Today presentation adapter", () => {
   const brief=buildTodayBrief({publicDashboard:{...fixture.publicDashboard,decision:{...decision,top_actions:[action],headline_action_id:"urgent",has_scoped_data:true}},summaryTiles:[],language:"zh"});
   expect(brief?.headline).toBe("提前出发");expect(brief?.topActions[0].title).toBe("Leave earlier");
  });
+ it("does not describe an actionless live brief as all clear", () => {
+  const fixture = demoFixtureForScope();
+  const decision = fixture.publicDashboard.decision!;
+  const brief = buildTodayBrief({
+   publicDashboard: {
+    ...fixture.publicDashboard,
+    decision: {...decision, has_scoped_data: true, top_actions: [], headline_action_id: ""},
+   },
+   summaryTiles: [],
+   language: "en",
+  });
+  expect(brief?.headline).toBe("No current recommendation");
+ });
  it("keeps missing historical snapshots read-only", () => {
   const fixture=demoFixtureForScope({date:"2026-08-07"});
   const brief=buildTodayBrief({publicDashboard:fixture.publicDashboard,summaryTiles:[],language:"en"});

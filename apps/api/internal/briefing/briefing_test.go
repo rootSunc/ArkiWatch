@@ -108,6 +108,25 @@ func TestModesExpiryAndExplicitRegion(t *testing.T) {
 		t.Fatal("historical missing snapshot must be read-only")
 	}
 }
+func TestEmptyConfiguredScenariosDoNotBecomeScopedEvidence(t *testing.T) {
+	now := signals.ParseTime("2026-08-09T06:00:00Z")
+	scope, err := timescope.Build(nil, now, "Europe/Helsinki")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := Input{City: "helsinki", Region: "Uusimaa", Scope: scope, PublicDashboard: Dashboard{CheckedAt: now.Format(time.RFC3339), CoverageRegion: "Uusimaa"}}
+	input.PublicDashboard.ScenarioSections = append(input.PublicDashboard.ScenarioSections, struct {
+		Recommendation Action  `json:"recommendation"`
+		Key            string  `json:"key"`
+		Description    string  `json:"description"`
+		DescriptionZH  *string `json:"description_zh"`
+	}{Recommendation: Action{ID: "placeholder-outdoor", FreshnessState: "placeholder", ValidTo: now.Add(time.Hour).Format(time.RFC3339)}, Key: "outdoor"})
+	got := Build(input)
+	if got.HasScopedData || len(got.TopActions) != 0 || len(got.PlanItems) != 0 || len(got.Timeline) != 0 || got.ActionEligibility["placeholder-outdoor"] {
+		t.Fatalf("a configured section with no observation must not become advice: %+v", got)
+	}
+}
+
 func TestHealthDistinguishesHistoricalEvidence(t *testing.T) {
 	sources := []platform.Source{{ID: "catalog-fmi", OperationalStatus: "pending"}, {ID: "live", OperationalStatus: "error"}, {ID: "ok", OperationalStatus: "healthy"}}
 	live := Health(sources, false)

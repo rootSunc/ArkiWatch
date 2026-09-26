@@ -19,7 +19,7 @@ func (briefingDatabase) LoadPublicDashboard(_ context.Context, date *time.Time, 
 	return map[string]any{"checked_at": now.Format(time.RFC3339), "coverage_region": "Uusimaa", "top_actions": []any{}, "scenario_sections": []any{}, "snapshot_available": date == nil}, nil
 }
 func (briefingDatabase) LoadWeather(_ context.Context, q observations.WeatherQuery) (observations.WeatherData, error) {
-	return observations.WeatherData{Outlook: &observations.NormalizedEvent{Attributes: map[string]any{"forecast_points": []any{map[string]any{"timestamp": q.Now.Format(time.RFC3339), "wind_gust_ms": 21.}}}}}, nil
+	return observations.WeatherData{Outlook: &observations.NormalizedEvent{EndsAt: q.Now.Add(time.Hour), Attributes: map[string]any{"forecast_points": []any{map[string]any{"timestamp": q.Now.Format(time.RFC3339), "wind_gust_ms": 21.}}}}}, nil
 }
 func TestPublicBriefingUsesGoDecisionsAndScopedInputs(t *testing.T) {
 	cfg := config.DefaultConfig()
