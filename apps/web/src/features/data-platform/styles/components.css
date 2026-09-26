@@ -16,10 +16,10 @@
    ========================================================================== */
 
 /*
- * ArkiWatch design refresh — minimal business style.
+ * ArkiWatch product visual system.
  *
- * White canvas, 1px hairline structure, generous whitespace, typographic
- * hierarchy instead of shadows/tints/pills. Tokens live in tokens.css; this
+ * Porcelain content, a midnight navigation plane, cobalt actions, and a
+ * restrained brass Today accent. Tokens live in tokens.css; this
  * file is the authoritative rule set for the app shell, the Signal observatory,
  * and Today. It is intentionally near the end of the cascade (see
  * data-platform.css) so it overrides the domain workspace stylesheets.
@@ -72,8 +72,7 @@
   overflow: visible;
 }
 
-/* No shadows anywhere in the shell (the assistant panel is the only exception,
- * and it sets its own). No tinted card fills, nothing above a 14px radius. */
+/* Keep focus visible on both the light content plane and dark navigation. */
 .dashboard-shell :where(button, a, input, select, textarea):focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
@@ -976,7 +975,7 @@
   border: 0;
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
-  border-left: 2px solid var(--amber);
+  border-left: 1px solid var(--amber-line);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -6367,14 +6366,8 @@
 
 /* --------------------------------------------------------------------------
    8. Sidebar plane
-   The rail used to be the same white as the content with a hairline between
-   them, so the shell read as one flat sheet and the selected row was a grey
-   block sitting on it. Now the rail carries its own tone and the active row
-   is the canvas colour, which makes the selection read as the content pane
-   reaching into the navigation rather than a highlight painted over it.
-
-   No new hues, no shadow, and the radius is unchanged: the tones are steps in
-   the palette's existing cool neutral axis.
+   The rail owns a darker product plane, separate from the evidence canvas.
+   The final rail rules below map its text, icon, and state roles explicitly.
    -------------------------------------------------------------------------- */
 
 .dashboard-side-nav {
@@ -6395,17 +6388,13 @@
   padding: 0 7px;
 }
 
-/* The rail's own dividers were tuned against white. On the tinted ground they
- * read heavier than intended. */
+/* Keep rail dividers quieter than the active row. */
 .dashboard-side-nav .side-nav-utility-group,
 .dashboard-side-nav .side-nav-footer {
   border-top-color: var(--sidenav-edge);
 }
 
-/* --muted-2 clears AA on white by a hair (4.54) and drops under it on the
- * tinted ground (4.42). The rail's mono eyebrows step to --muted, an existing
- * token at 5.36 against the ground. This follows the handoff's own rule that
- * tier-3 text recedes by size and mono tracking, never by going lighter. */
+/* The final rail rules use dedicated foreground tokens for both themes. */
 .dashboard-side-nav .brand-panel p,
 .dashboard-side-nav .brand-title-subtitle,
 .dashboard-side-nav .side-nav-group-label,
@@ -6413,17 +6402,12 @@
   color: var(--muted);
 }
 
-/* The drawer is the same rail, temporarily lifted over the content, so it
- * keeps the rail's tone; otherwise the active row (which is canvas-coloured)
- * would vanish into a canvas-coloured drawer. The lift is carried by a shadow
- * tinted to the palette's ink rather than the pure-black 0.4 it inherited,
- * which is the only shadow the design system allows and the assistant panel
- * already sets the convention for. */
+/* The mobile drawer reuses the rail palette and adds one depth shadow. */
 @media (max-width: 1023px) {
   .dashboard-side-nav.mobile-side-nav-open {
     background: var(--sidenav-ground);
     border-right-color: var(--sidenav-edge);
-    box-shadow: 32px 0 64px rgba(23, 36, 43, 0.18);
+    box-shadow: 32px 0 64px color-mix(in srgb, var(--shadow-color) 18%, transparent);
   }
 }
 
@@ -6480,7 +6464,7 @@ body {
   flex-basis: 34px;
   border-radius: 50%;
   background: var(--canvas);
-  box-shadow: 0 0 0 1px var(--line-soft), 0 6px 18px rgba(28, 63, 73, 0.08);
+  box-shadow: 0 0 0 1px var(--line-soft), 0 6px 18px color-mix(in srgb, var(--shadow-color) 8%, transparent);
 }
 
 .brand-title-main {
@@ -6499,7 +6483,7 @@ body {
 .nav-row-active,
 .nav-row-active:hover {
   padding-inline: 9px;
-  box-shadow: 0 7px 20px rgba(31, 72, 82, 0.06);
+  box-shadow: 0 7px 20px color-mix(in srgb, var(--shadow-color) 6%, transparent);
 }
 
 .nav-row-active::before {
@@ -6526,7 +6510,7 @@ body {
   border-bottom-color: color-mix(in srgb, var(--line) 82%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
   backdrop-filter: blur(18px) saturate(135%);
-  box-shadow: 0 7px 22px rgba(31, 72, 82, 0.04);
+  box-shadow: 0 7px 22px color-mix(in srgb, var(--shadow-color) 4%, transparent);
 }
 
 .topbar-crumb {
@@ -6609,13 +6593,13 @@ body {
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--canvas) 82%, transparent);
+  background: var(--surface);
   transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
 }
 
 .overview-search:focus-within {
   border-color: var(--blue);
-  background: var(--canvas);
+  background: var(--surface);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 12%, transparent);
 }
 
@@ -6628,11 +6612,9 @@ body {
   margin-bottom: 34px;
   padding: 14px 16px 14px 18px;
   border: 1px solid var(--amber-line);
-  border-left: 4px solid var(--amber);
+  border-left: 1px solid var(--amber-line);
   border-radius: var(--r-card);
-  background:
-    linear-gradient(100deg, color-mix(in srgb, var(--amber-soft) 90%, transparent), transparent 72%),
-    var(--canvas);
+  background: var(--amber-tint);
 }
 
 .overview-status-bar {
@@ -6648,14 +6630,14 @@ body {
 .overview-status-items > .overview-status-item {
   min-height: 138px;
   padding: 22px;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--line);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+  background: var(--surface);
 }
 
 .overview-status-items > .overview-status-item:nth-child(1),
 .overview-status-items > .overview-status-item:nth-child(3) {
-  background: color-mix(in srgb, var(--blue-soft) 28%, var(--canvas));
+  background: color-mix(in srgb, var(--blue-soft) 26%, var(--surface));
 }
 
 .overview-status-item > .material-symbols-outlined {
@@ -6714,9 +6696,9 @@ body {
 .signal-card {
   min-height: 190px;
   padding: 22px;
-  border-color: var(--line-soft);
+  border-color: var(--line);
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--canvas) 92%, transparent);
+  background: var(--surface);
   transition:
     background-color var(--dur) var(--ease-out),
     border-color var(--dur) var(--ease-out),
@@ -6727,7 +6709,7 @@ body {
 .signal-card:hover,
 .signal-card:focus-visible {
   border-color: color-mix(in srgb, var(--blue) 38%, var(--line));
-  background: var(--canvas);
+  background: var(--surface);
   box-shadow: var(--card-lift-shadow);
   transform: translateY(-3px);
 }
@@ -7354,4 +7336,174 @@ body {
     font-size: 28px;
     line-height: 1.08;
   }
+}
+
+/* Keep the recommendation readable when the compact shell has no room for
+ * two text columns. The earlier mobile rule loses its flex-basis to the
+ * shared strip's later flex shorthand, so make this the final mobile rule. */
+@media (max-width: 640px) {
+  .today-digest-strip {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .today-digest-strip-copy {
+    display: grid;
+    flex: 1 1 100%;
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .today-digest-strip-action {
+    margin-left: 0;
+  }
+}
+
+/* Separate the transit alert heading from the metric strip. On short phones,
+ * reclaim the same height inside the metric cells so the heading stays above
+ * the fixed navigation. */
+.transit-alert-panel > header {
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  .transit-summary-strip > article {
+    gap: 5px;
+  }
+
+  .transit-alert-panel > header {
+    margin-top: 16px;
+  }
+}
+
+/* Coverage rows need breathing room at every size. On a narrow screen, move
+ * the meter below the label and count instead of squeezing the label. */
+.water-coverage-row {
+  padding-inline: 12px;
+}
+
+@media (max-width: 640px) {
+  .water-coverage-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+  }
+
+  .water-coverage-row i {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .water-coverage-row em {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+  }
+
+  /* The desktop three-column field list leaves the field name only 18px
+   * wide at 280px. Keep field and owner side by side, with the detail below. */
+  .city-field-head,
+  .city-field-grid > article {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+  }
+
+  .city-field-head span:last-child {
+    display: none;
+  }
+
+  .city-field-grid > article p {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The navigation is a deliberate dark product plane in both appearances.
+ * Its own text and state roles keep page-level ink tokens untouched. */
+.dashboard-side-nav {
+  background: var(--sidenav-ground);
+  border-right-color: var(--sidenav-edge);
+  color: var(--sidenav-text);
+}
+
+.dashboard-side-nav .brand-title-main {
+  color: var(--sidenav-text-strong);
+}
+
+.dashboard-side-nav .brand-panel p,
+.dashboard-side-nav .brand-title-subtitle,
+.dashboard-side-nav .side-nav-group-label,
+.dashboard-side-nav .side-nav-catalog-label {
+  color: var(--sidenav-muted);
+}
+
+.dashboard-side-nav .nav-row,
+.dashboard-side-nav .side-nav-user-row {
+  color: var(--sidenav-text);
+}
+
+.dashboard-side-nav .nav-row .material-symbols-outlined,
+.dashboard-side-nav .nav-row .assistant-glyph {
+  color: var(--sidenav-icon);
+}
+
+.dashboard-side-nav .nav-row:hover {
+  background: var(--sidenav-row-hover);
+  color: var(--sidenav-text-strong);
+}
+
+.dashboard-side-nav .nav-row-active,
+.dashboard-side-nav .nav-row-active:hover {
+  background: var(--sidenav-row-active);
+  border-color: var(--sidenav-row-active-edge);
+  color: var(--sidenav-text-strong);
+}
+
+.dashboard-side-nav .nav-row-active::before {
+  display: none;
+}
+
+.dashboard-side-nav .nav-row-active .material-symbols-outlined,
+.dashboard-side-nav .nav-row-active .assistant-glyph {
+  color: var(--sidenav-accent);
+}
+
+.dashboard-side-nav .nav-row[data-nav-key="today"].nav-row-active .material-symbols-outlined {
+  color: var(--sidenav-badge-text);
+}
+
+.dashboard-side-nav .side-nav-count-badge {
+  background: var(--sidenav-badge-bg);
+  color: var(--sidenav-badge-text);
+}
+
+.dashboard-side-nav .side-nav-collapse-button,
+.dashboard-side-nav .side-nav-mobile-preferences .language-switcher,
+.dashboard-side-nav .side-nav-mobile-preferences .theme-toggle-button {
+  border-color: var(--sidenav-row-active-edge);
+  background: var(--sidenav-row-hover);
+  color: var(--sidenav-text-strong);
+}
+
+.dashboard-side-nav .side-nav-collapse-button .material-symbols-outlined,
+.dashboard-side-nav .side-nav-mobile-preferences .theme-toggle-button .material-symbols-outlined {
+  color: var(--sidenav-text-strong);
+}
+
+.dashboard-side-nav .side-nav-mobile-preferences .language-option {
+  color: var(--sidenav-text);
+}
+
+.dashboard-side-nav .side-nav-mobile-preferences .language-option:hover,
+.dashboard-side-nav .side-nav-mobile-preferences .language-option-active {
+  background: var(--sidenav-accent);
+  color: var(--sidenav-ground);
+}
+
+.dashboard-side-nav.mobile-side-nav-open .brand-panel {
+  border-bottom-color: var(--sidenav-edge);
+}
+
+.dashboard-side-nav :where(button, a):focus-visible {
+  outline-color: var(--sidenav-accent);
 }

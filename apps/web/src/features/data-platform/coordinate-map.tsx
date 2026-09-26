@@ -34,26 +34,15 @@ type ThemeMarkerColors = Record<CoordinateMapTone, string>;
 const MARKER_RADIUS = 7;
 const SELECTED_MARKER_RADIUS = 9;
 
-const DEFAULT_MARKER_COLORS: ThemeMarkerColors = {
-  good: "#2e7d32",
-  warn: "#b26a00",
-  bad: "#ba1a1a",
-  neutral: "#5f6368"
-};
-
 function readThemeMarkerColors(): ThemeMarkerColors {
-  if (typeof window === "undefined") {
-    return DEFAULT_MARKER_COLORS;
-  }
-
   const style = getComputedStyle(document.documentElement);
-  const read = (token: string, fallback: string) => style.getPropertyValue(token).trim() || fallback;
+  const read = (token: string) => style.getPropertyValue(token).trim();
 
   return {
-    good: read("--success", DEFAULT_MARKER_COLORS.good),
-    warn: read("--tertiary", DEFAULT_MARKER_COLORS.warn),
-    bad: read("--error", DEFAULT_MARKER_COLORS.bad),
-    neutral: read("--on-surface-variant", DEFAULT_MARKER_COLORS.neutral)
+    good: read("--success"),
+    warn: read("--tertiary"),
+    bad: read("--error"),
+    neutral: read("--on-surface-variant")
   };
 }
 
@@ -123,13 +112,18 @@ export function CoordinateMap({
   longitudeLabel = "Longitude",
   onPointClick
 }: CoordinateMapProps) {
-  const [markerColors, setMarkerColors] = useState<ThemeMarkerColors>(DEFAULT_MARKER_COLORS);
+  const [markerColors, setMarkerColors] = useState<ThemeMarkerColors | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
-    setMarkerColors(readThemeMarkerColors());
+    const root = document.documentElement;
+    const updateMarkerColors = () => setMarkerColors(readThemeMarkerColors());
+    updateMarkerColors();
+    const observer = new MutationObserver(updateMarkerColors);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
   }, []);
 
   const bounds = useMemo<LatLngBoundsExpression | null>(() => {
@@ -188,7 +182,7 @@ export function CoordinateMap({
   useEffect(() => {
     const map = mapRef.current;
     const layerGroup = layerGroupRef.current;
-    if (!map || !layerGroup || !bounds) {
+    if (!map || !layerGroup || !bounds || !markerColors) {
       return;
     }
 

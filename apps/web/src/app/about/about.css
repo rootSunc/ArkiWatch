@@ -1,6 +1,6 @@
 /*
- * About / landing (README §13). Minimal business style: white canvas, 1px
- * hairline section rules, no hero image, no gradient. Tokens come from the
+ * About / landing (README §13). A graphite hero sits above restrained
+ * evidence sections on the cool canvas. Tokens come from the
  * data-platform token layer, imported globally via app/minimal-global.css.
  */
 
@@ -141,24 +141,27 @@
   font-size: 16px;
 }
 
-/* --- Hero (no image) --- */
+/* --- Brand hero --- */
 .about-hero {
-  display: block;
-  padding: 96px 0 88px;
-}
-
-.about-hero-art {
-  display: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(195px, 0.32fr);
+  align-items: stretch;
+  gap: clamp(32px, 5vw, 72px);
+  margin-top: 24px;
+  padding: clamp(40px, 5vw, 64px);
+  border-radius: var(--r-frame);
+  background: var(--brand-panel);
+  color: var(--brand-on);
 }
 
 .about-hero-copy {
-  max-width: none;
+  max-width: 720px;
 }
 
 .about-eyebrow {
   display: block;
-  margin: 0 0 26px;
-  color: var(--blue);
+  margin: 0 0 22px;
+  color: var(--brand-accent);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
@@ -171,10 +174,10 @@
 }
 
 .about-hero h1 {
-  max-width: 20ch;
-  margin: 0 0 24px;
-  font-size: 64px;
-  font-weight: 700;
+  max-width: 18ch;
+  margin: 0 0 20px;
+  font-size: clamp(42px, 4.6vw, 58px);
+  font-weight: 650;
   letter-spacing: -0.045em;
   line-height: 1;
   text-wrap: balance;
@@ -182,8 +185,8 @@
 
 .about-hero-lead {
   max-width: 60ch;
-  margin: 0 0 44px;
-  color: var(--body);
+  margin: 0 0 30px;
+  color: var(--brand-muted);
   font-size: 19px;
   line-height: 1.62;
   text-wrap: pretty;
@@ -254,6 +257,32 @@
   display: none;
 }
 
+.about-hero .about-button-primary {
+  border-color: var(--brand-on);
+  background: var(--brand-on);
+  color: var(--brand-panel);
+}
+
+.about-hero .about-button-primary:hover {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+}
+
+.about-hero .about-button-secondary {
+  border-color: color-mix(in srgb, var(--brand-on) 42%, transparent);
+  background: transparent;
+  color: var(--brand-on);
+}
+
+.about-hero .about-button-secondary:hover {
+  border-color: var(--brand-on);
+  background: color-mix(in srgb, var(--brand-on) 9%, transparent);
+}
+
+.about-hero .about-hero-note {
+  color: var(--brand-muted);
+}
+
 .about-proof-note {
   padding: 16px 0 0;
 }
@@ -261,20 +290,18 @@
 /* --- Proof band --- */
 .about-proof {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  align-content: center;
+  border-left: 1px solid color-mix(in srgb, var(--brand-on) 24%, transparent);
 }
 
 .about-proof div {
   display: grid;
-  gap: 10px;
-  padding: 40px 0;
+  gap: 5px;
+  padding: 18px 0 18px 24px;
 }
 
 .about-proof div:not(:first-child) {
-  padding-left: 48px;
-  border-left: 1px solid var(--line-soft);
+  border-top: 1px solid color-mix(in srgb, var(--brand-on) 18%, transparent);
 }
 
 .about-proof strong {
@@ -283,11 +310,11 @@
   font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1;
-  color: var(--ink);
+  color: var(--brand-on);
 }
 
 .about-proof span {
-  color: var(--muted-3);
+  color: var(--brand-muted);
   font-size: 14px;
 }
 
@@ -295,7 +322,7 @@
 .about-workspaces,
 .about-coverage,
 .about-flow {
-  padding: 88px 0;
+  padding: 72px 0;
   border-top: 1px solid var(--line);
 }
 
@@ -347,7 +374,7 @@
   border-right: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
   border-radius: 0;
-  background: var(--canvas);
+  background: var(--surface);
   padding: 36px;
 }
 
@@ -364,7 +391,7 @@
 }
 
 .about-workspace-card-today .about-card-icon .material-symbols-outlined {
-  color: var(--amber);
+  color: var(--today-accent);
 }
 
 .about-workspace-card-data .about-card-icon .material-symbols-outlined {
@@ -559,7 +586,7 @@
   justify-content: space-between;
   gap: 56px;
   flex-wrap: wrap;
-  padding: 88px 0;
+  padding: 72px 0;
   border-top: 1px solid var(--line);
   border-radius: 0;
   background: transparent;
@@ -634,7 +661,23 @@
   }
 
   .about-hero {
-    padding: 64px 0 56px;
+    grid-template-columns: 1fr;
+    margin-top: 16px;
+    padding: 44px 32px;
+  }
+
+  .about-proof {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, var(--brand-on) 24%, transparent);
+  }
+
+  .about-proof div {
+    padding: 20px 14px 0 0;
+  }
+
+  .about-proof div:not(:first-child) {
+    border-top: 0;
   }
 
   .about-hero h1 {
@@ -644,6 +687,12 @@
   .about-cta {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero {
+    padding: 40px 24px;
   }
 }
 
@@ -688,14 +737,16 @@
     font-size: 36px;
   }
 
-  .about-proof div:not(:first-child) {
-    padding-left: 0;
-    border-left: 0;
-    border-top: 1px solid var(--line-soft);
+  .about-proof div {
+    padding: 16px 8px 0 0;
   }
 
-  .about-proof div {
-    padding: 24px 0;
+  .about-proof strong {
+    font-size: 27px;
+  }
+
+  .about-proof span {
+    font-size: 11px;
   }
 }
 
@@ -768,9 +819,15 @@
 }
 
 :root[data-language="zh"] .about-hero h1 {
-  font-size: 46px;
+  font-size: clamp(36px, 4vw, 48px);
   letter-spacing: -0.005em;
   line-height: 1.32;
+}
+
+@media (max-width: 640px) {
+  :root[data-language="zh"] .about-hero h1 {
+    font-size: 34px;
+  }
 }
 
 :root[data-language="zh"] .about-section-heading h2,

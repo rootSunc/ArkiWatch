@@ -34,27 +34,50 @@ Every page follows the same hierarchy:
 
 ## Visual direction
 
-The visual language is “calm public infrastructure”: a quiet neutral canvas,
-one blue action color, semantic green/amber/red status colors, restrained
-border contrast, and generous whitespace. Cards are containers for related
-evidence, not independent dashboards. Avoid decorative gradients, oversized
-icons, and more than one competing headline in a viewport.
+The visual language is a business operations workspace: graphite navigation,
+a cool white canvas, cobalt actions, semantic green/amber/red status colors,
+fine borders, and compact but readable spacing. Cards group related evidence.
+Avoid decorative gradients, oversized icons, and competing page headlines.
+
+The palette is graphite, cool white, and cobalt. All literal CSS colors live in
+`apps/web/src/app/tokens.css`; component CSS uses semantic tokens, including
+for translucent fills and shadows. Light mode pairs a cool canvas and white
+evidence surfaces with a graphite navigation plane. Dark mode uses layered
+charcoal surfaces and lighter cobalt actions. Both modes keep these roles stable:
+
+| Role | Tokens | Usage |
+| --- | --- | --- |
+| Canvas and elevation | `--canvas`, `--surface`, `--surface-soft`, `--line` | Page, evidence panels, quiet grouping, separators |
+| Text | `--ink`, `--ink-soft`, `--muted` | Headings, body, secondary labels |
+| Action and focus | `--blue`, `--blue-soft`, `--btn-fill`, `--focus-ring` | Links, selections, primary actions, keyboard focus |
+| Meaning | `--green`, `--amber`, `--red` | Good, caution, and error with text labels |
+| Today | `--today-accent`, `--today-soft`, `--today-line` | Quiet slate-blue workspace identity, separate from warnings |
+| Effects | `--shadow-color`, `--selection` | Depth and browser selection without component color literals |
+| Brand planes | `--sidenav-*`, `--brand-*` | Dark product navigation and About hero with their own readable foregrounds |
+
+Run `pnpm --filter @arkiwatch/web audit:colors` after adding styles. The check
+rejects literal CSS colors outside `tokens.css`. The web manifest is a static
+metadata exception and repeats the light canvas and blue values because it
+cannot read CSS variables.
 
 The current implementation follows a deliberately small visual grammar:
 
-- `Today` uses a warm amber accent, one primary recommendation, and a compact
+- `Today` uses a quiet slate-blue accent, one primary recommendation, and a compact
   glance panel. Supporting plans and personal context sit below the decision,
   never beside it as competing headlines.
-- `Data` uses a cool blue accent, a single signal observatory summary, and a
-  three-column signal grid on wide screens. The summary prioritizes category
+- `Data` uses cobalt actions, a single signal observatory summary, and a
+  regular two-column signal grid on wide screens. The summary prioritizes category
   coverage, event volume, and collector status; the last checked timestamp stays
   in the observatory header. Cross-signal history is collapsed by default so
   the latest evidence remains the first read.
-- The shell uses a white/neutral surface, 16px content cards, 10–12px controls,
-  and one-pixel borders instead of gradients or heavy shadows. That cascade
+- The shell uses a graphite navigation plane, white evidence surfaces, 12px
+  content card radii, 9px controls, and one-pixel borders. The legacy cascade
   lives in `styles/components.css`, whose internal order is load-bearing: its
   sections restyle the same selectors in both directions, so they cannot be
   reordered or split apart without deciding, per declaration, which one wins.
+  `styles/business-layout.css` applies the final shared workspace layout after
+  that cascade: compact headers, summary strip, regular card grid, and mobile
+  adjustments. It contains no literal colors.
 - Detail workspaces share `WorkspaceEvidenceHeader` and `WorkspaceEmptyState`.
   The header keeps the status, source, and scoped timestamp together; the
   empty state explains missing data without implying that a source is healthy.

@@ -27,7 +27,7 @@
   overflow: hidden;
   display: block;
   border-radius: 3px;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: color-mix(in srgb, var(--ink) 6%, transparent);
   position: relative;
   margin-top: 4px;
 }
@@ -52,12 +52,12 @@
   gap: 8px;
   padding: 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   transition: background-color 0.2s ease;
 }
 
 .regional-field-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .regional-field-card .material-symbols-outlined {
@@ -84,7 +84,7 @@
   margin-top: 16px;
   padding: 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -134,7 +134,7 @@
 }
 
 .regional-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
 .regional-table td {
@@ -149,17 +149,17 @@
 }
 
 .regional-growth-badge.good {
-  background-color: rgba(134, 239, 172, 0.12);
+  background-color: color-mix(in srgb, var(--green) 12%, transparent);
   color: var(--success);
 }
 
 .regional-growth-badge.warn {
-  background-color: rgba(241, 160, 43, 0.12);
+  background-color: color-mix(in srgb, var(--amber) 12%, transparent);
   color: var(--amber);
 }
 
 .regional-growth-badge.neutral {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--outline);
 }
 
@@ -172,7 +172,7 @@
 .regional-cell-progress-track {
   width: 60px;
   height: 4px;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: color-mix(in srgb, var(--ink) 6%, transparent);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -222,7 +222,7 @@
 
 .regional-morbidity-track {
   height: 4px;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: color-mix(in srgb, var(--ink) 6%, transparent);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 6px;

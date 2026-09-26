@@ -715,7 +715,7 @@
   border: 1px solid var(--outline-variant);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 18px 50px rgb(15 23 42 / 18%);
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--shadow-color) 18%, transparent);
   color: var(--on-surface);
   padding: 18px 20px 16px;
 }
@@ -1739,7 +1739,7 @@
   gap: 10px;
   margin: 0 0 16px;
   border-bottom: 1px solid var(--outline-variant);
-  border-left: 3px solid var(--outline);
+  border-left: 1px solid var(--outline);
   padding: 0 0 14px 12px;
 }
 

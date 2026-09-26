@@ -218,7 +218,7 @@ test.describe("deterministic demo", () => {
     await expect(page).toHaveTitle("About ArkiWatch | Public data. Practical decisions.");
     const proof = page.getByRole("region", { name: "ArkiWatch at a glance" });
     await expect(proof.getByText("24 / 36", { exact: true })).toBeVisible();
-    await expect(proof.getByText("live signal capabilities", { exact: true })).toBeVisible();
+    await expect(proof.getByText("supported signal capabilities", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "中文" }).click();
     await expect(page).toHaveTitle("关于 ArkiWatch | 公开数据，服务日常决策");
@@ -226,12 +226,12 @@ test.describe("deterministic demo", () => {
     await expect(page.getByText("FINLAND / PUBLIC DATA", { exact: true })).not.toBeVisible();
     await expect(page.getByRole("columnheader", { name: "城市", exact: true })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "City", exact: true })).not.toBeVisible();
-    await expect(page.getByText("实时表示已配置数据流；规划中表示城市可选择，但该数据源还没有被标记为实时覆盖。", { exact: true })).toBeVisible();
+    await expect(page.getByText("受支持表示这个城市已有数据接入能力，不代表当前部署已配置、已有数据或数据仍然新鲜。请在运行中的工作区查看实际状态。", { exact: true })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "关于 ArkiWatch 的导航" })).toBeVisible();
     await expect(page.getByRole("link", { name: "ArkiWatch 主页" })).toBeVisible();
     const localizedProof = page.getByRole("region", { name: "ArkiWatch 概览" });
     await expect(localizedProof.getByText("24 / 36", { exact: true })).toBeVisible();
-    await expect(localizedProof.getByText("项信号能力已接入", { exact: true })).toBeVisible();
+    await expect(localizedProof.getByText("项信号能力受支持", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "EN" }).click();
     await expect(page.getByRole("columnheader", { name: "City", exact: true })).toBeVisible();
@@ -475,7 +475,7 @@ test.describe("deterministic demo", () => {
     await expect(
       page.getByRole("button", { name: /Leave a few minutes earlier/ }),
     ).not.toBeVisible();
-    await expect(page.getByText("No signal data is available for this scope.")).toBeVisible();
+    await expect(page.getByText("No usable signal data for this scope.")).toBeVisible();
 
     await citySelector.selectOption("helsinki");
     await expect(
@@ -492,7 +492,7 @@ test.describe("deterministic demo", () => {
     await expect(
       page.getByRole("button", { name: /Leave a few minutes earlier/ }),
     ).not.toBeVisible();
-    await expect(page.getByText("No signal data is available for this scope.")).toBeVisible();
+    await expect(page.getByText("No usable signal data for this scope.")).toBeVisible();
   });
 
   test("opens life assistant from the workspace navigation", async ({ page }, testInfo) => {
@@ -839,7 +839,7 @@ test.describe("deterministic demo", () => {
       .filter({ visible: true })
       .first();
     await citySelector.selectOption("espoo");
-    await expect(page.getByText("No signal data is available for this scope.")).toBeVisible();
+    await expect(page.getByText("No usable signal data for this scope.")).toBeVisible();
     await expect(page.locator(".event-detail-panel")).toHaveCount(0);
   });
 
@@ -2613,7 +2613,7 @@ test("exposes the privacy boundary from the public product pages", async ({ page
   await page.getByRole("button", { name: "中文", exact: true }).click();
   await expect(page).toHaveTitle("隐私与数据边界 | ArkiWatch");
   await expect(page.getByRole("heading", { name: "隐私与数据边界" })).toBeVisible();
-  await expect(page.getByText(/确定性演示使用本地 fixture/)).toBeVisible();
+  await expect(page.getByText(/确定性演示使用本地数据/)).toBeVisible();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])

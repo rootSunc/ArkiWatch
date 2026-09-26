@@ -614,7 +614,7 @@
   border-color: var(--primary);
   background: var(--primary-container);
   color: var(--on-primary-container);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
 }
 
 .transit-filter-chip .material-symbols-outlined {
@@ -916,7 +916,7 @@
 
 .transit-alert-bad .transit-alert-dot {
   background: var(--error);
-  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 58%, transparent);
 }
 
 .transit-alert-warn .transit-alert-dot {
@@ -1301,7 +1301,7 @@
   border-radius: 10px;
   background: var(--card-bg);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 1px 2px color-mix(in srgb, var(--shadow-color) 4%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 55%, transparent);
   padding: 10px 12px;
 }
@@ -1387,17 +1387,17 @@
 
 .transit-stage-good,
 .transit-request-good {
-  border-color: rgba(142, 213, 255, 0.34);
+  border-color: color-mix(in srgb, var(--blue) 34%, transparent);
 }
 
 .transit-stage-warn,
 .transit-request-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .transit-stage-bad,
 .transit-request-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .transit-stage-good span,
@@ -1615,21 +1615,21 @@
 }
 
 .transit-hero-good:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--green) 5%, transparent));
   border-color: var(--success);
-  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .transit-hero-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent));
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .transit-hero-bad:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--red) 6%, transparent));
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .transit-summary-strip article {
@@ -1649,6 +1649,6 @@
 
 .transit-alert:hover {
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 4%, transparent);
   border-color: var(--outline-variant);
 }

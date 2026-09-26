@@ -367,7 +367,7 @@
 }
 
 .air-field-ready {
-  border-color: rgba(134, 239, 172, 0.35) !important;
+  border-color: color-mix(in srgb, var(--green) 35%, transparent) !important;
 }
 
 .air-field-ready strong {
@@ -375,7 +375,7 @@
 }
 
 .air-field-missing {
-  border-color: rgba(255, 193, 118, 0.28) !important;
+  border-color: color-mix(in srgb, var(--amber) 28%, transparent) !important;
 }
 
 .air-field-missing strong {
@@ -430,7 +430,7 @@
   background: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
   padding: 3px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
 }
 
 .air-pollutant-toggle button {
@@ -456,7 +456,7 @@
 .air-pollutant-toggle button.active {
   background: var(--primary-container);
   color: var(--on-primary-container);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--shadow-color) 10%, transparent);
   font-weight: 800;
 }
 
@@ -590,7 +590,7 @@
 }
 
 .air-pollutant-row-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .air-pollutant-row-warn .air-pollutant-track span,
@@ -599,7 +599,7 @@
 }
 
 .air-pollutant-row-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .air-pollutant-row-bad .air-pollutant-track span,
@@ -649,7 +649,7 @@
   border: 1px solid var(--detail-panel-border-strong);
   border-radius: 4px;
   background: color-mix(in srgb, var(--detail-panel-bg) 94%, transparent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent);
   color: var(--on-background);
   padding: 5px 7px;
   pointer-events: none;
@@ -738,7 +738,7 @@
 .air-map-leaflet .leaflet-popup-tip {
   background: var(--detail-panel-bg);
   color: var(--on-background);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
 
 .air-map-leaflet .leaflet-popup-content {
@@ -907,17 +907,17 @@
 
 .air-stage-good,
 .air-request-good {
-  border-color: rgba(134, 239, 172, 0.3);
+  border-color: color-mix(in srgb, var(--green) 30%, transparent);
 }
 
 .air-stage-warn,
 .air-request-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .air-stage-bad,
 .air-request-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .air-stage-good span,
@@ -1044,21 +1044,21 @@
 }
 
 .air-hero-good:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--green) 5%, transparent));
   border-color: var(--success);
-  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .air-hero-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent));
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .air-hero-bad:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--red) 6%, transparent));
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .air-map-dot {

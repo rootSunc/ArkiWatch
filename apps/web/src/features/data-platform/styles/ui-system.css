@@ -9,6 +9,8 @@
  */
 .dashboard-shell-mode-today {
   --ui-mode-accent: var(--ui-refresh-today);
+  --ui-mode-accent-border: var(--today-line);
+  --ui-mode-accent-soft: var(--today-soft);
 }
 
 .dashboard-shell-mode-data {
@@ -578,7 +580,6 @@
 .today-focus {
   min-height: 260px;
   border-color: var(--ui-mode-accent-border);
-  box-shadow: inset 3px 0 0 var(--ui-mode-accent);
   padding: clamp(24px, 3vw, 36px);
 }
 

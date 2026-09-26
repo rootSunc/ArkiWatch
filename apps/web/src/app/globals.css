@@ -19,6 +19,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  scrollbar-color: var(--line-strong) var(--canvas);
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--ink);
+}
+
+:where(input, textarea, [contenteditable="true"]) {
+  caret-color: var(--blue);
+}
+
+:where(input, progress, select) {
+  accent-color: var(--blue);
+}
+
 button,
 input {
   font: inherit;

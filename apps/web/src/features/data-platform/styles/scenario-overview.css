@@ -45,7 +45,7 @@
   border: 1px solid var(--card-border);
   border-radius: 18px;
   background: var(--surface-container-lowest);
-  box-shadow: 0 12px 36px rgba(31, 41, 55, 0.06);
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--shadow-color) 6%, transparent);
 }
 
 .today-command-good {
@@ -1417,17 +1417,17 @@
 
 .signal-card-good:hover {
   border-color: var(--blue);
-  box-shadow: 0 8px 24px rgba(142, 213, 255, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 8%, transparent);
 }
 
 .signal-card-warn:hover {
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .signal-card-bad:hover {
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(147, 0, 10, 0.12);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 12%, transparent);
 }
 
 @keyframes pulse-dot {

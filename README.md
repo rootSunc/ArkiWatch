@@ -26,12 +26,12 @@
 </p>
 
 <p align="center">
-  <a href="apps/web/public/screenshots/today-workspace-en.jpg">
-    <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="ArkiWatch Today workspace: one daily recommendation, glance metrics, and a short plan for Helsinki" width="100%">
+  <a href="apps/web/public/screenshots/data-platform-overview-en.jpg">
+    <img src="apps/web/public/screenshots/data-platform-overview-en.jpg" alt="ArkiWatch signal observatory: Helsinki demo scope, Today recommendation, source status, and core signals" width="100%">
   </a>
 </p>
 
-<p align="center"><sub>Helsinki demo snapshot · English UI. The same product is available in 中文.</sub></p>
+<p align="center"><sub>Signal observatory · Helsinki demo snapshot · English UI. The same product is available in 中文.</sub></p>
 
 ## What it is
 
@@ -67,9 +67,9 @@ pnpm install
 pnpm demo
 ```
 
-Open [localhost:3000](http://localhost:3000) and start from the recommendation
-on **Today**, then open **Signal observatory** to check where it came from. Ask
-the **assistant** a question and follow its citation back to a workspace.
+Open [localhost:3000](http://localhost:3000) and start in **Signal observatory**
+to inspect the source scope and freshness. Open **Today** for the recommendation.
+Ask the **assistant** a question and follow its citation back to a workspace.
 [`/about`](http://localhost:3000/about) has the product story and the city matrix.
 
 The demo will not pretend fixture data is current. Connect the API when you want
@@ -80,18 +80,18 @@ live public feeds — see [Run it yourself](#run-it-yourself).
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
-      <a href="apps/web/public/screenshots/today-workspace-en.jpg">
-        <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="Today workspace with one recommendation, glance metrics, and the plan for the next few hours" width="100%">
-      </a><br>
-      <strong>Today</strong><br>
-      <sub>One next step, with the evidence behind it.</sub>
-    </td>
-    <td width="50%" align="center" valign="top">
       <a href="apps/web/public/screenshots/data-platform-overview-en.jpg">
         <img src="apps/web/public/screenshots/data-platform-overview-en.jpg" alt="Signal observatory with source health, core signals, and today's recommendation" width="100%">
       </a><br>
       <strong>Signal observatory</strong><br>
       <sub>Scope, freshness, and evidence at a glance.</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="apps/web/public/screenshots/today-workspace-en.jpg">
+        <img src="apps/web/public/screenshots/today-workspace-en.jpg" alt="Today workspace with one recommendation, glance metrics, and the plan for the next few hours" width="100%">
+      </a><br>
+      <strong>Today</strong><br>
+      <sub>One next step, with the evidence behind it.</sub>
     </td>
   </tr>
   <tr>

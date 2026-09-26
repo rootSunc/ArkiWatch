@@ -56,10 +56,10 @@ describe("DataPlatformOverview", () => {
     renderOverview();
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "No signal data is available for this scope.",
+      "No usable signal data for this scope.",
     );
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Choose a supported city or date, or connect the live API to inspect current signals.",
+      "Sources may be missing, stale, or outside the selected city and date. Open Data to inspect the evidence and timestamps.",
     );
     expect(screen.getByRole("status").querySelector(".material-symbols-outlined")).toHaveAttribute(
       "aria-hidden",
@@ -73,7 +73,7 @@ describe("DataPlatformOverview", () => {
     expect(screen.getByText("No signal cards match the current search.")).toBeInTheDocument();
     expect(
       screen.queryByText(
-        "Choose a supported city or date, or connect the live API to inspect current signals.",
+        "Sources may be missing, stale, or outside the selected city and date. Open Data to inspect the evidence and timestamps.",
       ),
     ).not.toBeInTheDocument();
   });

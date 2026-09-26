@@ -68,7 +68,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--primary);
-  box-shadow: 0 0 8px rgba(142, 213, 255, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--blue) 60%, transparent);
 }
 
 .weather-live-status-ready span,
@@ -263,7 +263,7 @@
   width: 76px;
   height: 76px;
   border-radius: 0 0 0 999px;
-  background: rgba(241, 160, 43, 0.1);
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
   content: "";
   filter: blur(14px);
 }
@@ -275,7 +275,7 @@
   width: 82px;
   height: 82px;
   border-radius: 0 0 0 999px;
-  background: rgba(241, 160, 43, 0.1);
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
   content: "";
   filter: blur(16px);
 }
@@ -488,7 +488,7 @@
   background: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
   padding: 3px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
 }
 
 .weather-chart-toggle button {
@@ -514,7 +514,7 @@
 .weather-chart-toggle button.active {
   background: var(--primary-container);
   color: var(--on-primary-container);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--shadow-color) 10%, transparent);
   font-weight: 800;
 }
 
@@ -965,12 +965,12 @@
 
 .weather-pipeline-warn,
 .weather-source-warn {
-  border-color: rgba(241, 160, 43, 0.42);
+  border-color: color-mix(in srgb, var(--amber) 42%, transparent);
 }
 
 .weather-pipeline-bad,
 .weather-source-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .weather-pipeline-warn .weather-pipeline-meter span,
@@ -1039,7 +1039,7 @@
 
 .weather-event-bad .weather-event-dot {
   background: var(--error);
-  box-shadow: 0 0 8px rgba(255, 180, 171, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 60%, transparent);
 }
 
 .weather-event-warn .weather-event-dot {
@@ -1062,7 +1062,7 @@
 }
 
 .weather-event-bad div {
-  border-color: rgba(147, 0, 10, 0.45);
+  border-color: color-mix(in srgb, var(--red) 45%, transparent);
   background: var(--surface-container-highest);
 }
 
@@ -1183,43 +1183,43 @@
 }
 
 .weather-metric-humidity:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(167, 182, 204, 0.08));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--muted) 8%, transparent));
   border-color: var(--primary-fixed-dim);
-  box-shadow: 0 8px 24px rgba(167, 182, 204, 0.06);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--muted) 6%, transparent);
 }
 
 .weather-metric-primary:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(123, 208, 255, 0.08));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--blue) 8%, transparent));
   border-color: var(--primary-fixed-dim);
-  box-shadow: 0 8px 24px rgba(123, 208, 255, 0.06);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 6%, transparent);
 }
 
 .weather-metric-pressure:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(189, 200, 209, 0.08));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--muted) 8%, transparent));
   border-color: var(--secondary-fixed);
-  box-shadow: 0 8px 24px rgba(189, 200, 209, 0.06);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--muted) 6%, transparent);
 }
 
 .weather-metric-visibility:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(142, 213, 255, 0.08));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--blue) 8%, transparent));
   border-color: var(--primary-fixed);
-  box-shadow: 0 8px 24px rgba(142, 213, 255, 0.06);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--blue) 6%, transparent);
 }
 
 .weather-metric-cloud:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(135, 146, 154, 0.08));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--muted) 8%, transparent));
   border-color: var(--outline);
-  box-shadow: 0 8px 24px rgba(135, 146, 154, 0.06);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--muted) 6%, transparent);
 }
 
 .weather-metric-warn {
-  border-color: rgba(241, 160, 43, 0.3);
+  border-color: color-mix(in srgb, var(--amber) 30%, transparent);
 }
 
 .weather-metric-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06)) !important;
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent)) !important;
   border-color: var(--amber) !important;
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.12) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 12%, transparent) !important;
 }
 
 .weather-summary-strip article {

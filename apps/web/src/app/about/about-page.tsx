@@ -192,17 +192,14 @@ export default function AboutPage() {
               </a>
             </div>
           </div>
-        </section>
-
-        <section className="about-proof" aria-label={copy.proofLabel}>
-          <div><strong>{CITY_PACKS.length}</strong><span>{copy.proofCities}</span></div>
-          <div>
-            <strong>
-              {supportedSignalCapabilityCount} / {totalSignalCapabilityCount}
-            </strong>
-            <span>{copy.proofSupported}</span>
-          </div>
-          <div><strong>2</strong><span>{copy.proofWorkspaces}</span></div>
+          <section className="about-proof" aria-label={copy.proofLabel}>
+            <div><strong>{CITY_PACKS.length}</strong><span>{copy.proofCities}</span></div>
+            <div>
+              <strong>{supportedSignalCapabilityCount} / {totalSignalCapabilityCount}</strong>
+              <span>{copy.proofSupported}</span>
+            </div>
+            <div><strong>2</strong><span>{copy.proofWorkspaces}</span></div>
+          </section>
         </section>
         <p className="about-proof-note">{copy.heroNote}</p>
 

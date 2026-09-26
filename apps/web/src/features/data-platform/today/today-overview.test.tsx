@@ -67,16 +67,16 @@ describe("TodayOverview source health notice", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByText("No signal data is available for this scope.")).toBeInTheDocument();
+    expect(screen.getByText("No usable signal data for this scope.")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "No signal data is available for this scope.",
+        name: "No usable signal data for this scope.",
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Choose a supported city or date, or connect the live API to inspect current signals.",
+        "Sources may be missing, stale, or outside the selected city and date. Open Data to inspect the evidence and timestamps.",
       ),
     ).toBeInTheDocument();
   });

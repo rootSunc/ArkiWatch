@@ -1634,7 +1634,7 @@
     display: block;
     border-top: 1px solid var(--outline-variant);
     background: color-mix(in srgb, var(--surface-container-lowest) 94%, transparent);
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 -10px 30px color-mix(in srgb, var(--shadow-color) 22%, transparent);
     color: var(--on-surface-variant);
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
     backdrop-filter: blur(14px);
@@ -1660,7 +1660,7 @@
     border-right: 1px solid var(--outline-variant);
     z-index: 1100;
     padding: 16px 16px 24px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--shadow-color) 40%, transparent);
     animation: sideNavSlideIn 240ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -1716,7 +1716,7 @@
     width: 100vw;
     height: 100vh;
     height: 100dvh;
-    background: rgba(0, 0, 0, 0.4);
+    background: color-mix(in srgb, var(--shadow-color) 40%, transparent);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 1050;

@@ -25,6 +25,7 @@ async function waitForWorkspace(page, heading) {
 
 async function shot(page, name) {
   const file = path.join(outDir, name);
+  await page.mouse.move(0, 0);
   await page.screenshot({
     path: file,
     type: "jpeg",
@@ -40,6 +41,10 @@ const page = await browser.newPage({
   deviceScaleFactor: 2,
   locale: "en-US",
 });
+await page.addInitScript(() => {
+  localStorage.setItem("arkiwatch-theme", "light");
+  localStorage.setItem("arkiwatch-language", "en");
+});
 
 await mkdir(outDir, { recursive: true });
 
@@ -48,16 +53,14 @@ await page.addStyleTag({ content: hideChrome });
 await waitForWorkspace(page, "Leave a few minutes earlier");
 await shot(page, "today-workspace-en.jpg");
 
-// The launcher moved into the top bar during the minimal refactor; the old
-// .assistant-launcher class no longer exists.
+// The assistant opens from the shared workspace top bar.
 const launcher = page.locator(".topbar-assistant");
 await launcher.click();
 const suggested = page.getByRole("button", { name: "What should I pay attention to today?" });
 await suggested.waitFor({ timeout: 10_000 });
 await suggested.click();
-await page.locator(".assistant-message, [data-role='assistant']").last().waitFor({ timeout: 15_000 }).catch(async () => {
-  await page.getByText(/16 °C|outdoor|electricity|decision cards/i).first().waitFor({ timeout: 15_000 });
-});
+await page.locator(".assistant-message-body").last().waitFor({ timeout: 15_000 });
+await page.locator(".assistant-evidence-card").first().waitFor({ timeout: 15_000 });
 await page.waitForTimeout(600);
 await shot(page, "assistant-chat-en.jpg");
 

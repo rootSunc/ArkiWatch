@@ -577,7 +577,7 @@
   border-color: var(--primary);
   background: var(--primary-container);
   color: var(--on-primary-container);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
 }
 
 .road-rail-filter-chip .material-symbols-outlined {
@@ -787,12 +787,12 @@
 
 .road-rail-incident-bad .road-rail-incident-dot,
 .road-rail-corridor-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .road-rail-incident-bad .road-rail-incident-dot {
   background: var(--error);
-  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 58%, transparent);
 }
 
 .road-rail-incident-warn .road-rail-incident-dot {
@@ -1182,7 +1182,7 @@
   border-radius: 10px;
   background: var(--card-bg);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 1px 2px color-mix(in srgb, var(--shadow-color) 4%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--detail-panel-border-medium) 55%, transparent);
   padding: 10px 12px;
 }
@@ -1215,7 +1215,7 @@
 .road-rail-corridor-load > span {
   position: relative;
   overflow: hidden;
-  background: rgba(142, 213, 255, 0.3);
+  background: color-mix(in srgb, var(--blue) 30%, transparent);
 }
 
 .road-rail-corridor-load > span > i,
@@ -1233,11 +1233,11 @@
 
 .road-rail-corridor-load > span > em {
   right: 0;
-  background: rgba(241, 160, 43, 0.78);
+  background: color-mix(in srgb, var(--amber) 78%, transparent);
 }
 
 .road-rail-corridor-load-good > span {
-  background: rgba(92, 214, 149, 0.24);
+  background: color-mix(in srgb, var(--green) 24%, transparent);
 }
 
 .road-rail-corridor-load-good > span > i {
@@ -1245,7 +1245,7 @@
 }
 
 .road-rail-corridor-load-warn > span {
-  background: rgba(241, 160, 43, 0.24);
+  background: color-mix(in srgb, var(--amber) 24%, transparent);
 }
 
 .road-rail-corridor-load-warn > span > i {
@@ -1253,7 +1253,7 @@
 }
 
 .road-rail-corridor-load-bad > span {
-  background: rgba(255, 180, 171, 0.24);
+  background: color-mix(in srgb, var(--red) 24%, transparent);
 }
 
 .road-rail-corridor-load-bad > span > i {
@@ -1292,18 +1292,18 @@
 .road-rail-stage-good,
 .road-rail-request-good,
 .road-rail-corridor-good {
-  border-color: rgba(142, 213, 255, 0.34);
+  border-color: color-mix(in srgb, var(--blue) 34%, transparent);
 }
 
 .road-rail-stage-warn,
 .road-rail-request-warn,
 .road-rail-corridor-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .road-rail-stage-bad,
 .road-rail-request-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .road-rail-stage-good span,
@@ -1511,21 +1511,21 @@
 }
 
 .road-rail-hero-good:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--green) 5%, transparent));
   border-color: var(--success);
-  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .road-rail-hero-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent));
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .road-rail-hero-bad:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--red) 6%, transparent));
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .road-rail-summary-strip article {
@@ -1549,7 +1549,7 @@
 
 .road-rail-incident:hover {
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 4%, transparent);
   border-color: var(--outline-variant);
 }
 
@@ -1559,7 +1559,7 @@
 
 .road-rail-corridor:hover {
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 4%, transparent);
   border-color: var(--outline-variant);
 }
 

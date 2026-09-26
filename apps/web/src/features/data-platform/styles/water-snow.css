@@ -84,7 +84,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--primary);
-  box-shadow: 0 0 8px rgba(142, 213, 255, 0.54);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--blue) 54%, transparent);
 }
 
 .water-glass-panel,
@@ -555,7 +555,7 @@
 }
 
 .water-field-lattice-row i.active {
-  border-color: rgba(142, 213, 255, 0.45);
+  border-color: color-mix(in srgb, var(--blue) 45%, transparent);
   background: color-mix(in srgb, var(--primary) 34%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 26%, transparent);
 }
@@ -758,15 +758,15 @@
 }
 
 .water-signal-good {
-  border-color: rgba(134, 239, 172, 0.3);
+  border-color: color-mix(in srgb, var(--green) 30%, transparent);
 }
 
 .water-signal-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .water-signal-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .water-source-facts {
@@ -904,7 +904,7 @@
 }
 
 .water-guidance-row-good {
-  border-color: rgba(142, 213, 255, 0.34);
+  border-color: color-mix(in srgb, var(--blue) 34%, transparent);
 }
 
 .water-guidance-row-good i span {
@@ -1094,21 +1094,21 @@
 }
 
 .water-hero-good:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--green) 5%, transparent));
   border-color: var(--success);
-  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .water-hero-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent));
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .water-hero-bad:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--red) 6%, transparent));
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .water-summary-strip article {
@@ -1140,7 +1140,7 @@
 .water-event:hover,
 .regional-coverage-row:hover {
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 4%, transparent);
   border-color: var(--outline-variant);
 }
 

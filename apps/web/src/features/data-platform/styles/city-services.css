@@ -68,7 +68,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--primary);
-  box-shadow: 0 0 8px rgba(142, 213, 255, 0.62);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--blue) 62%, transparent);
 }
 
 .city-glass-panel,
@@ -281,19 +281,19 @@
 .city-readiness-row-good,
 .city-source-row-good,
 .city-model-row-good {
-  border-color: rgba(134, 239, 172, 0.3);
+  border-color: color-mix(in srgb, var(--green) 30%, transparent);
 }
 
 .city-readiness-row-warn,
 .city-source-row-warn,
 .city-model-row-warn {
-  border-color: rgba(241, 160, 43, 0.4);
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
 }
 
 .city-readiness-row-bad,
 .city-source-row-bad,
 .city-model-row-bad {
-  border-color: rgba(255, 180, 171, 0.5);
+  border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .city-readiness-row-good > div span,
@@ -460,7 +460,7 @@
 
 .city-service-row-bad .city-service-dot {
   background: var(--error);
-  box-shadow: 0 0 8px rgba(255, 180, 171, 0.58);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--red) 58%, transparent);
 }
 
 .city-service-main {
@@ -634,21 +634,21 @@
 }
 
 .city-hero-good:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(134, 239, 172, 0.05));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--green) 5%, transparent));
   border-color: var(--success);
-  box-shadow: 0 8px 24px rgba(134, 239, 172, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green) 8%, transparent);
 }
 
 .city-hero-warn:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(241, 160, 43, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--amber) 6%, transparent));
   border-color: var(--amber);
-  box-shadow: 0 8px 24px rgba(241, 160, 43, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--amber) 8%, transparent);
 }
 
 .city-hero-bad:hover {
-  background: linear-gradient(135deg, var(--surface-bright), rgba(186, 26, 26, 0.06));
+  background: linear-gradient(135deg, var(--surface-bright), color-mix(in srgb, var(--red) 6%, transparent));
   border-color: var(--red);
-  box-shadow: 0 8px 24px rgba(186, 26, 26, 0.08);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .city-summary-strip article {
@@ -680,7 +680,7 @@
 .city-model-row:hover,
 .city-visual-row:hover {
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) 4%, transparent);
   border-color: var(--outline-variant);
 }
 

@@ -12,8 +12,9 @@
     "e2e": "playwright test",
     "e2e:install": "playwright install chromium",
     "typecheck": "tsc --noEmit",
+    "audit:colors": "node scripts/audit-color-tokens.mjs",
     "generate:api-types": "openapi-typescript ../../contracts/openapi.json -o src/lib/api-contract.ts",
-    "check": "pnpm run lint && pnpm run test && pnpm run typecheck && pnpm run audit:i18n",
+    "check": "pnpm run lint && pnpm run test && pnpm run typecheck && pnpm run audit:i18n && pnpm run audit:colors",
     "audit:i18n": "node scripts/audit-legacy-i18n.mjs"
   },
   "dependencies": {
