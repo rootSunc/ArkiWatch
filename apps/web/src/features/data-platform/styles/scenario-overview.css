@@ -78,9 +78,9 @@
   color: var(--on-surface-variant);
   font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--label-tracking);
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .today-eyebrow {
@@ -609,7 +609,7 @@
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .today-personal-recommendation-copy strong {
@@ -722,7 +722,7 @@
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .today-digest-strip-copy strong {
@@ -1091,7 +1091,7 @@
   color: var(--on-surface-variant);
   font-size: 0.58rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .today-action-card-data b {
@@ -1105,7 +1105,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-family: var(--font-data);
   font-size: 0.58rem;
   line-height: 1.35;
 }
@@ -1350,7 +1350,7 @@
   width: 100%;
   margin-top: 0.35rem;
   font-size: 0.72rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-data);
   text-align: left;
 }
 

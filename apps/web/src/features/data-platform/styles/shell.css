@@ -90,10 +90,10 @@
 
 .brand-title-main {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .brand-panel p {
@@ -126,10 +126,10 @@
 
 .side-nav-catalog-label {
   padding: 12px 12px 4px;
-  font-size: 11px;
+  font-size: var(--label-size);
   font-weight: 650;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   color: var(--on-surface-variant);
 }
 
@@ -359,7 +359,7 @@
   border-radius: 999px;
   background: var(--primary-container);
   color: var(--on-primary-container);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -479,10 +479,10 @@
 
 .city-scope-label {
   color: var(--on-surface-variant);
-  font-size: 9px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 10px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-scope-value {
@@ -608,10 +608,10 @@
   align-items: center;
   gap: 4px;
   color: var(--on-surface-variant);
-  font-size: 9px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 10px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .date-scope-status::before {
@@ -1148,10 +1148,10 @@
 .metric-tile div > span:first-child,
 .platform-error > span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .metric-tile .material-symbols-outlined {
@@ -1194,7 +1194,7 @@
 
 .metric-tile small {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -1496,10 +1496,10 @@
   flex: 0 0 auto;
   border-radius: 4px;
   padding: 3px 8px;
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .status-badge-good {
@@ -1531,7 +1531,7 @@
   justify-content: space-between;
   gap: 10px;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -1700,7 +1700,7 @@
   border-radius: 999px;
   background: var(--secondary-container);
   color: var(--on-secondary-container);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   font-weight: 800;
   line-height: 18px;
@@ -1772,11 +1772,11 @@
 .overall-notification-kicker,
 .overall-notification-meta {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 500;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .overall-notification strong {
@@ -1899,7 +1899,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -1925,11 +1925,11 @@
   flex: 0 0 auto;
   border: 1px solid var(--outline-variant);
   border-radius: 999px;
-  font-size: 9px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 14px;
   padding: 1px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .timeline-read-state-unread {
@@ -1992,12 +1992,12 @@
   border-radius: 4px;
   background: var(--surface-container);
   color: var(--on-surface);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
   overflow-wrap: anywhere;
   padding: 5px 8px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 [id^="platform-event-"] {
@@ -2054,11 +2054,11 @@
 .event-detail-meta,
 .event-detail-evidence > span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .event-detail-kicker {
@@ -2120,11 +2120,11 @@
 
 .event-detail-attributes dt {
   color: var(--on-surface-variant);
-  font-size: 11px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 15px;
   overflow-wrap: anywhere;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .event-detail-attributes dd {
@@ -2244,7 +2244,7 @@
 }
 
 .platform-error small {
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
 }
 

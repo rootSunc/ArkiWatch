@@ -17,7 +17,7 @@
 @import "./styles/responsive.css";
 @import "./styles/ui-system.css";
 @import "./styles/components.css";
-@import "./styles/business-layout.css";
+@import "./styles/nordic.css";
 
 .dashboard-content article:has(.data-help-icon),
 .dashboard-content section:has(> header .data-help-icon) {

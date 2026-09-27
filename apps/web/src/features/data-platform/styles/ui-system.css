@@ -197,7 +197,7 @@
   padding: 10px 10px 5px;
   color: var(--on-surface-variant);
   font-size: 9px;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
 }
 
 .side-nav-footer {
@@ -264,11 +264,11 @@
 
 .desktop-dashboard-kicker {
   color: var(--primary);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .desktop-dashboard-header h2 {
@@ -330,11 +330,11 @@
   border-radius: 999px;
   background: var(--ui-muted-surface);
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   letter-spacing: 0.04em;
   padding: 0 10px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .workspace-context-badge .material-symbols-outlined {
@@ -678,12 +678,12 @@
 .mobile-brand-copy small {
   overflow: hidden;
   color: var(--on-surface-variant);
-  font-size: 9px;
+  font-size: var(--label-size);
   font-weight: 750;
   letter-spacing: 0.05em;
   line-height: 11px;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   white-space: nowrap;
 }
 

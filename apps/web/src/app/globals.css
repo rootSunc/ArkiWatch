@@ -16,7 +16,9 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow: auto;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 html {
@@ -47,7 +49,7 @@ button {
 }
 
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 3px solid var(--primary);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 

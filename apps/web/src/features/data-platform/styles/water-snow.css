@@ -50,7 +50,7 @@
 .water-provider-status strong,
 .water-detail-freshness {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -67,7 +67,7 @@
 .water-volume-panel header span,
 .water-event-panel header span,
 .water-provider-status strong {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-live-status {
@@ -182,16 +182,16 @@
 
 .water-command-facts span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-command-facts strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
   line-height: 18px;
@@ -223,7 +223,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
   text-align: right;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-current-cluster {
@@ -307,15 +307,15 @@
 
 .water-hero-footer span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-hero-footer strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
@@ -329,7 +329,7 @@
 .water-volume-panel header strong,
 .water-event-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 20px;
   font-weight: 700;
   line-height: 24px;
@@ -413,10 +413,10 @@
 .water-timeband-row strong,
 .water-event time {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-coverage-row i,
@@ -576,7 +576,7 @@
 
 .water-summary-strip article strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -790,7 +790,7 @@
 
 .water-volume-row em {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
@@ -951,7 +951,7 @@
 
 .water-severity-row strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   line-height: 14px;
   text-align: right;
@@ -983,7 +983,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 12px;
 }
@@ -1014,10 +1014,10 @@
 
 .water-detail-empty span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .water-detail-empty h2 {

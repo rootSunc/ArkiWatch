@@ -157,11 +157,11 @@
 
 .brand-panel p,
 .brand-title-subtitle {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -195,11 +195,11 @@
 
 .side-nav-group-label,
 .side-nav-catalog-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
   padding: 0 8px 10px;
 }
@@ -273,7 +273,7 @@
 
 .side-nav-count-badge {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   color: var(--amber);
   background: var(--amber-soft);
@@ -346,10 +346,10 @@
 }
 
 .mobile-brand-copy small {
-  font-size: 9.5px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: var(--label-size);
+  font-family: var(--font-data);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -368,10 +368,10 @@
   gap: 8px;
   flex: 0 0 auto;
   white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
 }
 
 .topbar-crumb-root {
@@ -624,7 +624,7 @@
 .notification-badge {
   background: var(--red);
   color: var(--btn-label);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 9.5px;
   min-width: 16px;
   height: 16px;
@@ -747,7 +747,7 @@
   box-shadow: none;
   padding: 0 0 18px;
   margin: 0 0 56px;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
 }
@@ -775,7 +775,7 @@
   flex: 0 0 auto;
   min-height: 32px;
   padding-block: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--blue);
   white-space: nowrap;
@@ -861,11 +861,11 @@
 .overview-hero-kicker,
 .overview-section-kicker {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--blue);
   margin-bottom: 18px;
 }
@@ -1006,11 +1006,11 @@
 }
 
 .today-digest-strip-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--amber);
   flex: 0 0 auto;
 }
@@ -1074,18 +1074,18 @@
 }
 
 .overview-status-item > div > span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
   white-space: normal;
   overflow: visible;
 }
 
 .overview-status-item strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 34px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -1167,7 +1167,7 @@
 .overview-section-count {
   flex: 0 0 auto;
   margin-left: auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
 }
@@ -1307,7 +1307,7 @@
   align-items: center;
   gap: 10px;
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   font-weight: 400;
   color: var(--muted-2);
@@ -1348,10 +1348,10 @@
 
 .source-health-row-code {
   flex: 0 0 7.5rem;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -1369,14 +1369,14 @@
 
 .source-health-row small {
   flex: 1 1 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
 }
 
 .source-health-row-doc {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--blue);
 }
@@ -1471,11 +1471,11 @@
 
 .signal-card-status {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -1493,11 +1493,11 @@
 
 .signal-readout .data-label-with-help,
 .signal-readout .data-label-with-help * {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -1506,7 +1506,7 @@
 }
 
 .signal-readout strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 24px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -1543,7 +1543,7 @@
 
 .signal-card-provider {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   color: var(--muted-3);
   overflow: hidden;
@@ -1597,11 +1597,11 @@
 .today-glance-title,
 .today-action-card-label {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -1732,7 +1732,7 @@
   flex-wrap: wrap;
   padding-top: 24px;
   border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
 }
@@ -1756,7 +1756,7 @@
   border: 0;
   background: transparent;
   padding: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--blue);
   cursor: pointer;
@@ -1781,9 +1781,9 @@
 .today-glance-title {
   padding: 18px 22px;
   border-bottom: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--label-tracking);
   color: var(--muted-2);
 }
 
@@ -1862,7 +1862,7 @@
 
 .today-glance-item strong {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 16px;
   font-weight: 500;
   color: var(--ink);
@@ -1941,7 +1941,7 @@
 .day-plan-timeline-button time {
   grid-column: 1;
   grid-row: 1 / span 2;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 12px;
   color: var(--muted-2);
   padding-top: 2px;
@@ -1975,11 +1975,11 @@
   background: transparent;
   border: 0;
   padding: 0;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -2128,7 +2128,7 @@
 }
 
 .today-action-card-time {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
   white-space: nowrap;
@@ -2301,10 +2301,10 @@
 }
 
 .weather-card-kicker span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -2321,7 +2321,7 @@
 }
 
 .weather-current-cluster strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 56px;
   font-weight: 500;
   letter-spacing: -0.05em;
@@ -2343,15 +2343,15 @@
 }
 
 .weather-hero-footer span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   color: var(--muted-2);
 }
 
 .weather-hero-footer strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 500;
   color: var(--ink);
@@ -2364,7 +2364,7 @@
 /* Signed delta ("+1°" / "−1°"), not an arrow glyph — matches the design. */
 .weather-trend-symbol {
   margin-right: 1px;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: inherit;
 }
 
@@ -2399,11 +2399,11 @@
 
 .weather-metric-label,
 .weather-summary-strip article span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -2413,7 +2413,7 @@
 
 .weather-metric-box strong,
 .weather-summary-strip article strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 28px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -2423,7 +2423,7 @@
 
 .weather-metric-box small {
   margin-left: 3px;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 13px;
   font-weight: 400;
   color: var(--muted-2);
@@ -2459,10 +2459,10 @@
 }
 
 .trend-panel > header span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -2475,7 +2475,7 @@
 }
 
 .trend-panel > header > strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 17px;
   font-weight: 500;
   color: var(--blue);
@@ -2516,7 +2516,7 @@
   justify-content: space-between;
   padding-top: 12px;
   border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
   color: var(--muted-3);
 }
@@ -2550,10 +2550,10 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -2622,7 +2622,7 @@
 }
 
 .weather-detail-freshness {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
   text-transform: none;
@@ -2657,15 +2657,15 @@
 }
 
 .air-card-kicker span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
 .air-card-kicker time {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
   color: var(--muted-3);
   text-transform: none;
@@ -2752,7 +2752,7 @@
 }
 
 .air-score-ring strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 44px;
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -2761,7 +2761,7 @@
 }
 
 .air-score-ring span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 44px;
   font-weight: 500;
   color: var(--quiet-value);
@@ -2808,7 +2808,7 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   color: var(--muted-3);
 }
@@ -2830,15 +2830,15 @@
 }
 
 .air-hero-footer span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
   color: var(--muted-2);
 }
 
 .air-hero-footer strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 16px;
   font-weight: 500;
   color: var(--ink);
@@ -2867,15 +2867,15 @@
 }
 
 .air-summary-strip article span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
 .air-summary-strip article strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 28px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -2898,7 +2898,7 @@
 
 .air-summary-strip article small {
   margin-left: 3px;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 13px;
   font-weight: 400;
   color: var(--muted-2);
@@ -2971,22 +2971,22 @@
   padding-bottom: 14px;
   border-top: 0;
   border-bottom: 1px solid var(--line-strong);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
   font-weight: 400;
 }
 
 .air-station-score {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   color: var(--green);
 }
 
 .air-station-city,
 .air-station-updated {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   color: var(--muted-3);
 }
 
@@ -3017,10 +3017,10 @@
 
 .air-pipeline-panel header span {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -3056,7 +3056,7 @@
 }
 
 .air-stage span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--green);
 }
@@ -3199,7 +3199,7 @@
 }
 
 .air-detail-freshness {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
   text-transform: none;
@@ -3270,7 +3270,7 @@
 }
 
 .mobility-tab-count {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   color: var(--amber);
   background: var(--amber-soft);
@@ -3353,11 +3353,11 @@
 .transit-summary-strip article span,
 .road-rail-summary-strip article span,
 .water-summary-strip article span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -3394,10 +3394,10 @@
 
 .energy-chart-heading span {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
   margin-bottom: 8px;
 }
@@ -3411,7 +3411,7 @@
 }
 
 .energy-chart-heading em {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   font-style: normal;
   color: var(--muted-2);
@@ -3420,7 +3420,7 @@
 .energy-chart-hours {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
   color: var(--muted-3);
   padding-top: 12px;
@@ -3455,7 +3455,7 @@
 .transit-summary-strip article strong,
 .road-rail-summary-strip article strong,
 .water-summary-strip article strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 34px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -3500,7 +3500,7 @@
 
 .transit-alert-context {
   margin: 8px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
 }
@@ -3563,7 +3563,7 @@
 .energy-price-axis-text,
 .energy-price-axis-tick {
   fill: var(--muted-3);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
 }
 
@@ -3579,7 +3579,7 @@
   gap: 16px;
   padding: 16px 0;
   border-top: 1px solid var(--line-softest);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 13.5px;
   color: var(--ink);
 }
@@ -3589,10 +3589,10 @@
   border-bottom: 1px solid var(--line-strong);
   padding-top: 0;
   padding-bottom: 14px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -3615,7 +3615,7 @@
 .energy-detail-freshness,
 .transit-detail-freshness,
 .road-rail-detail-freshness {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
   text-transform: none;
@@ -3677,7 +3677,7 @@
 .road-rail-incident-window,
 .transit-alert-meta span,
 .road-rail-incident-meta span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-2);
 }
@@ -3685,10 +3685,10 @@
 .transit-severity-chip,
 .transit-alert-severity,
 .road-rail-incident-kind {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-3);
 }
 
@@ -3706,7 +3706,7 @@
   background: var(--canvas);
   box-shadow: none;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
 }
 
@@ -3854,7 +3854,7 @@
 .water-coverage-row em {
   width: 56px;
   text-align: right;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   font-style: normal;
   color: var(--muted-3);
@@ -3901,7 +3901,7 @@
 }
 
 .water-observation-row span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-2);
 }
@@ -3931,12 +3931,12 @@
 }
 
 .water-command-status strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   color: var(--ink);
 }
 
 .water-command-facts strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   color: var(--ink);
 }
 
@@ -3949,7 +3949,7 @@
 }
 
 .water-detail-freshness {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
   text-transform: none;
@@ -4005,10 +4005,10 @@
   border-radius: var(--r-filter);
   background: var(--canvas);
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   padding: 7px 13px;
   box-shadow: none;
 }
@@ -4065,14 +4065,14 @@
 }
 
 .linked-events-date-rail strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 15px;
   font-weight: 500;
   color: var(--ink);
 }
 
 .linked-events-date-rail span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-2);
 }
@@ -4085,10 +4085,10 @@
 
 .linked-events-category-tag,
 .linked-events-free-tag {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   padding: 3px 7px;
   border: 1px solid var(--line);
   border-radius: var(--r-chip);
@@ -4117,7 +4117,7 @@
 
 .linked-events-footer,
 .linked-events-detail-freshness {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
   text-transform: none;
@@ -4168,17 +4168,17 @@
 .city-summary-strip article span,
 .regional-summary-strip article span,
 .geo-summary-strip article span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
 .city-summary-strip article strong,
 .regional-summary-strip article strong,
 .geo-summary-strip article strong {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 34px;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -4267,7 +4267,7 @@
 .geo-shape-count {
   width: 56px;
   text-align: right;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   font-weight: 400;
   color: var(--muted-3);
@@ -4280,7 +4280,7 @@
 }
 
 .geo-resolved-kind {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
 }
@@ -4341,10 +4341,10 @@
 
 .city-service-kind,
 .city-service-row > span:first-child {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-3);
 }
 
@@ -4354,7 +4354,7 @@
 
 .city-service-row time,
 .city-service-row > :last-child {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-2);
   white-space: nowrap;
@@ -4371,11 +4371,11 @@
   text-align: left;
   padding: 0 16px 14px 0;
   border-bottom: 1px solid var(--line-strong);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -4437,7 +4437,7 @@
 .geo-detail-freshness,
 .regional-detail-freshness,
 .catalog-note {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-3);
   text-transform: none;
@@ -4773,10 +4773,10 @@
 
 .transit-alert-severity,
 .road-rail-incident-kind {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   text-align: center;
   padding: 4px 8px;
   border: 1px solid var(--line);
@@ -4791,14 +4791,14 @@
 
 .transit-alert-main small,
 .road-rail-incident-main small {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
   color: var(--muted-3);
 }
 
 .transit-alert-when,
 .road-rail-incident-when {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-2);
   white-space: nowrap;
@@ -4850,10 +4850,10 @@
   border-radius: var(--r-filter);
   background: var(--canvas);
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   padding: 7px 13px;
   box-shadow: none;
 }
@@ -4932,7 +4932,7 @@
   flex-wrap: wrap;
   padding-top: 24px;
   border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   color: var(--muted-2);
 }
@@ -5030,7 +5030,7 @@
 
 .water-coverage-row i,
 .water-coverage-row span {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   color: var(--muted-3);
 }
@@ -5116,10 +5116,10 @@
 }
 
 .city-field-head span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
 }
 
@@ -5258,7 +5258,7 @@
     height: 44px;
     padding: 0 16px;
     border-bottom: 1px solid var(--line-soft);
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-size: 11px;
     color: var(--muted);
   }
@@ -5298,11 +5298,11 @@
 
   .mobile-context-row .city-scope-value,
   .mobile-context-row .date-scope-value-short {
-    font-family: var(--font-mono);
-    font-size: 11px;
+    font-family: var(--font-data);
+    font-size: var(--label-size);
     font-weight: 400;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: var(--label-tracking);
+    text-transform: var(--label-case);
     color: var(--muted);
     background: transparent;
   }
@@ -5497,10 +5497,10 @@
   }
 
   .dashboard-shell-mode-today .today-glance-item small {
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-family: var(--font-data);
+    font-size: var(--label-size);
+    letter-spacing: var(--label-tracking);
+    text-transform: var(--label-case);
     color: var(--muted-2);
   }
 
@@ -5675,11 +5675,11 @@
 }
 
 .workspace-evidence-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--blue);
   margin-bottom: 16px;
 }
@@ -5755,7 +5755,7 @@
   min-width: 0;
   gap: 0;
   color: var(--muted-2);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   line-height: 1.9;
   text-align: right;
@@ -5771,7 +5771,7 @@
   max-width: none;
   overflow: visible;
   font-weight: 400;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   white-space: normal;
 }
 
@@ -5781,7 +5781,7 @@
 
 .workspace-evidence-meta time {
   color: var(--muted-2);
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .workspace-evidence-coordinates,
@@ -5912,7 +5912,7 @@
   align-items: flex-end;
   max-width: none;
   color: var(--muted-2);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11.5px;
   line-height: 1.9;
   text-align: right;
@@ -5949,11 +5949,11 @@
 }
 
 .workspace-empty-state-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--blue);
 }
 
@@ -6501,7 +6501,7 @@ body {
 .side-nav-catalog-label {
   padding: 0 10px 9px;
   color: var(--muted);
-  letter-spacing: 0.12em;
+  letter-spacing: var(--label-tracking);
 }
 
 .detail-topbar {
@@ -6515,7 +6515,7 @@ body {
 
 .topbar-crumb {
   font-size: 10px;
-  letter-spacing: 0.13em;
+  letter-spacing: var(--label-tracking);
 }
 
 .detail-topbar .city-scope-control,
@@ -6657,7 +6657,7 @@ body {
   margin-bottom: 10px;
   color: var(--muted);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--label-tracking);
 }
 
 .overview-section-heading h2 {
@@ -6728,7 +6728,7 @@ body {
   border-radius: var(--r-chip);
   padding: 4px 8px;
   font-size: 9px;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--label-tracking);
 }
 
 .overview-catalog,
@@ -7184,11 +7184,11 @@ body {
   border-radius: var(--r-control);
   background: var(--canvas);
   color: var(--blue);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   letter-spacing: 0.04em;
   padding: 8px 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .linked-events-empty-state-action:hover {

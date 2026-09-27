@@ -196,34 +196,29 @@ export function DataPlatformOverview({
           <div className="overview-hero-kicker">
             <span className="overview-hero-kicker-dot" aria-hidden="true" />
             <span>{tKey("shell.dataPlatformMode")}</span>
+            <span className="overview-hero-kicker-sep" aria-hidden="true">·</span>
+            <span className="overview-hero-updated">
+              {tKey("shell.updated")} {scopedDataTimestamp(
+                checkedAt,
+                overview.time_scope,
+                language,
+                tKey,
+                "shell.notCollected",
+                platformTimezone,
+              )}
+            </span>
           </div>
           <h1>{tKey("shell.signalObservatory")}</h1>
           <p>{tKey("shell.dataPlatformLead")}</p>
         </div>
         <div className="overview-hero-tools">
           <OverviewSearch onChange={onSearchChange} value={searchValue} />
-          <span className="overview-hero-updated">
-            {tKey("shell.updated")} {scopedDataTimestamp(
-              checkedAt,
-              overview.time_scope,
-              language,
-              tKey,
-              "shell.notCollected",
-              platformTimezone,
-            )}
-          </span>
         </div>
       </header>
 
       {!hasSearch ? (
         <TodayDigestStrip onOpenToday={onOpenToday} todayBrief={todayBrief} />
       ) : null}
-
-      <OverviewStatusBar
-        overview={overview}
-        platformTimezone={platformTimezone}
-        tiles={signalSystemTiles}
-      />
 
       {hasSearch ? (
         <p className="overview-search-status" role="status">
@@ -269,6 +264,15 @@ export function DataPlatformOverview({
           )}
         </div>
       </section>
+
+      {/* The readings are the page's primary result, so they lead. The system
+        * summary (coverage, events, collectors, check time) is supporting
+        * evidence and follows as one quiet row. */}
+      <OverviewStatusBar
+        overview={overview}
+        platformTimezone={platformTimezone}
+        tiles={signalSystemTiles}
+      />
 
       {catalogSignalCount > 0 ? (
         <details

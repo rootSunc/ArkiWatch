@@ -34,7 +34,7 @@
 .city-provider-status strong,
 .city-detail-freshness {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -51,7 +51,7 @@
 .city-event-model-panel header span,
 .city-visual-panel header span,
 .city-provider-status strong {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-live-status {
@@ -192,10 +192,10 @@
 
 .city-hero-footer span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-hero-footer strong,
@@ -207,7 +207,7 @@
 .city-event-model-panel header strong,
 .city-visual-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -272,10 +272,10 @@
 .city-model-row span,
 .city-visual-row > span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-readiness-row-good,
@@ -399,7 +399,7 @@
 
 .city-summary-strip article strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -483,12 +483,12 @@
   border: 1px solid var(--detail-panel-border-stronger);
   border-radius: 4px;
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-style: normal;
   line-height: 12px;
   padding: 4px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-service-meta {
@@ -532,7 +532,7 @@
 
 .city-visual-row strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   line-height: 14px;
   text-align: right;
@@ -564,7 +564,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 12px;
 }
@@ -595,10 +595,10 @@
 
 .city-detail-empty span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .city-detail-empty h2 {

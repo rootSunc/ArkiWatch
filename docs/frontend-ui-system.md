@@ -34,16 +34,19 @@ Every page follows the same hierarchy:
 
 ## Visual direction
 
-The visual language is a business operations workspace: graphite navigation,
-a cool white canvas, cobalt actions, semantic green/amber/red status colors,
-fine borders, and compact but readable spacing. Cards group related evidence.
-Avoid decorative gradients, oversized icons, and competing page headlines.
+The visual language is Nordic minimal: a warm birch-paper canvas, a light
+navigation plane in the same tone, spruce ink, one fjord accent for actions and
+links, generous whitespace, and hairline dividers instead of shadows. Meaning
+is carried by nature-derived status colours (moss for good, cloudberry for
+caution, lingonberry for error) that only ever appear as small dots and text,
+never as large fills. Heather marks the Today workspace. Avoid decorative
+gradients, oversized icons, pill-shaped containers, and competing headlines.
 
-The palette is graphite, cool white, and cobalt. All literal CSS colors live in
-`apps/web/src/app/tokens.css`; component CSS uses semantic tokens, including
-for translucent fills and shadows. Light mode pairs a cool canvas and white
-evidence surfaces with a graphite navigation plane. Dark mode uses layered
-charcoal surfaces and lighter cobalt actions. Both modes keep these roles stable:
+All literal CSS colors live in `apps/web/src/app/tokens.css`; component CSS
+uses semantic tokens, including for translucent fills and shadows. Light mode
+pairs the birch canvas with slightly lighter evidence surfaces. Dark mode is a
+polar-night spruce palette with a pale fjord accent. Both modes keep these
+roles stable:
 
 | Role | Tokens | Usage |
 | --- | --- | --- |
@@ -51,33 +54,48 @@ charcoal surfaces and lighter cobalt actions. Both modes keep these roles stable
 | Text | `--ink`, `--ink-soft`, `--muted` | Headings, body, secondary labels |
 | Action and focus | `--blue`, `--blue-soft`, `--btn-fill`, `--focus-ring` | Links, selections, primary actions, keyboard focus |
 | Meaning | `--green`, `--amber`, `--red` | Good, caution, and error with text labels |
-| Today | `--today-accent`, `--today-soft`, `--today-line` | Quiet slate-blue workspace identity, separate from warnings |
+| Today | `--today-accent`, `--today-soft`, `--today-line` | Quiet heather workspace identity, separate from warnings |
 | Effects | `--shadow-color`, `--selection` | Depth and browser selection without component color literals |
-| Brand planes | `--sidenav-*`, `--brand-*` | Dark product navigation and About hero with their own readable foregrounds |
+| Brand planes | `--sidenav-*`, `--brand-*` | Canvas-toned product navigation and the dark spruce About hero, each with readable foregrounds |
 
 Run `pnpm --filter @arkiwatch/web audit:colors` after adding styles. The check
 rejects literal CSS colors outside `tokens.css`. The web manifest is a static
-metadata exception and repeats the light canvas and blue values because it
-cannot read CSS variables.
+metadata exception and repeats the light canvas and button fill values
+because it cannot read CSS variables.
+
+Typography uses Manrope for the interface (with a CJK fallback stack for
+Chinese) and tabular figures everywhere, so readouts, timestamps and labels no
+longer need a monospace face. `--font-data` names that role; JetBrains Mono
+(`--font-mono`) is kept for code only. Labels are sentence case
+(`--label-case`, `--label-tracking`, `--label-size`) rather than tracked
+uppercase. The font variables are attached to the root element, because the
+theme tokens that read them are declared on `:root`.
 
 The current implementation follows a deliberately small visual grammar:
 
-- `Today` uses a quiet slate-blue accent, one primary recommendation, and a compact
-  glance panel. Supporting plans and personal context sit below the decision,
-  never beside it as competing headlines.
-- `Data` uses cobalt actions, a single signal observatory summary, and a
-  regular two-column signal grid on wide screens. The summary prioritizes category
-  coverage, event volume, and collector status; the last checked timestamp stays
-  in the observatory header. Cross-signal history is collapsed by default so
-  the latest evidence remains the first read.
-- The shell uses a graphite navigation plane, white evidence surfaces, 12px
-  content card radii, 9px controls, and one-pixel borders. The legacy cascade
+- `Today` uses a quiet heather accent, one primary recommendation with its
+  actions directly beneath it, and a compact glance table. Supporting plans
+  and personal context sit below the decision, never beside it as competing
+  headlines.
+- `Data` leads with the readings themselves. The observatory hero carries the
+  scope and check time in one quiet line, the Today digest follows as the only
+  tinted card, and the two-column signal grid is the primary result. Each card
+  shows its title and status dot on one line and a left-aligned reading. The
+  system summary (coverage, event volume, collector status, check time) is
+  supporting evidence and follows the grid as a single hairline row.
+  Cross-signal history is collapsed by default so the latest evidence remains
+  the first read.
+- Missing values stay visibly quieter than real ones (muted text, no display
+  size) so an empty slot never reads like a reading.
+- The shell uses a canvas-toned navigation plane, light evidence surfaces,
+  12px card radii, 8px controls, and one-pixel hairlines. The legacy cascade
   lives in `styles/components.css`, whose internal order is load-bearing: its
   sections restyle the same selectors in both directions, so they cannot be
   reordered or split apart without deciding, per declaration, which one wins.
-  `styles/business-layout.css` applies the final shared workspace layout after
-  that cascade: compact headers, summary strip, regular card grid, and mobile
-  adjustments. It contains no literal colors.
+  `styles/nordic.css` is the final layer after that cascade: shell, overview,
+  Today, workspace rhythm, and phone/tablet adjustments. It wins by load order
+  and matching specificity rather than `!important`, and contains no literal
+  colors.
 - Detail workspaces share `WorkspaceEvidenceHeader` and `WorkspaceEmptyState`.
   The header keeps the status, source, and scoped timestamp together; the
   empty state explains missing data without implying that a source is healthy.
@@ -145,7 +163,9 @@ scope.
 - Desktop: persistent navigation, one context bar, and a centered content frame.
 - Tablet: persistent navigation may collapse; grids reduce to two columns.
 - Mobile: navigation becomes a drawer, the bottom bar contains only the most
-  common destinations (Today, overview, weather, mobility, and assistant), and
+  common destinations in desktop order (overview, Today, weather, mobility,
+  and assistant) with a soft pill behind the active icon, city and date read
+  as two chips under the app bar, and
   secondary tools stay behind the menu. The assistant action is disabled while
   the city/date scope is updating.
 

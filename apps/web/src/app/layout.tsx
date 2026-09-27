@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Manrope } from "next/font/google";
 import { ReactNode } from "react";
 
 import { documentLanguageTag } from "@/features/data-platform/language";
@@ -12,9 +12,9 @@ import "./globals.css";
 import "./material-symbols.css";
 import "./minimal-global.css";
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist",
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-manrope",
   weight: ["400", "500", "600", "700"],
   display: "swap"
 });
@@ -64,7 +64,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html
       suppressHydrationWarning
-      className="light"
+      // The font variables sit on the root element because the theme tokens
+      // that read them are declared on `:root`; a variable set on `body`
+      // would arrive too late for `--font-ui` to resolve it.
+      className={`light ${manrope.variable} ${jetBrainsMono.variable}`}
       data-theme="light"
       data-language={language}
       lang={documentLanguageTag(language)}
@@ -85,7 +88,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   if (!theme) {
                     theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                   }
-                  document.documentElement.className = theme;
+                  document.documentElement.classList.remove('light', 'dark');
+                  document.documentElement.classList.add(theme);
                   document.documentElement.setAttribute('data-theme', theme);
 
                   // The server already localized this document from the
@@ -112,7 +116,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           }}
         />
       </head>
-      <body className={`${geist.variable} ${jetBrainsMono.variable}`}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -136,7 +136,7 @@
 
 .incident-timeline-pager-status strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 700;
   line-height: 16px;
@@ -144,9 +144,9 @@
 
 .incident-timeline-pager-status span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 600;
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }

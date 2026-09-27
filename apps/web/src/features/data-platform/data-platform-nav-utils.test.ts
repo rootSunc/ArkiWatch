@@ -98,8 +98,8 @@ describe("mobileNavigationItems", () => {
     ] as PlatformCategory[];
 
     expect(mobileNavigationItems(categories).map((item) => item.key)).toEqual([
-      "today",
       "overview",
+      "today",
       "weather",
       "mobility",
     ]);
@@ -107,8 +107,8 @@ describe("mobileNavigationItems", () => {
 
   it("does not expose unavailable category destinations", () => {
     expect(mobileNavigationItems([]).map((item) => item.key)).toEqual([
-      "today",
       "overview",
+      "today",
     ]);
   });
 });

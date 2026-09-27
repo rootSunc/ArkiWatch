@@ -521,7 +521,12 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
               : tKey("waterSnow.noValue");
 
           return (
-            <article className={`water-glass-panel water-summary-${hasValue ? metricTone(metric) : "neutral"}`} key={tile.key}>
+            <article
+              className={`water-glass-panel water-summary-${hasValue ? metricTone(metric) : "neutral"}${
+                !hasValue && tile.key !== "stations_configured" ? " water-summary-empty" : ""
+              }`}
+              key={tile.key}
+            >
               <DataLabelWithHelp
                 helpText={dataHelpText({
                   key: tile.key,

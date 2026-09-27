@@ -227,7 +227,7 @@ export function navItemAvailable(item: NavItem, categories: PlatformCategory[]):
  * PRIMARY_NAV_ITEMS.
  */
 export function mobileNavigationItems(categories: PlatformCategory[]): NavItem[] {
-  const mobileOrder = [TODAY_NAV_KEY, FALLBACK_NAV_KEY, "weather", MOBILITY_NAV_KEY];
+  const mobileOrder = [FALLBACK_NAV_KEY, TODAY_NAV_KEY, "weather", MOBILITY_NAV_KEY];
   return mobileOrder
     .map((key) => PRIMARY_NAV_ITEMS.find((item) => item.key === key))
     .filter((item): item is NavItem => item != null && navItemAvailable(item, categories));

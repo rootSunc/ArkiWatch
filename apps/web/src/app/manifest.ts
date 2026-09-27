@@ -16,8 +16,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     // Web manifests require literal colors; keep these in sync with the light
     // theme's --canvas and --blue tokens in tokens.css.
-    background_color: "#f6f8fa",
-    theme_color: "#245fa7",
+    background_color: "#f3f1ec",
+    theme_color: "#2b4a52",
     icons: [
       {
         src: "/brand/logo-mark.png",

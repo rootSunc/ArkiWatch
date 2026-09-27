@@ -35,7 +35,7 @@
 .road-rail-provider-status strong,
 .road-rail-detail-freshness {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -53,7 +53,7 @@
 .road-rail-pipeline-panel header span,
 .road-rail-source-panel header span,
 .road-rail-provider-status strong {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-live-status {
@@ -179,11 +179,11 @@
 
 .road-rail-command-status p span {
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 14px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-command-panel-bad .road-rail-command-status p span {
@@ -212,16 +212,16 @@
 
 .road-rail-command-facts span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-command-facts strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
   line-height: 18px;
@@ -314,10 +314,10 @@
 
 .road-rail-hero-footer span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-hero-footer strong,
@@ -330,7 +330,7 @@
 .road-rail-pipeline-panel header strong,
 .road-rail-source-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 20px;
   font-weight: 700;
   line-height: 24px;
@@ -363,7 +363,7 @@
 .road-rail-timeband-row strong,
 .road-rail-incident-meta span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 13px;
 }
@@ -455,12 +455,12 @@
   color: var(--on-background);
   font-weight: 700;
   overflow-wrap: anywhere;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-network-bar strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   line-height: 14px;
   text-align: right;
@@ -554,12 +554,12 @@
   background: var(--surface-container-low);
   color: var(--on-surface-variant);
   cursor: pointer;
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
   padding: 6px 14px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   transition:
     background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -622,12 +622,12 @@
   border-radius: 999px;
   background: var(--surface-container-low);
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
   padding: 3px 8px 3px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-status .material-symbols-outlined {
@@ -825,7 +825,7 @@
   border: 1px solid var(--detail-panel-border-medium);
   border-radius: 4px;
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 700;
   line-height: 12px;
@@ -874,12 +874,12 @@
   border: 1px solid var(--detail-panel-border-stronger);
   border-radius: 4px;
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-style: normal;
   line-height: 12px;
   padding: 4px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-window {
@@ -923,7 +923,7 @@
   background: var(--surface-container);
   color: var(--on-background);
   padding: 4px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-detail {
@@ -951,11 +951,11 @@
 .road-rail-incident-detail header > div > span:not(.road-rail-incident-status),
 .road-rail-incident-detail-meta span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-detail header strong {
@@ -971,13 +971,13 @@
   border: 1px solid var(--detail-panel-border-stronger);
   border-radius: 4px;
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-style: normal;
   font-weight: 800;
   line-height: 12px;
   padding: 4px 6px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-detail-bad header em {
@@ -1030,7 +1030,7 @@
 .road-rail-incident-live-copy span:not(.road-rail-incident-status):not(.material-symbols-outlined),
 .road-rail-incident-live-facts dt,
 .road-rail-incident-live-facts dd {
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
 }
 
 .road-rail-incident-live-copy strong {
@@ -1038,7 +1038,7 @@
   font-size: 12px;
   font-weight: 800;
   line-height: 15px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-live-copy span:not(.road-rail-incident-status):not(.material-symbols-outlined) {
@@ -1079,10 +1079,10 @@
 
 .road-rail-incident-live-facts dt {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-incident-live-facts dd {
@@ -1111,7 +1111,7 @@
 
 .road-rail-incident-detail-meta strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   font-weight: 700;
   line-height: 15px;
@@ -1363,16 +1363,16 @@
 .road-rail-diagnostics-panel summary span:not(.material-symbols-outlined),
 .road-rail-diagnostic-section header span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-diagnostics-panel summary strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
@@ -1410,7 +1410,7 @@
 
 .road-rail-diagnostic-section header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
   line-height: 18px;
@@ -1442,7 +1442,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 12px;
 }
@@ -1473,10 +1473,10 @@
 
 .road-rail-detail-empty span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .road-rail-detail-empty h2 {

@@ -35,7 +35,7 @@
 .linked-events-schema-panel header span,
 .linked-events-model-panel header span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -54,7 +54,7 @@
 .linked-events-venue-panel header span,
 .linked-events-schema-panel header span,
 .linked-events-model-panel header span {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .linked-events-live-status {
@@ -238,10 +238,10 @@
 .linked-events-schema-list article span,
 .linked-events-model-panel div span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .linked-events-hero-footer strong,
@@ -257,7 +257,7 @@
 .linked-events-model-panel header strong,
 .linked-events-summary-strip article strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -340,7 +340,7 @@
 
 .linked-events-category-chip strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   line-height: 14px;
 }
@@ -493,7 +493,7 @@
 
 .linked-events-date-rail strong {
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   line-height: 22px;
 }
@@ -519,11 +519,11 @@
   border-radius: 999px;
   padding: 5px 8px;
   color: var(--on-surface);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 12px;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   white-space: nowrap;
 }
 
@@ -600,11 +600,11 @@
   background: var(--detail-panel-bg);
   padding: 5px 8px;
   color: var(--on-surface);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 12px;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   white-space: nowrap;
 }
 
@@ -617,10 +617,10 @@
 
 .linked-events-detail-section > span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .linked-events-link-stack {
@@ -781,7 +781,7 @@
 
 .linked-events-chart-bar-value {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   margin-bottom: 4px;
   font-weight: 600;
@@ -818,9 +818,9 @@
 .linked-events-chart-bar-label {
   margin-top: 8px;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  text-transform: var(--label-case);
   white-space: nowrap;
 }
 
@@ -881,9 +881,9 @@
 
 .linked-events-venue-info span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  text-transform: var(--label-case);
   flex-shrink: 0;
 }
 
@@ -939,7 +939,7 @@
 
 .linked-events-keyword-tag strong {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 9px;
   line-height: 11px;
 }
@@ -978,10 +978,10 @@
   background: color-mix(in srgb, var(--error) 6%, transparent);
   color: var(--error);
   padding: 4px 10px;
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   cursor: pointer;
   transition: background 160ms ease;
 }

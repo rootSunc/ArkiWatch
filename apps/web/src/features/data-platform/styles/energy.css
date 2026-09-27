@@ -59,7 +59,7 @@
 .energy-provider-status strong,
 .energy-detail-freshness {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -74,7 +74,7 @@
 .energy-volume-panel header span,
 .energy-severity-panel header span,
 .energy-provider-status strong {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-live-status {
@@ -236,16 +236,16 @@
 
 .energy-command-facts span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-command-facts strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
   line-height: 18px;
@@ -360,15 +360,15 @@
 
 .energy-hero-footer span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-hero-footer strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
@@ -381,7 +381,7 @@
 .energy-volume-panel header strong,
 .energy-severity-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 20px;
   font-weight: 700;
   line-height: 24px;
@@ -440,10 +440,10 @@
 .energy-volume-row span,
 .energy-severity-row span {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-window-row p,
@@ -512,7 +512,7 @@
 
 .energy-summary-strip article strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -580,14 +580,14 @@
 .energy-chart-context strong {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
 }
 
 .energy-chart-context span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-chart-context strong {
@@ -615,16 +615,16 @@
 .energy-price-row span,
 .energy-price-row strong,
 .energy-price-row em {
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
 }
 
 .energy-price-chart-head span,
 .energy-price-axis span,
 .energy-price-row span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-price-chart-head span {
@@ -719,7 +719,7 @@
 .energy-price-axis-text {
   user-select: none;
   pointer-events: none;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-family: var(--font-data);
 }
 
 .energy-price-axis-line,
@@ -758,16 +758,16 @@
 
 .energy-tooltip-time {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 9px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   letter-spacing: 0.05em;
 }
 
 .energy-tooltip-value {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
 }
@@ -784,14 +784,14 @@
 
 .energy-tooltip-detail span {
   color: var(--on-surface-variant);
-  font-size: 9px;
-  text-transform: uppercase;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: var(--label-size);
+  text-transform: var(--label-case);
+  font-family: var(--font-data);
 }
 
 .energy-tooltip-detail strong {
   color: var(--energy-accent);
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   font-weight: 600;
 }
@@ -833,10 +833,10 @@
 .energy-price-row.energy-price-row-heading em,
 .energy-price-row.energy-price-row-heading span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-price-row strong {
@@ -884,7 +884,7 @@
 .energy-point-row span,
 .energy-point-row strong {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 13px;
 }
@@ -1000,7 +1000,7 @@
 
 .energy-stat-chip strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
@@ -1011,11 +1011,11 @@
 
 .energy-stat-chip span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 600;
   line-height: 13px;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   overflow-wrap: normal;
   word-break: normal;
   white-space: nowrap;
@@ -1091,7 +1091,7 @@
 
 .energy-volume-row em {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
@@ -1111,7 +1111,7 @@
 
 .energy-severity-row strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   line-height: 14px;
   text-align: right;
@@ -1150,7 +1150,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 12px;
 }
@@ -1181,10 +1181,10 @@
 
 .energy-detail-empty span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .energy-detail-empty h2 {

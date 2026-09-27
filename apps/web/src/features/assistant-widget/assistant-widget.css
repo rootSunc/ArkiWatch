@@ -131,11 +131,11 @@ body:has(.assistant-widget-open) .dashboard-content {
   display: block;
   min-width: 0;
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 1.4;
   color: var(--muted-3);
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -167,10 +167,10 @@ body:has(.assistant-widget-open) .dashboard-content {
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--canvas);
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   color: var(--muted-3);
   cursor: pointer;
 }
@@ -251,10 +251,10 @@ body:has(.assistant-widget-open) .dashboard-content {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-3);
 }
 
@@ -368,15 +368,15 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-evidence-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-3);
 }
 
 .assistant-evidence-value {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   color: var(--ink);
@@ -391,13 +391,13 @@ body:has(.assistant-widget-open) .dashboard-content {
   flex-wrap: wrap;
   padding-top: 14px;
   border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10.5px;
   color: var(--muted-3);
 }
 
 .assistant-basis-label {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
   letter-spacing: 0.06em;
 }
 
@@ -409,7 +409,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 
 .assistant-basis-time {
   margin-left: auto;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 /* Follow-up chips */
@@ -420,10 +420,10 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-followups > span {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-3);
 }
 
@@ -493,9 +493,9 @@ body:has(.assistant-widget-open) .dashboard-content {
   background: var(--canvas);
   color: var(--ink);
   padding: 4px 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  text-transform: var(--label-case);
   letter-spacing: 0.04em;
   cursor: pointer;
 }
@@ -595,7 +595,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 
 .assistant-composer-note {
   margin: 11px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 1.6;
   color: var(--muted-3);

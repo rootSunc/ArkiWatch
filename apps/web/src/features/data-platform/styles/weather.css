@@ -34,7 +34,7 @@
 .weather-provider-status strong,
 .weather-detail-freshness {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
@@ -51,7 +51,7 @@
 .weather-source-panel header span,
 .weather-event-panel h3,
 .weather-provider-status strong {
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .weather-live-status {
@@ -183,17 +183,17 @@
 .weather-hero-footer span,
 .weather-event-item time {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 700;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .weather-hero-footer strong {
   display: flex;
   align-items: center;
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
@@ -239,7 +239,7 @@
 
 .weather-summary-strip article strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 700;
   line-height: 24px;
@@ -328,7 +328,7 @@
 .weather-metric-box p {
   margin-top: 4px;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   line-height: 16px;
   overflow-wrap: anywhere;
@@ -379,7 +379,7 @@
   align-items: center;
   gap: 5px;
   color: var(--tertiary-container);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   font-style: normal;
   font-weight: 500;
@@ -418,7 +418,7 @@
 .weather-atmospherics dd {
   margin: 0;
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 18px;
   font-weight: 500;
   line-height: 24px;
@@ -464,7 +464,7 @@
 
 .weather-chart-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
@@ -473,11 +473,11 @@
 
 .weather-chart-kind {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
   margin-right: auto;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .weather-chart-toggle {
@@ -495,7 +495,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 11px;
   font-weight: 700;
   line-height: 14px;
@@ -636,7 +636,7 @@
   position: absolute;
   left: -28px;
   color: var(--chart-axis-color);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 9px;
   line-height: 10px;
 }
@@ -663,7 +663,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--chart-axis-color);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 9px;
   line-height: 10px;
 }
@@ -699,10 +699,10 @@
 .trend-chart-stats span,
 .trend-chart-stats small {
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 13px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .trend-panel h2 {
@@ -717,7 +717,7 @@
 .trend-panel header strong,
 .trend-chart-stats strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 16px;
   font-weight: 700;
   line-height: 20px;
@@ -853,7 +853,7 @@
 .weather-pipeline-panel header strong,
 .weather-source-panel header strong {
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 20px;
   font-weight: 700;
   line-height: 24px;
@@ -900,10 +900,10 @@
 .weather-pipeline-stage span,
 .weather-source-layer span {
   color: var(--primary);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .weather-rain-window-panel p,
@@ -956,7 +956,7 @@
   border-radius: 4px;
   background: var(--detail-panel-bg);
   color: var(--on-background);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 13px;
   padding: 8px;
@@ -1109,7 +1109,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   color: var(--on-surface-variant);
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-data);
   font-size: 10px;
   line-height: 12px;
 }
@@ -1140,10 +1140,10 @@
 
 .weather-detail-empty span {
   color: var(--on-surface-variant);
-  font-size: 10px;
+  font-size: var(--label-size);
   font-weight: 800;
   line-height: 12px;
-  text-transform: uppercase;
+  text-transform: var(--label-case);
 }
 
 .weather-detail-empty h2 {

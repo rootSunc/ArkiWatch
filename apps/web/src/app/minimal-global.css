@@ -115,11 +115,11 @@
 }
 
 .login-brand span {
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
   color: var(--muted-2);
   line-height: 1;
 }
@@ -220,7 +220,7 @@
   margin: 28px 0 0;
   padding-top: 20px;
   border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 11px;
   line-height: 1.7;
   color: var(--muted-2);
@@ -333,10 +333,10 @@
 .not-found-code {
   margin: 0;
   color: var(--muted-2);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-data);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-case);
 }
 
 .not-found-panel h1 {
