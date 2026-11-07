@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -2056,5 +2057,73 @@ func TestWithCORSSetsHeadersForAllowedOriginAndHandlesPreflight(t *testing.T) {
 	passthrough.ServeHTTP(bare, httptest.NewRequest(http.MethodGet, "/", nil))
 	if bare.Code != http.StatusOK {
 		t.Fatalf("expected no configured origins to just pass through, got %d", bare.Code)
+	}
+}
+
+type scopedCollectorDatabase struct {
+	sourceDatabase
+	reference time.Time
+}
+
+func (db *scopedCollectorDatabase) ListSourceStatusAt(_ context.Context, at time.Time) ([]sources.Status, error) {
+	db.reference = at
+	stamp := at.Format(time.RFC3339)
+	return []sources.Status{{ID: "source-fmi", SourceCode: "fmi", IsActive: true, LastSuccessfulRunAt: &stamp, RunHistory: []sources.CollectorRunDay{{Date: at.In(time.FixedZone("EEST", 3*3600)).Format("2006-01-02"), Runs: 1, Succeeded: 1}}}}, nil
+}
+
+func TestHistoricalOverviewLoadsCollectorEvidenceAtItsReference(t *testing.T) {
+	cfg := config.DefaultConfig()
+	db := &scopedCollectorDatabase{}
+	server := New(cfg, db)
+	server.now = func() time.Time { return time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC) }
+	response := httptest.NewRecorder()
+	server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/platform/overview?city=helsinki&date=2026-08-08", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status=%d, body=%s", response.Code, response.Body.String())
+	}
+	want := time.Date(2026, 8, 8, 20, 59, 59, 0, time.UTC)
+	if !db.reference.Equal(want) {
+		t.Fatalf("collector reference=%s, want %s", db.reference, want)
+	}
+	var body struct {
+		Sources []struct {
+			SourceCode  string                    `json:"source_code"`
+			LastSuccess *string                   `json:"last_successful_run_at"`
+			History     []sources.CollectorRunDay `json:"run_history"`
+		} `json:"sources"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	for _, source := range body.Sources {
+		if source.SourceCode == "fmi" {
+			if source.LastSuccess == nil || len(source.History) != 1 || source.History[0].Date != "2026-08-08" {
+				t.Fatalf("collector evidence omitted: %+v", source)
+			}
+			return
+		}
+	}
+	t.Fatal("FMI missing")
+}
+
+type failedCollectorDatabase struct{ sourceDatabase }
+
+func (failedCollectorDatabase) ListSourceStatus(context.Context) ([]sources.Status, error) {
+	return nil, errors.New("private database diagnostics")
+}
+
+func TestReadFailuresCannotBecomeHealthyEmptyOverviews(t *testing.T) {
+	for _, db := range []database.HealthChecker{failedCollectorDatabase{}, &platformDatabase{err: errors.New("private database diagnostics")}} {
+		for _, path := range []string{"/api/platform/overview", "/api/platform/overview/export", "/api/platform/categories/weather", "/api/public/briefing"} {
+			server := New(config.DefaultConfig(), db)
+			response := httptest.NewRecorder()
+			server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+			if response.Code != http.StatusServiceUnavailable {
+				t.Fatalf("%s status=%d body=%s", path, response.Code, response.Body.String())
+			}
+			if strings.Contains(response.Body.String(), "private database") || strings.Contains(response.Body.String(), `"health_status":"healthy"`) {
+				t.Fatalf("failure leaked diagnostics or became healthy: %s", response.Body.String())
+			}
+		}
 	}
 }

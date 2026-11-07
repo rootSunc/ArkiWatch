@@ -273,8 +273,8 @@
       {
         "id": "scenario-energy-2026-08-08T09:00:00.000Z",
         "kind": "scenario",
-        "title": "Noon · lower-cost household window",
-        "title_zh": "中午 · 较低成本家庭用电时段",
+        "title": "Noon, lower-cost household window",
+        "title_zh": "中午，较低成本家庭用电时段",
         "detail": "A practical window for flexible household use.",
         "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
         "severity": "LOW",
@@ -287,8 +287,8 @@
       {
         "id": "scenario-outdoor-2026-08-08T07:00:00.000Z",
         "kind": "scenario",
-        "title": "Late morning · brief rain window",
-        "title_zh": "上午晚些时候 · 短时降雨",
+        "title": "Late morning, brief rain window",
+        "title_zh": "上午晚些时候，短时降雨",
         "detail": "Weather timing for the next useful decision.",
         "detail_zh": "帮助你安排下一步出行的天气时段。",
         "severity": "MEDIUM",
@@ -301,8 +301,8 @@
       {
         "id": "scenario-commute-2026-08-08T05:00:00.000Z",
         "kind": "scenario",
-        "title": "Morning peak · westbound tram alert",
-        "title_zh": "早高峰 · 西向有轨电车提醒",
+        "title": "Morning peak, westbound tram alert",
+        "title_zh": "早高峰，西向有轨电车提醒",
         "detail": "Transit and road signals that may change your route.",
         "detail_zh": "可能影响路线选择的公共交通和道路信号。",
         "severity": "HIGH",
@@ -557,7 +557,7 @@
         "valid_from": "2026-08-09T05:00:00.000Z",
         "valid_to": "2026-08-09T08:00:00.000Z",
         "evidence": [
-          "Digitransit · routes 4 and 10"
+          "Digitransit, routes 4 and 10"
         ]
       },
       {
@@ -573,7 +573,7 @@
         "valid_from": "2026-08-09T07:00:00.000Z",
         "valid_to": "2026-08-09T10:00:00.000Z",
         "evidence": [
-          "FMI · rain risk · 1.8 mm peak"
+          "FMI, rain risk, 1.8 mm peak"
         ]
       },
       {
@@ -589,7 +589,7 @@
         "valid_from": "2026-08-09T09:00:00.000Z",
         "valid_to": "2026-08-09T11:00:00.000Z",
         "evidence": [
-          "Pörssisähkö · 7.80 c/kWh example window"
+          "Pörssisähkö, 7.80 c/kWh example window"
         ]
       }
     ],
@@ -597,8 +597,8 @@
       {
         "id": "scenario-outdoor-2026-08-09T07:00:00.000Z",
         "kind": "scenario",
-        "title": "Late morning · brief rain window",
-        "title_zh": "上午晚些时候 · 短时降雨",
+        "title": "Late morning, brief rain window",
+        "title_zh": "上午晚些时候，短时降雨",
         "detail": "Weather timing for the next useful decision.",
         "detail_zh": "帮助你安排下一步出行的天气时段。",
         "severity": "MEDIUM",
@@ -611,8 +611,8 @@
       {
         "id": "scenario-energy-2026-08-09T09:00:00.000Z",
         "kind": "scenario",
-        "title": "Noon · lower-cost household window",
-        "title_zh": "中午 · 较低成本家庭用电时段",
+        "title": "Noon, lower-cost household window",
+        "title_zh": "中午，较低成本家庭用电时段",
         "detail": "A practical window for flexible household use.",
         "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
         "severity": "LOW",
@@ -705,8 +705,8 @@
       {
         "id": "scenario-commute-2026-08-09T05:00:00.000Z",
         "kind": "scenario",
-        "title": "Morning peak · westbound tram alert",
-        "title_zh": "早高峰 · 西向有轨电车提醒",
+        "title": "Morning peak, westbound tram alert",
+        "title_zh": "早高峰，西向有轨电车提醒",
         "detail": "Transit and road signals that may change your route.",
         "detail_zh": "可能影响路线选择的公共交通和道路信号。",
         "severity": "HIGH",
@@ -757,8 +757,8 @@
       {
         "id": "scenario-outdoor-2026-08-09T07:00:00.000Z",
         "kind": "scenario",
-        "title": "Late morning · brief rain window",
-        "title_zh": "上午晚些时候 · 短时降雨",
+        "title": "Late morning, brief rain window",
+        "title_zh": "上午晚些时候，短时降雨",
         "detail": "Weather timing for the next useful decision.",
         "detail_zh": "帮助你安排下一步出行的天气时段。",
         "severity": "MEDIUM",
@@ -849,8 +849,8 @@
       {
         "id": "scenario-energy-2026-08-09T09:00:00.000Z",
         "kind": "scenario",
-        "title": "Noon · lower-cost household window",
-        "title_zh": "中午 · 较低成本家庭用电时段",
+        "title": "Noon, lower-cost household window",
+        "title_zh": "中午，较低成本家庭用电时段",
         "detail": "A practical window for flexible household use.",
         "detail_zh": "适合安排可灵活调整家庭用电的时间段。",
         "severity": "LOW",

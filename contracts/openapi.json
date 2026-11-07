@@ -770,6 +770,40 @@
         "title": "CityPackRead",
         "type": "object"
       },
+      "CollectorRunDayRead": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "running": {
+            "title": "Running",
+            "type": "integer"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "succeeded": {
+            "title": "Succeeded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "runs",
+          "succeeded",
+          "failed",
+          "running"
+        ],
+        "title": "CollectorRunDayRead",
+        "type": "object"
+      },
       "CollectorRunRead": {
         "properties": {
           "error_message": {
@@ -1160,6 +1194,24 @@
             "default": "connected",
             "title": "Stage",
             "type": "string"
+          },
+          "last_successful_run_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Successful Run At"
+          },
+          "run_history": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorRunDayRead"
+            },
+            "title": "Run History",
+            "type": "array"
           }
         },
         "required": [
@@ -4086,6 +4138,24 @@
           "source_name": {
             "title": "Source Name",
             "type": "string"
+          },
+          "last_successful_run_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Successful Run At"
+          },
+          "run_history": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorRunDayRead"
+            },
+            "title": "Run History",
+            "type": "array"
           }
         },
         "required": [
@@ -7556,6 +7626,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "Source data temporarily unavailable."
           }
         },
         "summary": "Get Platform Category",
@@ -7848,6 +7921,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "Source data temporarily unavailable."
           }
         },
         "summary": "Get Platform Overview",
@@ -7936,6 +8012,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "Source data temporarily unavailable."
           }
         },
         "summary": "Export Platform Overview",
@@ -9175,6 +9254,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "Source data temporarily unavailable."
           }
         },
         "summary": "Public decisions for one city and reference time",

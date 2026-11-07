@@ -26,7 +26,7 @@ func (s *Server) publicBriefing(writer http.ResponseWriter, request *http.Reques
 	now := s.now().UTC()
 	city, date, overview, err := s.loadPlatformOverviewAt(request, now)
 	if err != nil {
-		writeJSON(writer, http.StatusUnprocessableEntity, map[string]string{"detail": err.Error()})
+		writeJSON(writer, platformErrorStatus(err), map[string]string{"detail": err.Error()})
 		return
 	}
 	dashboard := map[string]any{"checked_at": now.Format(time.RFC3339), "snapshot_available": false, "snapshot_date": nil, "app_name": s.cfg.AppName, "timezone": s.cfg.Timezone, "coverage_area": "Helsinki/Uusimaa", "top_actions": []any{}, "scenario_sections": []any{}, "scenario_channels": []any{}, "timeline": []any{}, "broadcasts": []any{}, "sources": []any{}}

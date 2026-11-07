@@ -1381,7 +1381,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1465,7 +1465,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1554,7 +1554,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://data.fingrid.fi/en/",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1575,7 +1575,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://api.porssisahko.net/",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1665,7 +1665,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://digitransit.fi/en/developers/",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1752,7 +1752,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://www.digitraffic.fi/en/",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1816,7 +1816,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://www.syke.fi/en-US/Open_information",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1880,7 +1880,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -1944,7 +1944,7 @@
             ],
             "datasets": [],
             "key_data_items": [],
-            "license_label": "Public data · see provider terms",
+            "license_label": "Public data, see provider terms",
             "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
             "last_run_status": "success",
             "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2130,7 +2130,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2151,7 +2151,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2172,7 +2172,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://digitransit.fi/en/developers/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2193,7 +2193,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.digitraffic.fi/en/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2214,7 +2214,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://data.fingrid.fi/en/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2235,7 +2235,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://api.porssisahko.net/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2256,7 +2256,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.syke.fi/en-US/Open_information",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2277,7 +2277,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2298,7 +2298,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2329,7 +2329,7 @@
         "valid_from": "2026-08-09T05:00:00.000Z",
         "valid_to": "2026-08-09T08:00:00.000Z",
         "evidence": [
-          "Digitransit · routes 4 and 10"
+          "Digitransit, routes 4 and 10"
         ]
       },
       {
@@ -2345,7 +2345,7 @@
         "valid_from": "2026-08-09T07:00:00.000Z",
         "valid_to": "2026-08-09T10:00:00.000Z",
         "evidence": [
-          "FMI · rain risk · 1.8 mm peak"
+          "FMI, rain risk, 1.8 mm peak"
         ]
       },
       {
@@ -2361,7 +2361,7 @@
         "valid_from": "2026-08-09T09:00:00.000Z",
         "valid_to": "2026-08-09T11:00:00.000Z",
         "evidence": [
-          "Pörssisähkö · 7.80 c/kWh example window"
+          "Pörssisähkö, 7.80 c/kWh example window"
         ]
       }
     ],
@@ -2409,7 +2409,7 @@
         "valid_from": "2026-08-09T07:00:00.000Z",
         "valid_to": "2026-08-09T10:00:00.000Z",
         "evidence": [
-          "FMI · rain risk · 1.8 mm peak"
+          "FMI, rain risk, 1.8 mm peak"
         ],
         "source_codes": [
           "fmi"
@@ -2427,7 +2427,7 @@
           "valid_from": "2026-08-09T07:00:00.000Z",
           "valid_to": "2026-08-09T10:00:00.000Z",
           "evidence": [
-            "FMI · rain risk · 1.8 mm peak"
+            "FMI, rain risk, 1.8 mm peak"
           ]
         }
       },
@@ -2444,7 +2444,7 @@
         "valid_from": "2026-08-09T05:00:00.000Z",
         "valid_to": "2026-08-09T08:00:00.000Z",
         "evidence": [
-          "Digitransit · routes 4 and 10"
+          "Digitransit, routes 4 and 10"
         ],
         "source_codes": [
           "digitransit",
@@ -2463,7 +2463,7 @@
           "valid_from": "2026-08-09T05:00:00.000Z",
           "valid_to": "2026-08-09T08:00:00.000Z",
           "evidence": [
-            "Digitransit · routes 4 and 10"
+            "Digitransit, routes 4 and 10"
           ]
         }
       },
@@ -2480,7 +2480,7 @@
         "valid_from": "2026-08-09T03:00:00.000Z",
         "valid_to": "2026-08-09T16:00:00.000Z",
         "evidence": [
-          "HSY · two reporting stations"
+          "HSY, two reporting stations"
         ],
         "source_codes": [
           "hsy"
@@ -2498,7 +2498,7 @@
           "valid_from": "2026-08-09T03:00:00.000Z",
           "valid_to": "2026-08-09T16:00:00.000Z",
           "evidence": [
-            "HSY · two reporting stations"
+            "HSY, two reporting stations"
           ]
         }
       },
@@ -2515,7 +2515,7 @@
         "valid_from": "2026-08-09T09:00:00.000Z",
         "valid_to": "2026-08-09T11:00:00.000Z",
         "evidence": [
-          "Pörssisähkö · 7.80 c/kWh example window"
+          "Pörssisähkö, 7.80 c/kWh example window"
         ],
         "source_codes": [
           "porssisahko",
@@ -2534,7 +2534,7 @@
           "valid_from": "2026-08-09T09:00:00.000Z",
           "valid_to": "2026-08-09T11:00:00.000Z",
           "evidence": [
-            "Pörssisähkö · 7.80 c/kWh example window"
+            "Pörssisähkö, 7.80 c/kWh example window"
           ]
         }
       }
@@ -2542,24 +2542,24 @@
     "timeline": [
       {
         "scenario_key": "commute",
-        "label": "Morning peak · westbound tram alert",
-        "label_zh": "早高峰 · 西向有轨电车提醒",
+        "label": "Morning peak, westbound tram alert",
+        "label_zh": "早高峰，西向有轨电车提醒",
         "severity": "HIGH",
         "starts_at": "2026-08-09T05:00:00.000Z",
         "ends_at": "2026-08-09T08:00:00.000Z"
       },
       {
         "scenario_key": "outdoor",
-        "label": "Late morning · brief rain window",
-        "label_zh": "上午晚些时候 · 短时降雨",
+        "label": "Late morning, brief rain window",
+        "label_zh": "上午晚些时候，短时降雨",
         "severity": "MEDIUM",
         "starts_at": "2026-08-09T07:00:00.000Z",
         "ends_at": "2026-08-09T10:00:00.000Z"
       },
       {
         "scenario_key": "energy",
-        "label": "Noon · lower-cost household window",
-        "label_zh": "中午 · 较低成本家庭用电时段",
+        "label": "Noon, lower-cost household window",
+        "label_zh": "中午，较低成本家庭用电时段",
         "severity": "LOW",
         "starts_at": "2026-08-09T09:00:00.000Z",
         "ends_at": "2026-08-09T11:00:00.000Z"
@@ -2579,7 +2579,7 @@
         "valid_from": "2026-08-09T03:00:00.000Z",
         "valid_to": "2026-08-09T16:00:00.000Z",
         "evidence": [
-          "HSY · two reporting stations"
+          "HSY, two reporting stations"
         ]
       }
     ],
@@ -2597,7 +2597,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://en.ilmatieteenlaitos.fi/open-data",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2618,7 +2618,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.hsy.fi/en/environmental-information/open-data/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2639,7 +2639,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://digitransit.fi/en/developers/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2660,7 +2660,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.digitraffic.fi/en/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2681,7 +2681,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://data.fingrid.fi/en/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2702,7 +2702,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://api.porssisahko.net/",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2723,7 +2723,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.syke.fi/en-US/Open_information",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2744,7 +2744,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://www.hel.fi/palvelukarttaws/restpages/index_en.html",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",
@@ -2765,7 +2765,7 @@
         ],
         "datasets": [],
         "key_data_items": [],
-        "license_label": "Public data · see provider terms",
+        "license_label": "Public data, see provider terms",
         "documentation_url": "https://github.com/City-of-Helsinki/linkedevents",
         "last_run_status": "success",
         "last_run_started_at": "2026-08-09T03:00:00.000Z",

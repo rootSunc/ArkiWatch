@@ -485,7 +485,7 @@ func (s *Server) platformOverview(writer http.ResponseWriter, request *http.Requ
 	}
 	cityRef, _, overview, err := s.loadPlatformOverview(request)
 	if err != nil {
-		writeJSON(writer, http.StatusUnprocessableEntity, map[string]any{"detail": map[string]any{"message": err.Error(), "supported_cities": platform.SupportedCityRefs(s.cfg)}})
+		writeJSON(writer, platformErrorStatus(err), map[string]any{"detail": map[string]any{"message": err.Error(), "supported_cities": platform.SupportedCityRefs(s.cfg)}})
 		return
 	}
 	_ = cityRef
@@ -494,6 +494,15 @@ func (s *Server) platformOverview(writer http.ResponseWriter, request *http.Requ
 
 func (s *Server) loadPlatformOverview(request *http.Request) (string, *time.Time, platform.Overview, error) {
 	return s.loadPlatformOverviewAt(request, s.now().UTC())
+}
+
+var errPlatformReadUnavailable = errors.New("Source data could not be read. Try again.")
+
+func platformErrorStatus(err error) int {
+	if errors.Is(err, errPlatformReadUnavailable) {
+		return http.StatusServiceUnavailable
+	}
+	return http.StatusUnprocessableEntity
 }
 
 func (s *Server) loadPlatformOverviewAt(request *http.Request, now time.Time) (string, *time.Time, platform.Overview, error) {
@@ -515,13 +524,20 @@ func (s *Server) loadPlatformOverviewAt(request *http.Request, now time.Time) (s
 	}
 	statusItems := []sources.Status{}
 	if s.sources != nil {
-		statusItems, _ = s.sources.ListSourceStatus(request.Context())
+		if reader, ok := s.sources.(database.ScopedSourceStatusReader); ok && scope.Mode == "historical" {
+			statusItems, err = reader.ListSourceStatusAt(request.Context(), scope.ReferenceTime)
+		} else {
+			statusItems, err = s.sources.ListSourceStatus(request.Context())
+		}
+		if err != nil {
+			return "", nil, platform.Overview{}, errPlatformReadUnavailable
+		}
 	}
 	data := platform.PlatformData{}
 	if s.platformReader != nil {
 		data, err = s.platformReader.LoadPlatform(request.Context(), platform.PlatformQuery{Now: scope.ReferenceTime, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: scope.Mode == "historical"})
 		if err != nil {
-			data = platform.PlatformData{}
+			return "", nil, platform.Overview{}, errPlatformReadUnavailable
 		}
 	}
 	return cityRef, targetDate, platform.BuildOverview(data, scope, s.cfg, statusItems, cityRef), nil
@@ -534,7 +550,7 @@ func (s *Server) platformOverviewExport(writer http.ResponseWriter, request *htt
 	}
 	cityRef, targetDate, overview, err := s.loadPlatformOverview(request)
 	if err != nil {
-		writeJSON(writer, http.StatusUnprocessableEntity, map[string]string{"detail": err.Error()})
+		writeJSON(writer, platformErrorStatus(err), map[string]string{"detail": err.Error()})
 		return
 	}
 	exportFormat := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("format")))
@@ -680,7 +696,7 @@ func (s *Server) platformCategory(writer http.ResponseWriter, request *http.Requ
 	}
 	_, _, overview, err := s.loadPlatformOverview(request)
 	if err != nil {
-		writeJSON(writer, http.StatusUnprocessableEntity, map[string]string{"detail": err.Error()})
+		writeJSON(writer, platformErrorStatus(err), map[string]string{"detail": err.Error()})
 		return
 	}
 	for _, category := range overview.Categories {

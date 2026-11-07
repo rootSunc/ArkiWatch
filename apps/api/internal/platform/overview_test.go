@@ -156,3 +156,18 @@ func TestBuildOverviewTruncatesRecentEventsToTwelveSortedByStart(t *testing.T) {
 		}
 	}
 }
+
+func TestSourceMetadataKeepsCollectorHistory(t *testing.T) {
+	at := "2026-10-24T08:00:00Z"
+	history := []sources.CollectorRunDay{{Date: "2026-10-24", Runs: 2, Succeeded: 1, Failed: 1}}
+	rows := buildSources(config.Config{}, []sources.Status{{ID: "fmi", SourceCode: "fmi", IsActive: true, LastSuccessfulRunAt: &at, RunHistory: history}}, time.Now())
+	for _, row := range rows {
+		if row.SourceCode == "fmi" {
+			if row.LastSuccessfulRunAt == nil || *row.LastSuccessfulRunAt != at || len(row.RunHistory) != 1 || row.RunHistory[0].Failed != 1 {
+				t.Fatalf("collector evidence dropped: %+v", row)
+			}
+			return
+		}
+	}
+	t.Fatal("FMI source missing")
+}

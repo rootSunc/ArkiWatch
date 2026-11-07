@@ -975,6 +975,22 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** CollectorRunDayRead */
+        CollectorRunDayRead: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Failed */
+            failed: number;
+            /** Running */
+            running: number;
+            /** Runs */
+            runs: number;
+            /** Succeeded */
+            succeeded: number;
+        };
         /** CollectorRunRead */
         CollectorRunRead: {
             /** Error Message */
@@ -1091,6 +1107,10 @@ export interface components {
              * @default connected
              */
             stage: string;
+            /** Last Successful Run At */
+            last_successful_run_at?: string | null;
+            /** Run History */
+            run_history?: components["schemas"]["CollectorRunDayRead"][];
         };
         /** DashboardUserRead */
         DashboardUserRead: {
@@ -2016,6 +2036,10 @@ export interface components {
             source_code: string;
             /** Source Name */
             source_name: string;
+            /** Last Successful Run At */
+            last_successful_run_at?: string | null;
+            /** Run History */
+            run_history?: components["schemas"]["CollectorRunDayRead"][];
         };
         /** TelegramChat */
         TelegramChat: {
@@ -3296,6 +3320,13 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description Source data temporarily unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     get_platform_coverage_api_platform_coverage_get: {
@@ -3445,6 +3476,13 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description Source data temporarily unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     export_platform_overview_api_platform_overview_export_get: {
@@ -3478,6 +3516,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            /** @description Source data temporarily unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -4254,6 +4299,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            /** @description Source data temporarily unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -599,6 +599,7 @@ func ensureIndexes(ctx context.Context, tx pgx.Tx) error {
 		`CREATE INDEX IF NOT EXISTS ix_scheduled_jobs_enabled_next_run ON scheduled_jobs (is_enabled, next_run_at)`,
 		`CREATE INDEX IF NOT EXISTS ix_scheduled_jobs_lock ON scheduled_jobs (locked_until)`,
 		`CREATE INDEX IF NOT EXISTS ix_collector_runs_source_started_at ON collector_runs (source_id, started_at)`,
+		`CREATE INDEX IF NOT EXISTS ix_collector_runs_source_success ON collector_runs (source_id, finished_at DESC) WHERE status = 'succeeded' AND finished_at IS NOT NULL`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS ux_daily_snapshots_user_date ON daily_snapshots (user_id, snapshot_date)`,
 		`CREATE INDEX IF NOT EXISTS ix_normalized_events_location_starts_at ON normalized_events (location_ref, starts_at)`,
 		`CREATE INDEX IF NOT EXISTS ix_normalized_events_type_starts_at ON normalized_events (event_type, starts_at)`,

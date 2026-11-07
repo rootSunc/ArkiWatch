@@ -34,23 +34,25 @@ type PlatformQuery struct {
 }
 
 type Source struct {
-	ID                  string   `json:"id"`
-	SourceCode          string   `json:"source_code"`
-	SourceName          string   `json:"source_name"`
-	AuthType            string   `json:"auth_type"`
-	PollIntervalSeconds int      `json:"poll_interval_seconds"`
-	OperationalStatus   string   `json:"operational_status"`
-	Stage               string   `json:"stage"`
-	Categories          []string `json:"categories"`
-	Datasets            []string `json:"datasets"`
-	KeyDataItems        []string `json:"key_data_items"`
-	LicenseLabel        *string  `json:"license_label"`
-	DocumentationURL    *string  `json:"documentation_url"`
-	LastRunStatus       *string  `json:"last_run_status"`
-	LastRunStartedAt    *string  `json:"last_run_started_at"`
-	LastRunFinishedAt   *string  `json:"last_run_finished_at"`
-	RecordsIngested     *int     `json:"records_ingested"`
-	ErrorMessage        *string  `json:"error_message"`
+	ID                  string                    `json:"id"`
+	SourceCode          string                    `json:"source_code"`
+	SourceName          string                    `json:"source_name"`
+	AuthType            string                    `json:"auth_type"`
+	PollIntervalSeconds int                       `json:"poll_interval_seconds"`
+	OperationalStatus   string                    `json:"operational_status"`
+	Stage               string                    `json:"stage"`
+	Categories          []string                  `json:"categories"`
+	Datasets            []string                  `json:"datasets"`
+	KeyDataItems        []string                  `json:"key_data_items"`
+	LicenseLabel        *string                   `json:"license_label"`
+	DocumentationURL    *string                   `json:"documentation_url"`
+	LastRunStatus       *string                   `json:"last_run_status"`
+	LastRunStartedAt    *string                   `json:"last_run_started_at"`
+	LastRunFinishedAt   *string                   `json:"last_run_finished_at"`
+	RecordsIngested     *int                      `json:"records_ingested"`
+	ErrorMessage        *string                   `json:"error_message"`
+	LastSuccessfulRunAt *string                   `json:"last_successful_run_at,omitempty"`
+	RunHistory          []sources.CollectorRunDay `json:"run_history,omitempty"`
 }
 
 type Metric struct {
@@ -224,6 +226,7 @@ func buildSources(cfg config.Config, statuses []sources.Status, now time.Time) [
 		item := Source{ID: "catalog-" + catalog.Code, SourceCode: catalog.Code, SourceName: catalog.Name, AuthType: catalog.Auth, PollIntervalSeconds: catalog.Poll, OperationalStatus: catalog.Stage, Stage: catalog.Stage, Categories: catalog.Categories, Datasets: catalog.Datasets, KeyDataItems: catalog.KeyItems, LicenseLabel: stringPointer(catalog.License), DocumentationURL: stringPointer(catalog.Docs)}
 		if status, ok := byCode[catalog.Code]; ok {
 			item.ID, item.OperationalStatus, item.PollIntervalSeconds = status.ID, sourceStatus(status, now), status.PollIntervalSeconds
+			item.LastSuccessfulRunAt, item.RunHistory = status.LastSuccessfulRunAt, status.RunHistory
 			if status.LastRun != nil {
 				item.LastRunStatus = stringPointer(status.LastRun.Status)
 				item.LastRunStartedAt = stringPointer(status.LastRun.StartedAt)
@@ -243,6 +246,13 @@ func sourceStatus(item sources.Status, now time.Time) string {
 		return "inactive"
 	}
 	if item.LastRun == nil {
+		return "pending"
+	}
+	if item.LastRun.Status == "running" {
+		started, err := time.Parse(time.RFC3339Nano, item.LastRun.StartedAt)
+		if err == nil && now.Sub(started) > time.Duration(item.PollIntervalSeconds*2)*time.Second {
+			return "stale"
+		}
 		return "pending"
 	}
 	if item.LastRun.Status != "succeeded" {
