@@ -33,6 +33,11 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/users"
 )
 
+// maxPlatformEventsPerSource bounds how many events one source contributes to a
+// platform read. Each category reads a handful of sources, so this is generous
+// for a category list while keeping the whole response bounded.
+const maxPlatformEventsPerSource = 40
+
 // HealthChecker is deliberately small so HTTP handlers can be tested without
 // starting PostgreSQL. The same interface will be extended with repositories
 // as database-backed endpoints are migrated.
@@ -1594,20 +1599,47 @@ func (store *Store) LoadTransit(ctx context.Context, query observations.TransitQ
 func (store *Store) LoadPlatform(ctx context.Context, query platform.PlatformQuery) (platform.PlatformData, error) {
 	start, end := query.Now.Add(-6*time.Hour), query.Now.Add(48*time.Hour)
 	capitalMetro := platform.IsCapitalRegionCity(query.LocationRef)
-	args := []any{start, end, query.LocationRef, capitalMetro}
+	args := []any{start, end, query.LocationRef, capitalMetro, maxPlatformEventsPerSource}
 	if query.Historical && query.WindowStart != nil && query.WindowEnd != nil {
-		args = []any{*query.WindowStart, *query.WindowEnd, query.LocationRef, capitalMetro}
+		args = []any{*query.WindowStart, *query.WindowEnd, query.LocationRef, capitalMetro, maxPlatformEventsPerSource}
 	}
+	// The cap is per source, not per result set. A single overall LIMIT lets one
+	// talkative source take every slot: Linked Events publishes multi-year
+	// exhibitions, some with a mistyped start (one upstream row begins in year
+	// 0026), so ordering the whole set by starts_at put them first and left every
+	// other category with zero events and an "empty" status.
+	//
+	// Within a source, severity leads so the per-source cap can never change the
+	// status a category derives from its worst event. Clamping starts_at to the
+	// window start then ranks what is already running ahead of what is still
+	// upcoming, without letting an ancient or malformed start date outrank
+	// anything.
 	rows, err := store.pool.Query(ctx, `
-		SELECT e.id, e.event_type, s.source_code, e.severity::text, e.location_ref,
-		       e.starts_at, e.ends_at, e.title, e.summary, e.attributes, e.created_at
-		FROM normalized_events AS e
-		JOIN data_sources AS s ON s.id = e.source_id
-		WHERE e.ends_at >= $1
-		  AND e.starts_at <= $2
-		  AND ($3 = '' OR e.location_ref = $3 OR e.location_ref = 'finland' OR ($4 AND s.source_code = 'digitransit' AND e.location_ref = 'helsinki'))
-		ORDER BY e.starts_at ASC
-		LIMIT 120
+		WITH scoped AS (
+			SELECT e.id, e.event_type, s.source_code, e.severity::text AS severity, e.location_ref,
+			       e.starts_at, e.ends_at, e.title, e.summary, e.attributes, e.created_at,
+			       ROW_NUMBER() OVER (
+			           PARTITION BY s.source_code
+			           ORDER BY CASE e.severity::text
+			                      WHEN 'HIGH' THEN 4
+			                      WHEN 'MEDIUM' THEN 3
+			                      WHEN 'LOW' THEN 2
+			                      ELSE 1
+			                    END DESC,
+			                    GREATEST(e.starts_at, $1) ASC,
+			                    e.id ASC
+			       ) AS source_rank
+			FROM normalized_events AS e
+			JOIN data_sources AS s ON s.id = e.source_id
+			WHERE e.ends_at >= $1
+			  AND e.starts_at <= $2
+			  AND ($3 = '' OR e.location_ref = $3 OR e.location_ref = 'finland' OR ($4 AND s.source_code = 'digitransit' AND e.location_ref = 'helsinki'))
+		)
+		SELECT id, event_type, source_code, severity, location_ref,
+		       starts_at, ends_at, title, summary, attributes, created_at
+		FROM scoped
+		WHERE source_rank <= $5
+		ORDER BY starts_at ASC
 	`, args...)
 	if err != nil {
 		return platform.PlatformData{}, err
