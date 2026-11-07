@@ -9,7 +9,7 @@ export type AssistantStreamPayload = {
   message?: string;
   citations?: AssistantApiCitation[];
   model?: string | null;
-  answer_mode?: "deepseek" | "fallback";
+  answer_mode?: "deepseek" | "fallback" | "insufficient_evidence";
   error_message?: string | null;
   answer?: string;
 };

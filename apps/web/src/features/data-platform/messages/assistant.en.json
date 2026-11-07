@@ -52,6 +52,7 @@
     "retryAssistant": "Retry assistant request",
     "basis": "Basis",
     "fallback": "Fallback",
+    "insufficientEvidence": "Not enough evidence",
     "nextSteps": "Next step",
     "viewSources": "View source details",
     "sourcesCount": "{count} sources",

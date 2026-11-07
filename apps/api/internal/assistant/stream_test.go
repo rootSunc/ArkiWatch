@@ -37,7 +37,7 @@ func TestStreamForwardsEachDelta(t *testing.T) {
 		`{"model":"deepseek-chat","choices":[{"delta":{"content":"is fair."}}]}`,
 	})
 	deltas := []string{}
-	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{Facts: []string{"air_quality: status=ready"}}, func(delta string) {
+	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{Facts: []string{"air_quality: status=ready"}, UsableDatasets: 1}, func(delta string) {
 		deltas = append(deltas, delta)
 	})
 	if len(deltas) != 3 {
@@ -57,9 +57,10 @@ func TestStreamForwardsEachDelta(t *testing.T) {
 func TestStreamAttachesGroundedCitations(t *testing.T) {
 	cfg, _ := streamingProvider(t, []string{`{"choices":[{"delta":{"content":"ok"}}]}`})
 	grounded := GroundedContext{
-		Facts:       []string{"traffic: status=watch"},
-		Citations:   []Citation{{Source: "traffic", Detail: "traffic snapshot."}},
-		DataContext: []string{"traffic"},
+		Facts:          []string{"traffic: status=watch"},
+		Citations:      []Citation{{Source: "traffic", Detail: "traffic snapshot."}},
+		DataContext:    []string{"traffic"},
+		UsableDatasets: 1,
 	}
 	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "roads?"}}, "en", grounded, func(string) {})
 	if len(result.Citations) != 1 || result.Citations[0].Source != "traffic" {
@@ -79,7 +80,7 @@ func TestStreamFallsBackToGroundedAnswer(t *testing.T) {
 	cfg := config.Config{DeepseekAPIKey: "test-key", DeepseekAPIBaseURL: server.URL, DeepseekModel: "test-model", AssistantRequestTimeoutSeconds: 5}
 
 	deltas := []string{}
-	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{Facts: []string{"air_quality: status=ready"}}, func(delta string) {
+	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{Facts: []string{"air_quality: status=ready"}, UsableDatasets: 1}, func(delta string) {
 		deltas = append(deltas, delta)
 	})
 	if result.AnswerMode != "fallback" || result.Error == nil {
@@ -100,7 +101,7 @@ func TestStreamReportsTruncatedAnswers(t *testing.T) {
 		`{"choices":[{"delta":{"content":"Partial answer"}}]}`,
 		`not json`,
 	})
-	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{}, func(string) {})
+	result := Stream(context.Background(), cfg, []Message{{Role: "user", Content: "air?"}}, "en", GroundedContext{UsableDatasets: 1}, func(string) {})
 	if result.Answer != "Partial answer" {
 		t.Fatalf("unexpected answer: %q", result.Answer)
 	}
@@ -108,7 +109,7 @@ func TestStreamReportsTruncatedAnswers(t *testing.T) {
 
 func TestStreamWithoutProviderKeyUsesFallback(t *testing.T) {
 	deltas := []string{}
-	result := Stream(context.Background(), config.Config{}, []Message{{Role: "user", Content: "air?"}}, "fi", GroundedContext{Facts: []string{"air_quality: status=ready"}}, func(delta string) {
+	result := Stream(context.Background(), config.Config{}, []Message{{Role: "user", Content: "air?"}}, "fi", GroundedContext{Facts: []string{"air_quality: status=ready"}, UsableDatasets: 1}, func(delta string) {
 		deltas = append(deltas, delta)
 	})
 	if result.AnswerMode != "fallback" || len(deltas) != 1 {

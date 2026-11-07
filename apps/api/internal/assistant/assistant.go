@@ -41,6 +41,9 @@ type TranslateResult struct {
 // given the current readings and told to answer only from them, and the same
 // datasets come back as citations so a reader can check the basis of an answer.
 func Chat(ctx context.Context, cfg config.Config, messages []Message, language string, grounded GroundedContext) ChatResult {
+	if !grounded.HasUsableEvidence() {
+		return insufficientEvidence(language, grounded)
+	}
 	if strings.TrimSpace(cfg.DeepseekAPIKey) == "" {
 		return fallbackChat(language, grounded)
 	}
@@ -126,6 +129,17 @@ func (response deepseekResponse) FirstContent() string {
 // fallbackChat answers without a model provider. It still reports the live
 // readings rather than apologising, because the data is the useful part and it
 // is available whether or not the provider is configured.
+func insufficientEvidence(language string, grounded GroundedContext) ChatResult {
+	answer := map[string]string{
+		"zh": "目前没有足够新的本地观测，无法判断这个问题。",
+		"fi": "Minulla ei ole riittävän tuoreita paikallisia mittauksia tämän arvioimiseen.",
+	}[language]
+	if answer == "" {
+		answer = "I don't have sufficiently recent local measurements to assess this."
+	}
+	return ChatResult{Answer: answer, Citations: citationsOrEmpty(grounded.Citations), AnswerMode: "insufficient_evidence", DataContext: dataContextOrEmpty(grounded.DataContext)}
+}
+
 func fallbackChat(language string, grounded GroundedContext) ChatResult {
 	intro := map[string]string{
 		"zh": "助手服务当前不可用，以下是 ArkiWatch 的实时数据：",
@@ -189,6 +203,11 @@ func inferredSourceLanguage(value string) string {
 // they arrive. Callers that cannot stream still receive the complete result, so
 // a provider without streaming support degrades to a single delta.
 func Stream(ctx context.Context, cfg config.Config, messages []Message, language string, grounded GroundedContext, onDelta func(string)) ChatResult {
+	if !grounded.HasUsableEvidence() {
+		result := insufficientEvidence(language, grounded)
+		onDelta(result.Answer)
+		return result
+	}
 	if strings.TrimSpace(cfg.DeepseekAPIKey) == "" {
 		result := fallbackChat(language, grounded)
 		onDelta(result.Answer)

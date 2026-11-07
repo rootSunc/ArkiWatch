@@ -8,6 +8,7 @@ import (
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/airquality"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/assistant"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/database"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
@@ -35,6 +36,7 @@ func (s *Server) groundAssistant(request *http.Request, payload assistantChatPay
 		return assistant.GroundedContext{}
 	}
 	historical := scope.Mode == "historical"
+	reference := scope.ReferenceTime
 	ctx := request.Context()
 	// The assistant reports the household-facing price feed, which is the one
 	// the product's energy advice is written against.
@@ -47,36 +49,43 @@ func (s *Server) groundAssistant(request *http.Request, payload assistantChatPay
 			if s.weather == nil {
 				continue
 			}
-			if data, err := s.weather.LoadWeather(ctx, observations.WeatherQuery{Now: now, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd}); err == nil {
-				payloads[dataset] = weather.Build(data, scope, now)
+			if data, err := s.weather.LoadWeather(ctx, observations.WeatherQuery{Now: reference, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd}); err == nil {
+				payloads[dataset] = weather.Build(data, scope, reference)
 			}
 		case "air_quality":
 			if s.airQuality == nil {
 				continue
 			}
-			if data, err := s.airQuality.LoadAirQuality(ctx, airquality.Query{Now: now, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd}); err == nil {
-				payloads[dataset] = airquality.Build(data, scope, now, cityRef)
+			if data, err := s.airQuality.LoadAirQuality(ctx, airquality.Query{Now: reference, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd}); err == nil {
+				payloads[dataset] = airquality.Build(data, scope, reference, cityRef)
 			}
 		case "energy":
 			if s.energy == nil {
 				continue
 			}
-			if data, err := s.energy.LoadEnergy(ctx, energy.Query{Now: now, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, SourceCode: defaultEnergySource, Historical: historical, LookaheadHours: s.cfg.SnapshotLookaheadHours}); err == nil {
-				payloads[dataset] = energy.Build(data, scope, now, defaultEnergySource, s.cfg)
+			if data, err := s.energy.LoadEnergy(ctx, energy.Query{Now: reference, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, SourceCode: defaultEnergySource, Historical: historical, LookaheadHours: s.cfg.SnapshotLookaheadHours}); err == nil {
+				payloads[dataset] = energy.Build(data, scope, reference, defaultEnergySource, s.cfg)
 			}
 		case "traffic":
 			if s.traffic == nil {
 				continue
 			}
-			if data, err := s.traffic.LoadTraffic(ctx, traffic.Query{Now: now, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: historical}); err == nil {
-				payloads[dataset] = traffic.Build(data, scope, now, cityRef)
+			if data, err := s.traffic.LoadTraffic(ctx, traffic.Query{Now: reference, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: historical}); err == nil {
+				current := traffic.Build(data, scope, reference, cityRef)
+				national := "finland"
+				current.Location = &national
+				if current.Summary != nil {
+					noted := *current.Summary + " Coverage is national and is not a reading for " + cityRef + " alone."
+					current.Summary = &noted
+				}
+				payloads[dataset] = current
 			}
 		case "transit":
 			if s.transit == nil {
 				continue
 			}
-			if data, err := s.transit.LoadTransit(ctx, observations.TransitQuery{Now: now, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: historical}); err == nil {
-				payloads[dataset] = transit.Build(data, scope, now, cityRef)
+			if data, err := s.transit.LoadTransit(ctx, observations.TransitQuery{Now: reference, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: historical}); err == nil {
+				payloads[dataset] = transit.Build(data, scope, reference, cityRef)
 			}
 		case "platform_overview":
 			payloads[dataset] = s.platformOverviewPayload(ctx, cityRef, scope)
@@ -88,7 +97,15 @@ func (s *Server) groundAssistant(request *http.Request, payload assistantChatPay
 func (s *Server) platformOverviewPayload(ctx context.Context, cityRef string, scope timescope.Scope) any {
 	statusItems := []sources.Status{}
 	if s.sources != nil {
-		statusItems, _ = s.sources.ListSourceStatus(ctx)
+		var err error
+		if reader, ok := s.sources.(database.ScopedSourceStatusReader); ok && scope.Mode == "historical" {
+			statusItems, err = reader.ListSourceStatusAt(ctx, scope.ReferenceTime)
+		} else {
+			statusItems, err = s.sources.ListSourceStatus(ctx)
+		}
+		if err != nil {
+			statusItems = nil
+		}
 	}
 	data := platform.PlatformData{}
 	if s.platformReader != nil {

@@ -19,9 +19,10 @@ type Citation struct {
 // flattened facts for the prompt, the citations to hand back, and the list of
 // datasets that were consulted.
 type GroundedContext struct {
-	Facts       []string
-	Citations   []Citation
-	DataContext []string
+	Facts          []string
+	Citations      []Citation
+	DataContext    []string
+	UsableDatasets int
 }
 
 const maxFactLength = 400
@@ -83,8 +84,27 @@ func BuildContext(payloads map[string]any) GroundedContext {
 		context.DataContext = append(context.DataContext, name)
 		context.Facts = append(context.Facts, factsFor(name, document)...)
 		context.Citations = append(context.Citations, citationFor(name, document))
+		if name != "platform_overview" && usableDataset(document) {
+			context.UsableDatasets++
+		}
 	}
 	return context
+}
+
+func usableDataset(document map[string]any) bool {
+	status := firstNonEmpty(field(document, "status"), field(document, "health_status"))
+	switch strings.ToLower(status) {
+	case "", "empty", "missing", "not_collected", "unavailable", "failed", "error", "stale":
+		return false
+	default:
+		return true
+	}
+}
+
+// HasUsableEvidence reports whether any question-specific dataset is current.
+// The platform overview is always loaded and is not itself an answer.
+func (context GroundedContext) HasUsableEvidence() bool {
+	return context.UsableDatasets > 0
 }
 
 func factsFor(name string, document map[string]any) []string {

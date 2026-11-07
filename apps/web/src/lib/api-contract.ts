@@ -889,7 +889,7 @@ export interface components {
              * Answer Mode
              * @enum {string}
              */
-            answer_mode: "deepseek" | "fallback";
+            answer_mode: "deepseek" | "fallback" | "insufficient_evidence";
             /** Citations */
             citations?: components["schemas"]["AssistantCitationRead"][];
             /** Data Context */

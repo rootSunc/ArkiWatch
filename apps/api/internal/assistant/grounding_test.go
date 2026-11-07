@@ -1,8 +1,11 @@
 package assistant
 
 import (
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
 )
 
 func TestSelectDataSourcesRoutesByKeyword(t *testing.T) {
@@ -107,6 +110,23 @@ func TestFallbackChatReportsReadings(t *testing.T) {
 	}
 	if len(result.Citations) != 1 || len(result.DataContext) != 1 {
 		t.Fatalf("fallback dropped citations or context: %#v", result)
+	}
+}
+
+func TestChatRefusesWhenEveryDatasetIsStaleOrEmpty(t *testing.T) {
+	grounded := BuildContext(map[string]any{
+		"air_quality":       map[string]any{"checked_at": "2026-08-20T12:00:00Z", "status": "stale", "location": "espoo"},
+		"platform_overview": map[string]any{"health_status": "healthy", "coverage_area": "Espoo/Uusimaa"},
+	})
+	if grounded.HasUsableEvidence() {
+		t.Fatalf("stale air plus a healthy catalog should not count as evidence: %#v", grounded)
+	}
+	result := Chat(context.Background(), config.Config{DeepseekAPIKey: "should-not-be-called"}, nil, "en", grounded)
+	if result.AnswerMode != "insufficient_evidence" {
+		t.Fatalf("mode = %s", result.AnswerMode)
+	}
+	if !strings.Contains(result.Answer, "sufficiently recent") {
+		t.Fatalf("answer = %s", result.Answer)
 	}
 }
 

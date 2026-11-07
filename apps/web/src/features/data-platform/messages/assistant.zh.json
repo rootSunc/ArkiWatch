@@ -49,6 +49,7 @@
     "retryAssistant": "重试助手请求",
     "basis": "依据",
     "fallback": "兜底回答",
+    "insufficientEvidence": "证据不足",
     "nextSteps": "下一步",
     "viewSources": "查看来源详情",
     "sourcesCount": "{count} 个来源",

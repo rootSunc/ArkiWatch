@@ -59,7 +59,7 @@ type ChatMessage = {
   role: "assistant" | "user";
   text: string;
   citations?: AssistantApiCitation[];
-  answerMode?: "deepseek" | "fallback";
+  answerMode?: "deepseek" | "fallback" | "insufficient_evidence";
   errorMessage?: string | null;
   retryAfterSeconds?: number | null;
   model?: string | null;
@@ -715,8 +715,8 @@ export function AssistantWidget({
                         {isDemoScope ? (
                           <span className="assistant-basis-chip">{tKey("assistant.demoFixture")}</span>
                         ) : null}
-                        {message.answerMode === "fallback" ? (
-                          <span className="assistant-basis-chip">{tKey("assistant.fallback")}</span>
+                        {message.answerMode === "fallback" || message.answerMode === "insufficient_evidence" ? (
+                          <span className="assistant-basis-chip">{tKey(message.answerMode === "insufficient_evidence" ? "assistant.insufficientEvidence" : "assistant.fallback")}</span>
                         ) : null}
                         <span className="assistant-basis-count">
                           {tKey("assistant.sourcesCount").replace(

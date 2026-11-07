@@ -533,7 +533,8 @@
           "answer_mode": {
             "enum": [
               "deepseek",
-              "fallback"
+              "fallback",
+              "insufficient_evidence"
             ],
             "title": "Answer Mode",
             "type": "string"
