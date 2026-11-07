@@ -159,10 +159,7 @@ func prioritySeverity(priority int) string {
 // would present time-bound regional advice as current, which is how a reader
 // ends up acting on an expired recommendation.
 func (store *Store) LoadPublicDashboard(ctx context.Context, targetDate *time.Time, now time.Time) (map[string]any, error) {
-	snapshotDay := now.UTC().Format("2006-01-02")
-	if targetDate != nil {
-		snapshotDay = targetDate.UTC().Format("2006-01-02")
-	}
+	snapshotDay := localSnapshotDay(now, targetDate)
 	if snapshot, ok, err := store.loadRegionalSnapshot(ctx, snapshotDay); err != nil {
 		return nil, err
 	} else if ok {
@@ -210,11 +207,22 @@ func (store *Store) RefreshRegionalSnapshot(ctx context.Context, now time.Time) 
 		VALUES ($1, 'HELSINKI_UUSIMAA'::snapshot_area_scope, $2::date, $3, $4)
 		ON CONFLICT (area_scope, snapshot_date)
 		DO UPDATE SET summary = EXCLUDED.summary, generated_at = EXCLUDED.generated_at
-	`, randomID(), now.UTC().Format("2006-01-02"), encoded, now.UTC())
+	`, randomID(), localSnapshotDay(now, nil), encoded, now.UTC())
 	if err != nil {
 		return fmt.Errorf("upsert regional snapshot: %w", err)
 	}
 	return nil
+}
+
+func localSnapshotDay(now time.Time, targetDate *time.Time) string {
+	if targetDate != nil {
+		return targetDate.UTC().Format("2006-01-02")
+	}
+	location, err := time.LoadLocation("Europe/Helsinki")
+	if err != nil {
+		location = time.UTC
+	}
+	return now.In(location).Format("2006-01-02")
 }
 
 func (store *Store) buildPublicDashboard(ctx context.Context, targetDate *time.Time, now time.Time) (map[string]any, error) {

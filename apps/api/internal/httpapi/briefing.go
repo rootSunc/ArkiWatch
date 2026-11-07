@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -28,6 +29,20 @@ func (s *Server) publicBriefing(writer http.ResponseWriter, request *http.Reques
 	if err != nil {
 		writeJSON(writer, platformErrorStatus(err), map[string]string{"detail": err.Error()})
 		return
+	}
+	dateKey := "live"
+	if date != nil {
+		dateKey = date.UTC().Format("2006-01-02")
+	}
+	cacheKey := fmt.Sprintf("public_briefing:%s:%s", city, dateKey)
+	if s.readCache != nil {
+		if cached, ok := s.readCache.Get(cacheKey); ok {
+			if payload, ok := cached.(map[string]any); ok {
+				writer.Header().Set("Cache-Control", "no-store")
+				writeJSON(writer, http.StatusOK, payload)
+				return
+			}
+		}
 	}
 	dashboard := map[string]any{"checked_at": now.Format(time.RFC3339), "snapshot_available": false, "snapshot_date": nil, "app_name": s.cfg.AppName, "timezone": s.cfg.Timezone, "coverage_area": "Helsinki/Uusimaa", "top_actions": []any{}, "scenario_sections": []any{}, "scenario_channels": []any{}, "timeline": []any{}, "broadcasts": []any{}, "sources": []any{}}
 	if s.publicDashboard != nil {
@@ -124,6 +139,9 @@ func (s *Server) publicBriefing(writer http.ResponseWriter, request *http.Reques
 	result["coverage_region"] = typed.CoverageRegion
 	result["decision"] = briefing.Build(in)
 	result["signals"] = map[string]any{"weather": in.Weather, "airQuality": in.AirQuality, "transit": in.Transit, "roadRail": in.RoadRail, "energy": in.Energy, "householdEnergy": in.HouseholdEnergy}
+	if s.readCache != nil {
+		s.readCache.Set(cacheKey, result)
+	}
 	writer.Header().Set("Cache-Control", "no-store")
 	writeJSON(writer, http.StatusOK, result)
 }

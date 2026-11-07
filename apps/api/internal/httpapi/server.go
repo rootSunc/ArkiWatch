@@ -1900,14 +1900,49 @@ func writeAuthFailure(writer http.ResponseWriter, failure *authFailure) {
 }
 
 func loginRateLimitKey(request *http.Request) string {
-	host, _, err := net.SplitHostPort(request.RemoteAddr)
-	if err != nil || host == "" {
-		host = request.RemoteAddr
-	}
+	host := requestClientIP(request)
 	if host == "" {
 		host = "unknown"
 	}
 	return "login:" + host
+}
+
+func requestClientIP(request *http.Request) string {
+	host := remoteHost(request.RemoteAddr)
+	if isLoopback(host) {
+		if forwarded := forwardedClientIP(request); forwarded != "" {
+			return forwarded
+		}
+	}
+	return host
+}
+
+func remoteHost(value string) string {
+	host, _, err := net.SplitHostPort(value)
+	if err != nil || host == "" {
+		return value
+	}
+	return host
+}
+
+func isLoopback(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func forwardedClientIP(request *http.Request) string {
+	header := strings.TrimSpace(request.Header.Get("X-Forwarded-For"))
+	if header == "" {
+		header = strings.TrimSpace(request.Header.Get("X-Real-IP"))
+	}
+	first := strings.TrimSpace(strings.Split(header, ",")[0])
+	if ip := net.ParseIP(first); ip != nil {
+		return ip.String()
+	}
+	return ""
 }
 
 func bearerToken(request *http.Request) (string, bool) {

@@ -2010,8 +2010,16 @@ func TestLoginRateLimitKeyFallsBackWhenRemoteAddrHasNoPort(t *testing.T) {
 
 	withoutPort := httptest.NewRequest(http.MethodPost, "/", nil)
 	withoutPort.RemoteAddr = "203.0.113.5" // no ":port" -- net.SplitHostPort fails, so the raw value is used
+	withoutPort.Header.Set("X-Forwarded-For", "198.51.100.8")
 	if got := loginRateLimitKey(withoutPort); got != "login:203.0.113.5" {
-		t.Fatalf("expected the raw RemoteAddr as a fallback, got %q", got)
+		t.Fatalf("expected a public peer to ignore a forwarded address, got %q", got)
+	}
+
+	proxied := httptest.NewRequest(http.MethodPost, "/", nil)
+	proxied.RemoteAddr = "127.0.0.1:4321"
+	proxied.Header.Set("X-Forwarded-For", "198.51.100.8, 127.0.0.1")
+	if got := loginRateLimitKey(proxied); got != "login:198.51.100.8" {
+		t.Fatalf("expected the client in front of the local proxy, got %q", got)
 	}
 }
 

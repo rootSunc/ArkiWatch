@@ -14,6 +14,17 @@ import (
 // openTestStore connects to the database CI provisions for the API job. The
 // tests skip rather than fail when it is absent so `go test ./...` still works
 // on a machine without PostgreSQL.
+func TestLocalSnapshotDayUsesHelsinkiCalendar(t *testing.T) {
+	instant := time.Date(2026, 1, 14, 22, 30, 0, 0, time.UTC) // 00:30 on 15 Jan in Helsinki
+	if got := localSnapshotDay(instant, nil); got != "2026-01-15" {
+		t.Fatalf("snapshot day = %s", got)
+	}
+	explicit := time.Date(2026, 8, 9, 0, 0, 0, 0, time.UTC)
+	if got := localSnapshotDay(instant, &explicit); got != "2026-08-09" {
+		t.Fatalf("explicit day = %s", got)
+	}
+}
+
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
 	dsn := os.Getenv("DATABASE_URL")
@@ -135,7 +146,7 @@ func TestPublicDashboardIgnoresStaleRegionalSnapshot(t *testing.T) {
 	// not days, so this can't collide with the unique (scope, date) constraint
 	// against real snapshots a long-lived local dev database has accumulated.
 	staleDate := now.AddDate(-5, 0, 0).Format("2006-01-02")
-	if _, err := store.pool.Exec(ctx, `UPDATE regional_snapshots SET snapshot_date = $1::date WHERE snapshot_date = $2::date`, staleDate, now.Format("2006-01-02")); err != nil {
+	if _, err := store.pool.Exec(ctx, `UPDATE regional_snapshots SET snapshot_date = $1::date WHERE snapshot_date = $2::date`, staleDate, localSnapshotDay(now, nil)); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
