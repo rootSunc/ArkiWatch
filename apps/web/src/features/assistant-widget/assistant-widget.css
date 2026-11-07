@@ -1,7 +1,7 @@
 /*
  * Assistant slide-over (README §12). A right-side panel over a dismissable
- * scrim; replaces the floating mascot bubble. The panel is the only element in
- * the product allowed a box-shadow.
+ * scrim; replaces the floating mascot bubble. A soft edge shadow separates the panel
+ * from the active workspace.
  */
 
 @keyframes assistantSlideover {
@@ -57,7 +57,7 @@
   background: var(--canvas);
   border-left: 1px solid var(--line);
   box-shadow: var(--assistant-panel-shadow);
-  animation: assistantSlideover 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: assistantSlideover 360ms var(--ease-out);
 }
 
 /* Keep the scrollable content behind the modal from moving. */
@@ -684,3 +684,5 @@ body:has(.assistant-widget-open) .dashboard-content {
     transition: none;
   }
 }
+
+.assistant-avatar-mark { width: 24px; height: 24px; color: var(--ink); }

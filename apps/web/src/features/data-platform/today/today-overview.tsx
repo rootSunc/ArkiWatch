@@ -130,17 +130,13 @@ export function TodayOverview({
     >
       <section className={`today-command today-command-${focusTone}`}>
         <div className="today-focus">
-          <div className="today-eyebrow">
-            <span>{tKey("shell.navToday")}</span>
-            <span aria-hidden="true">·</span>
-            <span>{todayBrief.coverageArea}</span>
-          </div>
           {todayBrief.recommendationCoverageArea ? (
             <p className="today-scope-note" role="note">
               {tKey("shell.publicRecommendationsScope")} {todayBrief.recommendationCoverageArea}
             </p>
           ) : null}
           <h1>{todayBrief.headline}</h1>
+          <span className="today-coverage">{todayBrief.coverageArea}</span>
           <p>
             {focusAction
               ? localizedContent(language, focusAction.body, focusAction.body_zh)

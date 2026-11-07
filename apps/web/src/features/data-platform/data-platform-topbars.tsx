@@ -18,7 +18,7 @@ import {
   breadcrumbForNav,
 } from "./data-platform-nav-utils";
 
-const ASSISTANT_MASCOT_SRC = "/brand/zoro_mascot_launcher.png";
+import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 import { SideNavRestoreButton } from "./data-platform-side-nav";
 import { type LanguageMode, useI18n } from "./i18n";
 import { PlatformScopeControls } from "./platform-scope-controls";
@@ -110,6 +110,8 @@ function DashboardSearch({
 type DataPlatformMobileHeaderProps = ScopeControlProps & {
   isDetailPage: boolean;
   isMobileMenuOpen: boolean;
+  selectedNavKey: string;
+  onBackToOverview: () => void;
   navigationButtonRef: RefObject<HTMLButtonElement>;
   onSearchChange: (value: string) => void;
   workspaceMode: WorkspaceMode;
@@ -126,6 +128,8 @@ export function DataPlatformMobileHeader({
   isDatePending,
   isDetailPage,
   isMobileMenuOpen,
+  selectedNavKey,
+  onBackToOverview,
   navigationButtonRef,
   isEventsExpanded,
   language,
@@ -142,32 +146,29 @@ export function DataPlatformMobileHeader({
   return (
     <header className="mobile-dashboard-header">
       <div className="mobile-brand">
+        {isDetailPage ? (
+          <button className="icon-button" type="button" aria-label={tKey("shell.backToSignals")} onClick={onBackToOverview}>
+            <span className="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+        ) : null}
         <button
           aria-controls="arkiwatch-mobile-navigation"
           aria-expanded={isMobileMenuOpen}
-          className="icon-button"
+          className={`icon-button${isDetailPage ? " mobile-workspace-menu" : ""}`}
           aria-label={tKey("shell.openNavigation")}
           onClick={onOpenNavigation}
           ref={navigationButtonRef}
           type="button"
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            menu
-          </span>
+          <span className="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
-        <span className="mobile-brand-mark" aria-hidden="true">
-          <Image
-            alt=""
-            className="brand-logo-image"
-            height={96}
-            src={BRAND_LOGO_SRC}
-            width={96}
-          />
-        </span>
-        <strong>ArkiWatch</strong>
+        {!isDetailPage ? <span className="mobile-brand-mark" aria-hidden="true">
+          <Image alt="" className="brand-logo-image" height={96} src={BRAND_LOGO_SRC} width={96} />
+        </span> : null}
+        <strong>{isDetailPage ? tKey(breadcrumbForNav(selectedNavKey).leafKey) : "ArkiWatch"}</strong>
         <NotificationButton
           count={notificationCount}
-          isActive={isEventsExpanded && !isDetailPage}
+          isActive={isEventsExpanded}
           language={language}
           onClick={onNotificationsClick}
           tone={notificationTone}
@@ -232,7 +233,6 @@ export function DataPlatformWorkspaceTopbar({
   isAuthenticated,
   isCityPending,
   isDatePending,
-  isDetailPage,
   onOpenAssistant,
   isEventsExpanded,
   isHistorical,
@@ -288,7 +288,7 @@ export function DataPlatformWorkspaceTopbar({
           isAuthenticated={isAuthenticated}
           isCityPending={isCityPending}
           isDatePending={isDatePending}
-          isEventsExpanded={isEventsExpanded && !isDetailPage}
+          isEventsExpanded={isEventsExpanded}
           isHistorical={isHistorical}
           isRefreshing={isRefreshing}
           language={language}
@@ -321,14 +321,7 @@ export function DataPlatformWorkspaceTopbar({
             }
             type="button"
           >
-            <Image
-              alt=""
-              aria-hidden="true"
-              className="topbar-assistant-mark"
-              height={36}
-              src={ASSISTANT_MASCOT_SRC}
-              width={36}
-            />
+            <AssistantGlyph className="topbar-assistant-mark" />
             <span>{tKey("shell.assistant")}</span>
           </button>
         ) : null}

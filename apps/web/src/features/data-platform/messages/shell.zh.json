@@ -1,5 +1,7 @@
 {
   "shell": {
+    "snapshotBrief": "快照简报",
+    "observatoryEyebrow": "洞察日常 · 从容决策",
     "adminSignIn": "管理员登录",
     "allSignals": "全部信号",
     "backToToday": "返回今日",
@@ -12,7 +14,7 @@
     "privacyDocumentDescription": "ArkiWatch 如何把公共信号与可选的个人配置分开。",
     "settingsDocumentTitle": "个人情境 | ArkiWatch",
     "dataPlatformMode": "数据平台",
-    "dataPlatformLead": "查看公共信号的范围、更新时间，以及每条读数背后的证据。",
+    "dataPlatformLead": "让分散的数据，成为清晰的日常。",
     "aboutArkiWatch": "关于 ArkiWatch",
     "reportDataIssue": "报告数据问题",
     "loadingDashboard": "正在加载数据平台",
@@ -48,7 +50,7 @@
     "signalSystemSummary": "信号系统摘要",
     "signalStatusArray": "信号状态总览",
     "coreSignals": "核心信号",
-    "coreSignalsLead": "对日常决策最有用的实时领域。",
+    "coreSignalsLead": "与你的日常决策息息相关的信号。",
     "historicalCoreSignalsLead": "所选日期保存的信号，范围与证据保持可见。",
     "catalogSignals": "数据目录",
     "catalogSignalsLead": "用于深入检查的参考数据集与区域背景。",
@@ -459,6 +461,13 @@
     "publicData": "公共数据",
     "snapshotChecked": "快照检查于",
     "tracked": "个信号",
-    "sourceDetails": "数据来源详情"
+    "sourceDetails": "数据来源详情",
+    "eventFilters": "筛选事件",
+    "allEvents": "全部事件",
+    "allCaughtUp": "已读完所有事件",
+    "allCaughtUpDetail": "已读事件仍可在「全部事件」中查看。",
+    "backToEvents": "返回事件列表",
+    "backToSignals": "返回信号总览",
+    "dataHealthDetails": "数据覆盖与更新情况"
   }
 }

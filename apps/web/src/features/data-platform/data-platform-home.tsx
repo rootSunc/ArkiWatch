@@ -512,16 +512,8 @@ export function DataPlatformHome({
   const {
     primaryVisibleCategories,
     catalogVisibleCategories,
-    visibleEvents,
-    unreadVisibleEvents,
-    visibleNotificationEvents,
-    latestUnreadEvent,
-    latestEventTone,
     recentNotificationCount,
     recentNotificationTone,
-    overallNotificationTitle,
-    overallNotificationBody,
-    overallNotificationDetail,
   } = buildSignalView({
     categoryEvents: publicDashboard?.decision?.category_events,
     selectedCategory,
@@ -568,24 +560,8 @@ export function DataPlatformHome({
   }
 
   function openRecentEventsPanel(): void {
-    if (selectedNavKey === FALLBACK_NAV_KEY && isEventsExpanded) {
-      setIsEventsExpanded(false);
-    } else {
-      selectNav(FALLBACK_NAV_KEY);
-      setSearchValue("");
-      setIsEventsExpanded(true);
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        window.requestAnimationFrame(() => {
-          document.querySelector<HTMLElement>(".events-panel-expanded")?.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-              ? "auto"
-              : "smooth",
-            block: "start",
-            inline: "nearest",
-          });
-        });
-      }
-    }
+    setSelectedEventId(null);
+    setIsEventsExpanded((expanded) => !expanded);
   }
 
   function restoreRecentEventsFocus(): void {
@@ -776,6 +752,8 @@ export function DataPlatformHome({
             {...scopeControlProps}
             isDetailPage={isDetailPage}
             isMobileMenuOpen={isMobileMenuOpen}
+            selectedNavKey={selectedNavKey}
+            onBackToOverview={() => selectNav(FALLBACK_NAV_KEY)}
             navigationButtonRef={mobileNavigationButtonRef}
             onSearchChange={setSearchValue}
             onOpenNavigation={() => setIsMobileMenuOpen(true)}
@@ -825,6 +803,7 @@ export function DataPlatformHome({
               className={`dashboard-scope-content${
                 isScopePending ? " dashboard-scope-content-pending" : ""
               }`}
+              key={selectedNavKey}
               ref={scopeContentRef}
             >
             {showInlineDataError ? (
@@ -913,41 +892,7 @@ export function DataPlatformHome({
                       <SourceHealthStrip overview={visibleOverview} />
                     ) : null
                   }
-                  secondaryContent={
-                    <RecentEventsPanel
-                      categories={categories}
-                      checkedAt={visibleOverview.checked_at}
-                      city={selectedCity}
-                      eventDetailCloseRef={eventDetailCloseRef}
-                      eventReferenceAt={eventReferenceAt}
-                      isExpanded={isEventsExpanded}
-                      latestEventTone={latestEventTone}
-                      latestUnreadEvent={latestUnreadEvent}
-                      onCloseEventDetail={closeEventDetail}
-                      onMarkEventRead={markRecentEventRead}
-                      onOpenEvent={openRecentEvent}
-                      onSelectEvent={selectRecentEvent}
-                      onToggleExpanded={() => {
-                        if (isEventsExpanded) {
-                          restoreRecentEventsFocus();
-                        }
-                        setIsEventsExpanded(!isEventsExpanded);
-                      }}
-                      platformTimezone={platformTimezone}
-                      readRecentEventIds={readRecentEventIds}
-                      selectedEvent={selectedEvent}
-                      selectedEventId={selectedEventId}
-                      timeScope={visibleOverview.time_scope}
-                      unreadVisibleEvents={unreadVisibleEvents}
-                      visibleEvents={visibleEvents}
-                      visibleNotificationEvents={visibleNotificationEvents}
-                      overallNotification={{
-                        body: overallNotificationBody,
-                        detail: overallNotificationDetail,
-                        title: overallNotificationTitle,
-                      }}
-                    />
-                  }
+
                 />
               )
             ) : (
@@ -971,6 +916,30 @@ export function DataPlatformHome({
             selectedNavKey={selectedNavKey}
           />
         </div>
+        {visibleOverview ? (
+          <RecentEventsPanel
+            categories={categories}
+            checkedAt={visibleOverview.checked_at}
+            city={selectedCity}
+            eventDetailCloseRef={eventDetailCloseRef}
+            eventReferenceAt={eventReferenceAt}
+            isExpanded={isEventsExpanded}
+            onCloseEventDetail={closeEventDetail}
+            onMarkEventRead={markRecentEventRead}
+            onOpenEvent={openRecentEvent}
+            onSelectEvent={selectRecentEvent}
+            onToggleExpanded={() => {
+              setIsEventsExpanded(false);
+              setSelectedEventId(null);
+              restoreRecentEventsFocus();
+            }}
+            platformTimezone={platformTimezone}
+            readRecentEventIds={readRecentEventIds}
+            selectedEvent={selectedEvent}
+            timeScope={visibleOverview.time_scope}
+            visibleEvents={recentEvents}
+          />
+        ) : null}
         <AssistantWidget
           city={selectedCity}
           date={historicalDate}

@@ -76,6 +76,7 @@ export function SignalCard({
   return (
     <button
       className={`signal-card signal-card-${readout.tone}`}
+      data-category={category.key}
       onClick={onSelect}
       type="button"
     >
@@ -115,6 +116,9 @@ export function SignalCard({
             {provider}
           </span>
         ) : null}
+        <span className="material-symbols-outlined signal-card-arrow" aria-hidden="true">
+          chevron_right
+        </span>
       </span>
     </button>
   );

@@ -1,10 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "./i18n";
 import { RecentEventsPanel } from "./recent-events-panel";
 import type { PlatformCategory, PlatformEvent } from "./types";
+
+// jsdom has no top-layer API; browser tests verify native modal behavior.
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+});
 
 const event: PlatformEvent = {
   id: "rain-1",
@@ -46,8 +52,6 @@ function renderPanel(overrides: Partial<ComponentProps<typeof RecentEventsPanel>
     eventDetailCloseRef: { current: null },
     eventReferenceAt: "2026-08-13T07:00:00Z",
     isExpanded: true,
-    latestEventTone: "bad",
-    latestUnreadEvent: event,
     onCloseEventDetail: vi.fn(),
     onMarkEventRead: vi.fn(),
     onOpenEvent: vi.fn(),
@@ -56,16 +60,8 @@ function renderPanel(overrides: Partial<ComponentProps<typeof RecentEventsPanel>
     platformTimezone: "Europe/Helsinki",
     readRecentEventIds: new Set(),
     selectedEvent: null,
-    selectedEventId: null,
     timeScope: null,
-    unreadVisibleEvents: [event],
     visibleEvents: [event],
-    visibleNotificationEvents: [event],
-    overallNotification: {
-      body: "Rain may affect the commute.",
-      detail: "Source-level evidence remains available below.",
-      title: "Weather · 1 notification",
-    },
     ...overrides,
   };
 
@@ -82,7 +78,7 @@ describe("RecentEventsPanel", () => {
     const onSelectEvent = vi.fn();
     renderPanel({ onMarkEventRead, onSelectEvent });
 
-    expect(screen.getByRole("complementary", { name: "Recent events" })).toHaveTextContent(
+    expect(screen.getByRole("dialog", { name: "Recent events" })).toHaveTextContent(
       "Heavy rain",
     );
     fireEvent.click(screen.getByRole("button", { name: /Open event detail/ }));
@@ -91,22 +87,49 @@ describe("RecentEventsPanel", () => {
     expect(onSelectEvent).toHaveBeenCalledWith(event, expect.anything());
   });
 
-  it("keeps decorative notification ligatures out of the accessibility tree", () => {
-    const { container } = renderPanel();
+  it("mounts outside the workspace and restores body scrolling on unmount", () => {
+    const { container, unmount } = renderPanel();
+    const dialog = screen.getByRole("dialog", { name: "Recent events" });
+    expect(container).not.toContainElement(dialog);
+    expect(dialog.parentElement).toBe(document.body);
+    expect(document.body.style.overflow).toBe("hidden");
+    unmount();
+    expect(document.body.style.overflow).toBe("");
+  });
 
-    const notificationIcons = Array.from(container.querySelectorAll(".material-symbols-outlined")).filter(
-      (icon) => icon.textContent?.trim() === "notifications",
-    );
+  it("filters read events with a useful empty state", () => {
+    renderPanel({ readRecentEventIds: new Set([event.id]) });
+    fireEvent.click(screen.getByRole("button", { name: /Unread/ }));
+    expect(screen.queryByRole("button", { name: /Open event detail/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("You’re all caught up");
+    fireEvent.click(screen.getByRole("button", { name: /All events/ }));
+    expect(screen.getByRole("button", { name: /Open event detail/ })).toBeVisible();
+  });
 
-    expect(notificationIcons).toHaveLength(2);
-    for (const icon of notificationIcons) {
-      expect(icon).toHaveAttribute("aria-hidden", "true");
-    }
+  it("shows detail as a separate screen and delegates back and workspace actions", () => {
+    const onCloseEventDetail = vi.fn();
+    const onOpenEvent = vi.fn();
+    renderPanel({ selectedEvent: event, onCloseEventDetail, onOpenEvent });
+    expect(screen.queryByRole("button", { name: /Open event detail/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Heavy rain" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Back to events" }));
+    expect(onCloseEventDetail).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Open workspace" }));
+    expect(onOpenEvent).toHaveBeenCalledWith(event);
+  });
+
+  it("handles Escape as back in detail and close in the list", () => {
+    const onCloseEventDetail = vi.fn();
+    const onToggleExpanded = vi.fn();
+    renderPanel({ selectedEvent: event, onCloseEventDetail, onToggleExpanded });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+    expect(onCloseEventDetail).toHaveBeenCalledOnce();
+    expect(onToggleExpanded).not.toHaveBeenCalled();
   });
 
   it("does not mount the event surface while collapsed", () => {
     renderPanel({ isExpanded: false });
 
-    expect(screen.queryByRole("complementary", { name: "Recent events" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Recent events" })).not.toBeInTheDocument();
   });
 });

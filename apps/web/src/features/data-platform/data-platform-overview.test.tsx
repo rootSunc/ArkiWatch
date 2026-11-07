@@ -1,9 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DataPlatformOverview } from "./data-platform-overview";
 import { I18nProvider } from "./i18n";
 import type { PlatformOverviewResponse } from "./types";
+
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+});
+afterEach(() => vi.unstubAllGlobals());
 
 const overview = {
   checked_at: "2026-08-13T09:30:00Z",

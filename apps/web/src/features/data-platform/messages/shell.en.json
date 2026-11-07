@@ -1,5 +1,7 @@
 {
   "shell": {
+    "snapshotBrief": "Snapshot brief",
+    "observatoryEyebrow": "EVERYDAY INTELLIGENCE",
     "adminSignIn": "Admin sign in",
     "allSignals": "All signals",
     "backToToday": "Back to Today",
@@ -16,7 +18,7 @@
     "publicData": "Public data",
     "snapshotChecked": "Snapshot checked",
     "tracked": "tracked",
-    "dataPlatformLead": "Inspect public signals, their scope, freshness, and the evidence behind every reading.",
+    "dataPlatformLead": "A clearer picture of your day. Public signals, connected.",
     "aboutArkiWatch": "About ArkiWatch",
     "reportDataIssue": "Report a data issue",
     "loadingDashboard": "Loading the data platform",
@@ -52,7 +54,7 @@
     "signalSystemSummary": "Signal system summary",
     "signalStatusArray": "Signal status array",
     "coreSignals": "Core signals",
-    "coreSignalsLead": "Live domains most useful for everyday decisions.",
+    "coreSignalsLead": "The signals behind your everyday decisions.",
     "historicalCoreSignalsLead": "Signals captured for the selected date, with scope and evidence kept visible.",
     "catalogSignals": "Data catalog",
     "catalogSignalsLead": "Reference datasets and regional context for deeper inspection.",
@@ -459,6 +461,13 @@
     "helsinkiUusimaa": "Helsinki & Uusimaa",
     "helsinkiRegion": "Helsinki region",
     "helsinkiMetro": "Helsinki metro",
-    "sourceDetails": "Source details"
+    "sourceDetails": "Source details",
+    "eventFilters": "Filter events",
+    "allEvents": "All events",
+    "allCaughtUp": "You’re all caught up",
+    "allCaughtUpDetail": "Read events are still available in All events.",
+    "backToEvents": "Back to events",
+    "backToSignals": "Back to signals",
+    "dataHealthDetails": "Data coverage & freshness"
   }
 }

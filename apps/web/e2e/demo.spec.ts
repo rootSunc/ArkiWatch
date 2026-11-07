@@ -635,13 +635,8 @@ test.describe("deterministic demo", () => {
     await expect(panel).toBeVisible();
     await expect.poll(async () =>
       panel.evaluate((element) => {
-        const scroller = element.closest<HTMLElement>(".dashboard-content");
         const panelRect = element.getBoundingClientRect();
-        const scrollerRect = scroller?.getBoundingClientRect();
-        if (!scrollerRect) {
-          return false;
-        }
-        return panelRect.top >= scrollerRect.top - 1 && panelRect.bottom <= scrollerRect.bottom + 1;
+        return element.matches(":modal") && panelRect.top >= 0 && panelRect.bottom <= window.innerHeight && getComputedStyle(element).backgroundColor !== "rgba(0, 0, 0, 0)";
       }),
     ).toBe(true);
   });
@@ -660,13 +655,14 @@ test.describe("deterministic demo", () => {
       .toMatch(recentEventsButtonName);
   });
 
-  test("keeps the recent events panel above the mobile navigation", async ({ page }, testInfo) => {
+  test("keeps the mobile event sheet in the top layer and within the viewport", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile-chromium", "mobile-only event panel layout audit");
 
     await page.setViewportSize({ width: 280, height: 740 });
     await page.goto("/", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: recentEventsButtonName }).click();
 
+    await expect.poll(() => page.locator(".events-panel-expanded").evaluate((panel) => panel.getBoundingClientRect().bottom <= window.innerHeight)).toBe(true);
     const layout = await page.locator(".events-panel-expanded").evaluate((panel) => {
       const panelRect = panel.getBoundingClientRect();
       const footerRect = document.querySelector<HTMLElement>(".mobile-dashboard-footer")?.getBoundingClientRect();
@@ -675,13 +671,62 @@ test.describe("deterministic demo", () => {
         panelRight: panelRect.right,
         panelBottom: panelRect.bottom,
         footerTop: footerRect?.top ?? Number.POSITIVE_INFINITY,
+        viewportHeight: window.innerHeight,
+        modal: panel.matches(":modal"),
         viewport: window.innerWidth,
       };
     });
 
     expect(layout.panelLeft).toBeGreaterThanOrEqual(0);
     expect(layout.panelRight).toBeLessThanOrEqual(layout.viewport);
-    expect(layout.panelBottom).toBeLessThanOrEqual(layout.footerTop);
+    expect(layout.panelBottom).toBeLessThanOrEqual(layout.viewportHeight);
+    expect(layout.modal).toBe(true);
+  });
+
+  test("opens the inbox without losing the workspace and uses a separate detail screen", async ({ page }) => {
+    await page.goto("/?view=mobility&mobilityTab=transit", { waitUntil: "networkidle" });
+    const url = page.url();
+    await page.getByRole("button", { name: recentEventsButtonName }).click();
+    const inbox = page.getByRole("dialog", { name: "Recent events" });
+    await expect(inbox).toBeVisible();
+    await expect(page).toHaveURL(url);
+    await inbox.locator(".timeline-item-content").first().click();
+    await expect(inbox.locator(".inbox-list-screen")).toBeHidden();
+    await expect(inbox.getByRole("button", { name: "Open workspace" })).toBeInViewport();
+    await page.keyboard.press("Escape");
+    await expect(inbox.locator(".inbox-list-screen")).toBeVisible();
+    await expect(inbox.locator(".timeline-item-content").first()).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(inbox).toHaveCount(0);
+    await expect(page).toHaveURL(url);
+  });
+
+  test("keeps the mobile inbox usable on short screens and in both themes", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "mobile sheet audit");
+    for (const theme of ["light", "dark"]) {
+      await setPreference(page, "theme", theme);
+      await page.setViewportSize({ width: 280, height: 480 });
+      await page.goto("/", { waitUntil: "networkidle" });
+      await page.getByRole("button", { name: recentEventsButtonName }).click();
+      const inbox = page.getByRole("dialog", { name: "Recent events" });
+      await expect(inbox.getByRole("button", { name: "Collapse recent events" })).toBeInViewport();
+      await inbox.locator(".timeline-item-content").first().click();
+      await expect(inbox.getByRole("button", { name: "Open workspace" })).toBeInViewport();
+      const layout = await inbox.evaluate((element) => ({ width: element.scrollWidth, client: element.clientWidth, modal: element.matches(":modal") }));
+      expect(layout.width).toBeLessThanOrEqual(layout.client);
+      expect(layout.modal).toBe(true);
+      await inbox.getByRole("button", { name: "Collapse recent events" }).click();
+    }
+  });
+
+  test("discloses mobile data health without hiding the daily recommendation", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "mobile hierarchy audit");
+    await page.goto("/", { waitUntil: "networkidle" });
+    const health = page.locator(".overview-health-disclosure");
+    await expect(health).not.toHaveAttribute("open", "");
+    await health.locator("summary").click();
+    await expect(health).toHaveAttribute("open", "");
+    await expect(page.locator(".today-digest-strip")).toBeVisible();
   });
 
   test("localizes transit alert enum details", async ({ page }) => {
@@ -833,6 +878,8 @@ test.describe("deterministic demo", () => {
     await page.getByRole("button", { name: recentEventsButtonName }).click();
     await page.locator(".timeline-item-content").first().click();
     await expect(page.locator(".event-detail-panel")).toBeVisible();
+
+    await page.getByRole("button", { name: "Collapse recent events" }).click();
 
     const citySelector = page
       .getByRole("combobox", { name: "City" })

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { AssistantGlyph } from "./assistant-glyph";
 import {
   FormEvent,
   type RefObject,
@@ -65,7 +65,6 @@ type ChatMessage = {
   retryQuestion?: string;
 };
 
-const ASSISTANT_MASCOT_SRC = "/brand/zoro_mascot_launcher.png";
 
 export function AssistantWidget({
   overview,
@@ -573,14 +572,7 @@ export function AssistantWidget({
         >
           <div className="assistant-panel-header">
             <span className="assistant-avatar" aria-hidden="true">
-              <Image
-                src={ASSISTANT_MASCOT_SRC}
-                alt=""
-                width={36}
-                height={36}
-                className="assistant-avatar-mascot"
-              />
-              <span className="assistant-avatar-status" />
+              <AssistantGlyph className="assistant-avatar-mark" />
             </span>
             <span className="assistant-panel-identity">
               <h2 id="assistant-dialog-title">{assistantName}</h2>

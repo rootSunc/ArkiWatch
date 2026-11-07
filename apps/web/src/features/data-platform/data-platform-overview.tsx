@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, type ChangeEvent, type ReactNode } from "react";
 
 import { formatTimestamp } from "@/features/shared/format";
 
 import { scopedDataTimestamp } from "./data-time-scope";
 import { useI18n } from "./i18n";
+import type { SignalSystemTile } from "./signals-console";
+import type { TodayBrief } from "./today/today-brief";
+import { TodayDigestStrip } from "./today/today-digest-strip";
 import type { PlatformOverviewResponse } from "./types";
 
 function snapshotClock(value: string | null, timeZone: string): string {
@@ -26,9 +29,6 @@ function snapshotClock(value: string | null, timeZone: string): string {
     return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(parsed);
   }
 }
-import type { SignalSystemTile } from "./signals-console";
-import type { TodayBrief } from "./today/today-brief";
-import { TodayDigestStrip } from "./today/today-digest-strip";
 
 type DataPlatformOverviewProps = {
   checkedAt: string;
@@ -47,7 +47,7 @@ type DataPlatformOverviewProps = {
   signalSystemTiles: SignalSystemTile[];
   todayBrief: TodayBrief | null;
   sourceHealth: ReactNode;
-  secondaryContent: ReactNode;
+  secondaryContent?: ReactNode;
 };
 
 function OverviewSearch({
@@ -188,15 +188,23 @@ export function DataPlatformOverview({
 }: DataPlatformOverviewProps) {
   const { language, tKey } = useI18n();
   const hasSearch = Boolean(searchValue.trim());
+  const healthDisclosureRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 641px)");
+    const syncLayout = () => {
+      if (healthDisclosureRef.current) healthDisclosureRef.current.open = desktop.matches;
+    };
+    syncLayout();
+    desktop.addEventListener("change", syncLayout);
+    return () => desktop.removeEventListener("change", syncLayout);
+  }, []);
 
   return (
     <div className="overview-page">
       <header className="overview-hero">
         <div className="overview-hero-copy">
           <div className="overview-hero-kicker">
-            <span className="overview-hero-kicker-dot" aria-hidden="true" />
-            <span>{tKey("shell.dataPlatformMode")}</span>
-            <span className="overview-hero-kicker-sep" aria-hidden="true">·</span>
+            <span className="overview-hero-eyebrow">{tKey("shell.observatoryEyebrow")}</span>
             <span className="overview-hero-updated">
               {tKey("shell.updated")} {scopedDataTimestamp(
                 checkedAt,
@@ -216,10 +224,6 @@ export function DataPlatformOverview({
         </div>
       </header>
 
-      {!hasSearch ? (
-        <TodayDigestStrip onOpenToday={onOpenToday} todayBrief={todayBrief} />
-      ) : null}
-
       {hasSearch ? (
         <p className="overview-search-status" role="status">
           {tKey("shell.searchResultsSummary").replace(
@@ -229,10 +233,29 @@ export function DataPlatformOverview({
         </p>
       ) : null}
 
+      <div
+        className={`overview-briefing${
+          hasSearch || !todayBrief?.hasScopedData
+            ? " overview-briefing-summary-only"
+            : ""
+        }`}
+      >
+        {!hasSearch ? (
+          <TodayDigestStrip onOpenToday={onOpenToday} todayBrief={todayBrief} />
+        ) : null}
+        <details className="overview-health-disclosure" ref={healthDisclosureRef}>
+          <summary><span>{tKey("shell.dataHealthDetails")}</span><span className="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>
+        <OverviewStatusBar
+          overview={overview}
+          platformTimezone={platformTimezone}
+          tiles={signalSystemTiles}
+        />
+        </details>
+      </div>
+
       <section className="overview-core-section" aria-label={tKey("shell.signalStatusArray")}>
         <div className="overview-section-heading">
           <div>
-            <span className="overview-section-kicker">{tKey("shell.localSignals")}</span>
             <h2>{tKey("shell.coreSignals")}</h2>
             <p>
               {isHistorical
@@ -264,15 +287,6 @@ export function DataPlatformOverview({
           )}
         </div>
       </section>
-
-      {/* The readings are the page's primary result, so they lead. The system
-        * summary (coverage, events, collectors, check time) is supporting
-        * evidence and follows as one quiet row. */}
-      <OverviewStatusBar
-        overview={overview}
-        platformTimezone={platformTimezone}
-        tiles={signalSystemTiles}
-      />
 
       {catalogSignalCount > 0 ? (
         <details
