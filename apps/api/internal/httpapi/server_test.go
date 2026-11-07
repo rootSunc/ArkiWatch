@@ -1901,6 +1901,11 @@ func TestValidateCommutePayloadRejectsInvalidModeWeekdaysAndClock(t *testing.T) 
 		{"weekday out of range low", func(p commutePayload) commutePayload { p.Weekdays = []int{0}; return p }},
 		{"weekday out of range high", func(p commutePayload) commutePayload { p.Weekdays = []int{8}; return p }},
 		{"unsupported preferred mode", func(p commutePayload) commutePayload { p.PreferredMode = "FLY"; return p }},
+		{"blank route name", func(p commutePayload) commutePayload { p.RouteNames = []string{" "}; return p }},
+		{"too many stops", func(p commutePayload) commutePayload {
+			p.StopNames = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"}
+			return p
+		}},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {

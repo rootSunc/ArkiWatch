@@ -100,6 +100,36 @@ func TestBuildCommuteUsesModeWeekdayAndDeparture(t *testing.T) {
 	}
 }
 
+func TestBuildCommuteMatchesNamedRouteAndStop(t *testing.T) {
+	mondayMorning := time.Date(2026, 8, 24, 5, 15, 0, 0, time.UTC)
+	rider := User{Timezone: "Europe/Helsinki", CaresCommute: true, HasCommuteProfile: true, Commutes: []Commute{ParseCommute("TRANSIT", "08:00", []int{1, 2, 3, 4, 5}).WithTargets([]string{"9"}, []string{"Kallio"})}}
+	matched := Event{EventType: "transit_delay", Severity: "HIGH", Title: "Tram 9 delayed", StartsAt: mondayMorning, EndsAt: mondayMorning.Add(time.Hour), Attributes: map[string]any{
+		"routes": []any{map[string]any{"name": "9", "gtfs_id": "HSL:1009"}},
+		"stops":  []any{map[string]any{"name": "Kallion virastotalo"}},
+	}}
+	if _, ok := Build(matched, rider, 90); !ok {
+		t.Fatal("expected route 9 at Kallio to match the saved commute")
+	}
+	otherRoute := matched
+	otherRoute.Attributes = map[string]any{"routes": []any{map[string]any{"name": "19"}}}
+	if _, ok := Build(otherRoute, rider, 90); ok {
+		t.Fatal("route 19 matched a commute limited to route 9")
+	}
+	otherStop := matched
+	otherStop.Attributes = map[string]any{
+		"routes": []any{map[string]any{"name": "9"}},
+		"stops":  []any{map[string]any{"name": "Kamppi"}},
+	}
+	if _, ok := Build(otherStop, rider, 90); ok {
+		t.Fatal("a Kamppi stop matched a Kallio commute")
+	}
+	network := matched
+	network.Attributes = map[string]any{}
+	if _, ok := Build(network, rider, 90); !ok {
+		t.Fatal("a network-wide alert should still reach a route-specific commute")
+	}
+}
+
 func TestBuildFormatsFloatsWithoutExponent(t *testing.T) {
 	user := User{Timezone: "Europe/Helsinki", CaresWeather: true}
 	event := Event{EventType: "rain_risk", Severity: "LOW", StartsAt: time.Now(), EndsAt: time.Now().Add(time.Hour), Attributes: map[string]any{"peak_precip_mm": 0.0000125}}

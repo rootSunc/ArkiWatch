@@ -128,7 +128,7 @@ func execute(ctx context.Context, store *database.Store, cfg config.Config, job 
 		}
 		item := results[0]
 		if item.Status != "succeeded" {
-			return nil, fmt.Errorf("%s collector failed: %s", code, item.ErrorMessage)
+			return nil, fmt.Errorf("%s collector %s: %s", code, item.Status, item.ErrorMessage)
 		}
 		return map[string]any{"source_code": item.SourceCode, "dataset": item.Dataset, "records_ingested": item.RecordsIngested, "records_skipped": item.RecordsSkipped}, nil
 	case scheduler.TaskPipelineNormalize:

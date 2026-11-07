@@ -264,7 +264,7 @@ func categoryStatus(def categoryDefinition, events []Event, categorySources []So
 		return def.Stage
 	}
 	for _, source := range categorySources {
-		if source.OperationalStatus == "failing" || source.OperationalStatus == "stale" || source.OperationalStatus == "pending" {
+		if source.OperationalStatus == "failing" || source.OperationalStatus == "stale" || source.OperationalStatus == "pending" || source.OperationalStatus == "degraded" {
 			return source.OperationalStatus
 		}
 	}
@@ -367,7 +367,7 @@ func overviewHealth(categories []Category) string {
 	if statuses["alert"] || statuses["failing"] {
 		return "alert"
 	}
-	if statuses["watch"] || statuses["stale"] || statuses["pending"] {
+	if statuses["watch"] || statuses["stale"] || statuses["pending"] || statuses["degraded"] {
 		return "watch"
 	}
 	if len(statuses) == 0 {
@@ -391,7 +391,7 @@ func toneForStatus(value string) string {
 	switch value {
 	case "healthy", "ready":
 		return "good"
-	case "pending", "stale", "watch":
+	case "pending", "stale", "watch", "degraded":
 		return "warn"
 	case "failing", "inactive", "alert":
 		return "bad"

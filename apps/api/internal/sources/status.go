@@ -17,6 +17,7 @@ type CollectorRunDay struct {
 	Succeeded int    `json:"succeeded"`
 	Failed    int    `json:"failed"`
 	Running   int    `json:"running"`
+	Degraded  int    `json:"degraded,omitempty"`
 }
 
 type Status struct {
@@ -55,6 +56,17 @@ func DeriveOperationalStatus(item Status, now time.Time) string {
 			return "stale"
 		}
 		return "pending"
+	}
+	if item.LastRun.Status == "degraded" {
+		reference := item.LastRun.FinishedAt
+		if reference == nil {
+			reference = &item.LastRun.StartedAt
+		}
+		parsed, err := time.Parse(time.RFC3339Nano, *reference)
+		if err != nil || now.Sub(parsed) > maxAge {
+			return "stale"
+		}
+		return "degraded"
 	}
 	if item.LastRun.Status != "succeeded" {
 		return "failing"

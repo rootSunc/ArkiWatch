@@ -990,6 +990,8 @@ export interface components {
             runs: number;
             /** Succeeded */
             succeeded: number;
+            /** Degraded */
+            degraded?: number;
         };
         /** CollectorRunRead */
         CollectorRunRead: {
@@ -2307,6 +2309,10 @@ export interface components {
             origin_location_id: string;
             /** @default TRANSIT */
             preferred_mode: components["schemas"]["CommuteMode"];
+            /** Route Names */
+            route_names?: string[];
+            /** Stop Names */
+            stop_names?: string[];
             /** User Id */
             user_id: string;
             /** Weekdays */
@@ -2332,6 +2338,10 @@ export interface components {
             /** Origin Location Id */
             origin_location_id: string;
             preferred_mode: components["schemas"]["CommuteMode"];
+            /** Route Names */
+            route_names?: string[];
+            /** Stop Names */
+            stop_names?: string[];
             /**
              * Updated At
              * Format: date-time
@@ -2359,6 +2369,10 @@ export interface components {
             origin_location_id: string;
             /** @default TRANSIT */
             preferred_mode: components["schemas"]["CommuteMode"];
+            /** Route Names */
+            route_names?: string[];
+            /** Stop Names */
+            stop_names?: string[];
             /** Weekdays */
             weekdays: number[];
         };

@@ -38,4 +38,14 @@ func TestDeriveOperationalStatusHandlesInFlightRunsWithoutFalseFailures(t *testi
 	if got := DeriveOperationalStatus(runningStuck, now); got != "stale" {
 		t.Fatalf("expected stuck in-flight run beyond 2x poll interval to report stale, got %q", got)
 	}
+
+	finished := now.Add(-time.Minute).Format(time.RFC3339Nano)
+	degraded := Status{
+		IsActive:            true,
+		PollIntervalSeconds: 600,
+		LastRun:             &CollectorRun{Status: "degraded", StartedAt: started, FinishedAt: &finished},
+	}
+	if got := DeriveOperationalStatus(degraded, now); got != "degraded" {
+		t.Fatalf("expected a recent partial collection to stay degraded, got %q", got)
+	}
 }

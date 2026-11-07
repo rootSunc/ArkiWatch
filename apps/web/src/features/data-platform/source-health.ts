@@ -15,6 +15,7 @@ export function sourceHealthTone(status: string | null | undefined): SourceHealt
     case "pending":
     case "stale":
     case "watch":
+    case "degraded":
       return "watch";
     case "failing":
     case "failed":

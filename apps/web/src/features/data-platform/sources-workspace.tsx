@@ -190,20 +190,24 @@ export function SourcesWorkspace({
                         data-state={
                           day.failed > 0
                             ? "failed"
-                            : day.running > 0
-                              ? "running"
-                              : day.succeeded > 0
-                                ? "succeeded"
-                                : "empty"
+                            : (day.degraded ?? 0) > 0
+                              ? "degraded"
+                              : day.running > 0
+                                ? "running"
+                                : day.succeeded > 0
+                                  ? "succeeded"
+                                  : "empty"
                         }
                       >
                         {day.failed > 0
                           ? "!"
-                          : day.succeeded > 0
-                            ? "✓"
-                            : day.running > 0
-                              ? "·"
-                              : "−"}
+                          : (day.degraded ?? 0) > 0
+                            ? "~"
+                            : day.succeeded > 0
+                              ? "✓"
+                              : day.running > 0
+                                ? "·"
+                                : "−"}
                       </span>
                     ))}
                   </span>
@@ -280,6 +284,12 @@ export function SourcesWorkspace({
                     label: tKey("shell.runsFailed"),
                     numeric: true,
                     render: (day) => day.failed,
+                  },
+                  {
+                    key: "degraded",
+                    label: tKey("shell.runsDegraded"),
+                    numeric: true,
+                    render: (day) => day.degraded ?? 0,
                   },
                   {
                     key: "running",

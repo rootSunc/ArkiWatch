@@ -449,7 +449,7 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 	userRows.Close()
 
 	commuteRows, err := tx.Query(ctx, `
-		SELECT user_id, preferred_mode::text, departure_time_local, weekdays
+		SELECT user_id, preferred_mode::text, departure_time_local, weekdays, route_names, stop_names
 		FROM user_commute_profiles
 		WHERE is_active = TRUE
 	`)
@@ -460,7 +460,8 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 	for commuteRows.Next() {
 		var userID, mode, departure string
 		var weekdays []int32
-		if err := commuteRows.Scan(&userID, &mode, &departure, &weekdays); err != nil {
+		var routes, stops []string
+		if err := commuteRows.Scan(&userID, &mode, &departure, &weekdays, &routes, &stops); err != nil {
 			commuteRows.Close()
 			return RulesResult{}, err
 		}
@@ -468,7 +469,7 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 		for index, day := range weekdays {
 			days[index] = int(day)
 		}
-		commutesByUser[userID] = append(commutesByUser[userID], rules.ParseCommute(mode, departure, days))
+		commutesByUser[userID] = append(commutesByUser[userID], rules.ParseCommute(mode, departure, days).WithTargets(routes, stops))
 	}
 	if err := commuteRows.Err(); err != nil {
 		commuteRows.Close()
@@ -1270,7 +1271,8 @@ func (store *Store) ListSourceStatusAt(ctx context.Context, now time.Time) ([]so
           count(r.id)::int AS runs,
           count(r.id) FILTER (WHERE r.status = 'succeeded' AND r.finished_at <= $3)::int AS succeeded,
           count(r.id) FILTER (WHERE r.status = 'failed' AND r.finished_at <= $3)::int AS failed,
-          count(r.id) FILTER (WHERE r.finished_at IS NULL OR r.finished_at > $3)::int AS running
+          count(r.id) FILTER (WHERE r.finished_at IS NULL OR r.finished_at > $3)::int AS running,
+          count(r.id) FILTER (WHERE r.status = 'degraded' AND r.finished_at <= $3)::int AS degraded
         FROM generate_series($1::date::timestamp, $2::date::timestamp, interval '1 day') AS day
         LEFT JOIN collector_runs AS r ON r.source_id = s.id
           AND r.started_at >= (day AT TIME ZONE 'Europe/Helsinki')

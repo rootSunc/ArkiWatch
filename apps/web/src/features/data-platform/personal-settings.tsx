@@ -77,6 +77,25 @@ const DEFAULT_PREFERENCES: PersonalPreferenceInput = {
   max_notifications_per_day: 6,
 };
 
+function namesToText(names: string[] | undefined) {
+  return (names ?? []).join(", ");
+}
+
+function textToNames(value: string) {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const part of value.split(/[,，]/)) {
+    const name = part.trim();
+    const key = name.toLocaleLowerCase();
+    if (!name || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    names.push(name);
+  }
+  return names;
+}
+
 const DEFAULT_COMMUTE: PersonalCommuteInput = {
   name: "Weekday commute",
   origin_location_id: "",
@@ -187,6 +206,8 @@ function PersonalSettingsContent({
   const [locationForm, setLocationForm] = useState<LocationForm>(locationFormFromDefault);
   const [preferenceForm, setPreferenceForm] = useState<PersonalPreferenceInput>(DEFAULT_PREFERENCES);
   const [commuteForm, setCommuteForm] = useState<PersonalCommuteInput>(DEFAULT_COMMUTE);
+  const [routeText, setRouteText] = useState("");
+  const [stopText, setStopText] = useState("");
   const [telegramId, setTelegramId] = useState("");
   const [telegramActive, setTelegramActive] = useState(false);
   const [outdoorLevel, setOutdoorLevel] = useState<"standard" | "sensitive">("standard");
@@ -262,6 +283,8 @@ function PersonalSettingsContent({
           weekdays: savedCommute.weekdays,
           is_active: savedCommute.is_active,
         });
+        setRouteText(namesToText(savedCommute.route_names));
+        setStopText(namesToText(savedCommute.stop_names));
       } else {
         setCommuteForm((current) => ({
           ...current,
@@ -413,7 +436,17 @@ function PersonalSettingsContent({
       commuteForm.weekdays.length > 0 &&
       commuteForm.weekdays.every((day) => Number.isInteger(day) && day >= 1 && day <= 7);
 
-    if (!name || name.length > 80 || !hasValidDepartureTime || !hasValidWeekdays) {
+    const routeNames = textToNames(routeText);
+    const stopNames = textToNames(stopText);
+    const namesFit = (names: string[]) => names.length <= 12 && names.every((item) => item.length <= 80);
+    if (
+      !name ||
+      name.length > 80 ||
+      !hasValidDepartureTime ||
+      !hasValidWeekdays ||
+      !namesFit(routeNames) ||
+      !namesFit(stopNames)
+    ) {
       setNotice({ tone: "error", text: tKey("shell.personalSettingsCommuteValidation") });
       return null;
     }
@@ -423,6 +456,8 @@ function PersonalSettingsContent({
       name,
       departure_time_local: departureTime,
       weekdays: [...commuteForm.weekdays].sort((left, right) => left - right),
+      route_names: routeNames,
+      stop_names: stopNames,
     };
   };
 
@@ -549,6 +584,8 @@ function PersonalSettingsContent({
       weekdays: profile.weekdays,
       is_active: profile.is_active,
     });
+    setRouteText(namesToText(profile.route_names));
+    setStopText(namesToText(profile.stop_names));
     setNotice(null);
     setActiveSection("commute");
   };
@@ -806,7 +843,11 @@ function PersonalSettingsContent({
                 locationNameById={locationNameById}
                 onChange={setCommuteForm}
                 onEdit={editCommute}
+                onRouteText={setRouteText}
                 onSave={saveCommute}
+                onStopText={setStopText}
+                routeText={routeText}
+                stopText={stopText}
                 tKey={tKey}
               />
             ) : null}
@@ -979,7 +1020,11 @@ function CommuteSection({
   locationNameById,
   onChange,
   onEdit,
+  onRouteText,
   onSave,
+  onStopText,
+  routeText,
+  stopText,
   tKey,
 }: {
   context: PersonalContextRead | null;
@@ -988,7 +1033,11 @@ function CommuteSection({
   locationNameById: Map<string, string>;
   onChange: (form: PersonalCommuteInput) => void;
   onEdit: (profile: PersonalContextRead["commuteProfiles"][number]) => void;
+  onRouteText: (value: string) => void;
   onSave: () => void;
+  onStopText: (value: string) => void;
+  routeText: string;
+  stopText: string;
   tKey: SettingsCopy;
 }) {
   const locations = context?.locations ?? [];
@@ -1025,6 +1074,13 @@ function CommuteSection({
                 {locations.map((location) => <option key={location.id} value={location.id}>{locationNameById.get(location.id)}</option>)}
               </select>
             </Field>
+            <Field label={tKey("shell.personalSettingsRoutes")} wide>
+              <input className={styles.input} maxLength={400} value={routeText} onChange={(event) => onRouteText(event.target.value)} />
+            </Field>
+            <Field label={tKey("shell.personalSettingsStops")} wide>
+              <input className={styles.input} maxLength={400} value={stopText} onChange={(event) => onStopText(event.target.value)} />
+            </Field>
+            <p className={`${styles.hint} ${styles.fieldWide}`}>{tKey("shell.personalSettingsRouteHint")}</p>
             <Field label={tKey("shell.personalSettingsDeparture")}>
               <input className={styles.input} type="time" value={form.departure_time_local} onChange={(event) => onChange({ ...form, departure_time_local: event.target.value })} />
             </Field>
@@ -1058,7 +1114,7 @@ function CommuteSection({
           <div className={styles.savedRow} key={profile.id}>
             <span>
               <strong>{profile.name}</strong>
-              <span>{locationNameById.get(profile.origin_location_id) ?? "?"} → {locationNameById.get(profile.destination_location_id) ?? "?"}, {profile.departure_time_local}</span>
+              <span>{locationNameById.get(profile.origin_location_id) ?? "?"} → {locationNameById.get(profile.destination_location_id) ?? "?"}, {profile.departure_time_local}{[...(profile.route_names ?? []), ...(profile.stop_names ?? [])].length ? ` · ${[...(profile.route_names ?? []), ...(profile.stop_names ?? [])].join(", ")}` : ""}</span>
             </span>
             <span className={styles.savedActions}>
               <span className={styles.savedMeta}>
@@ -1132,9 +1188,9 @@ function TelegramSection({
   );
 }
 
-function Field({ children, label }: { children: ReactNode; label: string }) {
+function Field({ children, label, wide = false }: { children: ReactNode; label: string; wide?: boolean }) {
   return (
-    <label className={styles.field}>
+    <label className={`${styles.field}${wide ? ` ${styles.fieldWide}` : ""}`}>
       <span className={styles.label}>{label}</span>
       {children}
     </label>

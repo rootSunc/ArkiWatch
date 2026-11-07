@@ -18,6 +18,8 @@ type Commute struct {
 	Mode               string
 	Departure          string
 	Weekdays           []int
+	Routes             []string
+	Stops              []string
 	DepartureMinutes   int
 	HasDepartureMinute bool
 }
@@ -194,7 +196,7 @@ func matchesPersonalCommute(event Event, user User) bool {
 }
 
 func commuteAccepts(commute Commute, event Event, zone *time.Location) bool {
-	if !modeAccepts(commute.Mode, event.EventType) || !weekdayAccepts(commute.Weekdays, event, zone) {
+	if !modeAccepts(commute.Mode, event.EventType) || !weekdayAccepts(commute.Weekdays, event, zone) || !targetsAccept(commute, event) {
 		return false
 	}
 	if !commute.HasDepartureMinute {
@@ -263,6 +265,87 @@ func roadAppliesToCommute(event Event, user User) bool {
 		}
 	}
 	return false
+}
+
+func targetsAccept(commute Commute, event Event) bool {
+	if len(commute.Routes) == 0 && len(commute.Stops) == 0 {
+		return true
+	}
+	routes := eventLabels(event, "routes", "route_ids")
+	stops := eventLabels(event, "stops", "stop_ids")
+	if len(commute.Routes) > 0 && len(routes) > 0 && !labelsOverlap(commute.Routes, routes) {
+		return false
+	}
+	if len(commute.Stops) > 0 && len(stops) > 0 && !labelsOverlap(commute.Stops, stops) {
+		return false
+	}
+	return true
+}
+
+func eventLabels(event Event, keys ...string) []string {
+	labels := []string{}
+	for _, key := range keys {
+		labels = append(labels, labelsFrom(event.Attributes[key])...)
+	}
+	return labels
+}
+
+func labelsFrom(value any) []string {
+	switch typed := value.(type) {
+	case string:
+		return []string{typed}
+	case []string:
+		return append([]string(nil), typed...)
+	case []any:
+		labels := []string{}
+		for _, item := range typed {
+			switch row := item.(type) {
+			case string:
+				labels = append(labels, row)
+			case map[string]any:
+				for _, key := range []string{"name", "short_name", "gtfs_id", "id"} {
+					if text, ok := row[key].(string); ok {
+						labels = append(labels, text)
+					}
+				}
+			}
+		}
+		return labels
+	default:
+		return nil
+	}
+}
+
+func labelsOverlap(wanted, found []string) bool {
+	for _, left := range wanted {
+		for _, right := range found {
+			if labelMatches(left, right) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func labelMatches(left, right string) bool {
+	first := strings.ToLower(strings.TrimSpace(left))
+	second := strings.ToLower(strings.TrimSpace(right))
+	if first == "" || second == "" {
+		return false
+	}
+	if first == second {
+		return true
+	}
+	if len([]rune(first)) >= 4 && len([]rune(second)) >= 4 && (strings.Contains(first, second) || strings.Contains(second, first)) {
+		return true
+	}
+	return false
+}
+
+func (commute Commute) WithTargets(routes, stops []string) Commute {
+	commute.Routes = append([]string(nil), routes...)
+	commute.Stops = append([]string(nil), stops...)
+	return commute
 }
 
 func ParseCommute(mode, departure string, weekdays []int) Commute {

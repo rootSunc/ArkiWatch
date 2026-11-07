@@ -566,6 +566,74 @@ describe("PersonalSettingsPage", () => {
     });
   });
 
+  it("keeps a trailing comma in the route field and saves distinct names", async () => {
+    const context = {
+      locations: [
+        {
+          id: "location-1",
+          user_id: "user-1",
+          label: "Home",
+          country_code: "FI",
+          city: "Helsinki",
+          district: null,
+          lat: 60.1699,
+          lon: 24.9384,
+          is_default: true,
+          created_at: "2026-04-12T08:00:00Z",
+        },
+        {
+          id: "location-2",
+          user_id: "user-1",
+          label: "Office",
+          country_code: "FI",
+          city: "Espoo",
+          district: null,
+          lat: 60.2055,
+          lon: 24.6559,
+          is_default: false,
+          created_at: "2026-04-12T08:00:00Z",
+        },
+      ],
+      preferences: null,
+      commuteProfiles: [
+        {
+          id: "commute-1",
+          user_id: "user-1",
+          name: "Weekday commute",
+          origin_location_id: "location-1",
+          destination_location_id: "location-2",
+          preferred_mode: "TRANSIT",
+          departure_time_local: "08:00",
+          weekdays: [1, 2, 3, 4, 5],
+          is_active: true,
+          created_at: "2026-04-12T08:00:00Z",
+          updated_at: "2026-04-12T08:00:00Z",
+        },
+      ],
+      channels: [],
+    };
+    const fetchMock = vi.fn(async () => Response.json(context, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<PersonalSettingsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /^Add commute profile/ }));
+    const routes = screen.getByLabelText("Routes");
+    fireEvent.change(routes, { target: { value: "9, " } });
+    expect(routes).toHaveValue("9, ");
+    fireEvent.change(routes, { target: { value: "9, Kallio" } });
+    fireEvent.change(screen.getByLabelText("Stops"), { target: { value: "Kallion virastotalo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(true);
+    });
+    const postCall = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
+      resource: "commuteProfiles",
+      payload: { route_names: ["9", "Kallio"], stop_names: ["Kallion virastotalo"] },
+    });
+  });
+
   it("can disable Telegram delivery while keeping its chat id", async () => {
     const context = {
       locations: [],

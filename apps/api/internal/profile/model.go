@@ -60,6 +60,8 @@ type CommuteProfile struct {
 	PreferredMode         string    `json:"preferred_mode"`
 	DepartureTimeLocal    string    `json:"departure_time_local"`
 	Weekdays              []int     `json:"weekdays"`
+	RouteNames            []string  `json:"route_names,omitempty"`
+	StopNames             []string  `json:"stop_names,omitempty"`
 	IsActive              bool      `json:"is_active"`
 	CreatedAt             time.Time `json:"created_at"`
 	UpdatedAt             time.Time `json:"updated_at"`
@@ -72,6 +74,8 @@ type CommuteProfileInput struct {
 	PreferredMode         string
 	DepartureTimeLocal    string
 	Weekdays              []int
+	RouteNames            []string
+	StopNames             []string
 	IsActive              bool
 }
 

@@ -7,6 +7,7 @@ describe("source health presentation", () => {
     expect(sourceHealthTone("ready")).toBe("healthy");
     expect(sourceHealthTone("pending")).toBe("watch");
     expect(sourceHealthTone("stale")).toBe("watch");
+    expect(sourceHealthTone("degraded")).toBe("watch");
     expect(sourceHealthTone("inactive")).toBe("failing");
     expect(sourceHealthTone("failed")).toBe("failing");
     expect(sourceHealthTone("new_backend_status")).toBe("unknown");

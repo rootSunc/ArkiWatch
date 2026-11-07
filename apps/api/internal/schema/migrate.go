@@ -345,6 +345,8 @@ func ensureTables(ctx context.Context, tx pgx.Tx) error {
 			preferred_mode commute_mode NOT NULL,
 			departure_time_local VARCHAR(5) NOT NULL,
 			weekdays INTEGER[] NOT NULL,
+			route_names TEXT[] NOT NULL DEFAULT '{}',
+			stop_names TEXT[] NOT NULL DEFAULT '{}',
 			is_active BOOLEAN NOT NULL,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -530,6 +532,8 @@ func ensureRawObservations(ctx context.Context, tx pgx.Tx) error {
 
 func ensureColumnsAndData(ctx context.Context, tx pgx.Tx) error {
 	statements := []string{
+		`ALTER TABLE user_commute_profiles ADD COLUMN IF NOT EXISTS route_names TEXT[] NOT NULL DEFAULT '{}'`,
+		`ALTER TABLE user_commute_profiles ADD COLUMN IF NOT EXISTS stop_names TEXT[] NOT NULL DEFAULT '{}'`,
 		`ALTER TABLE scheduled_jobs ADD COLUMN IF NOT EXISTS daily_at_local VARCHAR(5)`,
 		`ALTER TABLE recommendations ADD COLUMN IF NOT EXISTS advice_title_zh VARCHAR(200)`,
 		`ALTER TABLE recommendations ADD COLUMN IF NOT EXISTS advice_body_zh TEXT`,

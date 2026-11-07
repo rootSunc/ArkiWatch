@@ -793,6 +793,10 @@
           "succeeded": {
             "title": "Succeeded",
             "type": "integer"
+          },
+          "degraded": {
+            "title": "Degraded",
+            "type": "integer"
           }
         },
         "required": [
@@ -5009,6 +5013,26 @@
             "$ref": "#/components/schemas/CommuteMode",
             "default": "TRANSIT"
           },
+          "route_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Route Names",
+            "type": "array"
+          },
+          "stop_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Stop Names",
+            "type": "array"
+          },
           "user_id": {
             "title": "User Id",
             "type": "string"
@@ -5065,6 +5089,26 @@
           },
           "preferred_mode": {
             "$ref": "#/components/schemas/CommuteMode"
+          },
+          "route_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Route Names",
+            "type": "array"
+          },
+          "stop_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Stop Names",
+            "type": "array"
           },
           "updated_at": {
             "format": "date-time",
@@ -5127,6 +5171,26 @@
           "preferred_mode": {
             "$ref": "#/components/schemas/CommuteMode",
             "default": "TRANSIT"
+          },
+          "route_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Route Names",
+            "type": "array"
+          },
+          "stop_names": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Stop Names",
+            "type": "array"
           },
           "weekdays": {
             "items": {

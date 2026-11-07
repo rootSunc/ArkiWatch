@@ -142,6 +142,7 @@ button:disabled { cursor: default; opacity: .5; }
 .source-run-strip { display: inline-flex; gap: 3px; min-height: 20px; align-items: center; }
 .source-run-strip > span { display: grid; place-items: center; width: 15px; height: 20px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); background: var(--canvas); font-size: 11px; font-weight: 600; }
 .source-run-strip > [data-state="succeeded"] { color: var(--green); background: var(--status-good-bg); border-color: var(--green); }
+.source-run-strip > [data-state="degraded"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber); }
 .source-run-strip > [data-state="failed"] { color: var(--red); background: var(--red-soft); border-color: var(--red); }
 .source-run-strip > [data-state="running"] { color: var(--blue); background: var(--blue-soft); border-color: var(--blue); }
 .source-evidence { display: grid; gap: 16px; font-size: 13px; }

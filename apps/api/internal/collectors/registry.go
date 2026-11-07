@@ -32,7 +32,7 @@ func (collector fmiCollector) Collect(ctx context.Context) ([]Observation, error
 	endpoint := strings.TrimRight(collector.cfg.FMIAPIBaseURL, "/") + "/wfs"
 	places := parseWeatherPlaces(collector.cfg.WeatherPlaces, collector.cfg)
 	result := make([]Observation, 0, len(places))
-	var firstErr error
+	failed := []string{}
 	for _, place := range places {
 		now := observedNow()
 		query := map[string]string{
@@ -44,9 +44,7 @@ func (collector fmiCollector) Collect(ctx context.Context) ([]Observation, error
 		}
 		body, headers, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", endpoint, nil, query)
 		if err != nil {
-			if firstErr == nil {
-				firstErr = err
-			}
+			failed = append(failed, place.AreaCode)
 			continue
 		}
 		payload := payloadForRequest(body, endpoint+"?"+encodeQuery(query), headers.Get("Content-Type"))
@@ -57,10 +55,7 @@ func (collector fmiCollector) Collect(ctx context.Context) ([]Observation, error
 		}
 		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: place.AreaCode, ObservedAt: now, Payload: payload, Hash: hash})
 	}
-	if len(result) == 0 && firstErr != nil {
-		return nil, firstErr
-	}
-	return result, nil
+	return finishAreas(result, failed)
 }
 
 func (collector fmiCollector) CollectRange(ctx context.Context, start, end time.Time, areaCode, cursor string) ([]Observation, error) {
@@ -79,6 +74,7 @@ func (collector fmiCollector) CollectRange(ctx context.Context, start, end time.
 		places = filtered
 	}
 	result := make([]Observation, 0, len(places))
+	failed := []string{}
 	for _, place := range places {
 		query := map[string]string{
 			"service": "WFS", "version": "2.0.0", "request": "getFeature",
@@ -89,7 +85,8 @@ func (collector fmiCollector) CollectRange(ctx context.Context, start, end time.
 		}
 		body, headers, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", endpoint, nil, query)
 		if err != nil {
-			return nil, err
+			failed = append(failed, place.AreaCode)
+			continue
 		}
 		payload := payloadForRequest(body, endpoint+"?"+encodeQuery(query), headers.Get("Content-Type"))
 		payload["place"], payload["area_code"], payload["window_start"], payload["window_end"], payload["cursor"] = place.Place, place.AreaCode, start.UTC().Format(time.RFC3339Nano), end.UTC().Format(time.RFC3339Nano), cursor
@@ -99,7 +96,7 @@ func (collector fmiCollector) CollectRange(ctx context.Context, start, end time.
 		}
 		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: place.AreaCode, ObservedAt: start.UTC(), Payload: payload, Hash: hash})
 	}
-	return result, nil
+	return finishAreas(result, failed)
 }
 
 func (collector endpointCollector) SourceCode() string { return collector.source }
@@ -154,12 +151,14 @@ func (collector openMeteoCollector) Dataset() string    { return "air_quality_cu
 func (collector openMeteoCollector) Collect(ctx context.Context) ([]Observation, error) {
 	locations := parseLocations(collector.cfg.OpenMeteoAirQualityLocations, collector.cfg)
 	result := make([]Observation, 0, len(locations))
+	failed := []string{}
 	for _, location := range locations {
 		now := observedNow()
 		query := map[string]string{"latitude": fmt.Sprintf("%.4f", location.Latitude), "longitude": fmt.Sprintf("%.4f", location.Longitude), "current": "european_aqi,pm10,pm2_5,nitrogen_dioxide", "timezone": collector.cfg.Timezone}
 		body, headers, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", collector.cfg.OpenMeteoAirQualityURL, nil, query)
 		if err != nil {
-			return nil, err
+			failed = append(failed, location.AreaCode)
+			continue
 		}
 		payload := payloadForRequest(body, collector.cfg.OpenMeteoAirQualityURL+"?"+encodeQuery(query), headers.Get("Content-Type"))
 		payload["fetched_at"], payload["area_code"], payload["place"] = now.Format(time.RFC3339Nano), location.AreaCode, location.Place
@@ -170,7 +169,7 @@ func (collector openMeteoCollector) Collect(ctx context.Context) ([]Observation,
 		}
 		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: location.AreaCode, ObservedAt: now, Payload: payload, Hash: hash})
 	}
-	return result, nil
+	return finishAreas(result, failed)
 }
 
 func (collector openMeteoCollector) CollectRange(ctx context.Context, start, end time.Time, areaCode, cursor string) ([]Observation, error) {
@@ -195,6 +194,7 @@ func (collector openMeteoCollector) CollectRange(ctx context.Context, start, end
 	startDate := start.UTC().In(zone).Format("2006-01-02")
 	endDate := end.Add(-time.Nanosecond).UTC().In(zone).Format("2006-01-02")
 	result := make([]Observation, 0, len(locations))
+	failed := []string{}
 	for _, location := range locations {
 		query := map[string]string{
 			"latitude":   fmt.Sprintf("%.4f", location.Latitude),
@@ -206,7 +206,8 @@ func (collector openMeteoCollector) CollectRange(ctx context.Context, start, end
 		}
 		body, headers, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", collector.cfg.OpenMeteoAirQualityURL, nil, query)
 		if err != nil {
-			return nil, err
+			failed = append(failed, location.AreaCode)
+			continue
 		}
 		body["current"] = currentFromHourly(body)
 		payload := payloadForRequest(body, collector.cfg.OpenMeteoAirQualityURL+"?"+encodeQuery(query), headers.Get("Content-Type"))
@@ -219,7 +220,7 @@ func (collector openMeteoCollector) CollectRange(ctx context.Context, start, end
 		}
 		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: location.AreaCode, ObservedAt: start.UTC(), Payload: payload, Hash: hash})
 	}
-	return result, nil
+	return finishAreas(result, failed)
 }
 
 func currentFromHourly(body map[string]any) map[string]any {
@@ -367,6 +368,7 @@ func (collector linkedEventsCollector) collectWindow(ctx context.Context, observ
 		configured = filtered
 	}
 	result := make([]Observation, 0, len(configured))
+	failed := []string{}
 	for _, location := range configured {
 		nextURL := strings.TrimRight(location.BaseURL, "/") + "/event/"
 		params := map[string]string{"start": start.Format("2006-01-02"), "end": end.Add(-time.Nanosecond).Format("2006-01-02"), "include": "location,keywords", "sort": "start_time", "page_size": strconv.Itoa(collector.cfg.LinkedEventsPageSize)}
@@ -376,7 +378,9 @@ func (collector linkedEventsCollector) collectWindow(ctx context.Context, observ
 		for page := 0; page < collector.cfg.LinkedEventsMaxPages; page++ {
 			body, _, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", nextURL, map[string]string{"Accept": "application/json"}, params)
 			if err != nil {
-				return nil, err
+				failed = append(failed, location.AreaCode)
+				events = nil
+				break
 			}
 			requestURLs = append(requestURLs, nextURL+"?"+encodeQuery(params))
 			if values, ok := body["data"].([]any); ok {
@@ -393,6 +397,9 @@ func (collector linkedEventsCollector) collectWindow(ctx context.Context, observ
 			}
 			break
 		}
+		if containsString(failed, location.AreaCode) {
+			continue
+		}
 		payload := map[string]any{
 			"request_urls": requestURLs, "content_type": "application/json", "fetched_at": observedAt.Format(time.RFC3339Nano),
 			"window_start": start.Format(time.RFC3339Nano), "window_end": end.Format(time.RFC3339Nano), "city": location.AreaCode,
@@ -405,7 +412,16 @@ func (collector linkedEventsCollector) collectWindow(ctx context.Context, observ
 		}
 		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: location.AreaCode, ObservedAt: observedAt, Payload: payload, Hash: hash})
 	}
-	return result, nil
+	return finishAreas(result, failed)
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }
 
 type linkedEventLocation struct{ AreaCode, BaseURL string }

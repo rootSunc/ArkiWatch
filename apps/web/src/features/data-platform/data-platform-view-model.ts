@@ -30,6 +30,7 @@ export const MOBILITY_NAV_KEY = "mobility";
 const STATUS_LABEL_KEYS: Record<string, string> = {
   alert: "statusAlert",
   background: "statusCatalog",
+  degraded: "statusDegraded",
   connected: "statusActive",
   empty: "empty",
   failing: "statusAlert",

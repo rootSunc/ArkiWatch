@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,27 @@ type Observation struct {
 	ObservedAt time.Time
 	Payload    map[string]any
 	Hash       string
+}
+
+// PartialError means some areas were collected and others were not. The
+// returned observations are usable; the error names the areas that failed.
+type PartialError struct {
+	Areas []string
+}
+
+func (err *PartialError) Error() string {
+	return "partial collection failed for " + strings.Join(err.Areas, ", ")
+}
+
+func finishAreas(items []Observation, failed []string) ([]Observation, error) {
+	if len(failed) == 0 {
+		return items, nil
+	}
+	sort.Strings(failed)
+	if len(items) == 0 {
+		return nil, fmt.Errorf("collection failed for %s", strings.Join(failed, ", "))
+	}
+	return items, &PartialError{Areas: append([]string(nil), failed...)}
 }
 
 type Collector interface {

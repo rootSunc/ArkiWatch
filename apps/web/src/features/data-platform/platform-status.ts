@@ -16,6 +16,7 @@ export function liveStatusTone(status: string | null | undefined): LiveStatusTon
       return "ready";
     case "stale":
     case "partial":
+    case "degraded":
     case "pending":
     case "planned":
     case "watch":
@@ -63,7 +64,7 @@ export function liveStatusLabel(
     return tKey(readyKey);
   }
 
-  if (normalized === "partial") {
+  if (normalized === "partial" || normalized === "degraded") {
     return tKey("shell.partial");
   }
 

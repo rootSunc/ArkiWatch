@@ -160,7 +160,7 @@ func scanPreference(row interface{ Scan(...any) error }) (profile.Preference, er
 func (store *Store) ListCommuteProfiles(ctx context.Context, userID string) ([]profile.CommuteProfile, error) {
 	rows, err := store.pool.Query(ctx, `
 		SELECT id, user_id, name, origin_location_id, destination_location_id,
-		       preferred_mode::text, departure_time_local, weekdays, is_active, created_at, updated_at
+		       preferred_mode::text, departure_time_local, weekdays, route_names, stop_names, is_active, created_at, updated_at
 		FROM user_commute_profiles WHERE user_id = $1
 		ORDER BY is_active DESC, created_at DESC
 	`, userID)
@@ -186,11 +186,11 @@ func (store *Store) CreateCommuteProfile(ctx context.Context, userID string, inp
 	return scanCommute(store.pool.QueryRow(ctx, `
 		INSERT INTO user_commute_profiles
 			(id, user_id, name, origin_location_id, destination_location_id, preferred_mode,
-			 departure_time_local, weekdays, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6::commute_mode, $7, $8, $9)
+			 departure_time_local, weekdays, route_names, stop_names, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6::commute_mode, $7, $8, $9, $10, $11)
 		RETURNING id, user_id, name, origin_location_id, destination_location_id,
-		          preferred_mode::text, departure_time_local, weekdays, is_active, created_at, updated_at
-	`, randomID(), userID, input.Name, input.OriginLocationID, input.DestinationLocationID, input.PreferredMode, input.DepartureTimeLocal, int32Slice(input.Weekdays), input.IsActive))
+		          preferred_mode::text, departure_time_local, weekdays, route_names, stop_names, is_active, created_at, updated_at
+	`, randomID(), userID, input.Name, input.OriginLocationID, input.DestinationLocationID, input.PreferredMode, input.DepartureTimeLocal, int32Slice(input.Weekdays), textSlice(input.RouteNames), textSlice(input.StopNames), input.IsActive))
 }
 
 func (store *Store) UpdateCommuteProfile(ctx context.Context, userID, profileID string, input profile.CommuteProfileInput) (profile.CommuteProfile, error) {
@@ -201,11 +201,11 @@ func (store *Store) UpdateCommuteProfile(ctx context.Context, userID, profileID 
 		UPDATE user_commute_profiles
 		SET name = $1, origin_location_id = $2, destination_location_id = $3,
 		    preferred_mode = $4::commute_mode, departure_time_local = $5,
-		    weekdays = $6, is_active = $7, updated_at = now()
-		WHERE id = $8 AND user_id = $9
+		    weekdays = $6, route_names = $7, stop_names = $8, is_active = $9, updated_at = now()
+		WHERE id = $10 AND user_id = $11
 		RETURNING id, user_id, name, origin_location_id, destination_location_id,
-		          preferred_mode::text, departure_time_local, weekdays, is_active, created_at, updated_at
-	`, input.Name, input.OriginLocationID, input.DestinationLocationID, input.PreferredMode, input.DepartureTimeLocal, int32Slice(input.Weekdays), input.IsActive, profileID, userID))
+		          preferred_mode::text, departure_time_local, weekdays, route_names, stop_names, is_active, created_at, updated_at
+	`, input.Name, input.OriginLocationID, input.DestinationLocationID, input.PreferredMode, input.DepartureTimeLocal, int32Slice(input.Weekdays), textSlice(input.RouteNames), textSlice(input.StopNames), input.IsActive, profileID, userID))
 }
 
 func (store *Store) assertCommuteLocations(ctx context.Context, userID string, input profile.CommuteProfileInput) error {
@@ -226,7 +226,7 @@ func (store *Store) assertCommuteLocations(ctx context.Context, userID string, i
 func scanCommute(row interface{ Scan(...any) error }) (profile.CommuteProfile, error) {
 	var item profile.CommuteProfile
 	var weekdays []int32
-	if err := row.Scan(&item.ID, &item.UserID, &item.Name, &item.OriginLocationID, &item.DestinationLocationID, &item.PreferredMode, &item.DepartureTimeLocal, &weekdays, &item.IsActive, &item.CreatedAt, &item.UpdatedAt); err != nil {
+	if err := row.Scan(&item.ID, &item.UserID, &item.Name, &item.OriginLocationID, &item.DestinationLocationID, &item.PreferredMode, &item.DepartureTimeLocal, &weekdays, &item.RouteNames, &item.StopNames, &item.IsActive, &item.CreatedAt, &item.UpdatedAt); err != nil {
 		return profile.CommuteProfile{}, err
 	}
 	item.Weekdays = make([]int, len(weekdays))
@@ -234,6 +234,13 @@ func scanCommute(row interface{ Scan(...any) error }) (profile.CommuteProfile, e
 		item.Weekdays[index] = int(value)
 	}
 	return item, nil
+}
+
+func textSlice(values []string) []string {
+	if values == nil {
+		return []string{}
+	}
+	return values
 }
 
 func int32Slice(values []int) []int32 {

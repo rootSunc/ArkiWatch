@@ -91,7 +91,7 @@ export function toneFromStatus(status: string): EnergyTone {
   if (normalized === "healthy" || normalized === "ready" || normalized === "fetched" || normalized === "connected") {
     return "good";
   }
-  if (normalized === "partial" || normalized === "pending" || normalized === "stale" || normalized === "watch" || normalized === "planned") {
+  if (normalized === "partial" || normalized === "degraded" || normalized === "pending" || normalized === "stale" || normalized === "watch" || normalized === "planned") {
     return "warn";
   }
   if (normalized === "failing" || normalized === "inactive" || normalized === "alert" || normalized === "failed" || normalized === "error") {

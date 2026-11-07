@@ -1674,14 +1674,16 @@ func (s *Server) commuteProfileByID(writer http.ResponseWriter, request *http.Re
 }
 
 type commutePayload struct {
-	UserID                string `json:"user_id"`
-	Name                  string `json:"name"`
-	OriginLocationID      string `json:"origin_location_id"`
-	DestinationLocationID string `json:"destination_location_id"`
-	PreferredMode         string `json:"preferred_mode"`
-	DepartureTimeLocal    string `json:"departure_time_local"`
-	Weekdays              []int  `json:"weekdays"`
-	IsActive              *bool  `json:"is_active"`
+	UserID                string   `json:"user_id"`
+	Name                  string   `json:"name"`
+	OriginLocationID      string   `json:"origin_location_id"`
+	DestinationLocationID string   `json:"destination_location_id"`
+	PreferredMode         string   `json:"preferred_mode"`
+	DepartureTimeLocal    string   `json:"departure_time_local"`
+	Weekdays              []int    `json:"weekdays"`
+	RouteNames            []string `json:"route_names"`
+	StopNames             []string `json:"stop_names"`
+	IsActive              *bool    `json:"is_active"`
 }
 
 func (payload commutePayload) input() profile.CommuteProfileInput {
@@ -1689,7 +1691,30 @@ func (payload commutePayload) input() profile.CommuteProfileInput {
 	if mode == "" {
 		mode = "TRANSIT"
 	}
-	return profile.CommuteProfileInput{Name: strings.TrimSpace(payload.Name), OriginLocationID: payload.OriginLocationID, DestinationLocationID: payload.DestinationLocationID, PreferredMode: mode, DepartureTimeLocal: payload.DepartureTimeLocal, Weekdays: payload.Weekdays, IsActive: boolOr(payload.IsActive, true)}
+	routes, _ := cleanNameList(payload.RouteNames)
+	stops, _ := cleanNameList(payload.StopNames)
+	return profile.CommuteProfileInput{Name: strings.TrimSpace(payload.Name), OriginLocationID: payload.OriginLocationID, DestinationLocationID: payload.DestinationLocationID, PreferredMode: mode, DepartureTimeLocal: payload.DepartureTimeLocal, Weekdays: payload.Weekdays, RouteNames: routes, StopNames: stops, IsActive: boolOr(payload.IsActive, true)}
+}
+
+func cleanNameList(values []string) ([]string, bool) {
+	if len(values) > 12 {
+		return nil, false
+	}
+	seen := map[string]struct{}{}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		text := strings.TrimSpace(value)
+		if text == "" || len(text) > 80 {
+			return nil, false
+		}
+		key := strings.ToLower(text)
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+		result = append(result, text)
+	}
+	return result, true
 }
 
 func validateCommutePayload(payload commutePayload, requireUserID bool) bool {
@@ -1700,6 +1725,12 @@ func validateCommutePayload(payload commutePayload, requireUserID bool) bool {
 		payload.PreferredMode = "TRANSIT"
 	}
 	if payload.PreferredMode != "TRANSIT" && payload.PreferredMode != "WALK" && payload.PreferredMode != "BIKE" && payload.PreferredMode != "DRIVE" {
+		return false
+	}
+	if _, ok := cleanNameList(payload.RouteNames); !ok {
+		return false
+	}
+	if _, ok := cleanNameList(payload.StopNames); !ok {
 		return false
 	}
 	seen := map[int]struct{}{}

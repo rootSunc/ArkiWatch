@@ -2,6 +2,7 @@ package collectorservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -46,10 +47,11 @@ func RunCollector(ctx context.Context, store *database.Store, collector collecto
 	started := time.Now().UTC()
 	result := Result{SourceCode: collector.SourceCode(), Dataset: collector.Dataset()}
 	items, err := collector.Collect(ctx)
-	if err != nil {
-		message := err.Error()
-		result.Status, result.ErrorMessage = "failed", message
-		_ = store.AppendCollectorRun(ctx, collector.SourceCode(), collector.Dataset(), "failed", started, time.Now().UTC(), 0, &message)
+	status, message, items, fatal := classifyCollection(items, err)
+	if fatal != nil {
+		text := fatal.Error()
+		result.Status, result.ErrorMessage = "failed", text
+		_ = store.AppendCollectorRun(ctx, collector.SourceCode(), collector.Dataset(), "failed", started, time.Now().UTC(), 0, &text)
 		return result
 	}
 	persisted, err := store.PersistObservations(ctx, collector.SourceCode(), items)
@@ -59,12 +61,27 @@ func RunCollector(ctx context.Context, store *database.Store, collector collecto
 		_ = store.AppendCollectorRun(ctx, collector.SourceCode(), collector.Dataset(), "failed", started, time.Now().UTC(), 0, &message)
 		return result
 	}
-	if err := store.AppendCollectorRun(ctx, collector.SourceCode(), collector.Dataset(), "succeeded", started, time.Now().UTC(), persisted.Inserted, nil); err != nil {
+	if err := store.AppendCollectorRun(ctx, collector.SourceCode(), collector.Dataset(), status, started, time.Now().UTC(), persisted.Inserted, message); err != nil {
 		result.Status, result.ErrorMessage = "failed", err.Error()
 		return result
 	}
-	result.Status, result.RecordsIngested, result.RecordsSkipped = "succeeded", persisted.Inserted, persisted.Skipped
+	result.Status, result.RecordsIngested, result.RecordsSkipped = status, persisted.Inserted, persisted.Skipped
+	if message != nil {
+		result.ErrorMessage = *message
+	}
 	return result
+}
+
+func classifyCollection(items []collectors.Observation, err error) (string, *string, []collectors.Observation, error) {
+	var partial *collectors.PartialError
+	if errors.As(err, &partial) {
+		text := partial.Error()
+		return "degraded", &text, items, nil
+	}
+	if err != nil {
+		return "failed", nil, nil, err
+	}
+	return "succeeded", nil, items, nil
 }
 
 func RunSources(ctx context.Context, store *database.Store, cfg config.Config, requested []string) ([]Result, error) {
@@ -95,8 +112,9 @@ func RunRange(ctx context.Context, store *database.Store, cfg config.Config, sou
 		return result
 	}
 	items, err := rangeCollector.CollectRange(ctx, start, end, areaCode, cursor)
-	if err != nil {
-		result.Status, result.ErrorMessage = "failed", err.Error()
+	status, message, items, fatal := classifyCollection(items, err)
+	if fatal != nil {
+		result.Status, result.ErrorMessage = "failed", fatal.Error()
 		return result
 	}
 	persisted, err := store.PersistObservations(ctx, sourceCode, items)
@@ -104,7 +122,10 @@ func RunRange(ctx context.Context, store *database.Store, cfg config.Config, sou
 		result.Status, result.ErrorMessage = "failed", err.Error()
 		return result
 	}
-	result.Status, result.RecordsIngested, result.RecordsSkipped = "succeeded", persisted.Inserted, persisted.Skipped
+	result.Status, result.RecordsIngested, result.RecordsSkipped = status, persisted.Inserted, persisted.Skipped
+	if message != nil {
+		result.ErrorMessage = *message
+	}
 	return result
 }
 

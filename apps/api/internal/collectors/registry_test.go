@@ -3,6 +3,7 @@ package collectors
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -113,11 +114,12 @@ func TestFMICollectContinuesPastOneFailingPlaceButErrorsWhenAllFail(t *testing.T
 	cfg.WeatherPlaces = []string{"helsinki=Helsinki", "espoo=Espoo"}
 
 	items, err := (fmiCollector{cfg: cfg}).Collect(context.Background())
-	if err != nil {
-		t.Fatalf("expected Collect to succeed when at least one place works, got: %v", err)
+	var partial *PartialError
+	if !errors.As(err, &partial) || len(partial.Areas) != 1 || partial.Areas[0] != "espoo" {
+		t.Fatalf("expected a partial failure naming espoo, got items=%#v err=%v", items, err)
 	}
 	if len(items) != 1 || items[0].AreaCode != "helsinki" {
-		t.Fatalf("expected only the successful helsinki observation, got %#v", items)
+		t.Fatalf("expected the successful helsinki observation to be kept, got %#v", items)
 	}
 
 	cfg.WeatherPlaces = []string{"espoo=Espoo"}
