@@ -10,8 +10,9 @@ A person in a supported Finnish city can find a relevant signal, understand its
 place and time coverage, inspect its source, and decide whether to act. When the
 evidence is missing or old, the product makes that limitation visible.
 
-Two existing surfaces serve that outcome: Data supports inspection; Today
-summarizes a next step. Data is currently the default entry point. The assistant
+Home combines the next decision with the signal readings. Domain workspaces
+support deeper inspection, while the optional Your day page holds the personal
+plan without repeating the overview. Home is the default entry point. The assistant
 is an optional way to explain the same evidence. An account, a model provider,
 Telegram, and a historical archive are not prerequisites for that public path.
 
@@ -21,7 +22,7 @@ Telegram, and a historical archive are not prerequisites for that public path.
 | --- | --- | --- |
 | Collectors, provenance, freshness, scope | A decision is only useful if its evidence applies here and now | Adding a feed needs a specific user question |
 | Go-owned decisions and generated demo assets | Live and demo can use the same rules without duplicate browser business logic | Do not move presentation logic into Go |
-| Data and Today | Inspection and action are different reading tasks | Do not duplicate full summaries across both |
+| Home, domain workspaces and Your day | A decision needs readings, evidence and an optional personal plan | Keep one overview; the plan must not repeat it |
 | Saved context, Telegram, assistant | Potential convenience for recurring use | Keep optional; assess each against actual use |
 | History and backfill | Supports comparison and investigation | Keep bounded; missing history remains missing |
 | Single-VPS recipe | Makes self-hosting reproducible | Keep generic; personal infrastructure is separate |

@@ -1,0 +1,410 @@
+[
+  {
+    "mode": "desktop",
+    "route": "overview",
+    "headings": [
+      "Home"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 354,
+      "width": 180.65625,
+      "height": 207
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "weather",
+    "headings": [
+      "Weather"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 219.1875,
+      "height": 179
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "air",
+    "headings": [
+      "Air quality"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 566,
+      "height": 179
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "energy",
+    "headings": [
+      "Energy"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 214,
+      "width": 373.328125,
+      "height": 179
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "mobility",
+    "headings": [
+      "Mobility"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 373.328125,
+      "height": 179
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "water",
+    "headings": [
+      "Water and snow"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 566,
+      "height": 179
+    }
+  },
+  {
+    "mode": "desktop",
+    "route": "events",
+    "headings": [
+      "Events"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "desktop",
+    "route": "sources",
+    "headings": [
+      "Sources & health"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "mobile",
+    "route": "overview",
+    "headings": [
+      "Home"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 318,
+      "width": 174,
+      "height": 216
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "weather",
+    "headings": [
+      "Weather"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "air",
+    "headings": [
+      "Air quality"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "energy",
+    "headings": [
+      "Energy"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 235,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "mobility",
+    "headings": [
+      "Mobility"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 216
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "water",
+    "headings": [
+      "Water and snow"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "mobile",
+    "route": "events",
+    "headings": [
+      "Events"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "mobile",
+    "route": "sources",
+    "headings": [
+      "Sources & health"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "dark",
+    "route": "overview",
+    "headings": [
+      "Home"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 354,
+      "width": 180.65625,
+      "height": 207
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "weather",
+    "headings": [
+      "Weather"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 219.1875,
+      "height": 179
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "air",
+    "headings": [
+      "Air quality"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 566,
+      "height": 179
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "energy",
+    "headings": [
+      "Energy"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 214,
+      "width": 373.328125,
+      "height": 179
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "mobility",
+    "headings": [
+      "Mobility"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 373.328125,
+      "height": 179
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "water",
+    "headings": [
+      "Water and snow"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 272,
+      "y": 156,
+      "width": 566,
+      "height": 179
+    }
+  },
+  {
+    "mode": "dark",
+    "route": "events",
+    "headings": [
+      "Events"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "dark",
+    "route": "sources",
+    "headings": [
+      "Sources & health"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "overview",
+    "headings": [
+      "首页"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 318,
+      "width": 174,
+      "height": 216
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "weather",
+    "headings": [
+      "天气"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "air",
+    "headings": [
+      "空气质量"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "energy",
+    "headings": [
+      "电力能源"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 235,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "mobility",
+    "headings": [
+      "Mobility"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 216
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "water",
+    "headings": [
+      "Water and snow"
+    ],
+    "overflow": false,
+    "firstMetric": {
+      "x": 16,
+      "y": 165,
+      "width": 174,
+      "height": 192
+    }
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "events",
+    "headings": [
+      "事件"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  },
+  {
+    "mode": "zh-mobile",
+    "route": "sources",
+    "headings": [
+      "来源与健康"
+    ],
+    "overflow": false,
+    "firstMetric": null
+  }
+]

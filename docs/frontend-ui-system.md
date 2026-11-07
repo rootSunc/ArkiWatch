@@ -1,236 +1,116 @@
 # ArkiWatch frontend UI system
 
-ArkiWatch has two product jobs that should feel related, but should not compete
-for the same attention. The Data platform is the product's main body; Today /
-life assistant is a secondary, on-demand surface layered on top of it:
+The [October 2026 redesign](frontend-redesign-2026-10.md) is the accepted direction.
+Home combines the decision and readings. Domain workspaces provide inspection;
+Your day (`/plan`, with `?view=today` kept as a compatible entry) contains the
+optional personal timeline. There is one overview.
 
-| Workspace | User question | Primary action |
-| --- | --- | --- |
-| Data / public data platform | “What is happening in the data?” | Inspect a signal, its scope, freshness, and evidence. |
-| Today / life assistant | “What should I know or do today?” | Review one recommendation and act on it. |
+## Scope and navigation
 
-## Information architecture
+The context bar owns city, date, data mode and check time. Demo and historical
+states use a compact labelled pill. Notices are reserved for unavailable scopes
+and failures. Refresh, notifications and Ask remain on the right. The sidebar
+owns language, theme, settings and account controls. Its 56px rail preference is
+persisted locally. The personal-plan entry appears when personal context exists.
 
-The shell always exposes a small workspace switcher, with Data listed first.
-Data is the default, evidence-oriented landing surface: it opens the signal
-overview and then the category workspaces. Collector status, event history, and
-catalog views remain available from Data, but are intentionally secondary to
-the signal overview.
+Mobile uses a 48px brand row, a compact mode strip and bottom navigation. City
+and date controls open in a native bottom-sheet dialog. The document remains
+within the viewport at 320px in English and Chinese. Controls that act on old
+content become inert during a scope change; scope and navigation remain usable.
 
-Today / life assistant is reachable from the switcher or a direct `?view=today`
-link, but is no longer the default landing state. Its headline recommendation
-is still surfaced without leaving Data: a single-line `TodayDigestStrip`
-(`apps/web/src/features/data-platform/today/today-digest-strip.tsx`) sits above
-the signal observatory and links straight into the full Today page. This keeps
-the decision-first value reachable in one glance without making it compete
-with the data-first narrative for the default view.
+## Visual tokens and cascade
 
-Every page follows the same hierarchy:
+Inter is the UI face, with a CJK fallback stack and tabular numbers. JetBrains
+Mono is reserved for code and identifiers. The light palette uses a neutral
+canvas, white surfaces and blue `#1D4ED8`; the dark palette retains the same
+semantic roles. Status colors always carry words. Cards use 10px corners,
+controls 8px, borders 1px and three elevation levels.
 
-1. Global context: workspace, city, time scope, language, and account.
-2. One page-level purpose statement.
-3. One primary result or action.
-4. Supporting evidence, history, and source attribution.
+Literal CSS colors belong only in `apps/web/src/app/tokens.css`. Compatibility
+aliases resolve to the same palette; they do not introduce a second accent.
 
-## Visual direction
+The layer order is `reset, tokens, base, components, features, overrides`.
+Declare the layer *inside* the stylesheet: the pinned Next CSS loader interprets
+`@import "file.css" layer(features)` as a media query. Ordinary imports load
+files whose own declarations sit in `@layer features`.
 
-The visual language is Nordic minimal: a warm birch-paper canvas, a light
-navigation plane in the same tone, spruce ink, one fjord accent for actions and
-links, generous whitespace, and hairline dividers instead of shadows. Meaning
-is carried by nature-derived status colours (moss for good, cloudberry for
-caution, lingonberry for error) that only ever appear as small dots and text,
-never as large fills. Heather marks the Today workspace. Avoid decorative
-gradients, oversized icons, pill-shaped containers, and competing headlines.
+Shared primitives live in `apps/web/src/features/shared/ui/console.tsx` with a
+co-located CSS module. Shell components remain in the data-platform feature and
+compose those primitives. The feature sheets have bounded responsibilities:
 
-All literal CSS colors live in `apps/web/src/app/tokens.css`; component CSS
-uses semantic tokens, including for translucent fills and shadows. Light mode
-pairs the birch canvas with slightly lighter evidence surfaces. Dark mode is a
-polar-night spruce palette with a pale fjord accent. Both modes keep these
-roles stable:
+| File | Responsibility |
+| --- | --- |
+| `console-shell.css` | Navigation, context controls, Home, workspace layout, command palette and responsive shell |
+| `console-chart.css` | Shared trend frame, axes, area wash, tooltip and insufficient-history state |
+| `console-inspection.css` | Shared styling of retained specialist inspection controls and maps |
+| `console-plan.css` | Personal timeline and recommendations |
+| `events-inbox.css` | Native notification inbox dialog |
+| `skeleton.css` | Initial loading surface |
 
-| Role | Tokens | Usage |
-| --- | --- | --- |
-| Canvas and elevation | `--canvas`, `--surface`, `--surface-soft`, `--line` | Page, evidence panels, quiet grouping, separators |
-| Text | `--ink`, `--ink-soft`, `--muted` | Headings, body, secondary labels |
-| Action and focus | `--blue`, `--blue-soft`, `--btn-fill`, `--focus-ring` | Links, selections, primary actions, keyboard focus |
-| Meaning | `--green`, `--amber`, `--red` | Good, caution, and error with text labels |
-| Today | `--today-accent`, `--today-soft`, `--today-line` | Quiet heather workspace identity, separate from warnings |
-| Effects | `--shadow-color`, `--selection` | Depth and browser selection without component color literals |
-| Brand planes | `--sidenav-*`, `--brand-*` | Canvas-toned product navigation and the dark spruce About hero, each with readable foregrounds |
+The previous `components.css`, `nordic.css`, responsive override sheet and nine
+bespoke domain stylesheets are retired. CSS remains below 6,000 lines; the check
+script rejects unlayered source styles and `!important` outside overrides.
 
-Run `pnpm --filter @arkiwatch/web audit:colors` after adding styles. The check
-rejects literal CSS colors outside `tokens.css`. The web manifest is a static
-metadata exception and repeats the light canvas and button fill values
-because it cannot read CSS variables.
+## Components and data behavior
 
-Typography uses Manrope for the interface (with a CJK fallback stack for
-Chinese) and tabular figures everywhere, so readouts, timestamps and labels no
-longer need a monospace face. `--font-data` names that role; JetBrains Mono
-(`--font-mono`) is kept for code only. Labels are sentence case
-(`--label-case`, `--label-tracking`, `--label-size`) rather than tracked
-uppercase. The font variables are attached to the root element, because the
-theme tokens that read them are declared on `:root`.
+- Home shows one decision, six metric tiles, open events, a selected trend and
+  source-health summary. Empty domains remain visible with an explicit state.
+  Your day appears beside the decision only when saved personal context exists.
+- Domain pages compose PageHeader, KPI row, chart, sortable/searchable DataTable,
+  specialist inspection disclosure and source footer. Specialist
+  maps, source pipelines and event details remain available in inspection. Energy
+  provider switches control the primary KPIs, chart and table together; Mobility
+  lists individual incidents in the primary table.
+- Metric values and table readings expose provider, location, timestamp, method,
+  licence and source link through EvidencePopover. Missing metadata is labelled
+  as unrecorded. Forecasts also expose their validity time. Floating evidence is
+  clamped to the viewport, escapes scrolling table clipping, and links directly
+  to its provider drawer while retaining city/date.
+- TrendChart draws only with at least three finite samples. A smaller series
+  produces a short notice with the actual count. Station comparisons never
+  become time series. A 24-hour forecast/schedule uses timestamps, independent of
+  sampling frequency. The API supplies a 30-day archive; 7/30-day filters use
+  actual calendar dates, skip missing days and exclude later snapshots. Weather
+  history is a daily forecast mean, energy uses duration-weighted daily values,
+  and air/mobility retain their daily snapshot semantics. Chart positions reflect
+  elapsed time rather than array index.
+- Chart hover and keyboard focus expose value, unit, time and source; a dashed
+  reference line marks the snapshot instant when it is inside the series.
+- Failed requests and expired briefing caches withhold affected readings and
+  mark the tile Failed/Stale. A cached value does not silently regain health.
+- Events share one filter bar for All/Open/Ended, incident/public type, search,
+  domain, provider and severity. Open means active at the viewed reference time;
+  upcoming events appear in All with an explicit state. Time expiry is called
+  Ended, because there is no manual-resolution workflow in the API. Details open
+  in a right drawer. CSV export respects the current filters.
+- Sources & health lists domain, current status, last successful run, row count,
+  latency and seven days of recorded execution counts. Day boundaries use
+  Europe/Helsinki. A failed latest execution cannot overwrite the last success.
+  Its drawer includes errors, licence and per-day success/failure/unfinished
+  counts. Historical reads exclude later executions and later run outcomes.
+  Older demo/archive payloads explicitly say when run history is unrecorded.
+- Source/platform database read failures return HTTP 503 for the overview,
+  briefing, category and export routes; they cannot become healthy empty data.
+- Your day edits context in the shared drawer. Direct visits without saved
+  context show a setup explanation rather than an empty personal timeline.
+- Ask opens a resizable 420px non-modal dock at widths of at least 1280px.
+  Smaller screens use a modal sheet with a focus trap. Citations preserve the
+  desktop conversation and highlight the matching workspace. Changing city or
+  date resets the conversation's data scope.
+- The command palette supports Cmd/Ctrl+K, arrow keys, Enter and Escape.
+  `g h`, `g e`, `g s` navigate Home, Events and Sources. Scope stays in the URL.
 
-The current implementation follows a deliberately small visual grammar:
+## Validation
 
-- `Today` uses a quiet heather accent, one primary recommendation with its
-  actions directly beneath it, and a compact glance table. Supporting plans
-  and personal context sit below the decision, never beside it as competing
-  headlines.
-- `Data` leads with the readings themselves. The observatory hero carries the
-  scope and check time in one quiet line, the Today digest follows as the only
-  tinted card, and the two-column signal grid is the primary result. Each card
-  shows its title and status dot on one line and a left-aligned reading. The
-  system summary (coverage, event volume, collector status, check time) is
-  supporting evidence and follows the grid as a single hairline row.
-  Cross-signal history is collapsed by default so the latest evidence remains
-  the first read.
-- Missing values stay visibly quieter than real ones (muted text, no display
-  size) so an empty slot never reads like a reading.
-- The shell uses a canvas-toned navigation plane, light evidence surfaces,
-  12px card radii, 8px controls, and one-pixel hairlines. The legacy cascade
-  lives in `styles/components.css`, whose internal order is load-bearing: its
-  sections restyle the same selectors in both directions, so they cannot be
-  reordered or split apart without deciding, per declaration, which one wins.
-  `styles/nordic.css` is the final layer after that cascade: shell, overview,
-  Today, workspace rhythm, and phone/tablet adjustments. It wins by load order
-  and matching specificity rather than `!important`, and contains no literal
-  colors.
-- Detail workspaces share `WorkspaceEvidenceHeader` and `WorkspaceEmptyState`.
-  The header keeps the status, source, and scoped timestamp together; the
-  empty state explains missing data without implying that a source is healthy.
-  Shared primitives live in `apps/web/src/features/data-platform/workspace-ui.tsx`
-  and their visual tokens live in `app/tokens.css`.
+Run `pnpm --filter @arkiwatch/web check`, a demo production build, then
+`pnpm --filter @arkiwatch/web e2e --workers=2`.
 
-### About the `!important` declarations
+Use `e2e/tools/style-snapshot.mjs` before and after CSS changes, followed by
+`e2e/tools/style-diff.mjs`. Pure cascade refactors should have a zero diff. An
+intentional redesign changes structure and styles: review those differences
+against the design and screenshots, rather than treating a nonzero diff as a
+regression by itself. The matrix includes desktop/mobile, light/dark, English/
+Chinese, historical views, the plan and Sources & health.
 
-Some breakpoint and state rules use `!important` because later styles would
-otherwise override them. Treat that as cascade debt, not a permanent design
-requirement. The audit tool can identify winners in captured states, but cannot
-establish that a declaration is unused across hover, active, loading, and error
-states. Review those states when simplifying the cascade.
-
-### Verifying a stylesheet change
-
-Moving a rule between files changes the cascade, and the cascade here is load
-order. `apps/web/e2e/tools/` records the computed styling of every element on
-every route, in both themes, at two viewports:
-
-```bash
-cd apps/web
-node e2e/tools/style-snapshot.mjs before.json   # against a running build
-# …make the change, rebuild, restart…
-node e2e/tools/style-snapshot.mjs after.json
-node e2e/tools/style-diff.mjs before.json after.json
-```
-
-A pure reorganisation should produce no computed-style differences in captured
-states. Investigate any differences and check interaction states separately.
-
-The spacing scale is based on 4px units (`4, 8, 12, 16, 24, 32`). Content is
-limited to a readable 1280px frame. Interactive controls use a minimum 36px
-hit area on desktop and 44px on touch surfaces. Every status color is paired
-with text, and every live value keeps its source and timestamp nearby.
-
-## Display contracts
-
-The interface uses a small number of explicit state contracts so visual polish
-does not change the meaning of a data value:
-
-| Surface | Primary readout | Supporting evidence |
-| --- | --- | --- |
-| Today | One lead recommendation and a compact plan | Scenario context, source issues, and linked events below the decision |
-| Signal observatory | Categories, recent events, and collector status | View check time, category cards, catalog disclosure, and collector-run detail |
-| Event panel | Overall notification plus the current unread count | Read/unread events, structured attributes, evidence chips, and workspace link |
-| Energy card | Household best price in `c/kWh` when available | System-only current grid load in `MW`, source and scope metadata |
-
-`live`, `historical`, and static demo scopes are never interchangeable in copy:
-historical and demo timestamps are absolute, while live timestamps may include
-relative age. Empty data means the source returned no usable value for the
-selected scope; it is not silently promoted to healthy or live. A recent
-successful collector run does not prove that a usable reading exists for the
-selected city and date. The coverage catalog marks adapter support, not live
-availability.
-
-The event surface is intentionally progressive: the timeline is opt-in from
-the notification control, event details are opt-in from a timeline item, and
-opening a workspace preserves the event target in navigation. During a scope
-transition, actions are disabled until the new response replaces the previous
-scope.
-
-## Responsive behavior
-
-- Desktop: persistent navigation, one context bar, and a centered content frame.
-- Tablet: persistent navigation may collapse; grids reduce to two columns.
-- Mobile: navigation becomes a drawer, the bottom bar contains only the most
-  common destinations in desktop order (overview, Today, weather, mobility,
-  and assistant) with a soft pill behind the active icon, city and date read
-  as two chips under the app bar, and
-  secondary tools stay behind the menu. The assistant action is disabled while
-  the city/date scope is updating.
-
-## Component boundaries
-
-Keep the page controller focused on state and orchestration. The current Data
-surface uses these boundaries:
-
-- `data-platform-home.tsx` owns city/date scope, navigation, API responses,
-  focus restoration, and callbacks.
-- `data-platform-nav-utils.ts` contains pure availability and mobile-priority
-  navigation decisions.
-- `signal-observatory-overview.tsx` renders the summary header, freshness
-  marker, and system tiles.
-- `recent-events-panel.tsx` renders the notification summary, event timeline,
-  event detail, and evidence hierarchy; routing and read-state mutations stay
-  in the controller.
-- `data-platform-workspace-router.tsx` consumes one explicit `WorkspaceRoute`
-  instead of a set of independent detail booleans.
-- `workspace-ui.tsx` provides shared evidence headers, empty states, and
-  disclosure treatment for domain workspaces.
-
-When adding a new display surface, first define its view-model inputs and
-interaction callbacks, then keep markup and styling in the smallest semantic
-component that owns that hierarchy level. Avoid moving API fetching or router
-mutation into presentational components.
-
-## Implementation rules
-
-- Keep domain data and presentation models separate from shell components.
-- Prefer one semantic component per hierarchy level over one-off markup.
-- Keep the Today assistant contextual to the selected city and date.
-- Historical views must request the matching date-scoped public snapshot and
-  never fall back to live recommendations.
-- Keep Data workspaces explicit about coverage, freshness, and evidence.
-- Keep household and system energy semantics distinct; never label a grid-load
-  value as a household price or vice versa.
-- Keep demo fixtures visibly static and use historical wording for date-scoped
-  evidence; do not call either state “live”.
-- Use existing CSS tokens and semantic message catalogs; do not introduce
-  page-specific hard-coded colors or untranslated labels.
-- Keep API copy canonical and expose optional localized content fields (for
-  example `title_zh` and `body_zh`) through the shared content-localization
-  helper; this lets live sources adopt translations incrementally without
-  breaking older payloads.
-- Preserve keyboard focus, reduced-motion behavior, and visible loading/error
-  states during visual refinements.
-- Never present data from a previous city or date as current: keep the cached
-  cards visible during a scope transition, but announce the transition and
-  pause actions until the new scope has arrived.
-
-## Verification checklist
-
-For a frontend display change, run the focused tests first and then the full
-web gates:
-
-```bash
-pnpm --filter @arkiwatch/web test
-pnpm --filter @arkiwatch/web run typecheck
-pnpm --filter @arkiwatch/web run lint
-pnpm demo
-```
-
-Use the demo to check both a desktop overview and a narrow viewport. Confirm
-that the summary remains prioritized, the mobile bar exposes only its compact
-destinations, event details preserve keyboard focus, and demo/historical/live
-labels remain truthful. End each completed implementation round with a
-focused Conventional Commit.
+See the [implementation report](frontend-redesign-2026-10-implementation.md) for
+validation results and known API limits.

@@ -11,7 +11,7 @@ repository; they do not certify the health of a particular deployment.
 | Understand storage and external data flows | [Privacy](../PRIVACY.md), also available in the app at `/privacy` |
 | Run the live stack or contribute | [Development](development.md) |
 | Change business rules or API behavior | [Go business boundary](go-business-boundary.md), [API guide](../apps/api/README.md) |
-| Change a workspace or its presentation | [Frontend UI system](frontend-ui-system.md) |
+| Change a workspace or its presentation | [Frontend UI system](frontend-ui-system.md) · [Redesign review](frontend-redesign-2026-10-implementation.md) |
 | Understand historical collection | [History and backfill](history-backfill-framework.md) |
 | Deploy and operate an instance | [Deployment](../deploy/README.md) and its runbooks |
 | Decide what belongs in the public repository | [Public and private records](publication-boundary.md) |
