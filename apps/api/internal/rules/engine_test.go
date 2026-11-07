@@ -66,6 +66,40 @@ func TestBuildUsesAirQualityFallbacks(t *testing.T) {
 	}
 }
 
+func TestBuildCommuteUsesModeWeekdayAndDeparture(t *testing.T) {
+	mondayMorning := time.Date(2026, 8, 24, 5, 15, 0, 0, time.UTC) // 08:15 in Helsinki
+	transit := Event{EventType: "transit_delay", Severity: "HIGH", Title: "Tram 9 delayed", StartsAt: mondayMorning, EndsAt: mondayMorning.Add(time.Hour)}
+	driver := User{Timezone: "Europe/Helsinki", CaresCommute: true, HasCommuteProfile: true, Commutes: []Commute{ParseCommute("DRIVE", "08:00", []int{1, 2, 3, 4, 5})}}
+	if _, ok := Build(transit, driver, 90); ok {
+		t.Fatal("a driving commute produced a transit alert")
+	}
+	rider := driver
+	rider.Commutes = []Commute{ParseCommute("TRANSIT", "08:00", []int{1, 2, 3, 4, 5})}
+	if _, ok := Build(transit, rider, 90); !ok {
+		t.Fatal("weekday transit commute missed an overlapping service alert")
+	}
+	sunday := transit
+	sunday.StartsAt = time.Date(2026, 8, 23, 5, 15, 0, 0, time.UTC)
+	sunday.EndsAt = sunday.StartsAt.Add(time.Hour)
+	if _, ok := Build(sunday, rider, 90); ok {
+		t.Fatal("a weekday commute matched a Sunday alert")
+	}
+	evening := transit
+	evening.StartsAt = time.Date(2026, 8, 24, 15, 0, 0, 0, time.UTC)
+	evening.EndsAt = evening.StartsAt.Add(time.Hour)
+	if _, ok := Build(evening, rider, 90); ok {
+		t.Fatal("an 08:00 commute matched an evening alert")
+	}
+	road := Event{EventType: "road_disruption", Severity: "MEDIUM", LocationRef: "finland", Title: "Kehä I congestion in Espoo", StartsAt: mondayMorning, EndsAt: mondayMorning.Add(time.Hour)}
+	driver.City = "espoo"
+	if draft, ok := Build(road, driver, 90); !ok || draft.RuleCode != "R21_ROAD_COMMUTE" {
+		t.Fatalf("driving commute missed a local road disruption: %#v %v", draft, ok)
+	}
+	if _, ok := Build(road, rider, 90); ok {
+		t.Fatal("a transit commute produced a road alert")
+	}
+}
+
 func TestBuildFormatsFloatsWithoutExponent(t *testing.T) {
 	user := User{Timezone: "Europe/Helsinki", CaresWeather: true}
 	event := Event{EventType: "rain_risk", Severity: "LOW", StartsAt: time.Now(), EndsAt: time.Now().Add(time.Hour), Attributes: map[string]any{"peak_precip_mm": 0.0000125}}

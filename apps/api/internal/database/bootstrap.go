@@ -66,6 +66,7 @@ func (store *Store) SeedOperationalMetadata(ctx context.Context, cfg config.Conf
 		{Code: "R10_AIR_QUALITY_POOR", Name: "Poor air quality advice", Scenario: "air", Severity: "MEDIUM", Cooldown: 180, Events: []string{"air_quality_poor"}},
 		{Code: "R11_AIR_QUALITY_STATUS", Name: "Air quality status summary", Scenario: "air", Severity: "LOW", Cooldown: 360, Events: []string{"air_quality_status"}},
 		{Code: "R20_COMMUTE_DISRUPTION", Name: "Personal commute disruption advice", Scenario: "commute", Severity: "HIGH", Cooldown: 90, Events: []string{"transit_delay", "transit_disruption"}},
+		{Code: "R21_ROAD_COMMUTE", Name: "Personal driving commute road advice", Scenario: "commute", Severity: "HIGH", Cooldown: 90, Events: []string{"road_disruption", "road_weather_risk"}},
 		{Code: "R30_ENERGY_WINDOW", Name: "Personal energy timing advice", Scenario: "energy", Severity: "LOW", Cooldown: 240, Events: []string{"cheap_energy_window"}},
 		{Code: "PR_TRANSIT_DISRUPTION", Name: "Public commute disruption advice", Scenario: "commute", Severity: "HIGH", Cooldown: 90, Events: []string{"transit_delay", "transit_disruption"}},
 		{Code: "PR_WEATHER_OUTDOOR", Name: "Public outdoor timing advice", Scenario: "outdoor", Severity: "MEDIUM", Cooldown: 180, Events: []string{"rain_risk", "weather_outlook"}},

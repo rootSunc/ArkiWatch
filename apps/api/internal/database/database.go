@@ -448,6 +448,34 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 	}
 	userRows.Close()
 
+	commuteRows, err := tx.Query(ctx, `
+		SELECT user_id, preferred_mode::text, departure_time_local, weekdays
+		FROM user_commute_profiles
+		WHERE is_active = TRUE
+	`)
+	if err != nil {
+		return RulesResult{}, err
+	}
+	commutesByUser := map[string][]rules.Commute{}
+	for commuteRows.Next() {
+		var userID, mode, departure string
+		var weekdays []int32
+		if err := commuteRows.Scan(&userID, &mode, &departure, &weekdays); err != nil {
+			commuteRows.Close()
+			return RulesResult{}, err
+		}
+		days := make([]int, len(weekdays))
+		for index, day := range weekdays {
+			days[index] = int(day)
+		}
+		commutesByUser[userID] = append(commutesByUser[userID], rules.ParseCommute(mode, departure, days))
+	}
+	if err := commuteRows.Err(); err != nil {
+		commuteRows.Close()
+		return RulesResult{}, err
+	}
+	commuteRows.Close()
+
 	type ruleRow struct {
 		id, code string
 		cooldown int
@@ -482,10 +510,12 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 			SELECT id, event_type, severity::text, location_ref, starts_at, ends_at, title, attributes
 			FROM normalized_events
 			WHERE ends_at >= $1 AND starts_at <= $2
-			  AND location_type IN ('CITY'::location_type, 'DISTRICT'::location_type)
-			  AND LOWER(location_ref) = ANY($3::text[])
+			  AND (
+			    (location_type IN ('CITY'::location_type, 'DISTRICT'::location_type) AND LOWER(location_ref) = ANY($3::text[]))
+			    OR event_type = ANY($4::text[])
+			  )
 			ORDER BY starts_at ASC
-		`, now.UTC(), horizon, locationRefs)
+		`, now.UTC(), horizon, locationRefs, []string{"road_disruption", "road_weather_risk"})
 		if queryErr != nil {
 			return RulesResult{}, queryErr
 		}
@@ -507,8 +537,8 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 				return RulesResult{}, err
 			}
 			result.Events++
-			userContext := rules.User{ID: user.id, Timezone: user.timezone, City: user.city, Label: user.label, District: user.district, CaresWeather: user.caresWeather, CaresAir: user.caresAir, CaresCommute: user.caresCommute, CaresEnergy: user.caresEnergy, HasCommuteProfile: user.hasCommute}
-			ruleCode := map[string]string{"rain_risk": "R1_RAIN_RISK", "weather_outlook": "R2_WEATHER_OUTLOOK", "air_quality_poor": "R10_AIR_QUALITY_POOR", "air_quality_status": "R11_AIR_QUALITY_STATUS", "transit_delay": "R20_COMMUTE_DISRUPTION", "transit_disruption": "R20_COMMUTE_DISRUPTION", "cheap_energy_window": "R30_ENERGY_WINDOW"}[event.EventType]
+			userContext := rules.User{ID: user.id, Timezone: user.timezone, City: user.city, Label: user.label, District: user.district, CaresWeather: user.caresWeather, CaresAir: user.caresAir, CaresCommute: user.caresCommute, CaresEnergy: user.caresEnergy, HasCommuteProfile: user.hasCommute, Commutes: commutesByUser[user.id]}
+			ruleCode := map[string]string{"rain_risk": "R1_RAIN_RISK", "weather_outlook": "R2_WEATHER_OUTLOOK", "air_quality_poor": "R10_AIR_QUALITY_POOR", "air_quality_status": "R11_AIR_QUALITY_STATUS", "transit_delay": "R20_COMMUTE_DISRUPTION", "transit_disruption": "R20_COMMUTE_DISRUPTION", "road_disruption": "R21_ROAD_COMMUTE", "road_weather_risk": "R21_ROAD_COMMUTE", "cheap_energy_window": "R30_ENERGY_WINDOW"}[event.EventType]
 			rule, exists := rulesByCode[ruleCode]
 			if !exists {
 				continue

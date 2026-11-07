@@ -14,10 +14,19 @@ type Event struct {
 	Attributes                           map[string]any
 }
 
+type Commute struct {
+	Mode               string
+	Departure          string
+	Weekdays           []int
+	DepartureMinutes   int
+	HasDepartureMinute bool
+}
+
 type User struct {
 	ID, Timezone, City, Label, District               string
 	CaresWeather, CaresAir, CaresCommute, CaresEnergy bool
 	HasCommuteProfile                                 bool
+	Commutes                                          []Commute
 }
 
 type Draft struct {
@@ -137,10 +146,15 @@ func Build(event Event, user User, ruleCooldownMinutes int) (Draft, bool) {
 		station := attributeOr(event.Attributes, "worst_station", "network")
 		draft = Draft{RuleCode: "R11_AIR_QUALITY_STATUS", RecommendationType: "AIR", Priority: priority, Title: "Air quality status update", Body: fmt.Sprintf("Current air quality is %s. The weakest station right now is %s.", label, station), TitleZH: "空气质量状态更新", BodyZH: fmt.Sprintf("当前空气质量为 %s，目前最弱的监测站点是 %s。", label, station)}
 	case "transit_delay", "transit_disruption":
-		if !user.CaresCommute || !user.HasCommuteProfile {
+		if !matchesPersonalCommute(event, user) {
 			return Draft{}, false
 		}
 		draft = Draft{RuleCode: "R20_COMMUTE_DISRUPTION", RecommendationType: "COMMUTE", Priority: priority + 8, Title: event.TitleOr("Public transport service alert"), Body: fmt.Sprintf("Transit service risk is active from %s to %s. Check your commute before leaving and keep 10-15 minutes of buffer.", start, end), TitleZH: "公共交通服务提醒", BodyZH: fmt.Sprintf("%s 至 %s 存在公共交通服务风险。出发前查看通勤安排，并预留 10–15 分钟缓冲时间。", start, end)}
+	case "road_disruption", "road_weather_risk":
+		if !matchesPersonalCommute(event, user) || !roadAppliesToCommute(event, user) {
+			return Draft{}, false
+		}
+		draft = Draft{RuleCode: "R21_ROAD_COMMUTE", RecommendationType: "COMMUTE", Priority: priority + 8, Title: event.TitleOr("Road disruption on a driving commute"), Body: fmt.Sprintf("A road disruption is active from %s to %s. Check the route before leaving and keep extra time.", start, end), TitleZH: "驾车通勤道路提醒", BodyZH: fmt.Sprintf("%s 至 %s 存在道路影响。出发前查看路线，并预留额外时间。", start, end)}
 	case "cheap_energy_window":
 		if !user.CaresEnergy {
 			return Draft{}, false
@@ -158,6 +172,110 @@ func Build(event Event, user User, ruleCooldownMinutes int) (Draft, bool) {
 	}
 	draft.Rationale = map[string]any{"rule_code": draft.RuleCode, "event_type": event.EventType, "cooldown_minutes": ruleCooldownMinutes, "localized": map[string]any{"zh": map[string]any{"title": draft.TitleZH, "body": draft.BodyZH}}}
 	return draft, true
+}
+
+func matchesPersonalCommute(event Event, user User) bool {
+	if !user.CaresCommute {
+		return false
+	}
+	if len(user.Commutes) == 0 {
+		return user.HasCommuteProfile && isTransitEvent(event.EventType)
+	}
+	zone, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		zone = time.UTC
+	}
+	for _, commute := range user.Commutes {
+		if commuteAccepts(commute, event, zone) {
+			return true
+		}
+	}
+	return false
+}
+
+func commuteAccepts(commute Commute, event Event, zone *time.Location) bool {
+	if !modeAccepts(commute.Mode, event.EventType) || !weekdayAccepts(commute.Weekdays, event, zone) {
+		return false
+	}
+	if !commute.HasDepartureMinute {
+		return true
+	}
+	localStart := event.StartsAt.In(zone)
+	day := time.Date(localStart.Year(), localStart.Month(), localStart.Day(), 0, 0, 0, 0, zone)
+	windowStart := day.Add(time.Duration(commute.DepartureMinutes-45) * time.Minute)
+	windowEnd := day.Add(time.Duration(commute.DepartureMinutes+90) * time.Minute)
+	return event.EndsAt.After(windowStart) && event.StartsAt.Before(windowEnd)
+}
+
+func modeAccepts(mode, eventType string) bool {
+	switch strings.ToUpper(strings.TrimSpace(mode)) {
+	case "DRIVE", "BIKE":
+		return eventType == "road_disruption" || eventType == "road_weather_risk"
+	case "WALK":
+		return isTransitEvent(eventType) || eventType == "road_weather_risk"
+	default:
+		return isTransitEvent(eventType)
+	}
+}
+
+func weekdayAccepts(weekdays []int, event Event, zone *time.Location) bool {
+	if len(weekdays) == 0 {
+		return true
+	}
+	day := isoWeekday(event.StartsAt.In(zone))
+	for _, wanted := range weekdays {
+		if wanted == day {
+			return true
+		}
+	}
+	return false
+}
+
+func isoWeekday(value time.Time) int {
+	day := int(value.Weekday())
+	if day == 0 {
+		return 7
+	}
+	return day
+}
+
+func isTransitEvent(eventType string) bool {
+	return eventType == "transit_delay" || eventType == "transit_disruption"
+}
+
+func roadAppliesToCommute(event Event, user User) bool {
+	ref := strings.ToLower(strings.TrimSpace(event.LocationRef))
+	for _, place := range []string{user.City, user.Label, user.District} {
+		if place = strings.ToLower(strings.TrimSpace(place)); place != "" && place == ref {
+			return true
+		}
+	}
+	if ref != "finland" && ref != "" {
+		return false
+	}
+	haystack := strings.ToLower(event.Title)
+	for _, key := range []string{"location_description", "summary", "comment"} {
+		haystack += " " + strings.ToLower(renderAttribute(event.Attributes[key]))
+	}
+	for _, place := range []string{user.City, user.Label, user.District, "uusimaa", "kehä", "keha", "ring i", "ring iii"} {
+		if place = strings.ToLower(strings.TrimSpace(place)); place != "" && strings.Contains(haystack, place) {
+			return true
+		}
+	}
+	return false
+}
+
+func ParseCommute(mode, departure string, weekdays []int) Commute {
+	item := Commute{Mode: strings.ToUpper(strings.TrimSpace(mode)), Departure: strings.TrimSpace(departure), Weekdays: append([]int(nil), weekdays...)}
+	if len(item.Departure) == 5 && item.Departure[2] == ':' {
+		hour, hourErr := strconv.Atoi(item.Departure[:2])
+		minute, minuteErr := strconv.Atoi(item.Departure[3:])
+		if hourErr == nil && minuteErr == nil && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 {
+			item.DepartureMinutes = hour*60 + minute
+			item.HasDepartureMinute = true
+		}
+	}
+	return item
 }
 
 func (event Event) TitleOr(fallback string) string {
