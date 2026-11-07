@@ -202,6 +202,20 @@ func TestNormalizeEnergyCreatesCheapWindow(t *testing.T) {
 	}
 }
 
+func TestNormalizeEnergyKeepsUnitAndSourceForAdviceCopy(t *testing.T) {
+	start := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
+	prices := []any{}
+	for index, price := range []float64{10, 2, 2, 2, 12} {
+		at := start.Add(time.Duration(index) * time.Hour)
+		prices = append(prices, map[string]any{"startTime": at.Format(time.RFC3339), "price": price})
+	}
+	item := observation("porssisahko", "energy_price_timeseries", map[string]any{"unit": "c/kWh", "body": map[string]any{"prices": prices}})
+	items := Normalize(item, "porssisahko")
+	if len(items) != 1 || items[0].Attributes["unit"] != "c/kWh" || items[0].Attributes["source"] != "porssisahko" {
+		t.Fatalf("attributes = %#v", items[0].Attributes)
+	}
+}
+
 func TestNormalizeDigitransitUsesStableAlertID(t *testing.T) {
 	items := Normalize(observation("digitransit", "service_alerts", map[string]any{"body": map[string]any{"alerts": []any{map[string]any{"id": "alert-1", "title": "Delay on route 7", "description": "Delayed service"}}}}), "digitransit")
 	if len(items) != 1 || items[0].DedupeKey != "digitransit:alert-1" || items[0].EventType != "transit_delay" {

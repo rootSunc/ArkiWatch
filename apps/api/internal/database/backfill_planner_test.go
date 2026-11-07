@@ -45,6 +45,24 @@ func TestBackfillWindowsSplitsSubDayRanges(t *testing.T) {
 	}
 }
 
+func TestCoverageCompleteRequiresEveryConfiguredCity(t *testing.T) {
+	start := time.Date(2026, 8, 20, 0, 0, 0, 0, time.UTC)
+	end := start
+	covered := map[string]map[string]struct{}{
+		"2026-08-20": {"helsinki": {}},
+	}
+	if coverageComplete(covered, start, end, []string{"helsinki", "espoo"}) {
+		t.Fatal("one city must not satisfy a two-city source")
+	}
+	covered["2026-08-20"]["espoo"] = struct{}{}
+	if !coverageComplete(covered, start, end, []string{"helsinki", "espoo"}) {
+		t.Fatal("both configured cities should count as complete")
+	}
+	if !coverageComplete(covered, start, end, nil) {
+		t.Fatal("a national source is complete once any area exists that day")
+	}
+}
+
 func TestBackfillWindowsRejectsInvalidInput(t *testing.T) {
 	day := time.Date(2026, 8, 20, 0, 0, 0, 0, time.UTC)
 	if _, err := BackfillWindows(day, day.AddDate(0, 0, -1), 3600, time.UTC); err == nil {

@@ -53,3 +53,27 @@ func TestWindowSelectionPrefersSustainedRelativeLowPeriod(t *testing.T) {
 		t.Fatalf("unexpected sustained metrics: %#v", window)
 	}
 }
+
+func TestBuildMarksLiveEnergyStaleAfterTheSourceFreshnessWindow(t *testing.T) {
+	now := time.Date(2026, 4, 12, 12, 0, 0, 0, time.UTC)
+	scope, err := timescope.Build(nil, now, "Europe/Helsinki")
+	if err != nil {
+		t.Fatal(err)
+	}
+	prices := []any{}
+	for hour, value := range []float64{8.2, 3.1, 3.4, 12.0} {
+		prices = append(prices, map[string]any{
+			"startDate": now.Add(time.Duration(hour) * time.Hour).Format(time.RFC3339),
+			"endDate":   now.Add(time.Duration(hour+1) * time.Hour).Format(time.RFC3339),
+			"price":     value,
+		})
+	}
+	raw := observations.RawObservation{Dataset: PriceDataset, AreaCode: "helsinki", ObservedAt: now.Add(-49 * time.Hour), Payload: map[string]any{"body": map[string]any{"unit": PriceUnit, "prices": prices}}}
+	current := Build(Data{Price: raw}, scope, now, PriceSourceCode, config.DefaultConfig())
+	if current.Status != "stale" {
+		t.Fatalf("status = %q, want stale", current.Status)
+	}
+	if current.CurrentWindow == nil {
+		t.Fatal("stale energy should keep the last window visible as evidence")
+	}
+}

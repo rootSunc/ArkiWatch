@@ -1024,6 +1024,49 @@ func nearestCapitalCity(lat, lon float64) string {
 	return best
 }
 
+// ConfiguredAreaCodes lists the city areas a multi-place collector is expected
+// to cover. Sources with one national series return nil.
+func ConfiguredAreaCodes(cfg config.Config, sourceCode string) []string {
+	var locations []configuredLocation
+	switch sourceCode {
+	case "fmi":
+		locations = parseWeatherPlaces(cfg.WeatherPlaces, cfg)
+	case "open_meteo_air":
+		locations = parseLocations(cfg.OpenMeteoAirQualityLocations, cfg)
+	case "linkedevents":
+		seen := map[string]struct{}{}
+		areas := []string{}
+		for _, location := range linkedEventLocations(cfg) {
+			if _, ok := seen[location.AreaCode]; ok {
+				continue
+			}
+			seen[location.AreaCode] = struct{}{}
+			areas = append(areas, location.AreaCode)
+		}
+		sort.Strings(areas)
+		return areas
+	default:
+		return nil
+	}
+	seen := map[string]struct{}{}
+	areas := []string{}
+	for _, location := range locations {
+		if location.AreaCode == "" {
+			continue
+		}
+		if _, ok := seen[location.AreaCode]; ok {
+			continue
+		}
+		seen[location.AreaCode] = struct{}{}
+		areas = append(areas, location.AreaCode)
+	}
+	sort.Strings(areas)
+	if len(areas) < 2 {
+		return nil
+	}
+	return areas
+}
+
 func Registry(cfg config.Config) map[string]Collector {
 	return map[string]Collector{
 		"fmi":            fmiCollector{cfg: cfg},

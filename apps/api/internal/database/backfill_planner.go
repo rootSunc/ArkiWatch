@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/collectors"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/sourcepolicy"
 )
@@ -74,7 +76,7 @@ func (store *Store) PlanInitialBackfills(ctx context.Context, cfg config.Config,
 		days, windowSeconds, normalizeAfter := backfillPlanFor(sourceCode, cfg)
 		startDate := endDate.AddDate(0, 0, -(days - 1))
 
-		covered, err := store.sourceCoversEveryDay(ctx, sourceCode, startDate, endDate, location)
+		covered, err := store.sourceCoversEveryDay(ctx, sourceCode, startDate, endDate, location, collectors.ConfiguredAreaCodes(cfg, sourceCode))
 		if err != nil {
 			return result, err
 		}
@@ -120,11 +122,11 @@ func backfillPlanFor(sourceCode string, cfg config.Config) (int, int, bool) {
 // sourceCoversEveryDay reports whether the source already holds at least one
 // observation on each local day of the range, which is the signal that no
 // backfill is needed.
-func (store *Store) sourceCoversEveryDay(ctx context.Context, sourceCode string, startDate, endDate time.Time, location *time.Location) (bool, error) {
+func (store *Store) sourceCoversEveryDay(ctx context.Context, sourceCode string, startDate, endDate time.Time, location *time.Location, areas []string) (bool, error) {
 	startsAt := localMidnight(startDate, location)
 	endsAt := localMidnight(endDate.AddDate(0, 0, 1), location)
 	rows, err := store.pool.Query(ctx, `
-		SELECT DISTINCT DATE(r.observed_at AT TIME ZONE $4)
+		SELECT DISTINCT DATE(r.observed_at AT TIME ZONE $4), lower(r.area_code)
 		FROM raw_observations AS r
 		JOIN data_sources AS s ON s.id = r.source_id
 		WHERE s.source_code = $1 AND r.observed_at >= $2 AND r.observed_at < $3
@@ -133,23 +135,41 @@ func (store *Store) sourceCoversEveryDay(ctx context.Context, sourceCode string,
 		return false, err
 	}
 	defer rows.Close()
-	covered := map[string]struct{}{}
+	covered := map[string]map[string]struct{}{}
 	for rows.Next() {
 		var day time.Time
-		if err := rows.Scan(&day); err != nil {
+		var area string
+		if err := rows.Scan(&day, &area); err != nil {
 			return false, err
 		}
-		covered[day.Format("2006-01-02")] = struct{}{}
+		key := day.Format("2006-01-02")
+		if covered[key] == nil {
+			covered[key] = map[string]struct{}{}
+		}
+		covered[key][area] = struct{}{}
 	}
 	if err := rows.Err(); err != nil {
 		return false, err
 	}
+	return coverageComplete(covered, startDate, endDate, areas), nil
+}
+
+func coverageComplete(covered map[string]map[string]struct{}, startDate, endDate time.Time, areas []string) bool {
 	for day := startDate; !day.After(endDate); day = day.AddDate(0, 0, 1) {
-		if _, ok := covered[day.Format("2006-01-02")]; !ok {
-			return false, nil
+		present := covered[day.Format("2006-01-02")]
+		if len(areas) == 0 {
+			if len(present) == 0 {
+				return false
+			}
+			continue
+		}
+		for _, area := range areas {
+			if _, ok := present[strings.ToLower(area)]; !ok {
+				return false
+			}
 		}
 	}
-	return true, nil
+	return true
 }
 
 func (store *Store) matchingBackfillJobExists(ctx context.Context, sourceCode string, startDate, endDate time.Time) (bool, error) {
@@ -158,7 +178,7 @@ func (store *Store) matchingBackfillJobExists(ctx context.Context, sourceCode st
 		SELECT EXISTS (
 			SELECT 1 FROM backfill_jobs
 			WHERE source_code = $1 AND start_date = $2::date AND end_date = $3::date
-			  AND area_code IS NULL AND status::text <> 'CANCELLED'
+			  AND area_code IS NULL AND status::text IN ('PENDING', 'RUNNING')
 		)
 	`, sourceCode, startDate.Format("2006-01-02"), endDate.Format("2006-01-02")).Scan(&exists)
 	return exists, err

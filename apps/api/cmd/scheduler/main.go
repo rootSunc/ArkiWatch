@@ -77,12 +77,22 @@ func main() {
 }
 
 func runOnce(ctx context.Context, store *database.Store, cfg config.Config, instance string) error {
-	now := time.Now().UTC()
-	jobs, err := store.ClaimScheduledJobs(ctx, instance, now, cfg.SchedulerMaxDueJobs, cfg.SchedulerLockTTLSeconds)
-	if err != nil {
-		return err
+	limit := cfg.SchedulerMaxDueJobs
+	if limit < 1 {
+		limit = 1
 	}
-	for _, job := range jobs {
+	claimed := 0
+	for claimed < limit {
+		// Claim one job at a time so a long platform refresh cannot expire the
+		// lock of a later job that has not started yet.
+		jobs, err := store.ClaimScheduledJobs(ctx, instance, time.Now().UTC(), 1, cfg.SchedulerLockTTLSeconds)
+		if err != nil {
+			return err
+		}
+		if len(jobs) == 0 {
+			break
+		}
+		job := jobs[0]
 		result, taskErr := execute(ctx, store, cfg, job)
 		status := scheduler.RunSucceeded
 		var message *string
@@ -96,8 +106,9 @@ func runOnce(ctx context.Context, store *database.Store, cfg config.Config, inst
 			return err
 		}
 		fmt.Printf("[scheduler:job] key=%s status=%s\n", job.JobKey, status)
+		claimed++
 	}
-	fmt.Printf("[scheduler:once] claimed=%d\n", len(jobs))
+	fmt.Printf("[scheduler:once] claimed=%d\n", claimed)
 	return nil
 }
 

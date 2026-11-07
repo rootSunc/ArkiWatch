@@ -39,8 +39,10 @@ func Normalize(item collectors.Observation, sourceCode string) []Draft {
 		return hsy(item)
 	case "open_meteo_air\x00air_quality_current":
 		return openMeteoAir(item)
-	case "fingrid\x00energy_timeseries", "fingrid\x00dataset_probe", "porssisahko\x00energy_price_timeseries":
-		return energy(item)
+	case "fingrid\x00energy_timeseries", "fingrid\x00dataset_probe":
+		return energy(item, sourceCode)
+	case "porssisahko\x00energy_price_timeseries":
+		return energy(item, sourceCode)
 	case "digitraffic\x00traffic_messages":
 		return digitraffic(item)
 	case "digitransit\x00service_alerts":
@@ -620,7 +622,7 @@ type energyPoint struct {
 	Value   float64
 }
 
-func energy(item collectors.Observation) []Draft {
+func energy(item collectors.Observation, sourceCode string) []Draft {
 	points := energyPoints(body(item))
 	if len(points) < 2 {
 		return nil
@@ -691,7 +693,11 @@ func energy(item collectors.Observation) []Draft {
 	if maxValue-minValue > 0 {
 		severity = "LOW"
 	}
-	return []Draft{{EventType: "cheap_energy_window", Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.680), Title: "Lower energy window detected", Summary: fmt.Sprintf("Flexible electricity use can start from %s-%s UTC. The sustained relative-low window average is %.2f.", start.Format("15:04"), end.Format("15:04"), windowAverage), Attributes: map[string]any{"average_value": windowAverage, "minimum_value": minValue, "maximum_value": maxValue, "point_count": len(points), "window_point_count": len(best), "threshold_value": threshold, "horizon_average_value": average, "selection_strategy": "sustained_relative_low"}, DedupeKey: item.Hash + ":cheap_energy_window"}}
+	unit := firstText(item.Payload["unit"])
+	if unit == "" {
+		unit = firstText(asMap(body(item))["unit"])
+	}
+	return []Draft{{EventType: "cheap_energy_window", Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: start, EndsAt: end, Confidence: confidence(.680), Title: "Lower energy window detected", Summary: fmt.Sprintf("Flexible electricity use can start from %s-%s UTC. The sustained relative-low window average is %.2f.", start.Format("15:04"), end.Format("15:04"), windowAverage), Attributes: map[string]any{"average_value": windowAverage, "minimum_value": minValue, "maximum_value": maxValue, "point_count": len(points), "window_point_count": len(best), "threshold_value": threshold, "horizon_average_value": average, "selection_strategy": "sustained_relative_low", "unit": unit, "source": sourceCode}, DedupeKey: item.Hash + ":cheap_energy_window"}}
 }
 
 func groupAverage(points []energyPoint) float64 {

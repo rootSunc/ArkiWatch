@@ -10,6 +10,7 @@ import (
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/config"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/sourcepolicy"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/timescope"
 )
 
@@ -201,6 +202,12 @@ func Build(data Data, scope timescope.Scope, now time.Time, sourceCode string, c
 		status = "ready"
 	} else if len(points) > 0 {
 		status = "partial"
+	}
+	if scope.Mode == "live" && status != "empty" && raw.Dataset != "" {
+		observedAt := raw.ObservedAt
+		if !sourcepolicy.IsCurrent(responseSource, &observedAt, scope.ReferenceTime) {
+			status = "stale"
+		}
 	}
 	return Current{
 		CheckedAt: timescope.Format(now), TimeScope: scope.Payload(), Status: status, Location: stringPointer(location), SourceCode: responseSource, ProviderName: provider, ObservedAt: observed,

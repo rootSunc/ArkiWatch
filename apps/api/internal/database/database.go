@@ -1427,6 +1427,10 @@ func (store *Store) LoadEnergy(ctx context.Context, query energy.Query) (energy.
 	if err != nil {
 		return energy.Data{}, err
 	}
+	eventSource := energy.GridSourceCode
+	if query.SourceCode == energy.PriceSourceCode {
+		eventSource = energy.PriceSourceCode
+	}
 	var event *observations.NormalizedEvent
 	if query.Historical {
 		event, err = store.scanWeatherEvent(store.pool.QueryRow(ctx, `
@@ -1434,26 +1438,26 @@ func (store *Store) LoadEnergy(ctx context.Context, query energy.Query) (energy.
 			       e.starts_at, e.ends_at, e.summary, e.attributes
 			FROM normalized_events AS e
 			JOIN data_sources AS s ON s.id = e.source_id
-			WHERE s.source_code = 'fingrid'
+			WHERE s.source_code = $3
 			  AND e.event_type = 'cheap_energy_window'
 			  AND e.ends_at > $1
 			  AND e.starts_at < $2
 			ORDER BY e.starts_at DESC
 			LIMIT 1
-		`, *query.WindowStart, *query.WindowEnd))
+		`, *query.WindowStart, *query.WindowEnd, eventSource))
 	} else {
 		event, err = store.scanWeatherEvent(store.pool.QueryRow(ctx, `
 			SELECT e.id, e.event_type, s.source_code, e.severity::text, e.location_ref,
 			       e.starts_at, e.ends_at, e.summary, e.attributes
 			FROM normalized_events AS e
 			JOIN data_sources AS s ON s.id = e.source_id
-			WHERE s.source_code = 'fingrid'
+			WHERE s.source_code = $3
 			  AND e.event_type = 'cheap_energy_window'
 			  AND e.ends_at >= $1
 			  AND e.starts_at <= $2
 			ORDER BY e.starts_at DESC
 			LIMIT 1
-		`, query.Now, query.Now.Add(energyLookahead(query))))
+		`, query.Now, query.Now.Add(energyLookahead(query)), eventSource))
 	}
 	if err != nil {
 		return energy.Data{}, err
