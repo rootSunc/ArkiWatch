@@ -450,13 +450,27 @@ type sykeSeries struct {
 	MeasureID int
 	Unit      string
 	Select    string
+	// LookbackHours is how far back a live run asks for, and it follows the
+	// publication cadence of the series rather than the collection interval.
+	// SYKE timestamps hydrology at local midnight and publishes a day or more
+	// later, so a 24-hour window stepped straight over every daily value and
+	// never once caught a snow course, which is surveyed roughly fortnightly.
+	// Fetching the cadence and letting sourcepolicy.LiveCutoff decide what is
+	// still current keeps the freshness judgement in one place.
+	LookbackHours int
 }
 
 var sykeSeriesDefinitions = []sykeSeries{
-	{Parameter: "water_level", Table: "Vedenkorkeus", MeasureID: 1, Unit: "cm", Select: "Paikka_Id,Aika,Arvo,ArvoMin,ArvoMax,Lippu_id"},
-	{Parameter: "discharge", Table: "Virtaama", MeasureID: 2, Unit: "m3/s", Select: "Paikka_Id,Aika,Arvo,ArvoMin,ArvoMax,Lippu_id"},
-	{Parameter: "snow_water_equivalent", Table: "LumiAlue", MeasureID: 7, Unit: "mm", Select: "Paikka_Id,Aika,Arvo"},
+	{Parameter: "water_level", Table: "Vedenkorkeus", MeasureID: 1, Unit: "cm", Select: "Paikka_Id,Aika,Arvo,ArvoMin,ArvoMax,Lippu_id", LookbackHours: 168},
+	{Parameter: "discharge", Table: "Virtaama", MeasureID: 2, Unit: "m3/s", Select: "Paikka_Id,Aika,Arvo,ArvoMin,ArvoMax,Lippu_id", LookbackHours: 168},
+	{Parameter: "snow_water_equivalent", Table: "LumiAlue", MeasureID: 7, Unit: "mm", Select: "Paikka_Id,Aika,Arvo", LookbackHours: 840},
 }
+
+// sykeActiveStationState is the Tila_Id SYKE gives a station that is still in
+// service. Helsinki lists fifteen gauges, but most are decommissioned: two of
+// the three water-level slots the collector used to fill last reported in 1973
+// and 2007, which crowded the live ones out of a bounded OData filter.
+const sykeActiveStationState = 1
 
 type sykeCollector struct{ cfg config.Config }
 
@@ -496,7 +510,7 @@ func (collector sykeCollector) collectWindow(ctx context.Context, observedAt, st
 		return nil, nil
 	}
 	stationBody, _, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", strings.TrimRight(collector.cfg.SYKEHydrologyAPIBaseURL, "/")+"/Paikka", map[string]string{"Accept": "application/json"}, map[string]string{
-		"$top": strconv.Itoa(collector.cfg.SYKEHydrologyStationLimit * 10), "$filter": "KuntaNimi eq '" + strings.ReplaceAll(municipality, "'", "''") + "'", "$select": "Paikka_Id,Suure_Id,KuntaNimi,Nimi,VesalNimi,PaaVesalNimi,KoordLat,KoordLong", "$orderby": "Suure_Id asc,Paikka_Id asc",
+		"$top": strconv.Itoa(collector.cfg.SYKEHydrologyStationLimit * 10), "$filter": "KuntaNimi eq '" + strings.ReplaceAll(municipality, "'", "''") + "'", "$select": "Paikka_Id,Suure_Id,Tila_Id,KuntaNimi,Nimi,VesalNimi,PaaVesalNimi,KoordLat,KoordLong", "$orderby": "Suure_Id asc,Paikka_Id asc",
 	})
 	if err != nil {
 		return nil, err
@@ -504,6 +518,13 @@ func (collector sykeCollector) collectWindow(ctx context.Context, observedAt, st
 	stations, _ := stationBody["value"].([]any)
 	result := make([]Observation, 0, len(selected))
 	for _, series := range selected {
+		// A historical run was handed the window it must honour. A live run asks
+		// back as far as the series publishes, so a daily or fortnightly reading
+		// is not missed between two collector ticks.
+		seriesStart := start
+		if !historical && series.LookbackHours > 0 {
+			seriesStart = end.Add(-time.Duration(series.LookbackHours) * time.Hour)
+		}
 		stationIDs := sykeStationIDs(stations, series.MeasureID, collector.cfg.SYKEHydrologyStationLimit)
 		filter := ""
 		if len(stationIDs) > 0 {
@@ -517,7 +538,7 @@ func (collector sykeCollector) collectWindow(ctx context.Context, observedAt, st
 		if locationErr != nil {
 			location = time.UTC
 		}
-		startLocal := start.UTC().In(location).Format("2006-01-02T15:04:05")
+		startLocal := seriesStart.UTC().In(location).Format("2006-01-02T15:04:05")
 		endLocal := end.UTC().In(location).Format("2006-01-02T15:04:05")
 		timeFilter := "Aika ge datetime'" + startLocal + "' and Aika lt datetime'" + endLocal + "'"
 		if filter != "" {
@@ -535,7 +556,7 @@ func (collector sykeCollector) collectWindow(ctx context.Context, observedAt, st
 		if values, ok := body["value"].([]any); ok {
 			recordCount = len(values)
 		}
-		payload := map[string]any{"request_url": strings.TrimRight(collector.cfg.SYKEHydrologyAPIBaseURL, "/") + "/" + series.Table + "?" + encodeQuery(query), "content_type": headers.Get("Content-Type"), "fetched_at": observedAt.Format(time.RFC3339Nano), "body": body, "source_table": series.Table, "parameter": series.Parameter, "unit": series.Unit, "station_ids": stationIDs, "scope": map[bool]string{true: "municipality_history", false: "municipality"}[historical], "municipality": municipality, "station_count": len(stations), "record_count": recordCount, "window_start": start.UTC().Format(time.RFC3339Nano), "window_end": end.UTC().Format(time.RFC3339Nano), "cursor": cursor}
+		payload := map[string]any{"request_url": strings.TrimRight(collector.cfg.SYKEHydrologyAPIBaseURL, "/") + "/" + series.Table + "?" + encodeQuery(query), "content_type": headers.Get("Content-Type"), "fetched_at": observedAt.Format(time.RFC3339Nano), "body": body, "source_table": series.Table, "parameter": series.Parameter, "unit": series.Unit, "station_ids": stationIDs, "scope": map[bool]string{true: "municipality_history", false: "municipality"}[historical], "municipality": municipality, "station_count": len(stations), "record_count": recordCount, "window_start": seriesStart.UTC().Format(time.RFC3339Nano), "window_end": end.UTC().Format(time.RFC3339Nano), "cursor": cursor}
 		hash, err := BuildObservationHash(collector.SourceCode(), collector.Dataset(), resolvedArea, observedAt, payload)
 		if err != nil {
 			return nil, err
@@ -580,9 +601,15 @@ func sykeStationIDs(stations []any, measureID, limit int) []int {
 		}
 		measure, measureOK := collectorInt(station["Suure_Id"])
 		id, idOK := collectorInt(station["Paikka_Id"])
-		if measureOK && idOK && int(measure) == measureID {
-			result = append(result, id)
+		if !measureOK || !idOK || int(measure) != measureID {
+			continue
 		}
+		// A station without a readable state is kept: the filter is there to
+		// drop gauges SYKE has retired, not to discard anything unfamiliar.
+		if state, stateOK := collectorInt(station["Tila_Id"]); stateOK && state != sykeActiveStationState {
+			continue
+		}
+		result = append(result, id)
 	}
 	return result
 }

@@ -171,3 +171,37 @@ func TestSourceMetadataKeepsCollectorHistory(t *testing.T) {
 	}
 	t.Fatal("FMI source missing")
 }
+
+// A category only takes an event when it claims both the source and the event
+// type. The water category listed four aspirational types and not the one the
+// SYKE normalizer actually emits, so hydrology events were silently dropped and
+// the category reported "empty" even once the collector returned readings.
+//
+// Add a row here when a normalizer starts emitting a new event type. A type no
+// category claims reaches no workspace, and nothing else in the pipeline fails
+// to say so.
+func TestEveryEmittedEventTypeIsClaimedByACategory(t *testing.T) {
+	emitted := []struct{ sourceCode, eventType, category string }{
+		{"fmi", "weather_outlook", "weather"},
+		{"fmi", "rain_risk", "weather"},
+		{"hsy", "air_quality_status", "air"},
+		{"open_meteo_air", "air_quality_status", "air"},
+		{"porssisahko", "cheap_energy_window", "energy"},
+		{"fingrid", "cheap_energy_window", "energy"},
+		{"digitraffic", "road_disruption", "traffic"},
+		{"servicemap", "facility_availability", "city_services"},
+		{"linkedevents", "public_event", "events"},
+		{"syke", "hydrology_status", "water"},
+	}
+	for _, item := range emitted {
+		claimed := []string{}
+		for _, definition := range categoryDefinitions {
+			if contains(definition.EventTypes, item.eventType) && contains(definition.SourceCodes, item.sourceCode) {
+				claimed = append(claimed, definition.Key)
+			}
+		}
+		if len(claimed) != 1 || claimed[0] != item.category {
+			t.Errorf("%s/%s is claimed by %v, want exactly [%s]", item.sourceCode, item.eventType, claimed, item.category)
+		}
+	}
+}

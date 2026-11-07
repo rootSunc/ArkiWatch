@@ -788,3 +788,97 @@ func TestHSYCollectPartitionsRegionalStationsAcrossConfiguredAirQualityPlaces(t 
 		}
 	}
 }
+
+// Helsinki lists fifteen hydrology gauges and most are decommissioned. The
+// collector used to fill its bounded station filter with them, so a live run
+// asked two gauges that last reported in 1973 and 2007 for today's readings and
+// the water category stayed empty against real data.
+func TestSykeStationIDsDropsRetiredStations(t *testing.T) {
+	stations := []any{
+		map[string]any{"Paikka_Id": 2136.0, "Suure_Id": 1.0, "Tila_Id": 2.0}, // retired in 1973
+		map[string]any{"Paikka_Id": 3013.0, "Suure_Id": 1.0, "Tila_Id": 2.0}, // retired in 2007
+		map[string]any{"Paikka_Id": 3259.0, "Suure_Id": 1.0, "Tila_Id": 1.0}, // in service
+		map[string]any{"Paikka_Id": 4000.0, "Suure_Id": 1.0},                 // no state reported
+	}
+	if got := sykeStationIDs(stations, 1, 10); !reflect.DeepEqual(got, []int{3259, 4000}) {
+		t.Fatalf("retired gauges were kept or an unknown state was discarded: %v", got)
+	}
+	retiredOnly := []any{map[string]any{"Paikka_Id": 2136.0, "Suure_Id": 1.0, "Tila_Id": 2.0}}
+	if got := sykeStationIDs(retiredOnly, 1, 10); len(got) != 0 {
+		t.Fatalf("expected no stations when every gauge is retired: %v", got)
+	}
+}
+
+// SYKE timestamps hydrology at local midnight and publishes later, and snow
+// courses are surveyed roughly fortnightly. A live run asking only for the last
+// 24 hours stepped over every daily value and never caught a snow reading, so
+// the collector stored empty payloads and the normalizer had nothing to emit.
+func TestSykeLiveWindowFollowsEachSeriesCadence(t *testing.T) {
+	var mu sync.Mutex
+	windows := map[string]time.Duration{}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(request.URL.Path, "/Paikka") {
+			_, _ = writer.Write([]byte(`{"value":[
+				{"Paikka_Id":3259,"Suure_Id":1,"Tila_Id":1},
+				{"Paikka_Id":1097,"Suure_Id":2,"Tila_Id":1},
+				{"Paikka_Id":81,"Suure_Id":7,"Tila_Id":1}]}`))
+			return
+		}
+		filter := request.URL.Query().Get("$filter")
+		start, end, err := sykeFilterWindow(filter)
+		if err != nil {
+			t.Errorf("%s: %v (filter %q)", request.URL.Path, err, filter)
+		} else {
+			mu.Lock()
+			windows[strings.TrimPrefix(request.URL.Path, "/")] = end.Sub(start)
+			mu.Unlock()
+		}
+		_, _ = writer.Write([]byte(`{"value":[]}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.SYKEHydrologyAPIBaseURL = server.URL
+	if _, err := (sykeCollector{cfg: cfg}).Collect(context.Background()); err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+
+	for _, series := range sykeSeriesDefinitions {
+		want := time.Duration(series.LookbackHours) * time.Hour
+		got, ok := windows[series.Table]
+		if !ok {
+			t.Fatalf("%s was never requested", series.Table)
+		}
+		// The filter carries local datetime literals, so a window spanning the
+		// October clock change is one wall-clock hour shorter than the elapsed
+		// time. Comparing local against SYKE's local Aika stays correct.
+		if drift := got.Round(time.Hour) - want; drift < -time.Hour || drift > time.Hour {
+			t.Fatalf("%s asked for %s, want its %s cadence", series.Table, got.Round(time.Hour), want)
+		}
+	}
+	if windows["LumiAlue"] <= windows["Virtaama"] {
+		t.Fatalf("a fortnightly snow course must look back further than a daily series: %v vs %v", windows["LumiAlue"], windows["Virtaama"])
+	}
+}
+
+// sykeFilterWindow pulls the two datetime literals back out of an OData filter.
+func sykeFilterWindow(filter string) (time.Time, time.Time, error) {
+	parts := strings.Split(filter, "datetime'")
+	if len(parts) != 3 {
+		return time.Time{}, time.Time{}, errors.New("expected a start and an end datetime literal")
+	}
+	bounds := [2]time.Time{}
+	for index := range bounds {
+		raw, _, found := strings.Cut(parts[index+1], "'")
+		if !found {
+			return time.Time{}, time.Time{}, errors.New("unterminated datetime literal")
+		}
+		parsed, err := time.Parse("2006-01-02T15:04:05", raw)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+		bounds[index] = parsed
+	}
+	return bounds[0], bounds[1], nil
+}
