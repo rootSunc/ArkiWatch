@@ -118,12 +118,12 @@
     "currentHourNote": "当前小时",
     "eveningPeakNote": "晚高峰，可弹性安排则避开",
     "currentGridLoad": "当前电网负荷",
-    "mwSystemOnly": "{unit} · 仅系统数值",
-    "mwOver24h": "{unit} · 24 小时",
+    "mwSystemOnly": "{unit}，仅系统数值",
+    "mwOver24h": "{unit}，24 小时",
     "pollInterval": "轮询间隔",
     "fingridOpenData": "Fingrid 开放数据",
     "gridLoadIsNational": "电网负荷是国家级系统数值，绝不会以家庭电价的形式呈现。",
-    "sourcePair": "PORSSISAHKO · FINGRID",
+    "sourcePair": "PORSSISAHKO, FINGRID",
     "noValue": "无数值",
     "ckwhUnit": "c/kWh"
   }

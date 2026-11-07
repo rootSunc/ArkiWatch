@@ -70,13 +70,14 @@ function emptyNeeds(historyAvailability: boolean): PlatformDataNeeds {
 
 /**
  * Decide which platform queries to run for the active nav view.
- * Today/Overview stay on overview + public dashboard only unless historical.
+ * Home needs detail payloads for its readings and trends; the optional plan
+ * stays on overview + public briefing unless historical.
  */
 export function platformDataNeedsForView(
   navKey: string | null | undefined,
   options: PlatformDataNeedsOptions = {},
 ): PlatformDataNeeds {
-  const key = (navKey ?? TODAY_NAV_KEY).trim() || TODAY_NAV_KEY;
+  const key = (navKey ?? FALLBACK_NAV_KEY).trim() || FALLBACK_NAV_KEY;
   const isHistorical = Boolean(options.isHistorical);
   const needsHistoryAvailability =
     Boolean(options.needsHistoryAvailability) || isHistorical;
@@ -94,7 +95,18 @@ export function platformDataNeedsForView(
     };
   }
 
-  if (key === TODAY_NAV_KEY || key === FALLBACK_NAV_KEY) {
+  if (key === FALLBACK_NAV_KEY) return {
+    weather: true,
+    air: true,
+    energy: true,
+    householdEnergy: true,
+    roadRail: true,
+    transit: true,
+    history: true,
+    historyAvailability: needsHistoryAvailability,
+  };
+
+  if (key === TODAY_NAV_KEY) {
     return emptyNeeds(needsHistoryAvailability);
   }
 

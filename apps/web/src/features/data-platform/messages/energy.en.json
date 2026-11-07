@@ -118,12 +118,12 @@
     "currentHourNote": "Current hour",
     "eveningPeakNote": "Evening peak. Avoid if flexible",
     "currentGridLoad": "Current grid load",
-    "mwSystemOnly": "{unit} · system-only value",
+    "mwSystemOnly": "{unit}, system-only value",
     "mwOver24h": "{unit} over 24 h",
     "pollInterval": "Poll interval",
     "fingridOpenData": "Fingrid open data",
     "gridLoadIsNational": "Grid load is a national system value. It is never presented as a household price.",
-    "sourcePair": "PORSSISAHKO · FINGRID",
+    "sourcePair": "PORSSISAHKO, FINGRID",
     "noValue": "No value",
     "ckwhUnit": "c/kWh"
   }

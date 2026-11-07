@@ -41,6 +41,6 @@ describe("buildScenarioLiveHint", () => {
       "zh",
     );
 
-    expect(hint?.detail).toBe("Kallio · 良好");
+    expect(hint?.detail).toBe("Kallio，良好");
   });
 });

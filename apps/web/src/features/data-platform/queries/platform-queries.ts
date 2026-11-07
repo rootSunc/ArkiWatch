@@ -32,7 +32,7 @@ import {
   type PlatformDataNeedsOptions,
 } from "./platform-data-needs";
 
-const HISTORY_DAY_COUNT = 7;
+const HISTORY_DAY_COUNT = 30;
 const HISTORY_AVAILABILITY_DAY_COUNT = 90;
 export {
   PLATFORM_QUERY_REFETCH_INTERVAL_MS,

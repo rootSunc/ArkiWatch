@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DataPlatformOverview } from "./data-platform-overview";
@@ -30,65 +30,25 @@ const overview = {
   },
 } as PlatformOverviewResponse;
 
-function renderOverview(searchValue = "") {
-  return render(
-    <I18nProvider language="en">
-      <DataPlatformOverview
-        checkedAt={overview.checked_at}
-        catalogSignalCards={null}
-        catalogSignalCount={0}
-        coreSignalCards={null}
-        coreSignalCount={0}
-        isCatalogExpanded={false}
-        isHistorical={false}
-        onCatalogToggle={() => undefined}
-        onOpenToday={() => undefined}
-        onSearchChange={() => undefined}
-        overview={overview}
-        platformTimezone="Europe/Helsinki"
-        searchValue={searchValue}
-        signalSystemTiles={[]}
-        sourceHealth={null}
-        secondaryContent={null}
-        todayBrief={null}
-      />
-    </I18nProvider>,
-  );
+function renderOverview(coreSignalCards: React.ReactNode = null) {
+  return render(<I18nProvider language="en"><DataPlatformOverview checkedAt={overview.checked_at} coreSignalCards={coreSignalCards} coreSignalCount={0} onOpenToday={vi.fn()} overview={overview} platformTimezone="Europe/Helsinki" signalSystemTiles={[]} todayBrief={null} /></I18nProvider>);
 }
 
-describe("DataPlatformOverview", () => {
-  it("explains an empty scope instead of leaving a single-line placeholder", () => {
+describe("merged Home", () => {
+  it("explains missing readings without claiming healthy data", () => {
     renderOverview();
-
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "No usable signal data for this scope.",
-    );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Sources may be missing, stale, or outside the selected city and date. Open Data to inspect the evidence and timestamps.",
-    );
-    expect(screen.getByRole("status").querySelector(".material-symbols-outlined")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    );
+    expect(screen.getByText("No usable signal data for this scope.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Home");
   });
-
-  it("keeps search misses concise and separate from a missing data scope", () => {
-    renderOverview("does-not-match");
-
-    expect(screen.getByText("No signal cards match the current search.")).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "Sources may be missing, stale, or outside the selected city and date. Open Data to inspect the evidence and timestamps.",
-      ),
-    ).not.toBeInTheDocument();
+  it("puts supplied readings directly after the decision and removes the in-page search", () => {
+    renderOverview(<span>16 °C</span>);
+    expect(screen.getByText("16 °C")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Snapshot checked/)).not.toBeInTheDocument();
   });
-
-  it("returns focus to the search field after clearing a query", () => {
-    renderOverview("weather");
-
-    const input = screen.getByRole("textbox", { name: "Search signals, events..." });
-    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
-
-    expect(input).toHaveFocus();
+  it("shows a clear empty event region and history explanation", () => {
+    renderOverview();
+    expect(screen.getByText("No open events in this scope")).toBeInTheDocument();
+    expect(screen.getByText(/0 of 3 observations/)).toBeInTheDocument();
   });
 });

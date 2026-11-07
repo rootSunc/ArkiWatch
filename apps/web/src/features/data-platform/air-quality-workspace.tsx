@@ -118,7 +118,7 @@ function endpointLabel(request: AirQualitySourceRequest, tKey: (key: string) => 
 
   try {
     const url = new URL(request.endpoint);
-    return `${url.host}${url.searchParams.get("typeNames") ? ` · ${url.searchParams.get("typeNames")}` : ""}`;
+    return `${url.host}${url.searchParams.get("typeNames") ? `, ${url.searchParams.get("typeNames")}` : ""}`;
   } catch {
     return request.endpoint;
   }
@@ -237,7 +237,7 @@ function airHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date, language, timeZone),
         value: worstScore,
-        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")} · ${formatPercent(data.quality.field_coverage_pct, tKey)} ${tKey("airQuality.coverage")}`
+        detail: `${data.quality.reporting_station_count}/${data.quality.station_count} ${tKey("airQuality.stations")}, ${formatPercent(data.quality.field_coverage_pct, tKey)} ${tKey("airQuality.coverage")}`
       }
     ];
   });
@@ -557,7 +557,7 @@ export function AirQualityWorkspace({
                   className={activePollutantKey === profile.key ? "active" : ""}
                   key={profile.key}
                   onClick={() => setActivePollutantKey(profile.key)}
-                  title={profile.unit ? `${tKey(`airQuality.${profile.labelKey}`)} · ${profile.unit}` : tKey(`airQuality.${profile.labelKey}`)}
+                  title={profile.unit ? `${tKey(`airQuality.${profile.labelKey}`)}, ${profile.unit}` : tKey(`airQuality.${profile.labelKey}`)}
                   type="button"
                 >
                   {tKey(`airQuality.${profile.labelKey}`)}
@@ -571,7 +571,6 @@ export function AirQualityWorkspace({
         <article className="air-station-panel">
           <header className="air-station-heading">
             <h2>{tKey("airQuality.stationsTitle")}</h2>
-            <span>{tKey("airQuality.stationsLead")}</span>
           </header>
           <div className="air-station-table" role="table" aria-label={tKey("airQuality.stationsTitle")}>
             <div className="air-station air-station-head" role="row">
@@ -667,7 +666,7 @@ export function AirQualityWorkspace({
                   <strong>{localizedPlatformCopy(stage.label, language) ?? stage.label}</strong>
                   <span>
                     {enumLabel(stage.status).toUpperCase()}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("airQuality.records")}` : ""}
+                    {stage.record_count !== null ? `, ${stage.record_count} ${tKey("airQuality.records")}` : ""}
                   </span>
                 </article>
               ))}
@@ -696,7 +695,7 @@ export function AirQualityWorkspace({
                   </div>
                   <p>
                     {endpointLabel(request, tKey)}
-                    {request.fetched_at ? ` · ${tKey("airQuality.fetched")} ${scopedDataAge(request.fetched_at, airQuality.time_scope, language, tKey, "airQuality.notObserved", dataTimezone)}` : ""}
+                    {request.fetched_at ? `, ${tKey("airQuality.fetched")} ${scopedDataAge(request.fetched_at, airQuality.time_scope, language, tKey, "airQuality.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>{request.content_type ?? tKey("airQuality.contentTypeUnavailable")}</small>
                 </article>

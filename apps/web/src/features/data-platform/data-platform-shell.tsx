@@ -34,8 +34,8 @@ export type NavItem = {
 export type WorkspaceMode = "today" | "data";
 
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { key: "overview", labelKey: "navSignals", icon: "hub" },
-  { key: "today", labelKey: "navToday", icon: "calendar_today" },
+  { key: "overview", labelKey: "navHome", icon: "home" },
+  { key: "today", labelKey: "navPlan", icon: "calendar_today" },
   { key: "weather", labelKey: "navWeather", icon: "cloud", categoryKey: "weather" },
   { key: "air", labelKey: "navAirQuality", icon: "air", categoryKey: "air" },
   { key: "energy", labelKey: "navEnergy", icon: "bolt", categoryKey: "energy" },
@@ -315,7 +315,7 @@ export function CityScopeSelector({
       </span>
       <select
         aria-label={label}
-        disabled={isPending}
+
         onChange={(event) => onCityChange(event.currentTarget.value)}
         value={city}
       >
@@ -439,7 +439,6 @@ function buildCalendarCells(monthKey: string): CalendarCell[] {
 export function DateScopeSelector({
   availability = [],
   date,
-  isDemo = false,
   isPending,
   language,
   onCalendarOpen,
@@ -467,10 +466,6 @@ export function DateScopeSelector({
     monthKeyFromDateValue(displayValue),
   );
   const isHistorical = date !== null;
-  const statusLabel = translateMessageKey(
-    language,
-    isHistorical ? "shell.historyMode" : isDemo ? "shell.demoSnapshot" : "shell.liveMode",
-  );
   const valueLabel = isHistorical
     ? formatDateScopeValue(displayValue, language)
     : translateMessageKey(language, "shell.navToday");
@@ -610,7 +605,7 @@ export function DateScopeSelector({
   }, [closeCalendar, isCalendarOpen]);
 
   const selectCalendarDate = (value: string) => {
-    if (isPending || value > todayStr) {
+    if (value > todayStr) {
       return;
     }
 
@@ -631,7 +626,6 @@ export function DateScopeSelector({
         calendar_today
       </span>
       <span className="date-scope-picker">
-        <span className="date-scope-status">{statusLabel}</span>
         <span className="date-scope-value date-scope-value-full">
           {valueLabel}
         </span>
@@ -646,7 +640,7 @@ export function DateScopeSelector({
         aria-controls={calendarId}
         aria-expanded={isCalendarOpen}
         aria-haspopup="dialog"
-        disabled={isPending}
+
         ref={dateTriggerRef}
         onClick={() => {
           const nextOpen = !isCalendarOpen;
@@ -669,7 +663,7 @@ export function DateScopeSelector({
         <button
           className="date-scope-clear"
           aria-label={translateMessageKey(language, "shell.returnToLive")}
-          disabled={isPending}
+
           onClick={(event) => {
             event.preventDefault();
             onDateChange(null);
@@ -754,7 +748,7 @@ export function DateScopeSelector({
                   .join(" ")}
                 aria-label={cellLabel}
                 aria-current={isSelected ? "date" : undefined}
-                disabled={isFuture || isPending}
+                disabled={isFuture}
                 onClick={() => selectCalendarDate(cell.dateValue)}
                 title={cellLabel}
                 type="button"

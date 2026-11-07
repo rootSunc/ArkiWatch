@@ -1,3 +1,4 @@
+@layer features {
 .privacy-page {
   min-height: 100vh;
   min-height: 100dvh;
@@ -40,7 +41,7 @@
 }
 
 .privacy-brand strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -58,7 +59,7 @@
   min-height: 36px;
   padding: 8px 0;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .privacy-language {
@@ -75,7 +76,7 @@
   border: 0;
   background: transparent;
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 500;
   padding: 0 12px;
   white-space: nowrap;
@@ -104,7 +105,7 @@
 .privacy-content h1 {
   max-width: 16ch;
   margin: 0 0 24px;
-  font-size: clamp(42px, 7vw, 68px);
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -122,7 +123,7 @@
 .privacy-lead {
   max-width: 64ch;
   margin: 0;
-  font-size: 19px;
+  font-size: 16px;
   text-wrap: pretty;
 }
 
@@ -169,7 +170,7 @@
   border-top: 1px solid var(--line);
   color: var(--muted-2);
   font-family: var(--font-data);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .privacy-footer a {
@@ -207,11 +208,13 @@
   }
 
   .privacy-content h1 {
-    font-size: 42px;
+    font-size: 24px;
   }
 
   .privacy-footer {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
 }

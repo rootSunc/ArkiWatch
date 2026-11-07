@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useContext, type ReactNode } from "react";
+import { InspectionContext } from "@/features/shared/ui/inspection-context";
 
 import { scopedDataTimestamp } from "./data-time-scope";
 import type { LanguageMode } from "./i18n";
@@ -55,7 +58,14 @@ export function WorkspaceEvidenceHeader({
   timezone,
   children,
 }: WorkspaceEvidenceHeaderProps) {
-  const Heading = headingLevel === 2 ? "h2" : "h1";
+  const inspection = useContext(InspectionContext);
+  const Heading = inspection
+    ? headingLevel === 2
+      ? "h3"
+      : "h2"
+    : headingLevel === 2
+      ? "h2"
+      : "h1";
   const timestamp = scopedDataTimestamp(
     observedAt,
     timeScope,
@@ -73,15 +83,18 @@ export function WorkspaceEvidenceHeader({
         ) : null}
         <Heading>{title}</Heading>
         {status ? (
-          <div className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}>
+          <div
+            className={`workspace-evidence-status workspace-evidence-status-${statusTone}`}
+          >
             <span aria-hidden="true" />
             <strong>{status}</strong>
           </div>
         ) : null}
       </div>
       <div className="workspace-evidence-meta">
-        {sourceLabel ? <span className="workspace-evidence-source">{sourceLabel}</span> : null}
-        <span className="workspace-evidence-separator" aria-hidden="true">·</span>
+        {sourceLabel ? (
+          <span className="workspace-evidence-source">{sourceLabel}</span>
+        ) : null}
         <time dateTime={observedAt ?? undefined}>{timestamp}</time>
         {children ? (
           <details className="workspace-evidence-extra">
@@ -112,15 +125,26 @@ export function WorkspaceEmptyState({
   description,
   action,
 }: WorkspaceEmptyStateProps) {
-  const Heading = headingLevel === 1 ? "h1" : "h2";
+  const inspection = useContext(InspectionContext);
+  const Heading = inspection
+    ? headingLevel === 1
+      ? "h2"
+      : "h3"
+    : headingLevel === 1
+      ? "h1"
+      : "h2";
 
   return (
     <section className={`workspace-empty-state ${className}`.trim()}>
-      {eyebrow ? <span className="workspace-empty-state-eyebrow">{eyebrow}</span> : null}
+      {eyebrow ? (
+        <span className="workspace-empty-state-eyebrow">{eyebrow}</span>
+      ) : null}
       <MaterialIcon name="cloud_off" className="workspace-empty-state-icon" />
       <Heading>{title}</Heading>
       <p>{description}</p>
-      {action ? <div className="workspace-empty-state-action">{action}</div> : null}
+      {action ? (
+        <div className="workspace-empty-state-action">{action}</div>
+      ) : null}
     </section>
   );
 }

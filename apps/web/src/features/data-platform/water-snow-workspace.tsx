@@ -647,8 +647,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
         <article className="water-glass-panel water-signal-panel">
           <header>
             <div>
-              <span>{tKey("waterSnow.signalStack")}</span>
-              <h3>{tKey("waterSnow.signalStackLead")}</h3>
+              <h3>{tKey("waterSnow.signalStack")}</h3>
             </div>
             <strong>{signalMetrics.length} {tKey("waterSnow.metrics")}</strong>
           </header>
@@ -679,7 +678,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
                       <strong>{dataset.label}</strong>
                       <span>{translateEnumLabel(language, dataset.shape)}</span>
                     </div>
-                    <p>{dataset.spatial_grain} · {dataset.cadence}</p>
+                    <p>{dataset.spatial_grain}, {dataset.cadence}</p>
                     <div className="water-schema-composition">
                       <span>
                         {requiredFieldCount}/{dataset.fields.length} {tKey("waterSnow.requiredFields")}

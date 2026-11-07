@@ -256,7 +256,7 @@ export function buildTodayActionCardView(
         ? null
         : recommendationUnavailable
           ? null
-          : `${translateEnumLabel(language, recommendation.freshness_state)} · ${translateEnumLabel(
+          : `${translateEnumLabel(language, recommendation.freshness_state)}, ${translateEnumLabel(
               language,
               recommendation.area_scope,
             )}`,
@@ -275,7 +275,7 @@ export function buildTodayActionCardView(
       ? liveHint?.sources ?? ""
       : isScopeLimited
         ? ""
-        : section.source_codes.map((source) => source.toUpperCase()).join(" · "),
+        : section.source_codes.map((source) => source.toUpperCase()).join(", "),
     title: isSignalFallback
       ? liveHint?.headline ?? localizedContent(language, section.status_label, section.status_label_zh)
       : isScopeLimited

@@ -103,7 +103,7 @@ describe("TodayOverview source health notice", () => {
     );
 
     expect(screen.getByText("9.60 c/kWh")).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "At a glance" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Overview" })).toBeInTheDocument();
   });
 
   it("surfaces source issues before the user acts on the brief", () => {
@@ -130,7 +130,7 @@ describe("TodayOverview source health notice", () => {
     );
 
     expect(screen.getByText("有 2 个数据源需要关注")).toBeInTheDocument();
-    expect(screen.getByText("行动前请先查看信号状态。")).toBeInTheDocument();
+    expect(screen.queryByText("行动前请先查看信号状态。")).not.toBeInTheDocument();
     expect(
       screen.getByText("有 2 个数据源需要关注").closest(".today-source-warning"),
     ).toBeInTheDocument();

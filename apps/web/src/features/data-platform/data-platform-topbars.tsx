@@ -1,32 +1,30 @@
 "use client";
 
-import { useRef, type ChangeEvent, type ReactNode, type RefObject } from "react";
-import Image from "next/image";
-import Link from "next/link";
-
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import {
   CityScopeSelector,
   DateScopeSelector,
   NotificationButton,
+  RefreshDataButton,
   type DashboardTone,
   type ThemeMode,
   type WorkspaceMode,
 } from "./data-platform-shell";
-import {
-  BRAND_LOGO_SRC,
-  FALLBACK_NAV_KEY,
-  breadcrumbForNav,
-} from "./data-platform-nav-utils";
-
+import { breadcrumbForNav } from "./data-platform-nav-utils";
 import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
+import { ModePill } from "@/features/shared/ui/console";
+import { MaterialIcon } from "@/features/shared/material-icon";
 import { SideNavRestoreButton } from "./data-platform-side-nav";
 import { type LanguageMode, useI18n } from "./i18n";
-import { PlatformScopeControls } from "./platform-scope-controls";
-import { ShareViewLinkButton } from "./share-view-link-button";
 import type { PlatformCategory, PlatformHistoryAvailabilityDay } from "./types";
-import { displayTitle } from "./data-platform-view-model";
 
-type ScopeControlProps = {
+export type ScopeControlProps = {
   availability: PlatformHistoryAvailabilityDay[];
   city: string;
   date: string | null;
@@ -48,171 +46,13 @@ type ScopeControlProps = {
   onRefresh: () => void;
   renderAuthActionButton: (className: string) => ReactNode;
   showExport?: boolean;
+  checkedAt?: string;
+  sourceWarning?: boolean;
   themeMode: ThemeMode;
   onToggleTheme: () => void;
 };
 
-type DashboardSearchProps = {
-  className?: string;
-  clearLabel: string;
-  label: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  value: string;
-};
-
-function DashboardSearch({
-  className,
-  clearLabel,
-  label,
-  onChange,
-  placeholder,
-  value,
-}: DashboardSearchProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  function handleChange(event: ChangeEvent<HTMLInputElement>): void {
-    onChange(event.currentTarget.value);
-  }
-
-  return (
-    <div className={`dashboard-search${className ? ` ${className}` : ""}`}>
-      <span className="material-symbols-outlined" aria-hidden="true">
-        search
-      </span>
-      <input
-        aria-label={label}
-        onChange={handleChange}
-        placeholder={placeholder}
-        ref={inputRef}
-        value={value}
-      />
-      {value ? (
-        <button
-          aria-label={clearLabel}
-          className="dashboard-search-clear"
-          onClick={() => {
-            onChange("");
-            inputRef.current?.focus();
-          }}
-          title={clearLabel}
-          type="button"
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            close
-          </span>
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-type DataPlatformMobileHeaderProps = ScopeControlProps & {
-  isDetailPage: boolean;
-  isMobileMenuOpen: boolean;
-  selectedNavKey: string;
-  onBackToOverview: () => void;
-  navigationButtonRef: RefObject<HTMLButtonElement>;
-  onSearchChange: (value: string) => void;
-  workspaceMode: WorkspaceMode;
-  onOpenNavigation: () => void;
-  searchValue: string;
-};
-
-export function DataPlatformMobileHeader({
-  availability,
-  city,
-  date,
-  isDemo,
-  isCityPending,
-  isDatePending,
-  isDetailPage,
-  isMobileMenuOpen,
-  selectedNavKey,
-  onBackToOverview,
-  navigationButtonRef,
-  isEventsExpanded,
-  language,
-  notificationCount,
-  notificationTone,
-  onCalendarOpen,
-  onCityChange,
-  onDateChange,
-  onNotificationsClick,
-  onOpenNavigation,
-}: DataPlatformMobileHeaderProps) {
-  const { tKey } = useI18n();
-
-  return (
-    <header className="mobile-dashboard-header">
-      <div className="mobile-brand">
-        {isDetailPage ? (
-          <button className="icon-button" type="button" aria-label={tKey("shell.backToSignals")} onClick={onBackToOverview}>
-            <span className="material-symbols-outlined" aria-hidden="true">chevron_left</span>
-          </button>
-        ) : null}
-        <button
-          aria-controls="arkiwatch-mobile-navigation"
-          aria-expanded={isMobileMenuOpen}
-          className={`icon-button${isDetailPage ? " mobile-workspace-menu" : ""}`}
-          aria-label={tKey("shell.openNavigation")}
-          onClick={onOpenNavigation}
-          ref={navigationButtonRef}
-          type="button"
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">menu</span>
-        </button>
-        {!isDetailPage ? <span className="mobile-brand-mark" aria-hidden="true">
-          <Image alt="" className="brand-logo-image" height={96} src={BRAND_LOGO_SRC} width={96} />
-        </span> : null}
-        <strong>{isDetailPage ? tKey(breadcrumbForNav(selectedNavKey).leafKey) : "ArkiWatch"}</strong>
-        <NotificationButton
-          count={notificationCount}
-          isActive={isEventsExpanded}
-          language={language}
-          onClick={onNotificationsClick}
-          tone={notificationTone}
-        />
-      </div>
-      <div className="mobile-context-row">
-        <CityScopeSelector
-          city={city}
-          isPending={isCityPending}
-          language={language}
-          onCityChange={onCityChange}
-        />
-        <span className="mobile-context-sep" aria-hidden="true">
-          ·
-        </span>
-        <DateScopeSelector
-          availability={availability}
-          date={date}
-          isDemo={isDemo}
-          isPending={isDatePending}
-          language={language}
-          onCalendarOpen={onCalendarOpen}
-          onDateChange={onDateChange}
-        />
-        <Link
-          aria-label={tKey("shell.personalSettingsTitle")}
-          className="icon-button mobile-context-settings"
-          href="/settings"
-          title={tKey("shell.personalSettingsTitle")}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            settings
-          </span>
-        </Link>
-        <ShareViewLinkButton
-          language={language}
-          scopeKey={`${city}:${date ?? "live"}`}
-        />
-      </div>
-    </header>
-  );
-}
-
-type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
+type WorkspaceTopbarProps = ScopeControlProps & {
   assistantButtonRef?: RefObject<HTMLButtonElement>;
   isDetailPage: boolean;
   onOpenAssistant?: () => void;
@@ -224,215 +64,226 @@ type DataPlatformWorkspaceTopbarProps = ScopeControlProps & {
   selectedNavKey: string;
 };
 
-export function DataPlatformWorkspaceTopbar({
-  availability,
-  assistantButtonRef,
-  city,
-  date,
-  isDemo,
-  isAuthenticated,
-  isCityPending,
-  isDatePending,
-  onOpenAssistant,
-  isEventsExpanded,
-  isHistorical,
-  isRefreshing,
-  language,
-  notificationCount,
-  notificationTone,
-  onCalendarOpen,
-  onCityChange,
-  onDateChange,
-  onLanguageChange,
-  onNotificationsClick,
-  onRefresh,
-  onSelectNav,
-  onToggleTheme,
-  renderAuthActionButton,
-  restoreSideNavButton,
-  selectedNavKey,
-  showExport,
-  themeMode,
-}: DataPlatformWorkspaceTopbarProps) {
-  const { tKey } = useI18n();
-  const crumb = breadcrumbForNav(selectedNavKey);
-  const scopeUpdating = isCityPending || isDatePending;
-
+function ScopeSelectors(props: ScopeControlProps) {
   return (
-    <header className="detail-topbar">
-      {restoreSideNavButton}
+    <>
+      <CityScopeSelector
+        city={props.city}
+        isPending={props.isCityPending}
+        language={props.language}
+        onCityChange={props.onCityChange}
+      />
+      <DateScopeSelector
+        availability={props.availability}
+        date={props.date}
+        isDemo={props.isDemo}
+        isPending={props.isDatePending}
+        language={props.language}
+        onCalendarOpen={props.onCalendarOpen}
+        onDateChange={props.onDateChange}
+      />
+    </>
+  );
+}
+
+export function DataPlatformWorkspaceTopbar(props: WorkspaceTopbarProps) {
+  const { tKey } = useI18n();
+  const crumb = breadcrumbForNav(props.selectedNavKey);
+  const pending = props.isCityPending || props.isDatePending;
+  return (
+    <header className="detail-topbar" aria-busy={pending}>
+      {props.restoreSideNavButton}
       <nav className="topbar-crumb" aria-label={tKey("shell.breadcrumb")}>
-        <button
-          className="topbar-crumb-root"
-          onClick={() => onSelectNav(crumb.rootTarget)}
-          type="button"
-        >
-          {tKey(crumb.rootKey)}
-        </button>
-        <span className="topbar-crumb-sep" aria-hidden="true">
-          /
-        </span>
-        <span className="topbar-crumb-leaf" aria-current="page">
-          {tKey(crumb.leafKey)}
-        </span>
+        {props.selectedNavKey !== "overview" ? (
+          <>
+            <button
+              className="topbar-crumb-root"
+              type="button"
+              onClick={() => props.onSelectNav("overview")}
+            >
+              {tKey("shell.navHome")}
+            </button>
+            <span aria-hidden="true">/</span>
+          </>
+        ) : null}
+        <span aria-current="page">{tKey(crumb.leafKey)}</span>
       </nav>
-
-      <span className="topbar-spacer" />
-
-      <div className="detail-topbar-actions">
-        <PlatformScopeControls
-          availability={availability}
-          city={city}
-          date={date}
-          isDemo={isDemo}
-          isAuthenticated={isAuthenticated}
-          isCityPending={isCityPending}
-          isDatePending={isDatePending}
-          isEventsExpanded={isEventsExpanded}
-          isHistorical={isHistorical}
-          isRefreshing={isRefreshing}
-          language={language}
-          notificationCount={notificationCount}
-          notificationTone={notificationTone}
-          onCalendarOpen={onCalendarOpen}
-          onCityChange={onCityChange}
-          onDateChange={onDateChange}
-          onLanguageChange={onLanguageChange}
-          onNotificationsClick={onNotificationsClick}
-          onRefresh={onRefresh}
-          onToggleTheme={onToggleTheme}
-          renderAuthActionButton={renderAuthActionButton}
-          showAuth={false}
-          showExport={showExport}
-          themeMode={themeMode}
+      <div className="context-scope">
+        <ScopeSelectors {...props} />
+        <ModePill
+          demo={props.isDemo}
+          date={props.date}
+          warning={props.sourceWarning}
         />
-        {onOpenAssistant ? (
+        {props.checkedAt ? (
+          <time className="context-checked" dateTime={props.checkedAt}>
+            {new Intl.DateTimeFormat(
+              props.language === "zh" ? "zh-CN" : "en-GB",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Europe/Helsinki",
+              },
+            ).format(new Date(props.checkedAt))}
+          </time>
+        ) : null}
+      </div>
+      <div className="detail-topbar-actions">
+        <RefreshDataButton
+          isRefreshing={props.isRefreshing}
+          language={props.language}
+          onRefresh={props.onRefresh}
+        />
+        <NotificationButton
+          count={props.notificationCount}
+          isActive={props.isEventsExpanded}
+          language={props.language}
+          onClick={props.onNotificationsClick}
+          tone={props.notificationTone}
+        />
+        {props.onOpenAssistant ? (
           <button
             aria-label={tKey("assistant.openAssistant")}
-            aria-disabled={scopeUpdating || undefined}
             className="topbar-assistant"
-            disabled={scopeUpdating}
-            onClick={() => onOpenAssistant()}
-            ref={assistantButtonRef}
-            title={
-              scopeUpdating
-                ? tKey("shell.scopeUpdating")
-                : tKey("assistant.openAssistant")
-            }
+            disabled={pending}
+            onClick={() => props.onOpenAssistant?.()}
+            ref={props.assistantButtonRef}
             type="button"
           >
-            <AssistantGlyph className="topbar-assistant-mark" />
-            <span>{tKey("shell.assistant")}</span>
+            <AssistantGlyph />
+            <span>{tKey("shell.ask")}</span>
           </button>
         ) : null}
       </div>
+      {pending ? (
+        <span
+          className="context-progress"
+          role="status"
+          aria-label={tKey("shell.scopeUpdating")}
+        />
+      ) : null}
     </header>
   );
 }
 
-type DataPlatformDesktopHeaderProps = ScopeControlProps & {
-  onSearchChange: (value: string) => void;
-  restoreSideNavButton: ReactNode;
-  searchValue: string;
-  selectedCategory: PlatformCategory | null;
+type MobileHeaderProps = ScopeControlProps & {
+  isDetailPage: boolean;
+  isMobileMenuOpen: boolean;
   selectedNavKey: string;
+  onBackToOverview: () => void;
+  navigationButtonRef: RefObject<HTMLButtonElement>;
+  onSearchChange: (value: string) => void;
+  workspaceMode: WorkspaceMode;
+  onOpenNavigation: () => void;
+  searchValue: string;
 };
 
-export function DataPlatformDesktopHeader({
-  availability,
-  city,
-  date,
-  isDemo,
-  isAuthenticated,
-  isCityPending,
-  isDatePending,
-  isEventsExpanded,
-  isHistorical,
-  isRefreshing,
-  language,
-  notificationCount,
-  notificationTone,
-  onCalendarOpen,
-  onCityChange,
-  onDateChange,
-  onLanguageChange,
-  onNotificationsClick,
-  onRefresh,
-  onSearchChange,
-  onToggleTheme,
-  renderAuthActionButton,
-  restoreSideNavButton,
-  searchValue,
-  selectedCategory,
-  selectedNavKey,
-  showExport,
-  themeMode,
-}: DataPlatformDesktopHeaderProps) {
+export function DataPlatformMobileHeader(props: MobileHeaderProps) {
   const { tKey } = useI18n();
-
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (scopeOpen) dialogRef.current?.showModal();
+    else dialogRef.current?.close();
+  }, [scopeOpen]);
   return (
-    <div className="desktop-dashboard-header">
-      <div className="desktop-dashboard-heading">
-        {restoreSideNavButton}
-        <div className="desktop-dashboard-heading-copy">
-          <span className="desktop-dashboard-kicker">
-            {tKey(
-              selectedNavKey === FALLBACK_NAV_KEY
-                ? "shell.dataPlatformMode"
-                : "shell.lifeAssistant",
-            )}
-          </span>
-          <h2>
-            {selectedCategory
-              ? `${displayTitle(selectedCategory, language)} ${tKey("shell.dashboardSuffix")}`
-              : selectedNavKey === FALLBACK_NAV_KEY
-                ? tKey("shell.navSignals")
-                : tKey("shell.navToday")}
-          </h2>
-          <p>
-            {selectedCategory?.description ??
-              (selectedNavKey === FALLBACK_NAV_KEY
-                ? tKey("shell.dataPlatformLead")
-                : tKey("shell.lifeAssistantLead"))}
-          </p>
+    <header className="mobile-dashboard-header">
+      <div className="mobile-brand">
+        <button
+          aria-label={tKey("shell.openNavigation")}
+          aria-controls="arkiwatch-mobile-navigation"
+          aria-expanded={props.isMobileMenuOpen}
+          className="icon-button"
+          onClick={props.onOpenNavigation}
+          ref={props.navigationButtonRef}
+          type="button"
+        >
+          <MaterialIcon name="menu" />
+        </button>
+        <strong>ArkiWatch</strong>
+        <button
+          className="mobile-scope-trigger"
+          aria-label={tKey("shell.scope")}
+          onClick={() => setScopeOpen(true)}
+          type="button"
+        >
+          {props.city.split("_")[0]}
+          <MaterialIcon name="expand_more" />
+        </button>
+        <NotificationButton
+          count={props.notificationCount}
+          isActive={props.isEventsExpanded}
+          language={props.language}
+          onClick={props.onNotificationsClick}
+          tone={props.notificationTone}
+        />
+      </div>
+      <div className="mobile-mode-strip">
+        <ModePill
+          demo={props.isDemo}
+          date={props.date}
+          warning={props.sourceWarning}
+        />
+        <span>{tKey(breadcrumbForNav(props.selectedNavKey).leafKey)}</span>
+        {props.checkedAt ? (
+          <time
+            className="mobile-checked"
+            dateTime={props.checkedAt}
+            title={tKey("shell.snapshotChecked")}
+          >
+            {new Intl.DateTimeFormat(
+              props.language === "zh" ? "zh-CN" : "en-GB",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Europe/Helsinki",
+              },
+            ).format(new Date(props.checkedAt))}
+          </time>
+        ) : null}
+      </div>
+      <dialog
+        className="scope-sheet"
+        ref={dialogRef}
+        onCancel={() => setScopeOpen(false)}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setScopeOpen(false);
+        }}
+        aria-labelledby="scope-sheet-title"
+      >
+        <div className="scope-sheet-header">
+          <h2 id="scope-sheet-title">{tKey("shell.scope")}</h2>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label={tKey("shell.close")}
+            onClick={() => setScopeOpen(false)}
+          >
+            <MaterialIcon name="close" />
+          </button>
         </div>
-      </div>
-      <div className="desktop-controls">
-        <DashboardSearch
-          clearLabel={tKey("shell.clearSearch")}
-          label={tKey("shell.searchSignalsPlaceholder")}
-          onChange={onSearchChange}
-          placeholder={tKey("shell.searchSignalsPlaceholder")}
-          value={searchValue}
-        />
-        <PlatformScopeControls
-          availability={availability}
-          city={city}
-          date={date}
-          isDemo={isDemo}
-          isAuthenticated={isAuthenticated}
-          isCityPending={isCityPending}
-          isDatePending={isDatePending}
-          isEventsExpanded={isEventsExpanded}
-          isHistorical={isHistorical}
-          isRefreshing={isRefreshing}
-          language={language}
-          notificationCount={notificationCount}
-          notificationTone={notificationTone}
-          onCalendarOpen={onCalendarOpen}
-          onCityChange={onCityChange}
-          onDateChange={onDateChange}
-          onLanguageChange={onLanguageChange}
-          onNotificationsClick={onNotificationsClick}
-          onRefresh={onRefresh}
-          onToggleTheme={onToggleTheme}
-          renderAuthActionButton={renderAuthActionButton}
-          showExport={showExport}
-          themeMode={themeMode}
-        />
-      </div>
-    </div>
+        <ScopeSelectors {...props} />
+      </dialog>
+    </header>
   );
 }
 
+export function DataPlatformDesktopHeader(
+  props: ScopeControlProps & {
+    onSearchChange: (value: string) => void;
+    restoreSideNavButton: ReactNode;
+    searchValue: string;
+    selectedCategory: PlatformCategory | null;
+    selectedNavKey: string;
+  },
+) {
+  return (
+    <DataPlatformWorkspaceTopbar
+      {...props}
+      isDetailPage={false}
+      onSelectNav={() => {}}
+      workspaceMode="data"
+    />
+  );
+}
 export { SideNavRestoreButton };

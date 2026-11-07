@@ -541,7 +541,7 @@ function roadRailHistoryPoints(
       {
         label: formatHistoryDate(snapshot.date, language, timeZone),
         value: data.quality.normalized_event_count,
-        detail: `${data.quality.raw_message_count} ${tKey("roadRail.raw")} · ${data.quality.weather_risk_count} ${tKey("roadRail.weather")}`
+        detail: `${data.quality.raw_message_count} ${tKey("roadRail.raw")}, ${data.quality.weather_risk_count} ${tKey("roadRail.weather")}`
       }
     ];
   });
@@ -847,7 +847,7 @@ export function RoadRailWorkspace({
                         <strong>{localizedPlatformCopy(incident.title, language) ?? incident.title}</strong>
                         <p>{localizedPlatformCopy(incident.description, language) ?? incident.description}</p>
                         <small>
-                          {roadRail.source_code.toUpperCase()} · {formatClockTime(incident.starts_at, language, tKey, dataTimezone)}
+                          {roadRail.source_code.toUpperCase()}, {formatClockTime(incident.starts_at, language, tKey, dataTimezone)}
                         </small>
                         <div className="sr-only">
                           <MobilityEventStatus namespace="roadRail" event={incident} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />

@@ -135,7 +135,6 @@ export function WeatherDetailView({
     <div className="weather-detail-page">
       <WorkspaceEvidenceHeader
         className="weather-detail-header"
-        eyebrow={tKey("weather.weatherWorkspace")}
         fallbackKey="weather.notObserved"
         language={language}
         observedAt={dataTime}
@@ -154,7 +153,7 @@ export function WeatherDetailView({
         timezone={dataTimezone}
       >
         <span className="workspace-evidence-coordinates">
-          {tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone, weather.time_scope)} · LAT {formatNumber(coordinates.latitude, 4)} · LON {formatNumber(coordinates.longitude, 4)}
+          {tKey("weather.dataTime")} {exactDataTime(dataTime, language, tKey, dataTimezone, weather.time_scope)}, LAT {formatNumber(coordinates.latitude, 4)}, LON {formatNumber(coordinates.longitude, 4)}
         </span>
       </WorkspaceEvidenceHeader>
 
@@ -279,16 +278,16 @@ export function WeatherDetailView({
             <span>{weather.quality.forecast_hours}H {tKey("weather.forecastTrajectory")}</span>
             <strong>{chartReadout(chartData, chartMode, tKey, secondaryChartData)}</strong>
             <small className="weather-chart-kind">
-              {tKey(`weather.${chartKindLabelKey(activeChartConfig.kind)}`)} · {tKey(`weather.${activeChartConfig.descriptionKey}`)}
+              {tKey(`weather.${chartKindLabelKey(activeChartConfig.kind)}`)}, {tKey(`weather.${activeChartConfig.descriptionKey}`)}
             </small>
             <div className="weather-chart-toggle" aria-label={tKey("weather.forecastChartMode")}>
               {CHART_MODES.map((mode) => (
                 <button
-                  aria-label={`${tKey(`weather.${mode.fullLabelKey}`)} · ${tKey(`weather.${mode.descriptionKey}`)}`}
+                  aria-label={`${tKey(`weather.${mode.fullLabelKey}`)}, ${tKey(`weather.${mode.descriptionKey}`)}`}
                   className={chartMode === mode.key ? "active" : ""}
                   key={mode.key}
                   onClick={() => setChartMode(mode.key)}
-                  title={`${tKey(`weather.${mode.fullLabelKey}`)} · ${tKey(`weather.${mode.descriptionKey}`)}`}
+                  title={`${tKey(`weather.${mode.fullLabelKey}`)}, ${tKey(`weather.${mode.descriptionKey}`)}`}
                   type="button"
                 >
                   {mode.label}
@@ -311,7 +310,7 @@ export function WeatherDetailView({
               {axis.bottom}
               {activeChartConfig.unit}
             </span>
-            {renderForecastChart(chartData, secondaryChartData, activeChartConfig, tKey)}
+            {chartData.length >= 3 ? renderForecastChart(chartData, secondaryChartData, activeChartConfig, tKey) : <p className="trend-chart-insufficient">{tKey("shell.notEnoughHistory").replace("{count}", String(chartData.length))}</p>}
             <div className="weather-chart-x-axis">
               {chartLabels.map((label, index) => (
                 <span key={`${label}-${index}`}>{label}</span>
@@ -365,7 +364,7 @@ export function WeatherDetailView({
                   </div>
                   <p>
                     {tKey("weather.peak")} {formatNumber(window.peak_precip_mm, 1)} mm {tKey("weather.at")}{" "}
-                    {formatCompactTime(window.peak_precip_at, language, dataTimezone)} · {tKey("weather.total")}{" "}
+                    {formatCompactTime(window.peak_precip_at, language, dataTimezone)}, {tKey("weather.total")}{" "}
                     {formatNumber(window.total_precip_mm, 1)} mm
                   </p>
                   <span className="weather-rain-meter" aria-hidden="true">
@@ -431,7 +430,7 @@ export function WeatherDetailView({
                 </div>
                 <p>
                   {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
-                  {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("weather.records")}` : ""}
+                  {stage.record_count !== null ? `, ${stage.record_count} ${tKey("weather.records")}` : ""}
                 </p>
                 <span className="weather-pipeline-meter" aria-hidden="true">
                   <span style={{ width: `${stageProgress(stage)}%` }} />
@@ -468,7 +467,7 @@ export function WeatherDetailView({
                   </div>
                   <p>{localizedPlatformCopy(layer.detail, language) ?? layer.detail}</p>
                   <small>
-                    {request ? `${sourceRequestHost(request.endpoint, tKey)} · ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
+                    {request ? `${sourceRequestHost(request.endpoint, tKey)}, ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
                   </small>
                 </article>
               );

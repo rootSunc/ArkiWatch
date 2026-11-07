@@ -8,16 +8,15 @@ import { appEnv } from "@/lib/env";
 // this launches into.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${appEnv.appName}. Public data. Practical decisions.`,
+    name: appEnv.appName,
     short_name: appEnv.appName,
-    description:
-      "Practical daily guidance for life in Finland, grounded in transparent public data.",
+    description: "Public data for daily life in Finland.",
     start_url: "/",
     display: "standalone",
     // Web manifests require literal colors; keep these in sync with the light
     // theme's --canvas and --blue tokens in tokens.css.
-    background_color: "#f3f1ec",
-    theme_color: "#2b4a52",
+    background_color: "#fcfcfd",
+    theme_color: "#6e56cf",
     icons: [
       {
         src: "/brand/logo-mark.png",

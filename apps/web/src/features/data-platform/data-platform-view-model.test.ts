@@ -100,7 +100,7 @@ describe("data platform view model", () => {
   });
 
   it("resolves category titles from shell nav keys", () => {
-    expect(displayTitle(category("events"), "zh")).toBe("关联活动");
+    expect(displayTitle(category("events"), "zh")).toBe("事件");
     expect(displayTitle(category("energy"), "en")).toBe("Energy");
   });
 

@@ -11,7 +11,6 @@ import {
   recentEventLabel,
 } from "./data-platform-view-model";
 import type { LanguageMode } from "./language";
-import { isEmptyStatus } from "./platform-status";
 import type { DashboardTone } from "./data-platform-shell";
 import type { PlatformCategory, PlatformEvent } from "./types";
 
@@ -88,7 +87,7 @@ export function buildSignalView({
 
   return {
     primaryVisibleCategories: visibleCategories.filter(
-      (category) => !isCatalogCategoryKey(category.key) && !isEmptyStatus(category.status),
+      (category) => !isCatalogCategoryKey(category.key),
     ),
     catalogVisibleCategories: visibleCategories.filter((category) =>
       isCatalogCategoryKey(category.key),
@@ -105,10 +104,10 @@ export function buildSignalView({
     recentNotificationTone: notificationToneForEvents(unreadRecentEvents),
     overallNotificationTitle:
       visibleNotificationEvents.length > 0
-        ? `${scopeLabel} · ${recentEventLabel(visibleNotificationEvents.length, language)}`
-        : `${scopeLabel} · ${tKey("shell.noActiveNotifications")}`,
+        ? `${scopeLabel}, ${recentEventLabel(visibleNotificationEvents.length, language)}`
+        : `${scopeLabel}, ${tKey("shell.noActiveNotifications")}`,
     overallNotificationBody: priorityVisibleEvent
-      ? `${eventCategoryLabel(categories, priorityVisibleEvent, language)} · ${localizedContent(
+      ? `${eventCategoryLabel(categories, priorityVisibleEvent, language)}, ${localizedContent(
           language,
           priorityVisibleEvent.title,
           priorityVisibleEvent.title_zh,

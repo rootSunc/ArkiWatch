@@ -1,0 +1,83 @@
+@layer components {
+  .card, .metric {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+  .cardHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .cardHeader h2 { font-size: 16px; font-weight: 600; line-height: 24px; }
+  .cardBody { padding: 20px; min-width: 0; }
+  .cardFooter { padding: 12px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  .pageHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .heading h1 { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -.02em; }
+  .pageHeader p { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 20px; }
+  .badge, .mode { display: inline-flex; align-items: center; gap: 6px; padding: 3px 7px; border: 1px solid var(--line); border-radius: var(--r-chip); color: var(--muted); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+  .badge i, .mode i { width: 6px; height: 6px; background: currentColor; border-radius: 50%; flex-shrink: 0; }
+  .badge[data-tone="good"], .mode[data-tone="good"] { color: var(--green); border-color: color-mix(in srgb, var(--green) 25%, transparent); }
+  .badge[data-tone="warn"], .mode[data-tone="warn"] { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 25%, transparent); }
+  .badge[data-tone="bad"] { color: var(--red); border-color: color-mix(in srgb, var(--red) 25%, transparent); }
+  .mode { border-radius: var(--r-pill); padding: 4px 9px; background: var(--surface-soft); }
+  .metric { padding: 16px; display: grid; gap: 10px; align-content: start; }
+  .metricLabel { display: flex; align-items: center; justify-content: space-between; gap: 4px; color: var(--body); font-size: 13px; font-weight: 500; }
+  .metricLabel > button { display: flex; gap: 6px; align-items: center; flex: 1; background: transparent; padding: 0; color: inherit; text-align: left; min-height: 24px; }
+  .metricLabel > button span { color: var(--muted); margin-left: auto; }
+  .metricLabel > button:hover { color: var(--accent); }
+  .metricValue { display: flex; align-items: baseline; gap: 6px; }
+  .metricValue strong { color: var(--ink); font-size: 24px; line-height: 30px; letter-spacing: -.02em; font-weight: 600; }
+  .metricValue small { font-size: 12px; color: var(--muted); }
+  .metricTrend { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+  .metricTrend small, .noTrend { font-size: 12px; color: var(--muted); }
+  .sparkline { min-width: 0; flex: 1; width: 100%; max-width: 160px; height: 40px; overflow: visible; color: var(--accent); }
+  .sparkLine { stroke: currentColor; stroke-width: 1.5; fill: none; vector-effect: non-scaling-stroke; }
+  .sparkArea { fill: currentColor; opacity: .12; }
+  .metricFooter { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 4px; color: var(--muted); font-size: 11px; }
+  .metricAsk { color: var(--accent); background: transparent; font-size: 11px; padding: 0; min-height: 24px; order: 3; }
+  .metricFooter .badge { border: 0; padding: 0; font-size: 11px; }
+  .evidence { position: relative; display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .evidenceTrigger { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: transparent; border-radius: var(--r-chip); color: var(--muted); }
+  .evidenceTrigger:hover { color: var(--accent); background: var(--accent-soft); }
+  .popover { position: fixed; z-index: 60; right: auto; top: 0; left: 16px; max-height: calc(100dvh - 32px); overflow: auto; width: min(320px, 80vw); padding: 16px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-card); box-shadow: var(--shadow-md); color: var(--body); font-size: 12px; font-weight: 400; }
+  .popover > strong { color: var(--ink); font-size: 13px; }
+  .popover dl { margin: 12px 0; display: grid; gap: 10px; }
+  .popover dl > div { display: grid; grid-template-columns: 100px minmax(0,1fr); gap: 12px; }
+  .popover dt { color: var(--muted); }
+  .popover dd { margin: 0; overflow-wrap: anywhere; }
+  .popover a { color: var(--accent); display: inline-block; min-height: 24px; }
+  .empty { display: grid; justify-items: center; align-content: center; gap: 10px; padding: 28px 16px; color: var(--muted); text-align: center; font-size: 13px; }
+  .empty strong { color: var(--body); font-weight: 500; }
+  .empty p { max-width: 50ch; }
+  .tableScroll { overflow: auto; max-height: min(560px, 60dvh); max-width: 100%; }
+  .table { border-collapse: collapse; width: 100%; font-size: 13px; text-align: left; }
+  .table th { position: sticky; top: 0; z-index: 1; background: var(--surface-soft); color: var(--muted); font-weight: 500; font-size: 12px; }
+  .table :is(th, td) { padding: 10px 12px; height: 40px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .table th button { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: inherit; padding: 0; }
+  .table [data-numeric] { text-align: right; font-variant-numeric: tabular-nums; }
+  .table td { color: var(--body); }
+  .table tr:hover td { background: var(--surface-soft); }
+  .table tbody tr:last-child td { border-bottom: 0; }
+  .chartNotice { display: flex; align-items: center; min-height: 40px; color: var(--muted); font-size: 13px; line-height: 20px; }
+  .drawer { position: fixed; inset: 56px 0 0 auto; margin: 0; width: min(420px,100vw); max-width: none; height: calc(100dvh - 56px); max-height: none; border: 0; border-left: 1px solid var(--line); padding: 20px; color: var(--ink); background: var(--surface); box-shadow: var(--shadow-lg); overflow: auto; z-index: 45; }
+  .drawer > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .drawer h2 { font-size: 16px; font-weight: 600; }
+  .drawer::backdrop { background: var(--assistant-scrim); }
+  .toast { position: fixed; z-index: 90; bottom: 28px; left: 50%; transform: translateX(-50%); padding: 12px 20px; background: var(--ink); color: var(--surface); border-radius: var(--r-control); box-shadow: var(--shadow-lg); font-size: 13px; }
+  @media (max-width: 768px) {
+    .popover { position: fixed; top: auto; bottom: 76px; left: 16px; right: 16px; width: auto; max-height: 60dvh; overflow: auto; }
+    .drawer { inset: 0; width: 100vw; height: 100dvh; }
+    .cardHeader, .cardBody { padding: 16px; }
+    .pageHeader { flex-wrap: wrap; }
+    .metric { padding: 12px; }
+    .metricAsk { min-height: 44px; padding: 0 6px; }
+    .evidenceTrigger { width: 44px; height: 44px; align-self: center; margin: -6px -6px -6px 0; }
+    .metricLabel > button { min-height: 44px; }
+    .table thead { display: none; }
+    .table, .table tbody, .table tr, .table td { display: block; }
+    .table tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .table td { display: grid; grid-template-columns: minmax(80px, .6fr) minmax(0,1fr); gap: 16px; height: auto; min-height: 36px; padding: 8px 4px; border: 0; text-align: right; overflow-wrap: anywhere; }
+    .table td::before { content: attr(data-label); text-align: left; color: var(--muted); }
+    .toast { bottom: 88px; max-width: 90vw; }
+  }
+}

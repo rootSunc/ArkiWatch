@@ -127,7 +127,7 @@ export function buildUserSummaryTiles(
           ? `${commuteTotal} ${translateMessageKey(language, "shell.active")}`
           : translateMessageKey(language, "shell.allClear"),
       detail: commuteAvailable
-        ? `${translateMessageKey(language, "shell.navTransit")} ${transitAlerts} · ${translateMessageKey(language, "shell.navRoadRail")} ${roadEvents}`
+        ? `${translateMessageKey(language, "shell.navTransit")} ${transitAlerts}, ${translateMessageKey(language, "shell.navRoadRail")} ${roadEvents}`
         : translateMessageKey(language, "shell.na"),
       tone: commuteTone,
       icon: "commute",

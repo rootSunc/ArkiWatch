@@ -21,7 +21,7 @@ describe("platformDataNeedsForView", () => {
     });
   });
 
-  it("keeps today and overview on core queries only", () => {
+  it("loads saved history for Home while keeping the plan on core queries", () => {
     expect(platformDataNeedsForView("today")).toEqual({
       weather: false,
       air: false,
@@ -32,7 +32,11 @@ describe("platformDataNeedsForView", () => {
       history: false,
       historyAvailability: false,
     });
-    expect(platformDataNeedsForView("overview").history).toBe(false);
+    expect(platformDataNeedsForView("overview")).toEqual({
+      weather: true, air: true, energy: true, householdEnergy: true,
+      roadRail: true, transit: true, history: true, historyAvailability: false,
+    });
+    expect(platformDataNeedsForView(null)).toEqual(platformDataNeedsForView("overview"));
   });
 
   it("enables domain and history queries for workspaces", () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspaceConsole } from "./workspace-console";
 import type { EnergyPanelKey } from "./workspace-query-params";
 import type { MobilityTabKey } from "./mobility-workspace";
 import type {
@@ -26,6 +27,8 @@ import {
 
 export type DataPlatformWorkspaceRouterProps = {
   airQuality: AirQualityCurrentResponse | null;
+  city?: string;
+  onAsk?: (question: string) => void;
   energy: EnergyCurrentResponse | null;
   highlightedEventId: string | null;
   history: PlatformHistoryResponse;
@@ -75,7 +78,7 @@ export function workspaceRouteForCategory(
   }
 }
 
-export function DataPlatformWorkspaceRouter({
+function LegacyWorkspaceRouter({
   airQuality,
   energy,
   highlightedEventId,
@@ -175,4 +178,8 @@ export function DataPlatformWorkspaceRouter({
   }
 
   return null;
+}
+
+export function DataPlatformWorkspaceRouter(props: DataPlatformWorkspaceRouterProps) {
+  return <WorkspaceConsole {...props}><LegacyWorkspaceRouter {...props} /></WorkspaceConsole>;
 }

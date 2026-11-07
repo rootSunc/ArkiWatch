@@ -66,7 +66,7 @@ describe("buildSignalView", () => {
     const filtered = view({ searchValue: "nothing matches this" });
     expect(filtered.visibleEvents).toEqual([]);
     expect(filtered.overallNotificationTitle).toBe(
-      `Overall · ${tKey("shell.noActiveNotifications")}`,
+      `Overall, ${tKey("shell.noActiveNotifications")}`,
     );
     expect(filtered.overallNotificationBody).toBe(
       tKey("shell.noActiveCrossSignalNotificationsInThisView"),
@@ -87,7 +87,7 @@ describe("buildSignalView", () => {
       ],
     });
 
-    expect(result.primaryVisibleCategories.map((item) => item.key)).toEqual(["transit"]);
+    expect(result.primaryVisibleCategories.map((item) => item.key)).toEqual(["transit", "weather"]);
     expect(result.catalogVisibleCategories.map((item) => item.key)).toEqual(["city_services"]);
   });
 

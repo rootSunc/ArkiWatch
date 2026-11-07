@@ -1,3 +1,4 @@
+@layer components {
 /*
  * Baseline for the routes outside the data-platform shell: /about, /login,
  * /privacy, /settings and the 404 page.
@@ -8,7 +9,7 @@
   min-height: calc(100vh - 64px);
   min-height: calc(100dvh - 64px);
   place-items: center;
-  background: var(--surface-soft);
+  background: var(--brand-900);
   padding: 48px 40px;
 }
 
@@ -20,8 +21,8 @@
   border: 1px solid var(--line);
   border-top: 1px solid var(--line);
   border-radius: var(--r-panel);
-  background: var(--canvas);
-  box-shadow: none;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
   padding: 36px;
 }
 
@@ -89,7 +90,7 @@
   padding: 0 10px;
   /* Keep foreground/background changes atomic so the two language states
      never pass through a low-contrast intermediate frame. */
-  transition: none;
+
 }
 
 .login-language button:hover,
@@ -127,7 +128,7 @@
 .login-brand h1 {
   margin: 0;
   color: var(--ink);
-  font-size: 21px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -145,7 +146,7 @@
 
 .login-form label span {
   color: var(--muted-3);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.2;
 }
@@ -159,7 +160,7 @@
   color: var(--ink);
   outline: none;
   padding: 0 13px;
-  font-size: 14.5px;
+  font-size: 14px;
 }
 
 .login-form input:focus {
@@ -177,7 +178,7 @@
   border-radius: var(--r-card);
   background: var(--amber-soft);
   color: var(--amber);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   padding: 10px 12px;
 }
@@ -197,7 +198,7 @@
   border-radius: var(--r-control);
   background: var(--btn-fill);
   color: var(--btn-label);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 500;
   margin-top: 6px;
 }
@@ -221,7 +222,7 @@
   padding-top: 20px;
   border-top: 1px solid var(--line-soft);
   font-family: var(--font-data);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   color: var(--muted-2);
 }
@@ -235,7 +236,7 @@
   border-radius: var(--r-control);
   background: var(--canvas);
   color: var(--ink);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 500;
   text-decoration: none;
 }
@@ -292,7 +293,7 @@
   }
 
   .login-brand h1 {
-    font-size: 20px;
+    font-size: 16px;
     line-height: 24px;
     white-space: nowrap;
   }
@@ -342,7 +343,7 @@
 .not-found-panel h1 {
   margin: 0 0 16px;
   color: var(--ink);
-  font-size: clamp(36px, 7vw, 64px);
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -353,7 +354,7 @@
   max-width: 54ch;
   margin: 0;
   color: var(--body);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.6;
   text-wrap: pretty;
 }
@@ -378,7 +379,7 @@
   font-weight: 500;
   line-height: 1.35;
   text-decoration: none;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+
 }
 
 .not-found-action-primary {
@@ -420,4 +421,6 @@
   .not-found-action {
     width: 100%;
   }
+}
+
 }

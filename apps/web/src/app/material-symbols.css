@@ -1,3 +1,4 @@
+@layer base {
 /* Subset of Material Symbols used by the app (avoids full variable font download). */
 @font-face {
   font-family: "Material Symbols Outlined";
@@ -39,4 +40,6 @@
 svg.material-icon {
   width: 24px;
   height: 24px;
+}
+
 }

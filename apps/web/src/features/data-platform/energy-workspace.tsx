@@ -314,7 +314,7 @@ export function EnergyWorkspace({
         title={tKey("energy.householdPriceAndGridLoad")}
         timezone={dataTimezone}
       >
-        <p>{sourceDisclosureName} · {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
+        <p>{sourceDisclosureName}, {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
       </WorkspaceEvidenceHeader>
 
       <nav className="energy-tab-list" aria-label={tKey("energy.energyWorkspaceTabs")} role="tablist">
@@ -440,7 +440,7 @@ export function EnergyWorkspace({
             </div>
             <strong>{signalMetrics.length} {tKey("energy.metrics")}</strong>
           </header>
-          {chartPoints.length > 0 && chartRange && chartVisualScale ? (
+          {chartPoints.length >= 3 && chartRange && chartVisualScale ? (
             <div className="energy-price-chart" role="group" aria-label={isPricePanel ? tKey("energy.householdElectricityPriceForecast") : tKey("energy.fingridElectricitySystemTimeseries")}>
               <div className="energy-chart-heading">
                 <div>
@@ -774,7 +774,7 @@ export function EnergyWorkspace({
                 <span>{tKey("energy.points")}</span>
               </article>
             </div>
-            <p>{activeSourceName} · {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
+            <p>{activeSourceName}, {activeSource?.license_label ? dataLabel(activeSource.license_label) : tKey("energy.licenseUnavailable")}</p>
             {activeSource?.error_message ? <p>{tKey("shell.collectionError")}</p> : null}
             {activeSource?.documentation_url ? (
               <a href={activeSource.documentation_url} rel="noreferrer" target="_blank">

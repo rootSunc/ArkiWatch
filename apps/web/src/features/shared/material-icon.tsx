@@ -49,6 +49,9 @@ function DownloadIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 export function MaterialIcon({ name, className }: MaterialIconProps) {
+  if (name === "home" || name === "monitor_heart") {
+    return <svg className={`material-icon${className ? ` ${className}` : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{name === "home" ? <path d="m3 10 9-7 9 7v10H15v-7H9v7H3Z" /> : <><rect x="3" y="4" width="18" height="15" rx="2" /><path d="M6 12h3l2-4 3 8 2-4h2" /></>}</svg>;
+  }
   if (name === "download") {
     return <DownloadIcon className={className} />;
   }

@@ -51,12 +51,12 @@ describe("WorkspaceEvidenceHeader", () => {
         }}
         title="Weather"
       >
-        <span>LAT 60.1699 · LON 24.9384</span>
+        <span>LAT 60.1699, LON 24.9384</span>
       </WorkspaceEvidenceHeader>,
     );
 
     expect(screen.getByText("Source details")).toBeInTheDocument();
-    expect(screen.getByText("LAT 60.1699 · LON 24.9384")).toBeInTheDocument();
+    expect(screen.getByText("LAT 60.1699, LON 24.9384")).toBeInTheDocument();
   });
 });
 describe("WorkspaceEmptyState", () => {

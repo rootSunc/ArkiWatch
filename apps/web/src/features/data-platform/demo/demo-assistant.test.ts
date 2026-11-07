@@ -25,7 +25,7 @@ describe("demo assistant", () => {
     const reply = demoAssistantReply("今天有什么需要留意？", "zh");
 
     expect(reply.text).toContain("演示快照");
-    expect(reply.text).toContain("今日");
+    expect(reply.text).toContain("首页");
     expect(reply.text).not.toMatch(/\b(?:Demo|Good|Today|fixture|live)\b/i);
   });
 
@@ -57,7 +57,7 @@ describe("demo assistant", () => {
 
     expect(reply.text).toContain("historical demo snapshot for Helsinki on 2026-08-08");
     expect(reply.text).toContain("Do not use it to plan today’s laundry or dishes");
-    expect(reply.citations[0]?.detail).toBe("Helsinki historical snapshot · 2026-08-08");
+    expect(reply.citations[0]?.detail).toBe("Helsinki historical snapshot, 2026-08-08");
   });
 
   it("does not relabel the Helsinki demo snapshot for another city", () => {
@@ -68,7 +68,7 @@ describe("demo assistant", () => {
     expect(reply.text).toContain("covers Helsinki / Uusimaa only");
     expect(reply.text).not.toContain("16 °C");
     expect(reply.text).not.toContain("9.60 c/kWh");
-    expect(reply.citations[0]?.detail).toBe("Tampere · demo coverage is Helsinki / Uusimaa only");
+    expect(reply.citations[0]?.detail).toBe("Tampere, demo coverage is Helsinki / Uusimaa only");
   });
 
   it("keeps the unavailable historical answer localized in Chinese", () => {
@@ -81,4 +81,12 @@ describe("demo assistant", () => {
     expect(reply.text).not.toContain("16°C");
     expect(reply.text).not.toContain("9.60 c/kWh");
   });
+});
+
+
+it("links topic evidence to its workspace while retaining the demo scope", () => {
+ const reply = demoAssistantReply("Explain weather", "en");
+ expect(reply.citations[0].source).toBe("weather");
+ expect(reply.citations[0].detail).toContain("Helsinki snapshot");
+ expect(reply.text).toContain("demo weather snapshot");
 });

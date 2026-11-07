@@ -1,0 +1,27 @@
+@layer features {
+.day-plan-timeline { display: grid; gap: 16px; }
+.day-plan-timeline-header h2 { font-size: 16px; font-weight: 600; }
+.day-plan-timeline-list { list-style: none; padding: 0; margin: 0; }
+.day-plan-timeline-item { position: relative; padding-left: 20px; border-left: 1px solid var(--line); }
+.day-plan-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); left: -4px; top: 18px; }
+.day-plan-dot-good { background: var(--green); }
+.day-plan-dot-warn { background: var(--amber); }
+.day-plan-dot-bad { background: var(--red); }
+.day-plan-timeline-button { display: flex; align-items: flex-start; gap: 16px; width: 100%; min-height: 64px; padding: 12px 0; background: transparent; color: var(--body); text-align: left; }
+.day-plan-timeline-button:hover { color: var(--accent); }
+.day-plan-timeline-button > span { display: grid; gap: 4px; font-size: 13px; }
+.day-plan-timeline-button time { color: var(--muted); font-size: 12px; }
+.day-plan-timeline-button small { color: var(--muted); font-size: 12px; }
+.today-personal-recommendations { display: grid; gap: 16px; }
+.today-personal-recommendations-header { display: flex; align-items: center; gap: 12px; }
+.today-personal-recommendations-header h3 { font-size: 16px; font-weight: 600; }
+.today-personal-recommendations-count { color: var(--muted); font-size: 12px; }
+.today-personal-recommendations-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 16px; padding: 0; margin: 0; }
+.today-personal-recommendation { display: flex; align-items: flex-start; gap: 12px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-sm); }
+.today-personal-recommendation-copy { display: grid; gap: 8px; }
+.today-personal-recommendation-type, .today-personal-recommendation-validity { font-size: 12px; color: var(--muted); }
+.today-personal-recommendation-copy strong { font-size: 14px; font-weight: 600; }
+.today-personal-recommendation-copy p { font-size: 13px; color: var(--body); }
+.today-personal-recommendation button { min-height: 36px; color: var(--accent); background: transparent; padding: 8px 0; text-align: left; }
+
+}

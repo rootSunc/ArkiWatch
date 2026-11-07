@@ -30,7 +30,7 @@ function citationFor(scope: {
     return {
       source: "Static demo fixture",
       checked_at: null,
-      detail: `${scope.city} · demo coverage is Helsinki / Uusimaa only`,
+      detail: `${scope.city}, demo coverage is Helsinki / Uusimaa only`,
     };
   }
 
@@ -38,7 +38,7 @@ function citationFor(scope: {
     return {
       source: "Static demo fixture",
       checked_at: null,
-      detail: `${scope.city} · no demo data for ${scope.date}`,
+      detail: `${scope.city}, no demo data for ${scope.date}`,
     };
   }
 
@@ -46,8 +46,8 @@ function citationFor(scope: {
     source: "Static demo fixture",
     checked_at: null,
     detail: scope.date
-      ? `${scope.city} historical snapshot · ${scope.date}`
-      : `${scope.city} snapshot · ${DEMO_SNAPSHOT_DATE}`,
+      ? `${scope.city} historical snapshot, ${scope.date}`
+      : `${scope.city} snapshot, ${DEMO_SNAPSHOT_DATE}`,
   };
 }
 
@@ -107,7 +107,7 @@ export function demoAssistantReply(
         current:
           historical
             ? `这是 ${city} 在 ${date} 的可复现历史演示快照：室外约 16°C，记录到短时降雨可能；空气质量为良好；通勤面有 2 个活动提醒；记录的家庭电价窗口为 9.60 c/kWh，12:00 - 14:00 的可灵活安排窗口约为 7.80 c/kWh。建议把它作为历史证据查看，不要当作今天的建议。`
-            : "这是一个可复现的演示快照：室外约 16°C，存在短时降雨可能；空气质量为良好；通勤面有 2 个活动提醒；当前家庭电价窗口为 9.60 c/kWh，12:00 - 14:00 的可灵活安排窗口约为 7.80 c/kWh。建议先查看今日的决策卡，再按需要打开对应数据源。",
+            : "这是一个可复现的演示快照：室外约 16°C，存在短时降雨可能；空气质量为良好；通勤面有 2 个活动提醒；当前家庭电价窗口为 9.60 c/kWh，12:00 - 14:00 的可灵活安排窗口约为 7.80 c/kWh。建议先查看首页的决策卡，再按需要打开对应数据源。",
         weather:
           historical
             ? `${city} 在 ${date} 的历史天气快照记录约 16°C，并有短时降雨风险。这只用于解释所选日期的证据；真实部署时请连接 API 获取对应日期的预报。`
@@ -133,7 +133,7 @@ export function demoAssistantReply(
         current:
           historical
             ? `This is a reproducible historical demo snapshot for ${city} on ${date}: outdoor conditions were around 16 °C with a short rain risk; air quality was Good; commute had 2 active notices; the recorded household electricity window was 9.60 c/kWh, with a flexible-use window around 12:00 - 14:00 at about 7.80 c/kWh. Treat it as historical evidence, not advice for today.`
-            : "This is a reproducible demo snapshot: outdoor conditions are around 16 °C with a short rain risk; air quality is Good; commute has 2 active notices; the current household electricity window is 9.60 c/kWh, and a flexible-use window around 12:00 - 14:00 is about 7.80 c/kWh. Start with Today’s decision cards, then open a source workspace if you need detail.",
+            : "This is a reproducible demo snapshot: outdoor conditions are around 16 °C with a short rain risk; air quality is Good; commute has 2 active notices; the current household electricity window is 9.60 c/kWh, and a flexible-use window around 12:00 - 14:00 is about 7.80 c/kWh. Start with Home’s decision card, then open a source workspace if you need detail.",
         weather:
           historical
             ? `The historical demo weather snapshot for ${city} on ${date} recorded around 16 °C with a short rain risk. Use it to explain the selected date only; connect the API in production for a date-specific forecast.`
@@ -158,7 +158,7 @@ export function demoAssistantReply(
 
   return {
     text,
-    citations: [citationFor({ city, citySupported, date, snapshotAvailable })],
+    citations: [{ ...citationFor({ city, citySupported, date, snapshotAvailable }), source: ({ weather: "weather", air: "air_quality", mobility: "transit", energy: "energy_household", sources: "platform_overview", current: "Static demo fixture" })[topic] }],
     answerMode: "fallback",
     model: null,
   };

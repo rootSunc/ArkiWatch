@@ -43,7 +43,7 @@ const COPY = {
     operatorTitle: "Operator responsibilities",
     operator:
       "Use strong, unique values for authentication, database, metrics, provider, and Telegram secrets. Protect production API and documentation paths at the edge, secure backups, rotate credentials after suspected exposure, and never commit environment files or production data.",
-    footer: "ArkiWatch · Finnish public data, made practical.",
+    footer: "ArkiWatch",
     back: "Back to the data platform",
   },
   zh: {
@@ -81,7 +81,7 @@ const COPY = {
     operatorTitle: "运营者责任",
     operator:
       "请为认证、数据库、指标、供应商和 Telegram secret 使用强度足够且彼此不同的值；在边缘层保护生产 API 与文档路径，保护备份，在怀疑泄露后轮换凭据，并且不要提交环境文件或生产数据。",
-    footer: "ArkiWatch · 让芬兰公共数据真正服务日常。",
+    footer: "ArkiWatch",
     back: "返回数据平台",
   },
 } as const;
@@ -100,7 +100,6 @@ export default function PrivacyPage() {
         <header className="privacy-nav">
           <Link className="privacy-brand" href="/" aria-label={copy.homeLabel}>
             <strong>ArkiWatch</strong>
-            <span>{copy.brandDescriptor}</span>
           </Link>
           <div className="privacy-nav-actions">
             <PageLanguageToggle
@@ -116,7 +115,6 @@ export default function PrivacyPage() {
         </header>
 
         <article className="privacy-content">
-          <p className="privacy-eyebrow">{copy.eyebrow}</p>
           <h1>{copy.title}</h1>
           <p className="privacy-lead">{copy.intro}</p>
 

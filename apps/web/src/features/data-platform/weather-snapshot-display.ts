@@ -68,7 +68,7 @@ export function weatherSnapshotDetail(
   }
 
   if (parts.length > 0) {
-    return parts.join(" · ");
+    return parts.join(", ");
   }
 
   return `${weather.quality.forecast_hours}h ${translateMessageKey(language, "shell.forecast")}`;

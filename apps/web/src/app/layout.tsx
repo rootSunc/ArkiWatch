@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Manrope } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { ReactNode } from "react";
 
 import { documentLanguageTag } from "@/features/data-platform/language";
@@ -12,9 +12,9 @@ import "./globals.css";
 import "./material-symbols.css";
 import "./minimal-global.css";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
   weight: ["400", "500", "600", "700", "800"],
   display: "swap"
 });
@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       // The font variables sit on the root element because the theme tokens
       // that read them are declared on `:root`; a variable set on `body`
       // would arrive too late for `--font-ui` to resolve it.
-      className={`light ${manrope.variable} ${jetBrainsMono.variable}`}
+      className={`light ${inter.variable} ${jetBrainsMono.variable}`}
       data-theme="light"
       data-language={language}
       lang={documentLanguageTag(language)}

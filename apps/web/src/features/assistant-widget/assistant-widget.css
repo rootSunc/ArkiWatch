@@ -1,26 +1,13 @@
+@layer features {
 /*
  * Assistant slide-over (README §12). A right-side panel over a dismissable
  * scrim; replaces the floating mascot bubble. A soft edge shadow separates the panel
  * from the active workspace.
  */
 
-@keyframes assistantSlideover {
-  from {
-    transform: translateX(32px);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
 
-@keyframes assistantScrimIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+
+
 
 .assistant-widget-open {
   position: fixed;
@@ -42,10 +29,10 @@
   padding: 0;
   margin: 0;
   background: var(--assistant-scrim);
-  -webkit-backdrop-filter: blur(1.5px);
-  backdrop-filter: blur(1.5px);
+
+
   cursor: default;
-  animation: assistantScrimIn 220ms ease-out;
+
 }
 
 .assistant-panel {
@@ -56,16 +43,16 @@
   max-width: 100%;
   background: var(--canvas);
   border-left: 1px solid var(--line);
-  box-shadow: var(--assistant-panel-shadow);
-  animation: assistantSlideover 360ms var(--ease-out);
+  box-shadow: none;
+
 }
 
 /* Keep the scrollable content behind the modal from moving. */
-body:has(.assistant-widget-open) {
+body:has(.assistant-widget-open:not(.assistant-widget-docked)) {
   overflow: hidden;
 }
 
-body:has(.assistant-widget-open) .dashboard-content {
+body:has(.assistant-widget-open:not(.assistant-widget-docked)) .dashboard-content {
   overflow: hidden;
 }
 
@@ -109,7 +96,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   height: 10px;
   border-radius: 6px;
   background: var(--green);
-  border: 2px solid var(--canvas);
+  border: 1px solid var(--canvas);
 }
 
 .assistant-panel-identity {
@@ -121,14 +108,16 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-panel-identity h2 {
-  font-size: 15.5px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--ink);
 }
 
 .assistant-panel-scope {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
   overflow: hidden;
   font-family: var(--font-data);
@@ -145,11 +134,11 @@ body:has(.assistant-widget-open) .dashboard-content {
   min-height: 40px;
   padding: 0 13px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--canvas);
   color: var(--ink-soft);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -204,7 +193,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-close .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -227,10 +216,10 @@ body:has(.assistant-widget-open) .dashboard-content {
   max-width: 82%;
   margin: 0;
   padding: 12px 16px;
-  border-radius: 14px 14px 4px 14px;
+  border-radius: 6px 6px 4px 6px;
   background: var(--btn-fill);
   color: var(--btn-label);
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.55;
   white-space: pre-wrap;
 }
@@ -274,7 +263,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-message-body > :first-child {
-  font-size: 15.5px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.5;
@@ -285,7 +274,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-message-paragraph,
 .assistant-message-body > * {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--body);
   text-wrap: pretty;
@@ -308,7 +297,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--body);
 }
@@ -320,7 +309,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 
 .assistant-message-body code {
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 14px;
   padding: 0.05rem 0.3rem;
   border-radius: 4px;
   background: var(--line-soft);
@@ -349,7 +338,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-evidence-card:hover,
 .assistant-evidence-card:focus-visible {
   border-color: var(--blue);
-  outline: none;
+  outline: 2px solid var(--focus-ring); outline-offset: 2px;
 }
 
 .assistant-evidence-card-static {
@@ -363,7 +352,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-evidence-top .material-symbols-outlined {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--blue);
 }
 
@@ -392,7 +381,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   padding-top: 14px;
   border-top: 1px solid var(--line-soft);
   font-family: var(--font-data);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted-3);
 }
 
@@ -437,12 +426,12 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-suggestions button {
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--canvas);
   color: var(--ink);
   padding: 9px 15px;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   text-align: left;
 }
@@ -452,7 +441,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-suggestions button:hover,
 .assistant-suggestions button:focus-visible {
   border-color: var(--blue);
-  outline: none;
+  outline: 2px solid var(--focus-ring); outline-offset: 2px;
 }
 
 .assistant-followups button:disabled,
@@ -472,7 +461,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   border-radius: var(--r-card);
   background: var(--amber-soft);
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -503,7 +492,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 .assistant-message-retry:hover,
 .assistant-message-retry:focus-visible {
   border-color: var(--blue);
-  outline: none;
+  outline: 2px solid var(--focus-ring); outline-offset: 2px;
 }
 
 .assistant-message-retry:disabled {
@@ -512,7 +501,7 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-message-retry .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -555,7 +544,7 @@ body:has(.assistant-widget-open) .dashboard-content {
   background: transparent;
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 14.5px;
+  font-size: 14px;
 }
 
 .assistant-composer-field input::placeholder {
@@ -590,13 +579,13 @@ body:has(.assistant-widget-open) .dashboard-content {
 }
 
 .assistant-composer-field button .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .assistant-composer-note {
   margin: 11px 0 0;
   font-family: var(--font-data);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--muted-3);
 }
@@ -680,9 +669,20 @@ body:has(.assistant-widget-open) .dashboard-content {
 @media (prefers-reduced-motion: reduce) {
   .assistant-scrim,
   .assistant-panel {
-    animation: none;
-    transition: none;
+
+
   }
 }
 
 .assistant-avatar-mark { width: 24px; height: 24px; color: var(--ink); }
+
+
+.assistant-panel { background: var(--surface); box-shadow: var(--shadow-lg); }
+.assistant-panel-header h2 { font-size: 16px; font-weight: 600; }
+.assistant-widget-docked { position: relative; flex: 0 0 auto; inset: auto; z-index: 25; height: 100dvh; max-width: 45vw; }
+.assistant-widget-docked .assistant-panel { width: 100%; box-shadow: none; }
+.assistant-resize-handle { position: absolute; z-index: 5; width: 6px; top: 0; bottom: 0; left: -3px; cursor: col-resize; touch-action: none; }
+.assistant-resize-handle:hover { background: var(--accent); }
+@media (max-width: 768px) { .assistant-panel { width: 100%; height: 100dvh; border: 0; } }
+@media (prefers-reduced-motion: reduce) { .assistant-panel { transition: none; } }
+}

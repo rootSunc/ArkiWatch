@@ -70,7 +70,7 @@ export function SourceHealthStrip({
         <div className="source-health-list">
           {overview.sources.map((source) => (
             <article
-              aria-label={`${source.source_name} · ${isCatalogOnlySource(source) ? tKey("shell.catalogOnlySources") : collectionLabel(source.operational_status)}`}
+              aria-label={`${source.source_name}, ${isCatalogOnlySource(source) ? tKey("shell.catalogOnlySources") : collectionLabel(source.operational_status)}`}
               className={`source-health-row source-health-row-${isCatalogOnlySource(source) ? "unknown" : sourceHealthTone(source.operational_status)}`}
               key={source.id}
             >
@@ -92,7 +92,7 @@ export function SourceHealthStrip({
               </small>
               {source.documentation_url ? (
                 <a
-                  aria-label={`${source.source_name} · ${tKey("shell.providerDocs")}`}
+                  aria-label={`${source.source_name}, ${tKey("shell.providerDocs")}`}
                   className="source-health-row-doc"
                   href={source.documentation_url}
                   rel="noreferrer"

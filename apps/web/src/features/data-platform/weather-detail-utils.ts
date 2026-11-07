@@ -280,7 +280,7 @@ export function buildTimelineItems(
     const status = stateLabel(state);
     return state === "active"
       ? status
-      : `${status} · ${formatTimelineTime(startsAt, language, timeZone)}`;
+      : `${status}, ${formatTimelineTime(startsAt, language, timeZone)}`;
   };
   const warningItems =
     weather?.warnings.map((warning, index) => ({
@@ -315,7 +315,7 @@ export function buildTimelineItems(
     const copy: Record<string, { title: string; body: string; tone: TimelineItem["tone"] }> = {
       gust: { title: "highWindAdvisory", body: `${tKey("weather.gustsNear")} ${formatNumber(advisory.value)} m/s ${tKey("weather.acrossTheForecastWindow")}`, tone: "warn" },
       visibility: { title: "reducedVisibility", body: `${tKey("weather.visibilityIs")} ${formatNumber(advisory.value / 1000)} km. ${tKey("weather.slowMovementWindowsMayNeedExtraMargin")}`, tone: "bad" },
-      rain: { title: "heavyRainAdvisory", body: `${tKey("weather.peakRain")} ${formatNumber(advisory.value)} mm/h · ${tKey("weather.rainTotal")} ${formatNumber(advisory.total)} mm.`, tone: "warn" },
+      rain: { title: "heavyRainAdvisory", body: `${tKey("weather.peakRain")} ${formatNumber(advisory.value)} mm/h, ${tKey("weather.rainTotal")} ${formatNumber(advisory.total)} mm.`, tone: "warn" },
     };
     const item = copy[advisory.kind];
     return { id: `${advisory.kind}-advisory`, time: eventTimeLabel(state, advisory.starts_at), title: tKey(`weather.${item.title}`), body: item.body, tone: item.tone, active: state === "active", state };

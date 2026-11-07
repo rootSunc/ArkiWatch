@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import AboutPage from "./about-page";
 
 export const metadata: Metadata = {
-  title: "About ArkiWatch | Public data. Practical decisions.",
+  title: "About ArkiWatch",
   description:
     "ArkiWatch turns Finnish public signals into transparent, practical daily guidance.",
 };

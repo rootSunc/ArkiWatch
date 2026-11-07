@@ -1,9 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "./i18n";
 import {
-  DataPlatformDesktopHeader,
   DataPlatformWorkspaceTopbar,
 } from "./data-platform-topbars";
 
@@ -53,7 +52,7 @@ describe("DataPlatformWorkspaceTopbar", () => {
     expect(onOpenAssistant).toHaveBeenCalledWith();
   });
 
-  it("keeps the theme switch available in the desktop scope controls", () => {
+  it("leaves preferences in the sidebar and keeps the scope and mode visible", () => {
     const onToggleTheme = vi.fn();
 
     render(
@@ -89,51 +88,8 @@ describe("DataPlatformWorkspaceTopbar", () => {
       </I18nProvider>,
     );
 
-    screen.getByRole("button", { name: "Switch to night theme" }).click();
-    expect(onToggleTheme).toHaveBeenCalledOnce();
-  });
-});
-
-describe("DataPlatformDesktopHeader", () => {
-  it("returns focus to the search field after clearing a query", () => {
-    render(
-      <I18nProvider language="en">
-        <DataPlatformDesktopHeader
-          availability={[]}
-          city="Helsinki"
-          date={null}
-          isDemo={false}
-          isAuthenticated={false}
-          isCityPending={false}
-          isDatePending={false}
-          isEventsExpanded={false}
-          isHistorical={false}
-          isRefreshing={false}
-          language="en"
-          notificationCount={0}
-          notificationTone="neutral"
-          onCalendarOpen={vi.fn()}
-          onCityChange={vi.fn()}
-          onDateChange={vi.fn()}
-          onLanguageChange={vi.fn()}
-          onNotificationsClick={vi.fn()}
-          onRefresh={vi.fn()}
-          onSearchChange={vi.fn()}
-          onToggleTheme={vi.fn()}
-          renderAuthActionButton={() => null}
-          restoreSideNavButton={null}
-          searchValue="weather"
-          selectedCategory={null}
-          selectedNavKey="overview"
-          showExport={false}
-          themeMode="light"
-        />
-      </I18nProvider>,
-    );
-
-    const input = screen.getByRole("textbox", { name: "Search signals, events..." });
-    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
-
-    expect(input).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Switch to night theme" })).not.toBeInTheDocument();
+    expect(screen.getByText("Live", { exact: true })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "City" })).toBeInTheDocument();
   });
 });

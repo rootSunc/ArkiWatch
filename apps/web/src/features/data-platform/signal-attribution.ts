@@ -1,6 +1,7 @@
 import type { LanguageMode } from "./i18n";
 import { translateMessageKey } from "./i18n";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
+import { isEmptyStatus } from "./platform-status";
 import { scopedDataAge } from "./data-time-scope";
 import type {
   AirQualityCurrentResponse,
@@ -37,7 +38,7 @@ export function categorySignalAttribution(
   switch (category.key) {
     case "weather":
       return {
-        sources: codes.join(" · ").toUpperCase() || "FMI",
+        sources: codes.join(", ").toUpperCase() || "FMI",
         timeScope: weather?.time_scope,
         updatedAt:
           weather?.generated_at ??
@@ -47,7 +48,7 @@ export function categorySignalAttribution(
       };
     case "air":
       return {
-        sources: codes.join(" · ").toUpperCase() || "HSY",
+        sources: codes.join(", ").toUpperCase() || "HSY",
         timeScope: airQuality?.time_scope,
         updatedAt:
           airQuality?.observed_at ??
@@ -58,7 +59,7 @@ export function categorySignalAttribution(
     case MOBILITY_NAV_KEY:
       return {
         sources: (codes.length > 0 ? codes : ["digitransit", "digitraffic"])
-          .join(" · ")
+          .join(", ")
           .toUpperCase(),
         timeScope: transit?.time_scope ?? roadRail?.time_scope,
         updatedAt:
@@ -68,22 +69,22 @@ export function categorySignalAttribution(
           roadRail?.checked_at ??
           null,
       };
-    case "energy":
+    case "energy": {
+      const active =
+        householdEnergy?.current_window &&
+        !isEmptyStatus(householdEnergy.status)
+          ? householdEnergy
+          : energy;
       return {
-        sources: (codes.length > 0 ? codes : ["porssisahko", "fingrid"])
-          .join(" · ")
-          .toUpperCase(),
-        timeScope: householdEnergy?.time_scope ?? energy?.time_scope,
-        updatedAt:
-          householdEnergy?.observed_at ??
-          energy?.observed_at ??
-          householdEnergy?.checked_at ??
-          energy?.checked_at ??
-          null,
+        sources:
+          active?.source_code.toUpperCase() ?? codes.join(", ").toUpperCase(),
+        timeScope: active?.time_scope,
+        updatedAt: active?.observed_at ?? active?.checked_at ?? null,
       };
+    }
     case "transit":
       return {
-        sources: codes.join(" · ").toUpperCase() || "DIGITRANSIT",
+        sources: codes.join(", ").toUpperCase() || "DIGITRANSIT",
         timeScope: transit?.time_scope,
         updatedAt:
           transit?.observed_at ??
@@ -93,7 +94,7 @@ export function categorySignalAttribution(
       };
     case "traffic":
       return {
-        sources: codes.join(" · ").toUpperCase() || "DIGITRAFFIC",
+        sources: codes.join(", ").toUpperCase() || "DIGITRAFFIC",
         timeScope: roadRail?.time_scope,
         updatedAt:
           roadRail?.observed_at ??
@@ -103,7 +104,7 @@ export function categorySignalAttribution(
       };
     default:
       return {
-        sources: codes.join(" · ").toUpperCase() || UNAVAILABLE_DATA_VALUE,
+        sources: codes.join(", ").toUpperCase() || UNAVAILABLE_DATA_VALUE,
         timeScope: null,
         updatedAt: category.sources[0]?.last_run_finished_at ?? null,
       };
@@ -122,5 +123,5 @@ export function formatSignalAttributionLine(
     "shell.notCollected",
     attribution.timeScope?.timezone,
   );
-  return `${attribution.sources} · ${age}`;
+  return `${attribution.sources}, ${age}`;
 }

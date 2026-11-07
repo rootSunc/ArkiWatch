@@ -78,6 +78,10 @@ describe("resolveNavKey", () => {
     expect(resolveNavKey(null, [])).toBe("overview");
   });
 
+  it("returns unsupported views to Home rather than a personal plan", () => {
+    expect(resolveNavKey("unknown", [])).toBe("overview");
+  });
+
   it("preserves a mobility deep link while categories are still loading", () => {
     expect(resolveNavKey("mobility", [])).toBe("mobility");
   });
@@ -99,16 +103,13 @@ describe("mobileNavigationItems", () => {
 
     expect(mobileNavigationItems(categories).map((item) => item.key)).toEqual([
       "overview",
-      "today",
-      "weather",
-      "mobility",
+
     ]);
   });
 
   it("does not expose unavailable category destinations", () => {
     expect(mobileNavigationItems([]).map((item) => item.key)).toEqual([
       "overview",
-      "today",
     ]);
   });
 });

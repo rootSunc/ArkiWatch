@@ -7,6 +7,14 @@ describe("platform query scope forwarding", () => {
     vi.unstubAllEnvs();
   });
 
+  it("requests the full advertised 30-day history window for the selected date", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "false");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ weather: [] }, { status: 200 })));
+    const { fetchPlatformHistory } = await import("./platform-queries");
+    await fetchPlatformHistory({ city: "helsinki", date: "2026-08-09" });
+    expect(fetch).toHaveBeenCalledWith(new URL("http://127.0.0.1:8000/api/platform/history?city=helsinki&days=30&date=2026-08-09"), expect.objectContaining({ cache: "no-store" }));
+  });
+
   it("forwards the selected date to the public dashboard endpoint", async () => {
     vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "false");
     vi.stubGlobal(

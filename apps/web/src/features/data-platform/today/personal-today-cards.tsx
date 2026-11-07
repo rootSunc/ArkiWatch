@@ -69,10 +69,7 @@ export function PersonalTodayCards({
       className="today-personal-recommendations"
     >
       <header className="today-personal-recommendations-header">
-        <span className="today-section-kicker">
-          {tKey("shell.personalRecommendations")}
-        </span>
-        <h3>{tKey("shell.personalRecommendationsLead")}</h3>
+        <h3>{tKey("shell.personalRecommendations")}</h3>
         <span className="today-personal-recommendations-count">
           {cards.length}
         </span>

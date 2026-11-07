@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveApiBaseUrl } from "@/lib/api-client";
 import { MaterialIcon } from "@/features/shared/material-icon";
 
+import { normalizeCityValue } from "./city-scope";
 import { translateMessageKey, type LanguageMode } from "./i18n";
 
 type ExportSnapshotButtonProps = {
@@ -16,11 +17,15 @@ type ExportSnapshotButtonProps = {
 
 type ExportState = "idle" | "loading" | "success" | "error";
 
+function exportCityRef(city: string): string {
+  return normalizeCityValue(city.split("/")[0]);
+}
+
 function exportUrl(city: string, date: string | null): URL {
   const url = new URL(
     `${resolveApiBaseUrl()}/platform/overview/export`,
   );
-  url.searchParams.set("city", city);
+  url.searchParams.set("city", exportCityRef(city));
   url.searchParams.set("format", "csv");
   if (date) {
     url.searchParams.set("date", date);
@@ -31,7 +36,7 @@ function exportUrl(city: string, date: string | null): URL {
 function responseFilename(response: Response, city: string, date: string | null): string {
   const disposition = response.headers.get("content-disposition") ?? "";
   const match = disposition.match(/filename="?([^";]+)"?/i);
-  return match?.[1] ?? `arkiwatch-${city}-${date ?? "live"}.csv`;
+  return match?.[1] ?? `arkiwatch-${exportCityRef(city)}-${date ?? "live"}.csv`;
 }
 
 export function ExportSnapshotButton({

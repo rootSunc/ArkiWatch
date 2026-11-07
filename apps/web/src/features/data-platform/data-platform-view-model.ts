@@ -13,6 +13,7 @@ import {
 } from "./i18n";
 import type { MobilityTabKey } from "./mobility-workspace";
 import { isEmptyStatus } from "./platform-status";
+import { weatherReferencePoint } from "./console-model";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -403,26 +404,19 @@ export function signalReadout(
   const categoryEmpty = isEmptyStatus(category.status);
 
   if (category.key === "weather") {
-    const generatedAt =
-      usableWeather?.generated_at ??
-      usableWeather?.checked_at ??
-      metricByKey(category, "source_status")?.updated_at;
+    const point = weatherReferencePoint(usableWeather);
     return {
-      label: translateMessageKey(language, "shell.lastSync"),
-      value: generatedAt
-        ? categoryEmpty
-          ? translateMessageKey(language, "shell.na")
-          : formatTimestamp(generatedAt, "dateTime", language, timezone)
-        : formatMetricValue(metricByKey(category, "source_status"), language),
-      helpKey: "last_sync",
-      tone,
+      label: translateMessageKey(language, "weather.temperature"),
+      value: !categoryEmpty && point ? `${point.temperature_c} °C` : translateMessageKey(language, "shell.na"),
+      helpKey: "temperature", tone,
+      detail: point ? formatTimestamp(point.timestamp, "dateTime", language, timezone) : undefined,
     };
   }
 
   if (category.key === "air") {
     const score = usableAirQuality?.worst_score;
     return {
-      label: translateMessageKey(language, "shell.aqiAvg"),
+      label: translateMessageKey(language, "airQuality.worstScore"),
       value:
         score === null || score === undefined
           ? categoryEmpty

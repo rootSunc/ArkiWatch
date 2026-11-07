@@ -46,6 +46,7 @@ import {
   NAV_QUERY_KEY,
   TODAY_NAV_KEY,
   buildNavigationQueryParams,
+  currentSearchParams,
   categoryByKey,
   mobileNavigationItems,
   resolveNavKey,
@@ -64,9 +65,15 @@ import {
 import type { MobilityTabKey } from "./mobility-workspace";
 import {
   resolveScenarioTarget,
-  resolveSummaryTileTarget,
 } from "./scenario-navigation";
-import { TodayOverview } from "./today/today-overview";
+import { PlanWorkspace } from "./plan-workspace";
+import { SourcesWorkspace } from "./sources-workspace";
+import { ConsoleEvents } from "./console-events";
+import { signalTrend } from "./console-model";
+import { useMediaQuery } from "@/features/shared/use-media-query";
+import { Drawer } from "@/features/shared/ui/console";
+import { PersonalSettingsPage } from "./personal-settings";
+import { CommandPalette } from "./command-palette";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
 import {
   DataPlatformWorkspaceRouter,
@@ -81,7 +88,6 @@ import { DataPlatformOverview } from "./data-platform-overview";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { RecentEventsPanel } from "./recent-events-panel";
 import { DEMO_CITY } from "./demo/demo-data";
-import { SourceHealthStrip } from "./source-health-strip";
 import { platformErrorMessage } from "./platform-error";
 import {
   PlatformDataWarning,
@@ -166,6 +172,7 @@ export function DataPlatformHome({
 
   const demoCitySupported = normalizeCityValue(selectedCity) === DEMO_CITY;
 
+  const [contextOpen, setContextOpen] = useState(false);
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
   const [assistantOpenQuestion, setAssistantOpenQuestion] = useState<string | null>(null);
   const hasRenderedPlatformStateRef = useRef(false);
@@ -177,6 +184,8 @@ export function DataPlatformHome({
     error,
     history,
     historyAvailability,
+    failedSignalKeys,
+    staleSignalKeys,
     householdEnergy,
     isPending,
     isLoadingView,
@@ -212,8 +221,9 @@ export function DataPlatformHome({
   } = useClientPreferences();
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
-  const [isCatalogExpanded, setIsCatalogExpanded] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const isDesktopDock = useMediaQuery("(min-width: 1280px)");
+  const assistantIsModal = isAssistantOpen && !isDesktopDock;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
   const [isSideNavHidden, setIsSideNavHidden] = useState(false);
@@ -238,7 +248,7 @@ export function DataPlatformHome({
   } = useShellFocus({
     isMobileMenuOpen,
     onCloseMobileMenu: closeMobileMenu,
-    isAssistantOpen,
+    isAssistantOpen: assistantIsModal,
     isScopePending,
     isPending,
     isLoadingView,
@@ -294,7 +304,6 @@ export function DataPlatformHome({
   } = usePersonalDashboard({
     enabled:
       isAuthenticated &&
-      workspaceMode === "today" &&
       !appEnv.demoMode &&
       !isHistorical,
     userId: defaultUserId ?? resolvedUserId,
@@ -310,10 +319,11 @@ export function DataPlatformHome({
   }
 
   function triggerDataRefresh(): void {
-    if (isRefreshing || !isAuthenticated || refreshMutation.isPending) {
+    if (isRefreshing || refreshMutation.isPending) {
       return;
     }
 
+    if (!isAuthenticated || appEnv.demoMode || isHistorical) { retryPlatformData(); return; }
     refreshMutation.mutate(undefined, {
       onError: (error) => {
         console.error("Error refreshing data sources:", error);
@@ -408,7 +418,7 @@ export function DataPlatformHome({
   // links move the interface. Resolving the request needs the categories that
   // arrived with the data above.
   useEffect(() => {
-    const nextRequestedKey = searchParams.get(NAV_QUERY_KEY);
+    const nextRequestedKey = searchParams.get(NAV_QUERY_KEY) ?? (pathname === "/plan" ? TODAY_NAV_KEY : null);
     const nextMobilityTab = resolveMobilityTabParam(
       searchParams.get(MOBILITY_TAB_QUERY_KEY) ?? nextRequestedKey,
     );
@@ -421,7 +431,7 @@ export function DataPlatformHome({
       setSelectedEnergyTab(nextEnergyTab);
     }
     setSelectedNavKey((current) => (current === nextNavKey ? current : nextNavKey));
-  }, [categories, searchParams, setSelectedEnergyTab, setSelectedMobilityTab, setSelectedNavKey]);
+  }, [categories, pathname, searchParams, setSelectedEnergyTab, setSelectedMobilityTab, setSelectedNavKey]);
 
   const scenarioLiveSignals = useMemo<ScenarioLiveSignals>(
     () => ({
@@ -438,6 +448,13 @@ export function DataPlatformHome({
   const openAssistantView = useCallback(
     (view: string): void => {
       openNavigationTarget({ navKey: view });
+      const highlight = () => {
+        const target = document.querySelector<HTMLElement>(`[data-domain="${CSS.escape(view)}"] .workspace-kpis`) ?? (view === "overview" ? document.querySelector<HTMLElement>(".home-metrics") : null);
+        if (!target) return false;
+        target.setAttribute("data-citation-highlight", ""); target.scrollIntoView({ block: "nearest", behavior: "instant" });
+        window.setTimeout(() => target.removeAttribute("data-citation-highlight"), 3000); return true;
+      };
+      if (!highlight()) { const observer = new MutationObserver(() => { if (highlight()) observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); window.setTimeout(() => observer.disconnect(), 5000); }
     },
     [openNavigationTarget],
   );
@@ -466,28 +483,17 @@ export function DataPlatformHome({
     [openNavigationTarget, scenarioLiveSignals],
   );
 
-  const openSummaryTile = useCallback(
-    (tileKey: string): void => {
-      const target = resolveSummaryTileTarget(tileKey, scenarioLiveSignals);
-      if (target) {
-        openNavigationTarget(target);
-      }
-    },
-    [openNavigationTarget, scenarioLiveSignals],
-  );
-
-  const selectedCategory =
+  const rawSelectedCategory =
     selectedNavKey === FALLBACK_NAV_KEY || selectedNavKey === TODAY_NAV_KEY
       ? null
       : categoryByKey(displayCategories, selectedNavKey);
+  const selectedCategory = rawSelectedCategory && (failedSignalKeys.includes(rawSelectedCategory.key) || staleSignalKeys.includes(rawSelectedCategory.key)) ? { ...rawSelectedCategory, status: failedSignalKeys.includes(rawSelectedCategory.key) ? "failed" : "stale" } : rawSelectedCategory;
   const demoSnapshotCheckedAt = publicDashboard?.checked_at
     ? formatTimestamp(publicDashboard.checked_at, "dateTime", languageMode, platformTimezone)
     : null;
 
   const {
-    evaluationTime: todayEvaluationTime,
     todayBrief,
-    todaySourceIssueCount,
     signalSystemTiles,
   } = useTodayBrief({
     publicDashboard,
@@ -623,16 +629,26 @@ export function DataPlatformHome({
     router.push(destinationPath);
   }
 
-  function renderSignalCard(category: PlatformCategory) {
+  function renderSignalCard(rawCategory: PlatformCategory) {
+    const category = failedSignalKeys.includes(rawCategory.key) || staleSignalKeys.includes(rawCategory.key) ? { ...rawCategory, status: failedSignalKeys.includes(rawCategory.key) ? "failed" : "stale" } : rawCategory;
     return (
       <SignalCard
         airQuality={airQuality}
         category={category}
         energy={energy}
         householdEnergy={householdEnergy}
+        history={history}
         key={category.key}
         language={languageMode}
-        onSelect={() => selectNav(category.key)}
+        onAsk={requestAssistant}
+        onSelect={() => {
+          if (["failed", "stale", "error"].includes(category.status)) {
+            const params = buildNavigationQueryParams(currentSearchParams(searchParams), "sources", {}, { mobilityTab: selectedMobilityTab, energyTab: selectedEnergyTab });
+            const source = category.sources.find((item) => ["failed", "failing", "stale"].includes(item.operational_status)) ?? category.sources[0];
+            if (source) params.set("source", source.source_code);
+            router.push(`/?${params}`);
+          } else selectNav(category.key);
+        }}
         platformTimezone={platformTimezone}
         regionalScopeLabel={tKey("shell.regionalScope")}
         roadRail={roadRail}
@@ -653,7 +669,7 @@ export function DataPlatformHome({
     isSideNavHidden,
   );
   const restoreSideNavButton = isSideNavHidden ? (
-    <SideNavRestoreButton onShow={() => setIsSideNavHidden(false)} />
+    <SideNavRestoreButton onShow={() => collapseSidebar(false)} />
   ) : null;
   const scopeControlProps = {
     availability: historyAvailability?.days ?? [],
@@ -680,9 +696,18 @@ export function DataPlatformHome({
     onRefresh: triggerDataRefresh,
     themeMode,
     showExport: workspaceMode === "data" && !appEnv.demoMode,
+    checkedAt: visibleOverview?.checked_at,
+    sourceWarning: (visibleOverview?.source_health?.issues ?? 0) > 0 || failedSignalKeys.length > 0 || staleSignalKeys.length > 0,
     renderAuthActionButton,
   };
-  const mobileNavItems = useMemo(() => mobileNavigationItems(categories), [categories]);
+  useEffect(() => {
+    try { setIsSideNavHidden(localStorage.getItem("arkiwatch-sidebar-collapsed") === "true"); } catch { /* Navigation works without storage. */ }
+  }, []);
+  const collapseSidebar = (hidden: boolean) => {
+    setIsSideNavHidden(hidden);
+    try { localStorage.setItem("arkiwatch-sidebar-collapsed", String(hidden)); } catch { /* Optional preference. */ }
+  };
+  const mobileNavItems = useMemo(() => mobileNavigationItems(categories, Boolean(personalDashboard?.today?.cards.length || (personalDashboard?.onboarding_completion_percent ?? 0) > 0) || selectedNavKey === TODAY_NAV_KEY), [categories, personalDashboard, selectedNavKey]);
 
   // The overview streams in after the shell, so the first paint shows a
   // skeleton rather than empty workspaces. Only the first paint: once anything
@@ -713,9 +738,10 @@ export function DataPlatformHome({
           date={selectedDate}
           isAuthenticated={isAuthenticated}
           isHistorical={isHistorical}
-          isAssistantOpen={isAssistantOpen}
+          isAssistantOpen={assistantIsModal}
           isMobileMenuOpen={isMobileMenuOpen}
           isRefreshing={isRefreshing}
+          showPlan={Boolean(personalDashboard?.today?.cards.length || (personalDashboard?.onboarding_completion_percent ?? 0) > 0) || selectedNavKey === TODAY_NAV_KEY}
           navBadges={{
             today: todayBrief?.topActions.length ?? 0,
             mobility: mobilityCategory?.events.length ?? 0,
@@ -725,7 +751,7 @@ export function DataPlatformHome({
             if (isMobileMenuOpen) {
               closeMobileMenu();
             } else {
-              setIsSideNavHidden(true);
+              collapseSidebar(!isSideNavHidden);
             }
           }}
           onPrefetchNavItem={prefetchNavItem}
@@ -744,7 +770,7 @@ export function DataPlatformHome({
         ) : null}
 
         <div
-          aria-hidden={isMobileMenuOpen || isAssistantOpen ? "true" : undefined}
+          aria-hidden={isMobileMenuOpen || assistantIsModal ? "true" : undefined}
           className="dashboard-app"
           ref={dashboardAppRef}
         >
@@ -826,33 +852,17 @@ export function DataPlatformHome({
             ) : null}
 
             {selectedNavKey === TODAY_NAV_KEY ? (
-              <TodayOverview
-                isHistorical={isHistorical}
-                isScopePending={isScopePending}
-                language={languageMode}
-                liveSignals={scenarioLiveSignals}
-                now={todayEvaluationTime}
-                planItems={todayBrief?.planItems ?? []}
-                personalDashboard={personalDashboard}
-                personalDashboardError={personalDashboardError}
-                sourceIssueCount={todaySourceIssueCount}
-                todayBrief={todayBrief}
-                onOpenAssistant={requestAssistant}
-                onOpenSettings={() => router.push("/settings")}
-                onOpenEvent={openRecentEvent}
-                onOpenSignals={() => selectNav(FALLBACK_NAV_KEY)}
-                onOpenScenario={openScenario}
-                onOpenSummaryTile={openSummaryTile}
-                onRetryPersonalDashboard={retryPersonalDashboard}
-              />
+              <PlanWorkspace onEditContext={() => setContextOpen(true)} brief={todayBrief} personal={personalDashboard} error={personalDashboardError} onRetry={retryPersonalDashboard} onOpenAssistant={requestAssistant} onOpenEvent={openRecentEvent} onOpenScenario={openScenario} />
             ) : visibleOverview ? (
-              isDetailPage ? (
+              selectedNavKey === "sources" ? <SourcesWorkspace overview={visibleOverview} /> : selectedNavKey === "events" ? <ConsoleEvents timeScope={visibleOverview.time_scope} categories={displayCategories} events={recentEvents} checkedAt={visibleOverview.checked_at} timezone={platformTimezone} highlightedEventId={highlightedEventId} onOpenEvent={openRecentEvent} /> : isDetailPage ? (
                 <DataPlatformWorkspaceRouter
                   airQuality={airQuality}
+                  city={selectedCity}
                   energy={energy}
                   highlightedEventId={highlightedEventId}
                   history={history}
                   householdEnergy={householdEnergy}
+                  onAsk={requestAssistant}
                   onEnergyPanelChange={selectEnergyTab}
                   onMobilityTabChange={selectMobilityTab}
                   overview={visibleOverview}
@@ -877,9 +887,6 @@ export function DataPlatformHome({
                       : null
                   }
                   coreSignalCount={primaryVisibleCategories.length}
-                  isCatalogExpanded={isCatalogExpanded}
-                  isHistorical={isHistorical}
-                  onCatalogToggle={setIsCatalogExpanded}
                   onOpenToday={() => selectNav(TODAY_NAV_KEY)}
                   onSearchChange={setSearchValue}
                   overview={visibleOverview}
@@ -887,11 +894,14 @@ export function DataPlatformHome({
                   searchValue={searchValue}
                   signalSystemTiles={signalSystemTiles}
                   todayBrief={todayBrief}
-                  sourceHealth={
-                    !isHistorical ? (
-                      <SourceHealthStrip overview={visibleOverview} />
-                    ) : null
-                  }
+                  events={recentEvents}
+                  onOpenEvent={openRecentEvent}
+                  onSelectNav={selectNav}
+                  onOpenScenario={openScenario}
+                  onOpenAssistant={requestAssistant}
+                  personalDashboard={personalDashboard}
+                  onEditContext={() => setContextOpen(true)}
+                  trendSeries={displayCategories.filter((c) => ["weather", "air", "energy"].includes(c.key)).map((c) => ({ key: c.key, label: tKey(`shell.${c.key === "weather" ? "navWeather" : c.key === "air" ? "navAirQuality" : "navEnergy"}`), points: signalTrend(c, { weather, airQuality, energy, householdEnergy, history, referenceAt: visibleOverview.checked_at, timeScope: visibleOverview.time_scope }, languageMode, platformTimezone), unit: c.key === "weather" ? "°C" : null }))}
 
                 />
               )
@@ -914,6 +924,7 @@ export function DataPlatformHome({
             onOpenAssistant={requestAssistant}
             onSelectNavItem={selectNavItem}
             selectedNavKey={selectedNavKey}
+            onOpenNavigation={() => setIsMobileMenuOpen(true)}
           />
         </div>
         {visibleOverview ? (
@@ -940,6 +951,8 @@ export function DataPlatformHome({
             visibleEvents={recentEvents}
           />
         ) : null}
+        <Drawer open={contextOpen} title={tKey("shell.editContext")} onClose={() => setContextOpen(false)}>{isAuthenticated ? <PersonalSettingsPage compact onSaved={() => { void retryPersonalDashboard(); }} /> : <a className="console-button console-button-primary" href="/login">{tKey("shell.adminSignIn")}</a>}</Drawer>
+        <CommandPalette categories={displayCategories} events={recentEvents} onSelectNav={selectNav} onSelectCity={selectCity} onOpenEvent={openRecentEvent} onAsk={requestAssistant} />
         <AssistantWidget
           city={selectedCity}
           date={historicalDate}

@@ -30,7 +30,7 @@
     "updated": "Updated",
     "empty": "Empty",
     "stationsTitle": "Stations",
-    "stationCoverageStatus": "Static demo snapshot · HSY station coverage",
+    "stationCoverageStatus": "Static demo snapshot, HSY station coverage",
     "cityScoreNote": "The city score follows Open-Meteo readings. HSY station coverage is Helsinki, Espoo, and Vantaa only.",
     "snapshotAge": "Snapshot",
     "absoluteDemoTimestamp": "Absolute demo timestamp",

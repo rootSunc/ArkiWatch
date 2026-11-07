@@ -37,7 +37,7 @@ describe("PersonalTodayCards", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByRole("region", { name: "For you today" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "For you" })).toBeInTheDocument();
     expect(screen.getByText("Leave a little earlier")).toBeInTheDocument();
     expect(screen.getByText(/Valid until/)).toBeInTheDocument();
     expect(document.querySelector(".today-personal-recommendations-action .assistant-glyph")).toBeInTheDocument();

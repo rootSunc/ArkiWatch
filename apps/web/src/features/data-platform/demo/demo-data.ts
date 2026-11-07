@@ -155,7 +155,7 @@ export function rawDemoFixtureForScope(scope: {
   const city = cityLabel(cityRef);
   const coverageArea = cityCoverageArea(cityRef);
   const date = normalizeSourceDateValue(scope.date);
-  const scopeSuffix = date ? ` · ${date}` : "";
+  const scopeSuffix = date ? `, ${date}` : "";
   const unavailableCityScope = cityRef !== DEMO_CITY;
   const unavailableHistoricalDate = date !== null && date !== DEMO_SNAPSHOT_DATE;
   const unavailableScopedData = unavailableCityScope || unavailableHistoricalDate;

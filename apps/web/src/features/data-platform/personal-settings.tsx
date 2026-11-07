@@ -149,12 +149,14 @@ function channelForTelegram(channels: PersonalChannel[]): PersonalChannel | null
   return channels.find((channel) => channel.channel_type === "TELEGRAM") ?? null;
 }
 
-export function PersonalSettingsPage() {
+export function PersonalSettingsPage({ compact = false, onSaved }: { compact?: boolean; onSaved?: () => void } = {}) {
   const { languageMode, selectLanguageMode, themeMode, toggleThemeMode } = useClientPreferences();
 
   return (
     <I18nProvider language={languageMode}>
       <PersonalSettingsContent
+        compact={compact}
+        onSaved={onSaved}
         language={languageMode}
         onLanguageChange={selectLanguageMode}
         onThemeToggle={toggleThemeMode}
@@ -165,11 +167,15 @@ export function PersonalSettingsPage() {
 }
 
 function PersonalSettingsContent({
+  compact = false,
+  onSaved,
   language,
   onLanguageChange,
   onThemeToggle,
   themeMode,
 }: {
+  compact?: boolean;
+  onSaved?: () => void;
   language: "en" | "zh";
   onLanguageChange: (language: "en" | "zh") => void;
   onThemeToggle: () => void;
@@ -517,7 +523,7 @@ function PersonalSettingsContent({
       requests.push({ resource: "commuteProfiles", payload: commute });
     }
 
-    await persist(requests, tKey("shell.personalSettingsSaved"));
+    if (await persist(requests, tKey("shell.personalSettingsSaved"))) onSaved?.();
   };
 
   const startNewLocation = () => {
@@ -552,32 +558,31 @@ function PersonalSettingsContent({
   const currentSection = SECTIONS.find((section) => section.key === activeSection) ?? SECTIONS[0];
 
   const locationNameById = useMemo(
-    () => new Map(locationOptions.map((location) => [location.id, `${location.label} · ${location.city}`])),
+    () => new Map(locationOptions.map((location) => [location.id, `${location.label}, ${location.city}`])),
     [locationOptions],
   );
 
+  const Container = compact ? "div" : "main";
   if (isLoading && !context) {
     return (
-      <main className={styles.page}>
+      <Container className={`${styles.page}${compact ? ` ${styles.compact}` : ""}`}>
         <div className={styles.shell}>
           <div aria-live="polite" className={styles.loading} role="status">
             {tKey("shell.personalSettingsLoading")}
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   return (
-    <main className={styles.page}>
+    <Container className={`${styles.page}${compact ? ` ${styles.compact}` : ""}`}>
       <div className={styles.shell}>
-        <header className={styles.header}>
+        {!compact ? <header className={styles.header}>
           <div className={styles.brandRow}>
             <MaterialIcon name="sparkles" className={styles.brandMark} />
             <div>
-              <span className={styles.eyebrow}>{tKey("shell.personalSettingsAccount")}</span>
               <h1 className={styles.title}>{tKey("shell.personalSettingsTitle")}</h1>
-              <p className={styles.subtitle}>{tKey("shell.personalSettingsSubtitle")}</p>
             </div>
           </div>
           <div className={styles.headerActions}>
@@ -588,7 +593,7 @@ function PersonalSettingsContent({
               {tKey("shell.personalSettingsBack")}
             </Link>
           </div>
-        </header>
+        </header> : null}
 
         <div className={styles.contextList}>
           <div className={styles.field}>
@@ -721,7 +726,8 @@ function PersonalSettingsContent({
           </button>
         </div>
 
-        <div className={styles.layout}>
+        {compact && notice ? <p role={notice.tone === "error" ? "alert" : "status"} className={styles.notice}>{notice.text}</p> : null}
+        {compact ? <Link className={styles.textButton} href="/settings">{tKey("shell.moreDetails")} →</Link> : <div className={styles.layout}>
           <nav className={styles.nav} aria-label={tKey("shell.personalSettingsTitle")}>
             {SECTIONS.map((section) => (
               <button
@@ -747,9 +753,7 @@ function PersonalSettingsContent({
           <section className={styles.content}>
             <div className={styles.hero}>
               <div>
-                <span className={styles.sectionKicker}>{tKey("shell.personalAssistantContext")}</span>
                 <h2>{tKey(`shell.${currentSection.labelKey}`)}</h2>
-                <p>{tKey("shell.personalSettingsSubtitle")}</p>
               </div>
               <div className={styles.progress}>
                 <span
@@ -819,9 +823,9 @@ function PersonalSettingsContent({
               />
             ) : null}
           </section>
-        </div>
+        </div>}
       </div>
-    </main>
+    </Container>
   );
 }
 
@@ -850,9 +854,7 @@ function LocationSection({
     <section className={styles.card}>
       <div className={styles.sectionHeader}>
         <div>
-          <span className={styles.sectionKicker}>{tKey("shell.personalStepLocation")}</span>
           <h3>{tKey(form.id ? "shell.personalSettingsEditLocation" : "shell.personalSettingsAddLocation")}</h3>
-          <p className={styles.hint}>{tKey("shell.personalSettingsLocationHint")}</p>
         </div>
         {context?.locations.length ? (
           <button className={styles.textButton} onClick={onNew} type="button">
@@ -894,8 +896,8 @@ function LocationSection({
         {context?.locations.length ? context.locations.map((location) => (
           <div className={styles.savedRow} key={location.id}>
             <span>
-              <strong>{location.label}{location.is_default ? ` · ${tKey("shell.personalSettingsDefaultMarker")}` : ""}</strong>
-              <span>{location.city}{location.district ? ` · ${location.district}` : ""}</span>
+              <strong>{location.label}{location.is_default ? `, ${tKey("shell.personalSettingsDefaultMarker")}` : ""}</strong>
+              <span>{location.city}{location.district ? `, ${location.district}` : ""}</span>
             </span>
             <span className={styles.savedActions}>
               <span className={styles.savedMeta}>{location.lat.toFixed(4)}, {location.lon.toFixed(4)}</span>
@@ -935,9 +937,7 @@ function PreferencesSection({
     <section className={styles.card}>
       <div className={styles.sectionHeader}>
         <div>
-          <span className={styles.sectionKicker}>{tKey("shell.personalStepPreferences")}</span>
           <h3>{tKey("shell.personalStepPreferences")}</h3>
-          <p className={styles.hint}>{tKey("shell.personalSettingsPreferencesHint")}</p>
         </div>
       </div>
       <div className={styles.toggleGrid}>
@@ -996,9 +996,7 @@ function CommuteSection({
     <section className={styles.card}>
       <div className={styles.sectionHeader}>
         <div>
-          <span className={styles.sectionKicker}>{tKey("shell.personalStepCommute")}</span>
           <h3>{tKey("shell.personalSettingsAddCommute")}</h3>
-          <p className={styles.hint}>{tKey("shell.personalSettingsCommuteHint")}</p>
         </div>
       </div>
       {locations.length < 2 ? (
@@ -1060,11 +1058,11 @@ function CommuteSection({
           <div className={styles.savedRow} key={profile.id}>
             <span>
               <strong>{profile.name}</strong>
-              <span>{locationNameById.get(profile.origin_location_id) ?? "?"} → {locationNameById.get(profile.destination_location_id) ?? "?"} · {profile.departure_time_local}</span>
+              <span>{locationNameById.get(profile.origin_location_id) ?? "?"} → {locationNameById.get(profile.destination_location_id) ?? "?"}, {profile.departure_time_local}</span>
             </span>
             <span className={styles.savedActions}>
               <span className={styles.savedMeta}>
-                {profile.preferred_mode} · {profile.is_active
+                {profile.preferred_mode}, {profile.is_active
                   ? tKey("shell.personalSettingsActive")
                   : tKey("shell.personalSettingsPaused")}
               </span>
@@ -1102,7 +1100,6 @@ function TelegramSection({
     <section className={styles.card}>
       <div className={styles.sectionHeader}>
         <div>
-          <span className={styles.sectionKicker}>{tKey("shell.personalStepTelegram")}</span>
           <h3>{tKey("shell.personalStepTelegram")}</h3>
           <p className={styles.hint}>{tKey("shell.personalSettingsTelegramHint")}</p>
         </div>

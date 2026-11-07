@@ -34,12 +34,12 @@
     "historicalMostRelevant": "所选日期最需要关注什么？",
     "historicalBestWindow": "所选日期什么时候条件最好？",
     "historicalChangedSignals": "所选日期哪些信号发生了变化？",
-    "demoMode": "演示模式 · 基于静态示例",
+    "demoMode": "演示模式，基于静态示例",
     "scopeLabel": "助手数据范围",
-    "scopeToday": "今天 · 公共建议",
-    "scopeData": "数据 · 来源证据",
-    "scopeHistoricalToday": "历史 · 仅供证据查看",
-    "scopeHistoricalData": "历史 · 来源证据",
+    "scopeToday": "今天，公共建议",
+    "scopeData": "数据，来源证据",
+    "scopeHistoricalToday": "历史，仅供证据查看",
+    "scopeHistoricalData": "历史，来源证据",
     "scopeLive": "实时",
     "scopeHistorical": "历史",
     "tooltip": "💡 需要数据协助吗？",
@@ -64,9 +64,9 @@
     "sourceTransit": "公共交通",
     "sourceHistory": "平台历史",
     "sourceSnapshotDetail": "{source} 数据快照",
-    "sourceStatusDetail": "状态：{status} · {location}",
+    "sourceStatusDetail": "状态：{status}，{location}",
     "sourceUnavailableDetail": "数据采集暂时不可用。",
-    "demoSnapshotDetail": "{location} 快照 · {date}",
+    "demoSnapshotDetail": "{location} 快照，{date}",
     "providerUnavailable": "AI 服务暂时不可用，本次回答仅使用有数据依据的内容。",
     "timedOut": "助手响应时间过长。可以重试，或先查看引用的数据。",
     "rateLimited": "助手请求较多，请在 {seconds} 秒后重试。",
@@ -76,6 +76,7 @@
     "offlinePrompt": "数据平台暂时不可用。待 overview 服务正常后，我可以帮您解析遥测图表和日志。",
     "answeredFromSignals": "综合 {count} 个信号得出",
     "composerNote": "每个回答都会标注其来源工作区。",
-    "composerNoteDemo": "每个回答都会标注其来源工作区。演示模式使用示例数据。"
+    "composerNoteDemo": "每个回答都会标注其来源工作区。演示模式使用示例数据。",
+    "resizePanel": "调整助手面板宽度"
   }
 }

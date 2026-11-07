@@ -192,7 +192,9 @@ export function TodayOverview({
                       : "shell.dataChecked",
                 )}
                 {todayBrief.checkedAt ? (
-                  <> · {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}</>
+                  <time dateTime={todayBrief.checkedAt}>
+                    {formatTimestamp(todayBrief.checkedAt, "dateTime", language, todayBrief.timezone)}
+                  </time>
                 ) : null}
               </span>
               <span className="today-provenance-spacer" />
@@ -233,10 +235,7 @@ export function TodayOverview({
           <span className="material-symbols-outlined" aria-hidden="true">
             info
           </span>
-          <span>
-            <strong>{limitedModeLabel}</strong>
-            <span>{limitedModeDetail}</span>
-          </span>
+          <strong>{limitedModeLabel}</strong>
         </div>
       ) : null}
 
@@ -252,7 +251,6 @@ export function TodayOverview({
                 String(sourceIssueCount),
               )}
             </strong>
-            <span>{tKey("shell.todaySourceHealthWarningDetail")}</span>
           </span>
           <button
             className="today-source-warning-action"
@@ -289,7 +287,6 @@ export function TodayOverview({
           <MaterialIcon name="person_alert" />
           <span className="today-personal-warning-copy">
             <strong>{tKey("shell.personalContextUnavailable")}</strong>
-            <span>{tKey("shell.personalContextUnavailableDetail")}</span>
             {localizedPersonalDashboardError ? (
               <small>{localizedPersonalDashboardError}</small>
             ) : null}
@@ -327,16 +324,9 @@ export function TodayOverview({
             aria-label={tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
           >
             <div className="today-decisions-summary">
-              <span className="today-decisions-summary-copy">
-                <span className="today-section-kicker">
-                  {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
-                </span>
-                <span className="today-decisions-title">
-                  {isRecommendationLimited
-                    ? tKey("shell.localSignalsOnlyLead")
-                    : tKey("shell.dailyDecisionsLead")}
-                </span>
-              </span>
+              <h2>
+                {tKey(isRecommendationLimited ? "shell.localSignals" : "shell.dailyDecisions")}
+              </h2>
             </div>
             <div className="today-action-grid">
               {todayBrief.scenarioSections.map((section) => (

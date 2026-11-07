@@ -2,14 +2,15 @@
 
 import type { Ref } from "react";
 
+import { MaterialIcon } from "@/features/shared/material-icon";
 import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import type { NavItem } from "./data-platform-shell";
 import { useI18n } from "./i18n";
 
 const MOBILE_ITEM_LABEL_KEYS: Record<string, string> = {
-  today: "shell.navToday",
-  overview: "shell.navSignalsShort",
+  today: "shell.navPlan",
+  overview: "shell.navHome",
   weather: "shell.navWeather",
   mobility: "shell.navMobilityShort",
 };
@@ -25,6 +26,7 @@ type MobileBottomNavProps = {
   onOpenAssistant: () => void;
   onSelectNavItem: (item: NavItem) => void;
   selectedNavKey: string;
+  onOpenNavigation?: () => void;
 };
 
 /**
@@ -39,6 +41,7 @@ export function MobileBottomNav({
   onOpenAssistant,
   onSelectNavItem,
   selectedNavKey,
+  onOpenNavigation,
 }: MobileBottomNavProps) {
   const { tKey } = useI18n();
 
@@ -69,9 +72,7 @@ export function MobileBottomNav({
               title={tKey(`shell.${item.labelKey}`)}
               type="button"
             >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {item.icon}
-              </span>
+              <MaterialIcon name={item.icon} />
               <span>{tKey(mobileItemLabelKey(item.key, item.labelKey))}</span>
             </button>
           );
@@ -92,6 +93,7 @@ export function MobileBottomNav({
           <AssistantGlyph />
           <span>{tKey("shell.ask")}</span>
         </button>
+        {onOpenNavigation ? <button className="mobile-bottom-nav-item" type="button" onClick={onOpenNavigation}><span className="material-symbols-outlined" aria-hidden="true">more_horiz</span><span>{tKey("shell.more")}</span></button> : null}
       </nav>
     </footer>
   );

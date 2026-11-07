@@ -147,7 +147,7 @@ function stopLabel(stopId: string): string {
 function scopeFactsLabel(facts: TransitScopeFact[]): string {
   return facts
     .map((fact) => (fact.label ? `${fact.label} ${fact.value}` : fact.value))
-    .join(" · ");
+    .join(", ");
 }
 
 function stopFacts(stopId: string, tKey: (key: string) => string): TransitScopeFact[] {
@@ -808,7 +808,7 @@ export function TransitWorkspace({
                         <strong>{localizedPlatformCopy(alert.title, language) ?? alert.title}</strong>
                         <p>{localizedPlatformCopy(alert.description, language) ?? alert.description}</p>
                         <small>
-                          {transit.source_code.toUpperCase()} · {alert.id} · {formatClockTime(alert.starts_at, language, tKey, dataTimezone)}
+                          {transit.source_code.toUpperCase()}, {alert.id}, {formatClockTime(alert.starts_at, language, tKey, dataTimezone)}
                         </small>
                         <div className="sr-only">
                           <MobilityEventStatus namespace="transit" event={alert} historical={isHistorical} language={language} timeZone={dataTimezone} tKey={tKey} />
@@ -1074,7 +1074,7 @@ export function TransitWorkspace({
         <summary>
           <div>
             <span>{tKey("transit.diagnostics")}</span>
-            <strong>{readyPipelineCount}/{transit.data_pipeline.length} {tKey("transit.stages")} · {fetchedSourceCount}/{transit.source_requests.length} {tKey("transit.sources")}</strong>
+            <strong>{readyPipelineCount}/{transit.data_pipeline.length} {tKey("transit.stages")}, {fetchedSourceCount}/{transit.source_requests.length} {tKey("transit.sources")}</strong>
           </div>
           <span className="material-symbols-outlined" aria-hidden="true">
             expand_more
@@ -1095,7 +1095,7 @@ export function TransitWorkspace({
                   </div>
                   <p>
                     {localizedPlatformCopy(stage.detail, language) ?? stage.detail}
-                    {stage.record_count !== null ? ` · ${stage.record_count} ${tKey("transit.records")}` : ""}
+                    {stage.record_count !== null ? `, ${stage.record_count} ${tKey("transit.records")}` : ""}
                   </p>
                   <span className="transit-stage-meter" aria-hidden="true">
                     <span style={{ width: `${stageProgress(stage)}%` }} />
@@ -1119,7 +1119,7 @@ export function TransitWorkspace({
                   </div>
                   <p>
                     {sourceRequestHost(request.endpoint, tKey)}
-                    {request.fetched_at ? ` · ${tKey("transit.fetched")} ${scopedDataAge(request.fetched_at, transit.time_scope, language, tKey, "transit.notObserved", dataTimezone)}` : ""}
+                    {request.fetched_at ? `, ${tKey("transit.fetched")} ${scopedDataAge(request.fetched_at, transit.time_scope, language, tKey, "transit.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>{request.content_type ?? tKey("transit.contentTypeUnavailable")}</small>
                 </article>

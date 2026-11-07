@@ -121,7 +121,7 @@
     "fmiForecast": "FMI forecast",
     "staticDemoLayer": "Static demo layer",
     "fmiProviderLabel": "FMI (Finnish Meteorological Institute)",
-    "historyPointDetail": "{rain} mm rain · {points} points",
+    "historyPointDetail": "{rain} mm rain, {points} points",
     "weatherWorkspace": "Weather workspace"
   }
 }

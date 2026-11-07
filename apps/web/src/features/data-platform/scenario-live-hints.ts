@@ -17,6 +17,10 @@ import { formatTimestamp } from "@/features/shared/format";
 import { isHistoricalTimeScope, isStaticDemoTimeScope, scopedDataAge } from "./data-time-scope";
 import { isEmptyStatus } from "./platform-status";
 
+function copySeparator(language: LanguageMode): string {
+  return language === "zh" ? "，" : ", ";
+}
+
 export type ScenarioLiveHint = {
   headline: string;
   detail: string;
@@ -107,7 +111,7 @@ export function buildScenarioLiveHint(
         headline,
         detail:
           worstStationLabel && conditionLabel
-            ? `${worstStationLabel} · ${conditionLabel}`
+            ? `${worstStationLabel}${copySeparator(language)}${conditionLabel}`
             : `${reporting}/${total} ${translateMessageKey(language, "shell.stations")}`,
         timeScope: airQuality.time_scope,
         updatedAt: airQuality.observed_at ?? airQuality.checked_at,
@@ -137,7 +141,7 @@ export function buildScenarioLiveHint(
       }
       return {
         headline,
-        detail: parts.join(" · "),
+        detail: parts.join(copySeparator(language)),
         timeScope: usableTransit?.time_scope ?? usableRoadRail?.time_scope,
         updatedAt:
           usableTransit?.observed_at ??
@@ -145,7 +149,7 @@ export function buildScenarioLiveHint(
           usableTransit?.checked_at ??
           usableRoadRail?.checked_at ??
           null,
-        sources: "DIGITRANSIT · DIGITRAFFIC",
+        sources: "DIGITRANSIT, DIGITRAFFIC",
       };
     }
     case "energy": {
@@ -178,7 +182,7 @@ export function buildScenarioLiveHint(
       }
       return {
         headline,
-        detail: details.join(" · ") || translateMessageKey(language, "shell.compareHouseholdPricesWithGridLoad"),
+        detail: details.join(copySeparator(language)) || translateMessageKey(language, "shell.compareHouseholdPricesWithGridLoad"),
         timeScope: usableHouseholdEnergy?.time_scope ?? usableSystemEnergy?.time_scope,
         updatedAt:
           usableHouseholdEnergy?.observed_at ??
@@ -186,7 +190,7 @@ export function buildScenarioLiveHint(
           usableHouseholdEnergy?.checked_at ??
           usableSystemEnergy?.checked_at ??
           null,
-        sources: "PORSSISAHKO · FINGRID",
+        sources: "PORSSISAHKO, FINGRID",
       };
     }
     default:
@@ -215,5 +219,5 @@ export function formatScenarioHintAge(
     return `${translateMessageKey(language, "shell.updated")} ${age}`;
   }
 
-  return `${translateMessageKey(language, "shell.updated")} ${age} · ${formatTimestamp(updatedAt, "dateTime", language, timeZone)}`;
+  return `${translateMessageKey(language, "shell.updated")} ${age}${copySeparator(language)}${formatTimestamp(updatedAt, "dateTime", language, timeZone)}`;
 }

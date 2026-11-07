@@ -145,8 +145,8 @@
     "normalizedTransitAlerts": "Normalized transit alerts",
     "staticDemoTransitNote": "Static demo fixture; not a live service alert.",
     "hslSourceLabel": "HSL GTFS-RT Service Alerts",
-    "historyPointDetail": "{active} active · {routes} route scoped",
-    "historyPointDetailAtSnapshot": "{active} active at snapshot · {routes} route scoped",
+    "historyPointDetail": "{active} active, {routes} route scoped",
+    "historyPointDetailAtSnapshot": "{active} active at snapshot, {routes} route scoped",
     "summaryDecoded": "{raw} HSL service alerts decoded. {active} alerts are active now; {routes} include route scope and {stops} include stop scope.",
     "summaryDecodedAtSnapshot": "{raw} HSL service alerts decoded. {active} alerts were active at the selected snapshot; {routes} include route scope and {stops} include stop scope.",
     "digitransitSourceLabel": "Digitransit alerts"

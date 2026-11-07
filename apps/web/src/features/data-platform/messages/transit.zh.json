@@ -145,8 +145,8 @@
     "normalizedTransitAlerts": "标准化公共交通提醒",
     "staticDemoTransitNote": "静态演示数据；并非实时服务提醒。",
     "hslSourceLabel": "HSL GTFS-RT 服务提醒",
-    "historyPointDetail": "{active} 条生效 · {routes} 条线路级",
-    "historyPointDetailAtSnapshot": "{active} 条快照时生效 · {routes} 条线路级",
+    "historyPointDetail": "{active} 条生效，{routes} 条线路级",
+    "historyPointDetailAtSnapshot": "{active} 条快照时生效，{routes} 条线路级",
     "summaryDecoded": "已解析 {raw} 条 HSL 服务提醒，当前有 {active} 条生效；其中 {routes} 条包含线路范围，{stops} 条包含站点范围。",
     "summaryDecodedAtSnapshot": "已解析 {raw} 条 HSL 服务提醒，所选快照时有 {active} 条生效；其中 {routes} 条包含线路范围，{stops} 条包含站点范围。",
     "digitransitSourceLabel": "Digitransit 服务提醒"

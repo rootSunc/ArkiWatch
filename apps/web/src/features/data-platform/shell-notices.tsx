@@ -1,7 +1,7 @@
 "use client";
 
 import { cityLabel } from "./city-scope";
-import { HistoricalWarningBanner, RefreshErrorBanner } from "./data-platform-shell";
+import { RefreshErrorBanner } from "./data-platform-shell";
 import { useI18n } from "./i18n";
 import type { PlatformTimeScope } from "./types";
 
@@ -27,79 +27,12 @@ type ShellNoticesProps = {
  * sit together because a reader needs all of them before trusting a number,
  * and because only one is usually present.
  */
-export function ShellNotices({
-  historicalDate,
-  timeScope,
-  onReturnToLive,
-  isDemo,
-  isDetailPage,
-  demoCitySupported,
-  demoSnapshotCheckedAt,
-  selectedCity,
-  isScopePending,
-  refreshError,
-  onDismissRefreshError,
-}: ShellNoticesProps) {
+export function ShellNotices({ isDemo, demoCitySupported, selectedCity, refreshError, onDismissRefreshError }: ShellNoticesProps) {
   const { language, tKey } = useI18n();
-
-  return (
-    <>
-      {historicalDate ? (
-        <HistoricalWarningBanner
-          date={historicalDate}
-          language={language}
-          onReturnToLive={onReturnToLive}
-          timeScope={timeScope}
-        />
-      ) : null}
-
-      {isDemo && !isDetailPage ? (
-        <div className="demo-mode-banner" role="status">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            database
-          </span>
-          <span className="demo-mode-banner-copy">
-            <span>
-              {tKey(
-                demoCitySupported ? "shell.demoModeNotice" : "shell.demoModeCityLimited",
-              ).replace("{city}", cityLabel(selectedCity))}
-            </span>
-            {demoSnapshotCheckedAt ? (
-              <time>
-                {tKey("shell.demoSnapshotCheckedAt").replace("{checkedAt}", demoSnapshotCheckedAt)}
-              </time>
-            ) : null}
-          </span>
-          <a className="demo-mode-banner-link" href="/about">
-            {tKey("shell.aboutArkiWatch")}
-            <span aria-hidden="true"> →</span>
-          </a>
-        </div>
-      ) : null}
-
-      {isScopePending ? (
-        <div className="scope-pending-banner" role="status" aria-live="polite">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            sync
-          </span>
-          <span className="scope-pending-banner-copy">
-            <strong>{tKey("shell.scopeUpdating")}</strong>
-            <span>
-              {tKey("shell.scopeUpdatingDetail").replace("{scope}", cityLabel(selectedCity))}
-            </span>
-          </span>
-        </div>
-      ) : null}
-
-      {refreshError ? (
-        <RefreshErrorBanner
-          error={refreshError}
-          language={language}
-          onDismiss={onDismissRefreshError}
-        />
-      ) : null}
-    </>
-  );
+  return <>
+    {isDemo && !demoCitySupported ? <p className="scope-limited-notice" role="status">{tKey("shell.demoModeCityLimited").replace("{city}", cityLabel(selectedCity))}</p> : null}
+    {refreshError ? <RefreshErrorBanner error={refreshError} language={language} onDismiss={onDismissRefreshError} /> : null}
+  </>;
 }
 
 type PlatformDataWarningProps = {
@@ -191,7 +124,7 @@ export function PlatformUnavailable({
       </div>
       <small>
         {tKey("shell.apiEndpoint")}: {apiBaseUrl}
-        {userId ? ` · ${tKey("shell.userContext")}: ${userId}` : ""}
+        {userId ? `, ${tKey("shell.userContext")}: ${userId}` : ""}
       </small>
     </section>
   );

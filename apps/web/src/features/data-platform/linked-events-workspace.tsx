@@ -371,7 +371,7 @@ function eventAddress(event: PlatformEvent | null, tKey: (key: string) => string
   const address = attributeText(event, "address");
   const extra = attributeText(event, "location_extra_info");
   if (address && extra) {
-    return `${address} · ${extra}`;
+    return `${address}, ${extra}`;
   }
   return address ?? extra ?? eventPlace(event, tKey);
 }
@@ -1102,7 +1102,6 @@ export function LinkedEventsWorkspace({
           </div>
           <div className="linked-events-scope-note">
             <span>{tKey("linkedEvents.eventsInScope").replace("{shown}", String(filteredEvents.length)).replace("{total}", String(sortedEvents.length))}</span>
-            <span aria-hidden="true">·</span>
             <span>{tKey("linkedEvents.coverageCities")}</span>
           </div>
         </article>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useMediaQuery } from "@/features/shared/use-media-query";
+
 import { AssistantGlyph } from "./assistant-glyph";
 import {
   FormEvent,
@@ -83,6 +85,8 @@ export function AssistantWidget({
   onOpenView,
 }: AssistantWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const isDesktopDock = useMediaQuery("(min-width: 1280px)");
+  const [dockWidth, setDockWidth] = useState(420);
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
@@ -105,7 +109,7 @@ export function AssistantWidget({
       ? tKey("assistant.scopeToday")
       : tKey("assistant.scopeData");
   const assistantScopeDate = date
-    ? `${tKey("assistant.scopeHistorical")} · ${formatAssistantScopeDate(date, language)}`
+    ? `${tKey("assistant.scopeHistorical")}, ${formatAssistantScopeDate(date, language)}`
     : isDemoScope
       ? tKey("assistant.demoFixture")
       : tKey("assistant.scopeLive");
@@ -138,8 +142,6 @@ export function AssistantWidget({
   // A background data refresh changes checked_at but not the user's scope.
   // The conversation survives until city, date, workspace, or identity changes.
   const assistantScopeKey = [
-    mode,
-    scopeKey,
     city,
     date ?? "live",
     userId,
@@ -199,7 +201,7 @@ export function AssistantWidget({
         return;
       }
 
-      if (event.key !== "Tab") {
+      if (event.key !== "Tab" || isDesktopDock) {
         return;
       }
 
@@ -232,7 +234,7 @@ export function AssistantWidget({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [closeAssistant, isOpen]);
+  }, [closeAssistant, isDesktopDock, isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -324,14 +326,14 @@ export function AssistantWidget({
         tKey("assistant.whichExpansionPlanned")
       ];
     }
-    const firstCat = firstAssistantCategoryLabel(overview, language);
+    const firstCat = firstAssistantCategoryLabel(overview && scopeKey && scopeKey !== "overview" ? { ...overview, categories: overview.categories.filter((category) => category.key === scopeKey) } : overview, language);
     return [
       tKey("assistant.explainCurrent"),
       analyzeCategory(firstCat),
       tKey("assistant.whichSourceAbnormal"),
       tKey("assistant.whichExpansionPlanned")
     ];
-  }, [analyzeCategory, isHistoricalScope, language, mode, overview, tKey]);
+  }, [analyzeCategory, isHistoricalScope, language, mode, overview, scopeKey, tKey]);
 
   const submitQuestion = async (question: string) => {
     const normalizedQuestion = question.trim();
@@ -553,23 +555,29 @@ export function AssistantWidget({
   }
 
   return (
-    <div className={`assistant-widget assistant-widget-open assistant-widget-mode-${mode}`}>
+    <div className={`assistant-widget assistant-widget-open assistant-widget-mode-${mode}${isDesktopDock ? " assistant-widget-docked" : ""}`} style={isDesktopDock ? { width: dockWidth } : undefined}>
       <div className="assistant-overlay">
-        <button
+        {!isDesktopDock ? <button
           aria-label={tKey("assistant.dismissOutside")}
           className="assistant-scrim"
           onClick={closeAssistant}
           type="button"
-        />
+        /> : null}
 
         <section
           aria-describedby="assistant-scope-label"
           aria-labelledby="assistant-dialog-title"
-          aria-modal="true"
+          aria-modal={!isDesktopDock || undefined}
           className="assistant-panel"
           ref={drawerRef}
           role="dialog"
         >
+          {isDesktopDock ? <div className="assistant-resize-handle" role="separator" aria-orientation="vertical" aria-label={tKey("assistant.resizePanel")} aria-valuenow={dockWidth} aria-valuemin={320} aria-valuemax={640} tabIndex={0} onKeyDown={(event) => { if (event.key === "ArrowLeft") setDockWidth((w) => Math.min(640, w + 20)); if (event.key === "ArrowRight") setDockWidth((w) => Math.max(320, w - 20)); }} onPointerDown={(event) => {
+            event.preventDefault(); const start = event.clientX, width = dockWidth;
+            const move = (e: PointerEvent) => setDockWidth(Math.max(320, Math.min(640, width + start - e.clientX)));
+            const stop = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", stop); };
+            window.addEventListener("pointermove", move); window.addEventListener("pointerup", stop);
+          }} /> : null}
           <div className="assistant-panel-header">
             <span className="assistant-avatar" aria-hidden="true">
               <AssistantGlyph className="assistant-avatar-mark" />
@@ -582,7 +590,6 @@ export function AssistantWidget({
                 id="assistant-scope-label"
               >
                 <span>{assistantCoverageArea}</span>
-                <span aria-hidden="true"> · </span>
                 <span>{assistantScopeDate}</span>
               </span>
             </span>
@@ -697,7 +704,7 @@ export function AssistantWidget({
                         language={language}
                         messageId={message.id}
                         onOpenView={(view) => {
-                          closeAssistant();
+                          if (!isDesktopDock) closeAssistant();
                           onOpenView?.(view);
                         }}
                         sourceDocumentation={sourceDocumentation}

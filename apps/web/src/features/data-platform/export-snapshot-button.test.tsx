@@ -38,4 +38,27 @@ describe("ExportSnapshotButton", () => {
     });
     expect(screen.getByRole("button", { name: "Snapshot download failed" })).not.toBeDisabled();
   });
+
+  it("normalizes coverage-area strings to a valid city ref in the export query", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error("offline"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ExportSnapshotButton
+        city="Espoo/Uusimaa"
+        date="2026-08-09"
+        language="en"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Download public snapshot" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    const requestedUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestedUrl.searchParams.get("city")).toBe("espoo");
+    expect(requestedUrl.searchParams.get("date")).toBe("2026-08-09");
+    expect(requestedUrl.searchParams.get("format")).toBe("csv");
+  });
 });

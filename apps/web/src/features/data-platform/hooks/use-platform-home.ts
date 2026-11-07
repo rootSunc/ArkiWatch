@@ -55,6 +55,8 @@ export type UsePlatformHomeOptions = PlatformQueryScope & {
 export type PlatformHomeState = PlatformFetchResult & {
   /** True until the overview lands, i.e. before the shell has anything to render. */
   isPending: boolean;
+  failedSignalKeys: string[];
+  staleSignalKeys: string[];
   /** True while any query needed by the active view has not produced data yet. */
   isLoadingView: boolean;
   /** True while the rendered data still belongs to the previously selected scope. */
@@ -63,7 +65,9 @@ export type PlatformHomeState = PlatformFetchResult & {
   retry: () => Promise<void>;
 };
 
-export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeState {
+export function usePlatformHome(
+  options: UsePlatformHomeOptions,
+): PlatformHomeState {
   const city = normalizeCityValue(options.city);
   const date = normalizeSourceDateValue(options.date);
   const userId = options.userId ?? appEnv.defaultUserId;
@@ -101,9 +105,18 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
         queryFn: async ({ signal }) =>
           unwrapApiResult(await fetchPublicDashboard(normalizedScope, signal)),
         ...queryOptions,
-        refetchInterval: (query: { state: { data: unknown; dataUpdatedAt: number } }) => appEnv.demoMode || isHistoricalScope
-          ? false
-          : Math.max(1000, briefingCacheRemaining(query.state.data as PublicDashboardRead | undefined, query.state.dataUpdatedAt) || 300000),
+        refetchInterval: (query: {
+          state: { data: unknown; dataUpdatedAt: number };
+        }) =>
+          appEnv.demoMode || isHistoricalScope
+            ? false
+            : Math.max(
+                1000,
+                briefingCacheRemaining(
+                  query.state.data as PublicDashboardRead | undefined,
+                  query.state.dataUpdatedAt,
+                ) || 300000,
+              ),
       },
       {
         queryKey: platformKeys.weather(normalizedScope),
@@ -115,7 +128,9 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
       {
         queryKey: platformKeys.airQuality(normalizedScope),
         queryFn: async ({ signal }) =>
-          unwrapApiResult(await fetchAirQualityCurrent(normalizedScope, signal)),
+          unwrapApiResult(
+            await fetchAirQualityCurrent(normalizedScope, signal),
+          ),
         ...queryOptions,
         enabled: needs.air,
       },
@@ -129,7 +144,9 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
       {
         queryKey: platformKeys.householdEnergy(normalizedScope),
         queryFn: async ({ signal }) =>
-          unwrapApiResult(await fetchHouseholdEnergyCurrent(normalizedScope, signal)),
+          unwrapApiResult(
+            await fetchHouseholdEnergyCurrent(normalizedScope, signal),
+          ),
         ...queryOptions,
         enabled: needs.householdEnergy,
       },
@@ -157,7 +174,9 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
       {
         queryKey: platformKeys.historyAvailability(normalizedScope),
         queryFn: async ({ signal }) =>
-          unwrapApiResult(await fetchPlatformHistoryAvailability(normalizedScope, signal)),
+          unwrapApiResult(
+            await fetchPlatformHistoryAvailability(normalizedScope, signal),
+          ),
         ...queryOptions,
         enabled: needs.historyAvailability,
       },
@@ -198,7 +217,49 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     await Promise.all(activeResults.map((query) => query.refetch()));
   };
 
+  const briefingExpired =
+    !appEnv.demoMode &&
+    !isHistoricalScope &&
+    publicDashboardQuery.data != null &&
+    briefingCacheRemaining(
+      publicDashboardQuery.data,
+      publicDashboardQuery.dataUpdatedAt,
+    ) === 0;
+  const validBriefing =
+    publicDashboardQuery.isError ||
+    publicDashboardQuery.isPlaceholderData ||
+    briefingExpired
+      ? null
+      : (publicDashboardQuery.data ?? null);
+  const fallbackFailed = publicDashboardQuery.isError;
   return {
+    staleSignalKeys: briefingExpired
+      ? [
+          !needs.weather ? "weather" : null,
+          !needs.air ? "air" : null,
+          !needs.energy && !needs.householdEnergy ? "energy" : null,
+          !needs.transit && !needs.roadRail ? "mobility" : null,
+        ].filter((key): key is string => key !== null)
+      : [],
+    failedSignalKeys: [
+      (needs.weather && weatherQuery.isError) ||
+      (!needs.weather && fallbackFailed)
+        ? "weather"
+        : null,
+      (needs.air && airQualityQuery.isError) || (!needs.air && fallbackFailed)
+        ? "air"
+        : null,
+      (needs.energy && energyQuery.isError) ||
+      (needs.householdEnergy && householdEnergyQuery.isError) ||
+      (!needs.energy && !needs.householdEnergy && fallbackFailed)
+        ? "energy"
+        : null,
+      (needs.roadRail && roadRailQuery.isError) ||
+      (needs.transit && transitQuery.isError) ||
+      (!needs.roadRail && !needs.transit && fallbackFailed)
+        ? "mobility"
+        : null,
+    ].filter((key): key is string => key !== null),
     isPending: overviewQuery.isPending && overviewQuery.data == null,
     // Background refreshes intentionally do not enter the blocking/loading
     // state. This keeps retry actions and focus restoration usable while the
@@ -209,17 +270,33 @@ export function usePlatformHome(options: UsePlatformHomeOptions): PlatformHomeSt
     apiBaseUrl: resolveApiBaseUrl(),
     defaultUserId: userId,
     overview: overviewQuery.data ?? null,
-    publicDashboard: publicDashboardQuery.isError || publicDashboardQuery.isPlaceholderData
-      || (!appEnv.demoMode && !isHistoricalScope && briefingCacheRemaining(publicDashboardQuery.data, publicDashboardQuery.dataUpdatedAt) === 0)
-      ? null : publicDashboardQuery.data ?? null,
-    weather: weatherQuery.data ?? publicDashboardQuery.data?.signals?.weather ?? null,
-    airQuality: airQualityQuery.data ?? publicDashboardQuery.data?.signals?.airQuality ?? null,
-    energy: energyQuery.data ?? publicDashboardQuery.data?.signals?.energy ?? null,
-    householdEnergy: householdEnergyQuery.data ?? publicDashboardQuery.data?.signals?.householdEnergy ?? null,
+    publicDashboard: validBriefing,
+    weather:
+      (needs.weather ? weatherQuery.data : null) ??
+      validBriefing?.signals?.weather ??
+      null,
+    airQuality:
+      (needs.air ? airQualityQuery.data : null) ??
+      validBriefing?.signals?.airQuality ??
+      null,
+    energy:
+      (needs.energy ? energyQuery.data : null) ??
+      validBriefing?.signals?.energy ??
+      null,
+    householdEnergy:
+      (needs.householdEnergy ? householdEnergyQuery.data : null) ??
+      validBriefing?.signals?.householdEnergy ??
+      null,
     history: historyQuery.data ?? emptyHistory(),
     historyAvailability: historyAvailabilityQuery.data ?? null,
-    roadRail: roadRailQuery.data ?? publicDashboardQuery.data?.signals?.roadRail ?? null,
-    transit: transitQuery.data ?? publicDashboardQuery.data?.signals?.transit ?? null,
+    roadRail:
+      (needs.roadRail ? roadRailQuery.data : null) ??
+      validBriefing?.signals?.roadRail ??
+      null,
+    transit:
+      (needs.transit ? transitQuery.data : null) ??
+      validBriefing?.signals?.transit ??
+      null,
     error: queryErrors[0] ?? null,
   };
 }

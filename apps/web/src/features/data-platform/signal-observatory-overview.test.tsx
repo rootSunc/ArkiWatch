@@ -50,8 +50,8 @@ describe("SignalObservatoryOverview", () => {
       </I18nProvider>,
     );
 
-    expect(screen.getByRole("region", { name: "Signal observatory" })).toHaveTextContent(
-      "Signal observatory",
+    expect(screen.getByRole("region", { name: "Signals" })).toHaveTextContent(
+      "Signals",
     );
     expect(screen.getByText("Signal categories")).toBeInTheDocument();
     expect(screen.getByText("4 active, 2 empty, 3 catalog")).toBeInTheDocument();

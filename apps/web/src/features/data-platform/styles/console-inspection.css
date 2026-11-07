@@ -1,0 +1,83 @@
+@layer features {
+/* Shared inspection treatment for source-specific controls retained below the
+   workspace template. Their domain calculations and interactions stay intact. */
+.workspace-inspection-content :is([class$="-detail-page"], .mobility-workspace, .energy-tabpanel) { display: grid; gap: 20px; min-width: 0; }
+.workspace-inspection-content :is([class*="-glass-panel"], .air-station-panel, .geo-catalog-panel, .regional-indicators) { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
+.workspace-inspection-content :is([class*="-glass-panel"], .air-station-panel) > header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; margin-bottom: 16px; }
+.workspace-inspection-content h1 { font-size: 20px; line-height: 28px; font-weight: 600; }
+.workspace-inspection-content h2 { font-size: 16px; line-height: 24px; font-weight: 600; }
+.workspace-inspection-content h3 { font-size: 14px; line-height: 20px; font-weight: 600; }
+.workspace-inspection-content :is(p, small) { color: var(--muted); font-size: 12px; line-height: 18px; }
+.workspace-inspection-content small { display: block; }
+.workspace-inspection-content :is([class$="-main-grid"], [class$="-lower-grid"], [class$="-ops-grid"], [class$="-insight-grid"], [class$="-bento-grid"], [class$="-visual-grid"]) { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px),1fr)); gap: 16px; min-width: 0; align-items: start; }
+.workspace-inspection-content :is([class$="-side-grid"], [class$="-stack"], [class$="-event-list"], [class$="-field-grid"], [class$="-quality-facts"], [class$="-detail-metrics"], [class$="-source-facts"]) { display: grid; gap: 12px; }
+.workspace-inspection-content :is([class$="-summary-strip"], .energy-chrome-strip, .regional-summary-strip) { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; }
+.workspace-inspection-content :is([class$="-summary-strip"], .energy-chrome-strip) > article { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-control); }
+.workspace-inspection-content :is([class$="-summary-strip"], .energy-chrome-strip) > article > strong { font-size: 20px; font-weight: 600; line-height: 28px; }
+.workspace-inspection-content :is([class$="-metric-label"], [class$="-card-kicker"], [class$="-field-head"]) { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.workspace-inspection-content :is([class*="-current-cluster"], [class*="-current-score"]) { display: flex; align-items: center; gap: 16px; margin: 16px 0; }
+.workspace-inspection-content :is([class*="-current-cluster"], [class*="-current-score"]) strong { font-size: 30px; line-height: 36px; font-weight: 600; }
+.workspace-inspection-content :is([class$="-hero-footer"], [class$="-quality-stats"], .air-score-scale-labels) { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--line); }
+.workspace-inspection-content :is([class$="-hero-footer"], [class$="-quality-stats"]) > div { display: grid; gap: 4px; font-size: 12px; }
+.workspace-inspection-content :is([class*="-provider-status"], [class$="-detail-freshness"]) { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 0; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+.workspace-evidence-header { display: grid; gap: 8px; padding: 16px 0; }
+.workspace-evidence-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.workspace-evidence-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.workspace-evidence-status > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.workspace-evidence-status-good { color: var(--green); }
+.workspace-evidence-status-warn, .workspace-evidence-status-stale { color: var(--amber); }
+.workspace-evidence-status-bad, .workspace-evidence-status-failed { color: var(--red); }
+.workspace-evidence-meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; }
+.workspace-evidence-extra-content { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-control); }
+.workspace-empty-state { display: grid; gap: 12px; padding: 24px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
+.workspace-empty-state p { color: var(--muted); max-width: 65ch; line-height: 20px; }
+.workspace-inspection-content :is([class$="-row"], [class*="-pipeline-stage"], [class*="-source-layer"], [class$="-field"], .air-station, [class*="-event-item"], .water-detail-item) { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.workspace-inspection-content :is([class$="-row"], .air-station, [class*="-source-layer"]) > strong { margin-left: auto; }
+.workspace-inspection-content :is([class$="-row"], .air-station) > div { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.workspace-inspection-content :is([class$="-row"], .air-station) > small { width: 100%; }
+.workspace-inspection-content .air-station-head { background: var(--surface-soft); font-size: 12px; }
+.workspace-inspection-content :is(table) { border-collapse: collapse; width: 100%; font-size: 13px; }
+.workspace-inspection-content :is(th, td) { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+.workspace-inspection-content th { background: var(--surface-soft); font-size: 12px; color: var(--muted); font-weight: 500; }
+.workspace-inspection-content :is([class$="-table-wrapper"], [class$="-table"]) { max-width: 100%; overflow-x: auto; }
+.workspace-inspection-content :is([class$="-toggle"], [role="tablist"], .energy-panel-tabs, .mobility-tabs, .linked-events-filters, .event-category-tabs) { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--surface-soft); }
+.workspace-inspection-content button { min-height: 32px; padding: 6px 10px; border-radius: var(--r-chip); color: var(--body); background: transparent; font-size: 12px; }
+.workspace-inspection-content button:is(.active, [aria-selected="true"], [aria-pressed="true"]) { color: var(--accent); background: var(--surface); box-shadow: var(--shadow-sm); }
+.workspace-inspection-content :is(input, select) { min-height: 36px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-control); color: var(--body); background: var(--surface); font: inherit; font-size: 13px; max-width: 100%; }
+.workspace-inspection-content :is([class$="-meter"], [class$="-progress"], .air-pollutant-track) { display: block; height: 4px; width: 100%; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.workspace-inspection-content :is([class$="-meter"], [class$="-progress"], .air-pollutant-track) > span { display: block; height: 100%; background: var(--accent); }
+.workspace-inspection-content :is([class$="-dot"], .water-status-dot) { display: block; height: 6px; width: 6px; border-radius: 50%; background: var(--accent); }
+.workspace-inspection-content :is([class*="-good"], [class*="-ready"]) > [class$="-dot"] { background: var(--green); }
+.workspace-inspection-content :is([class*="-warn"], [class*="-stale"]) > [class$="-dot"] { background: var(--amber); }
+.workspace-inspection-content :is([class*="-bad"], [class*="-failed"]) > [class$="-dot"] { background: var(--red); }
+.workspace-inspection-content :is(svg) { display: block; max-width: 100%; }
+.workspace-inspection-content :is([class$="-line-chart"], .energy-price-chart) { position: relative; min-width: 0; margin: 12px 0; color: var(--accent); }
+.workspace-inspection-content :is([class$="-line-chart"], .energy-price-chart) svg { width: 100%; height: auto; max-height: 280px; }
+.workspace-inspection-content :is(.weather-axis, .energy-chart-axis-label) { color: var(--muted); font-size: 11px; }
+.workspace-inspection-content :is([class$="-chart-x-axis"], .energy-price-axis) { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
+.workspace-inspection-content :is(.weather-forecast-line, .weather-line-path, .energy-price-line, .energy-chart-line) { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.workspace-inspection-content :is(.weather-chart-area, .weather-forecast-area, .energy-price-area) { fill: var(--accent); opacity: .12; }
+.workspace-inspection-content :is(.weather-forecast-bar, .energy-volume-bar) { fill: var(--accent); }
+.workspace-inspection-content :is(.weather-chart-grid, .energy-chart-grid) { stroke: var(--line); fill: none; }
+.air-map-frame { position: relative; height: 300px; border-radius: var(--r-control); background: var(--surface-sunken); overflow: hidden; isolation: isolate; }
+.air-map-frame > .air-map-leaflet, .air-map-frame > .air-map-canvas, .air-map-frame > .leaflet-container { height: 100%; width: 100%; }
+.air-map-loading-label { display: grid; height: 100%; place-items: center; color: var(--muted); }
+.air-map-fallback, .air-map-empty { display: grid; place-items: center; min-height: 240px; padding: 20px; color: var(--muted); text-align: center; }
+.air-map-footer { position: absolute; z-index: 500; bottom: 0; left: 0; right: 0; padding: 6px 10px; background: var(--surface); color: var(--muted); font-size: 11px; }
+.air-map-station-tooltip-name, .air-map-station-tooltip-coords, .air-map-station-popup-body { display: grid; gap: 6px; }
+.data-label-with-help { display: inline-flex; align-items: center; gap: 4px; }
+.data-help-icon { position: relative; display: inline-flex; align-items: center; color: var(--muted); cursor: help; }
+.data-help-icon::after { content: attr(data-tooltip); display: none; position: absolute; z-index: 40; width: min(260px, 75vw); bottom: calc(100% + 8px); left: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--surface); box-shadow: var(--shadow-md); color: var(--body); font: 12px/18px var(--font-ui); letter-spacing: 0; white-space: normal; }
+.data-help-icon:hover::after, .data-help-icon:focus::after { display: block; }
+.linked-event-card, .linked-events-card { display: grid; gap: 12px; border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; }
+.linked-events-grid, .linked-event-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,260px),1fr)); gap: 16px; }
+.linked-event-detail, .linked-events-selected-detail { display: grid; gap: 16px; }
+.linked-event-card a, .geo-catalog-note a { color: var(--accent); }
+@media (max-width: 768px) {
+  .workspace-inspection-content :is([class$="-main-grid"], [class$="-lower-grid"], [class$="-ops-grid"], [class$="-bento-grid"]) { grid-template-columns: minmax(0,1fr); }
+  .workspace-inspection-content :is([class$="-summary-strip"], .energy-chrome-strip) { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .workspace-inspection-content button { min-height: 44px; }
+  .workspace-inspection-content :is(th, td) { padding: 8px; }
+}
+
+}

@@ -16,7 +16,7 @@ import "./about.css";
 
 const COPY = {
   en: {
-    documentTitle: "About ArkiWatch | Public data. Practical decisions.",
+    documentTitle: "About ArkiWatch",
     homeLabel: "ArkiWatch home",
     brandDescriptor: "FINLAND / PUBLIC DATA",
     navLabel: "About navigation",
@@ -25,9 +25,9 @@ const COPY = {
     navData: "Open data platform",
     navDemo: "Open the demo",
     eyebrow: "Open-source public data for Finland",
-    heroTitle: "Make everyday decisions with better evidence.",
+    heroTitle: "Public data for daily life in Finland.",
     heroLead:
-      "ArkiWatch turns weather, air, mobility, energy, and city signals into a calm daily brief, then lets you inspect every source behind it.",
+      "Weather, air, transit, energy, and city services, with the source for each figure.",
     heroPrimary: "Open the demo",
     heroSecondary: "View on GitHub",
     heroNote: "Demo data is clearly labelled. Connect the API for live public feeds.",
@@ -38,11 +38,11 @@ const COPY = {
     workspaceTitle: "Start with a decision. Keep the evidence.",
     workspaceLead:
       "The interface stays quiet until you need detail. Today helps you decide; Data helps you verify.",
-    todayTitle: "Today / life assistant",
+    todayTitle: "Today",
     todayLead: "A short, personal brief for the next few hours.",
     todayPoints: ["One focus recommendation", "Plan-aware timeline", "Ask the assistant from the same signal"],
     todayCta: "Open Today",
-    dataTitle: "Data / public observatory",
+    dataTitle: "Data",
     dataLead: "Structured workspaces for checking freshness, scope, and source evidence.",
     dataPoints: ["Clear source health", "City and date scope", "Evidence before interpretation"],
     dataCta: "Explore the data",
@@ -67,10 +67,10 @@ const COPY = {
     ctaGithub: "Star on GitHub",
     ctaIssue: "Report a data issue",
     privacyLabel: "Privacy",
-    footer: "ArkiWatch · Finnish public data, made practical.",
+    footer: "ArkiWatch",
   },
   zh: {
-    documentTitle: "关于 ArkiWatch | 公开数据，服务日常决策",
+    documentTitle: "关于 ArkiWatch",
     homeLabel: "ArkiWatch 主页",
     brandDescriptor: "芬兰 / 公共数据",
     navLabel: "关于 ArkiWatch 的导航",
@@ -79,9 +79,8 @@ const COPY = {
     navData: "打开数据平台",
     navDemo: "打开演示",
     eyebrow: "面向芬兰的开源公共数据",
-    heroTitle: "用更可靠的证据，做日常决定。",
-    heroLead:
-      "ArkiWatch 把天气、空气、出行、能源和城市信号整理成安静清晰的每日简报，也让你随时查看每条结论背后的数据来源。",
+    heroTitle: "芬兰日常生活的公共数据。",
+    heroLead: "天气、空气、出行、能源和城市服务，并保留每项数据的来源。",
     heroPrimary: "打开演示",
     heroSecondary: "在 GitHub 查看",
     heroNote: "演示数据会明确标注；连接 API 后即可使用实时公共数据。",
@@ -91,11 +90,11 @@ const COPY = {
     coverageCity: "城市",
     workspaceTitle: "从一个决定开始，把证据留在手边。",
     workspaceLead: "界面只在需要时展开细节：Today 帮你决定，Data 帮你核验。",
-    todayTitle: "Today / 生活助手",
+    todayTitle: "今日",
     todayLead: "面向接下来几小时的简短、个人化提示。",
     todayPoints: ["一个重点建议", "结合计划的时间线", "从同一条信号直接询问助手"],
     todayCta: "打开 Today",
-    dataTitle: "Data / 公共数据观测台",
+    dataTitle: "数据",
     dataLead: "用结构化工作区检查数据新鲜度、范围和来源依据。",
     dataPoints: ["清晰的来源健康度", "城市与日期范围", "先看证据，再看解释"],
     dataCta: "探索数据",
@@ -120,7 +119,7 @@ const COPY = {
     ctaGithub: "在 GitHub 点 Star",
     ctaIssue: "报告数据问题",
     privacyLabel: "隐私说明",
-    footer: "ArkiWatch · 让芬兰公共数据真正服务日常。",
+    footer: "ArkiWatch",
   },
 } as const;
 
@@ -154,10 +153,7 @@ export default function AboutPage() {
         <header className="about-nav">
           <Link className="about-brand" href="/" aria-label={copy.homeLabel}>
             <Image src="/brand/logo-mark.png" alt="" width={34} height={34} priority />
-            <span>
-              <strong>ArkiWatch</strong>
-              <small>{copy.brandDescriptor}</small>
-            </span>
+            <strong>ArkiWatch</strong>
           </Link>
           <nav className="about-nav-actions" aria-label={copy.navLabel}>
             <Link className="about-nav-link" href="/?view=overview&city=helsinki">
@@ -178,7 +174,6 @@ export default function AboutPage() {
 
         <section className="about-hero">
           <div className="about-hero-copy">
-            <p className="about-eyebrow"><span />{copy.eyebrow}</p>
             <h1>{copy.heroTitle}</h1>
             <p className="about-hero-lead">{copy.heroLead}</p>
             <div className="about-hero-actions">

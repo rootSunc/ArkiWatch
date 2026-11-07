@@ -101,7 +101,7 @@ describe("RecentEventsPanel", () => {
     renderPanel({ readRecentEventIds: new Set([event.id]) });
     fireEvent.click(screen.getByRole("button", { name: /Unread/ }));
     expect(screen.queryByRole("button", { name: /Open event detail/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("You’re all caught up");
+    expect(screen.getByRole("status")).toHaveTextContent("No unread events");
     fireEvent.click(screen.getByRole("button", { name: /All events/ }));
     expect(screen.getByRole("button", { name: /Open event detail/ })).toBeVisible();
   });

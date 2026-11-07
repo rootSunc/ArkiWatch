@@ -116,7 +116,8 @@ export function useScopeRouting({
       const currentPath = searchParams.toString()
         ? `${pathname}?${searchParams.toString()}`
         : pathname;
-      const destinationPath = nextPath ? `${pathname}?${nextPath}` : pathname;
+      const destinationBase = nextNavKey === "today" ? "/plan" : pathname === "/plan" ? "/" : pathname;
+      const destinationPath = nextPath ? `${destinationBase}?${nextPath}` : destinationBase;
       if (destinationPath === currentPath) {
         return;
       }

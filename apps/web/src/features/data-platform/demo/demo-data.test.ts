@@ -43,7 +43,7 @@ describe("demo fixture", () => {
   it("keeps city and historical scope explicit", () => {
     const fixture = demoFixtureForScope({ city: "espoo", date: DEMO_SNAPSHOT_DATE });
 
-    expect(fixture.overview.coverage_area).toBe("Espoo / Uusimaa · 2026-08-08");
+    expect(fixture.overview.coverage_area).toBe("Espoo / Uusimaa, 2026-08-08");
     expect(fixture.overview.time_scope?.mode).toBe("historical");
     expect(fixture.overview.time_scope?.date).toBe(DEMO_SNAPSHOT_DATE);
     expect(fixture.overview.time_scope?.window_start).toBe(

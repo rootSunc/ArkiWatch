@@ -14,6 +14,7 @@ function renderNavigation(isAuthenticated: boolean, navBadges?: Record<string, n
         isAuthenticated={isAuthenticated}
         isMobileMenuOpen={false}
         navBadges={navBadges}
+        showPlan={Boolean(navBadges?.today)}
         navigationRef={{ current: null }}
         onHide={vi.fn()}
         onSelectNavItem={vi.fn()}
@@ -36,16 +37,16 @@ describe("DataPlatformSideNav", () => {
     );
   });
 
-  it("does not expose private setup controls in the public view", () => {
+  it("keeps the optional setup entry reachable from the public view", () => {
     renderNavigation(false);
 
-    expect(screen.queryByRole("link", { name: "Personal context" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Personal context" })).toHaveAttribute("href", "/settings");
   });
 
   it("includes a visible navigation badge count in the accessible name", () => {
     renderNavigation(true, { today: 4 });
 
-    const button = screen.getByRole("button", { name: "Today (4)" });
+    const button = screen.getByRole("button", { name: "Your day (4)" });
     expect(button.querySelector(".side-nav-count-badge")).toHaveAttribute("aria-hidden", "true");
   });
 

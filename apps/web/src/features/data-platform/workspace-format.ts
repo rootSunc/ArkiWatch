@@ -17,7 +17,7 @@ export function statusTone(status: string): PlatformTone {
   return "neutral";
 }
 export function uniqueJoined(values: string[]): string {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].slice(0, 4).join(" · ") || UNAVAILABLE_DATA_VALUE;
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].slice(0, 4).join(", ") || UNAVAILABLE_DATA_VALUE;
 }
 export function clampPercent(value: number): number { return Math.max(6, Math.min(100, value)); }
 export function severityRows(counts: Record<string, number> = {}) {

@@ -33,7 +33,6 @@ export function SignalObservatoryOverview({
             </span>
             {tKey("shell.signalObservatory")}
           </h3>
-          <p>{tKey("shell.signalObservatoryLead")}</p>
         </div>
         <span className="signals-console-header-meta">
           <span className="material-symbols-outlined" aria-hidden="true">

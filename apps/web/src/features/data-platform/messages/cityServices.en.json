@@ -19,7 +19,7 @@
     "serviceModel": "Fields provided by the source",
     "summaryMetrics": "City service summary metrics",
     "analytics": "City service analytics",
-    "serviceOperations": "Service Operations",
+    "serviceOperations": "Services",
     "serviceOperationsLead": "Public facilities and availability signals",
     "rows": "rows",
     "until": "until",
@@ -47,7 +47,7 @@
     "temporaryClosuresDetail": "Closure windows and facility availability",
     "accessibilityDetail": "Access attributes for service-unit matching",
     "categoryDescription": "Public service locations and opening information.",
-    "providerCoverage": "Provider-led Helsinki coverage · reference dataset, not a live signal",
+    "providerCoverage": "Provider-led Helsinki coverage, reference dataset, not a live signal",
     "fieldColumn": "Field",
     "ownerColumn": "Owner",
     "coversColumn": "What it covers"

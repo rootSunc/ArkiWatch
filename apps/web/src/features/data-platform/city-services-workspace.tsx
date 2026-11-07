@@ -363,8 +363,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
         <article className="city-glass-panel city-service-panel">
           <header>
             <div>
-              <span>{tKey("cityServices.serviceOperations")}</span>
-              <h2>{tKey("cityServices.serviceOperationsLead")}</h2>
+              <h2>{tKey("cityServices.serviceOperations")}</h2>
             </div>
             <strong>{category.events.length || category.sources.length} {tKey("cityServices.rows")}</strong>
           </header>

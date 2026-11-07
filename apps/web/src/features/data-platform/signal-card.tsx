@@ -1,18 +1,19 @@
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { categorySignalAttribution } from "./signal-attribution";
-import { DataLabelWithHelp, dataHelpText } from "./data-help";
+import { MetricTile } from "@/features/shared/ui/console";
+import { signalTrend, weatherReferencePoint } from "./console-model";
 import { categorySupportsCityScope, cityLabel } from "./city-scope";
-import { CATEGORY_ICONS } from "./data-platform-nav-utils";
 import {
   displayTitle,
   signalReadout,
   statusLabel,
 } from "./data-platform-view-model";
-import type { LanguageMode } from "./i18n";
+import { translateMessageKey, type LanguageMode } from "./i18n";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
   PlatformCategory,
+  PlatformHistoryResponse,
   RoadRailCurrentResponse,
   TransitCurrentResponse,
   WeatherForecastResponse,
@@ -23,8 +24,10 @@ type SignalCardProps = {
   category: PlatformCategory;
   energy: EnergyCurrentResponse | null;
   householdEnergy: EnergyCurrentResponse | null;
+  history?: PlatformHistoryResponse;
   language: LanguageMode;
   onSelect: () => void;
+  onAsk?: (question: string) => void;
   platformTimezone?: string;
   regionalScopeLabel: string;
   roadRail: RoadRailCurrentResponse | null;
@@ -38,8 +41,10 @@ export function SignalCard({
   category,
   energy,
   householdEnergy,
+  history,
   language,
   onSelect,
+  onAsk,
   platformTimezone,
   regionalScopeLabel,
   roadRail,
@@ -73,53 +78,84 @@ export function SignalCard({
   const hasProvider = Boolean(provider) && provider !== UNAVAILABLE_DATA_VALUE;
   const followsSelectedCity = categorySupportsCityScope(category.key);
 
+  const attribution = categorySignalAttribution(
+    category,
+    weather,
+    airQuality,
+    energy,
+    householdEnergy,
+    roadRail,
+    transit,
+  );
+  const primarySource =
+    category.sources.find(
+      (source) => source.source_code.toUpperCase() === provider,
+    ) ?? category.sources[0];
+  const points = signalTrend(
+    category,
+    { weather, airQuality, energy, householdEnergy, history },
+    language,
+    platformTimezone ?? "Europe/Helsinki",
+  );
+  const first = points[0]?.value,
+    last = points.at(-1)?.value;
+  const delta =
+    points.length >= 3 && first != null && last != null
+      ? `${last - first > 0 ? "+" : ""}${(last - first).toFixed(1)}`
+      : undefined;
+  const invalid = ["stale", "failed", "error"].includes(category.status);
   return (
-    <button
-      className={`signal-card signal-card-${readout.tone}`}
-      data-category={category.key}
-      onClick={onSelect}
-      type="button"
-    >
-      <span className="signal-card-top">
-        <span className="material-symbols-outlined" aria-hidden="true">
-          {CATEGORY_ICONS[category.key] ?? "database"}
-        </span>
-        <strong className="signal-card-title">{displayTitle(category, language)}</strong>
-        <span className={`signal-card-status signal-card-status-${readout.tone}`}>
-          {statusLabel(category, language)}
-        </span>
-      </span>
-
-      <span className="signal-readout">
-        <DataLabelWithHelp
-          helpText={dataHelpText({
-            key: readout.helpKey,
-            label: readout.label,
-            language,
-          })}
-        >
-          {readout.label}
-        </DataLabelWithHelp>
-        <strong>{readout.value}</strong>
-      </span>
-
-      <span className="signal-card-footer">
-        <span className="material-symbols-outlined" aria-hidden="true">
-          {followsSelectedCity ? "location_on" : "public"}
-        </span>
-        <span className="signal-card-scope">
-          {followsSelectedCity ? cityLabel(selectedCity) : regionalScopeLabel}
-        </span>
-        <span className="signal-card-footer-spacer" />
-        {hasProvider ? (
-          <span className="signal-card-provider" title={provider}>
-            {provider}
-          </span>
-        ) : null}
-        <span className="material-symbols-outlined signal-card-arrow" aria-hidden="true">
-          chevron_right
-        </span>
-      </span>
-    </button>
+    <MetricTile
+      label={displayTitle(category, language)}
+      value={invalid ? statusLabel(category, language) : readout.value}
+      trend={points.map((p) => p.value)}
+      trendLabel={translateMessageKey(
+        language,
+        ["air", "mobility"].includes(category.key)
+          ? "shell.availableHistory"
+          : category.key === "weather"
+            ? "shell.forecast24h"
+            : "shell.trend24h",
+      )}
+      delta={delta}
+      tone={
+        invalid ? (category.status === "stale" ? "warn" : "bad") : readout.tone
+      }
+      status={statusLabel(category, language)}
+      onSelect={onSelect}
+      onAsk={
+        onAsk
+          ? () =>
+              onAsk(
+                `${displayTitle(category, language)}: ${invalid ? statusLabel(category, language) : readout.value}`,
+              )
+          : undefined
+      }
+      source={hasProvider ? provider : undefined}
+      evidence={{
+        provider,
+        station: followsSelectedCity
+          ? cityLabel(selectedCity)
+          : regionalScopeLabel,
+        observedAt: attribution.updatedAt,
+        validAt:
+          category.key === "weather"
+            ? weatherReferencePoint(weather)?.timestamp
+            : null,
+        licence: (category.key === "energy" && primarySource
+          ? [primarySource]
+          : category.sources
+        )
+          .map((source) =>
+            source.license_label
+              ? `${source.source_code}: ${source.license_label}`
+              : null,
+          )
+          .filter(Boolean)
+          .join("; "),
+        method: null,
+        href: `/?view=sources${primarySource ? `&source=${encodeURIComponent(primarySource.source_code)}` : ""}`,
+      }}
+    />
   );
 }

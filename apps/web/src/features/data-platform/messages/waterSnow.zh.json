@@ -34,7 +34,7 @@
     "snow": "雪",
     "risk": "风险",
     "platformAnalytics": "水与雪平台分析",
-    "signalStack": "水文信号组件",
+    "signalStack": "水文",
     "signalStackLead": "源数据格式、事件就绪度与采集状态",
     "metrics": "指标",
     "datasetShapeDistribution": "数据集结构分布",
@@ -77,7 +77,7 @@
     "sourceReturnedEmpty": "该范围下数据源返回为空",
     "noActiveWarning": "无生效预警",
     "regionalNotCity": "区域范围，非城市范围",
-    "providerCoverage": "数据源定义的区域覆盖 · 可用性取决于已配置的 SYKE 站点",
+    "providerCoverage": "数据源定义的区域覆盖，可用性取决于已配置的 SYKE 站点",
     "levelObservations": "水位观测",
     "flowObservations": "流量观测",
     "emptyMeans": "空值表示数据源在所选范围内没有可用读数。它不会被提升为正常或实时。"

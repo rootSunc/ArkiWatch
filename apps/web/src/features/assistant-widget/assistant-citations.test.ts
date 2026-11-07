@@ -24,7 +24,7 @@ describe("assistant citation presentation", () => {
         "platform_overview status=healthy, location=Helsinki region.",
         "zh",
       ),
-    ).toBe("状态：运行正常 · 赫尔辛基地区");
+    ).toBe("状态：运行正常，赫尔辛基地区");
     expect(assistantCitationDetail("weather", "weather data snapshot.", "zh")).toBe(
       "天气 数据快照",
     );

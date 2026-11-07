@@ -34,7 +34,7 @@
     "snow": "Snow",
     "risk": "Risk",
     "platformAnalytics": "Water and snow platform analytics",
-    "signalStack": "Hydrology Signal Stack",
+    "signalStack": "Hydrology",
     "signalStackLead": "Source schema, event readiness, and collection state",
     "metrics": "metrics",
     "datasetShapeDistribution": "Dataset shape distribution",
@@ -77,7 +77,7 @@
     "sourceReturnedEmpty": "Source returned empty for this scope",
     "noActiveWarning": "No active warning",
     "regionalNotCity": "Regional, not city-scoped",
-    "providerCoverage": "Provider-defined regional coverage · availability follows configured SYKE stations",
+    "providerCoverage": "Provider-defined regional coverage, availability follows configured SYKE stations",
     "levelObservations": "Level observations",
     "flowObservations": "Flow observations",
     "emptyMeans": "Empty means the source returned no usable value for the selected scope. It is not promoted to healthy or live."

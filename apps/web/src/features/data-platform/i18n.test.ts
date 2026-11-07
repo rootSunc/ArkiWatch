@@ -38,7 +38,7 @@ describe("translateMessageKey", () => {
   });
 
   it("keeps demo-only assistant copy fully localized", () => {
-    expect(translateMessageKey("zh", "assistant.demoMode")).toBe("演示模式 · 基于静态示例");
+    expect(translateMessageKey("zh", "assistant.demoMode")).toBe("演示模式，基于静态示例");
   });
 });
 

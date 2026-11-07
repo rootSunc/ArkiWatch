@@ -37,7 +37,7 @@ export default async function Page({ searchParams }: PageProps) {
       date: selectedDate,
       authToken: session?.token,
       userId: session?.user.id,
-      activeNavKey: resolvedSearchParams?.view ?? "today",
+      activeNavKey: resolvedSearchParams?.view ?? "overview",
       isHistorical: Boolean(selectedDate),
     }).catch(() => undefined);
   }

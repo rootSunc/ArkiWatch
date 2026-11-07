@@ -143,7 +143,7 @@ export function assistantCitationDetail(
     return translateMessageKey(language, "assistant.sourceUnavailableDetail");
   }
 
-  const demoSnapshotMatch = trimmedDetail.match(/^(.+?) snapshot · (.+)$/i);
+  const demoSnapshotMatch = trimmedDetail.match(/^(.+?) snapshot(?:, |\u00b7 )(.+)$/i);
   if (demoSnapshotMatch) {
     return translateMessageKey(language, "assistant.demoSnapshotDetail")
       .replace("{location}", translateDataLabel(language, demoSnapshotMatch[1] ?? ""))
@@ -209,7 +209,7 @@ export function AssistantCitationList({
         if (documentationUrl) {
           return (
             <a
-              aria-label={`${sourceLabel} · ${tKey("assistant.openProviderDocs")}`}
+              aria-label={`${sourceLabel}, ${tKey("assistant.openProviderDocs")}`}
               className="assistant-evidence-card"
               href={documentationUrl}
               key={key}

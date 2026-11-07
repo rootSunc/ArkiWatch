@@ -19,7 +19,7 @@
     "serviceModel": "数据源提供的字段",
     "summaryMetrics": "城市服务摘要指标",
     "analytics": "城市服务分析",
-    "serviceOperations": "城市服务运营",
+    "serviceOperations": "服务",
     "serviceOperationsLead": "公共设施及可用性信号",
     "rows": "行",
     "until": "直到",
@@ -47,7 +47,7 @@
     "temporaryClosuresDetail": "关闭时段及设施可用性",
     "accessibilityDetail": "用于服务单位匹配的无障碍属性",
     "categoryDescription": "公共服务地点与开放信息。",
-    "providerCoverage": "赫尔辛基数据源覆盖 · 参考数据集，不是实时信号",
+    "providerCoverage": "赫尔辛基数据源覆盖，参考数据集，不是实时信号",
     "fieldColumn": "字段",
     "ownerColumn": "来源",
     "coversColumn": "覆盖内容"

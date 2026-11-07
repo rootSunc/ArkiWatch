@@ -90,7 +90,7 @@ export function RecentEventsPanel({
       <div className="inbox-handle" aria-hidden="true" />
       <header className="inbox-header">
         <div>
-          <span className="inbox-eyebrow">ArkiWatch · {cityLabel(city)}</span>
+          <span className="inbox-eyebrow"><span>ArkiWatch</span><span>{cityLabel(city)}</span></span>
           <h2 id="events-inbox-title">{tKey("shell.recentEvents")}</h2>
         </div>
         <button className="inbox-icon-button" type="button" aria-label={tKey("shell.collapseRecentEvents")} onClick={onToggleExpanded}>
@@ -127,7 +127,7 @@ export function RecentEventsPanel({
                 </button>
               </article>
             );
-          }) : <div className="inbox-empty" role="status"><span className="material-symbols-outlined" aria-hidden="true">notifications</span><h3>{tKey(unreadOnly ? "shell.allCaughtUp" : "shell.noActiveNotifications")}</h3><p>{tKey(unreadOnly ? "shell.allCaughtUpDetail" : "shell.noRecentEventsMatchTheCurrentView")}</p></div>}
+          }) : <div className="inbox-empty" role="status"><span className="material-symbols-outlined" aria-hidden="true">notifications</span><h3>{tKey(unreadOnly ? "shell.allCaughtUp" : "shell.noActiveNotifications")}</h3></div>}
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export function RecentEventsPanel({
             <span className="material-symbols-outlined" aria-hidden="true">chevron_left</span>{tKey("shell.backToEvents")}
           </button>
           <div className="inbox-detail-scroll" key={selectedEvent.id}>
-            <span className="inbox-eyebrow">{eventCategoryLabel(categories, selectedEvent, language)} · {eventTypeLabel(selectedEvent.event_type, language)}</span>
+            <span className="inbox-eyebrow"><span>{eventCategoryLabel(categories, selectedEvent, language)}</span><span>{eventTypeLabel(selectedEvent.event_type, language)}</span></span>
             <h3>{localizedContent(language, selectedEvent.title, selectedEvent.title_zh)}</h3>
             <p className="inbox-detail-body">{localizedContent(language, selectedEvent.body, selectedEvent.body_zh)}</p>
             <dl className="inbox-facts">

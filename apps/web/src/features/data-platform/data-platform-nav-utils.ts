@@ -57,6 +57,8 @@ export function buildNavigationQueryParams(
     nextParams.delete(ENERGY_TAB_QUERY_KEY);
   }
 
+  if (nextNavKey !== "sources") nextParams.delete("source");
+
   if (options.eventId) {
     nextParams.set(EVENT_QUERY_KEY, options.eventId);
   } else {
@@ -98,8 +100,10 @@ export function breadcrumbForNav(navKey: string): {
   rootTarget: string;
 } {
   if (navKey === TODAY_NAV_KEY) {
-    return { rootKey: "shell.lifeAssistant", leafKey: "shell.navToday", rootTarget: TODAY_NAV_KEY };
+    return { rootKey: "shell.lifeAssistant", leafKey: "shell.navPlan", rootTarget: TODAY_NAV_KEY };
   }
+
+  if (navKey === "sources") return { rootKey: "shell.navHome", leafKey: "shell.navSources", rootTarget: FALLBACK_NAV_KEY };
 
   const catalogLeafKeys: Record<string, string> = {
     city_services: "shell.navCityServices",
@@ -134,7 +138,7 @@ export function breadcrumbForNav(navKey: string): {
 
   return {
     rootKey: "shell.dataPlatformMode",
-    leafKey: "shell.signalObservatory",
+    leafKey: "shell.navHome",
     rootTarget: FALLBACK_NAV_KEY,
   };
 }
@@ -226,11 +230,11 @@ export function navItemAvailable(item: NavItem, categories: PlatformCategory[]):
  * switcher. The full navigation stays in the side drawer, driven by
  * PRIMARY_NAV_ITEMS.
  */
-export function mobileNavigationItems(categories: PlatformCategory[]): NavItem[] {
-  const mobileOrder = [FALLBACK_NAV_KEY, TODAY_NAV_KEY, "weather", MOBILITY_NAV_KEY];
+export function mobileNavigationItems(categories: PlatformCategory[], showPlan = false): NavItem[] {
+  const mobileOrder = [FALLBACK_NAV_KEY, TODAY_NAV_KEY, "events"];
   return mobileOrder
     .map((key) => PRIMARY_NAV_ITEMS.find((item) => item.key === key))
-    .filter((item): item is NavItem => item != null && navItemAvailable(item, categories));
+    .filter((item): item is NavItem => item != null && navItemAvailable(item, categories) && (item.key !== TODAY_NAV_KEY || showPlan));
 }
 
 export function resolveNavKey(
@@ -243,6 +247,8 @@ export function resolveNavKey(
     return FALLBACK_NAV_KEY;
   }
 
+  if (normalized === "sources") return "sources";
+
   if (normalized === TODAY_NAV_KEY) {
     return TODAY_NAV_KEY;
   }
@@ -252,11 +258,11 @@ export function resolveNavKey(
     // unavailable. Preserve deep links until the overview can validate them.
     return categories.length === 0 || mobilityAvailable(categories)
       ? MOBILITY_NAV_KEY
-      : TODAY_NAV_KEY;
+      : FALLBACK_NAV_KEY;
   }
 
   if (!categoryVisibleToCurrentUser(normalized)) {
-    return TODAY_NAV_KEY;
+    return FALLBACK_NAV_KEY;
   }
 
   if (categories.length === 0 && isCatalogCategoryKey(normalized)) {
@@ -271,7 +277,7 @@ export function resolveNavKey(
       primaryNavItem.categoryKey &&
       !categoryVisibleToCurrentUser(primaryNavItem.categoryKey)
     ) {
-      return TODAY_NAV_KEY;
+      return FALLBACK_NAV_KEY;
     }
 
     return normalized;
@@ -281,5 +287,5 @@ export function resolveNavKey(
     (category) => category.key === normalized && categoryVisibleToCurrentUser(category.key),
   )
     ? normalized
-    : TODAY_NAV_KEY;
+    : FALLBACK_NAV_KEY;
 }

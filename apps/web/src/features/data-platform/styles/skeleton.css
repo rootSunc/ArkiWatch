@@ -1,9 +1,10 @@
+@layer features {
 /* Route-level loading skeleton. Mirrors the dashboard shell geometry so the
    first paint lands where the real layout will render. */
 
 .platform-skeleton-block {
   display: block;
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface-container-high);
   animation: platform-skeleton-pulse 1.4s ease-in-out infinite;
 }
@@ -20,7 +21,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .platform-skeleton-block {
-    animation: none;
+
     opacity: 0.6;
   }
 }
@@ -41,7 +42,7 @@
   width: 36px;
   height: 36px;
   flex: 0 0 36px;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .platform-skeleton-brand-copy {
@@ -76,7 +77,7 @@
 .platform-skeleton-topbar-control {
   width: 132px;
   height: 36px;
-  border-radius: 999px;
+  border-radius: 6px;
 }
 
 .platform-skeleton-topbar-spacer {
@@ -92,7 +93,7 @@
 
 .platform-skeleton-tile {
   height: 104px;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 .platform-skeleton-cards {
@@ -103,7 +104,7 @@
 
 .platform-skeleton-card {
   height: 220px;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 .platform-skeleton-sr-only {
@@ -137,7 +138,7 @@
     width: 36px;
     height: 36px;
     flex: 0 0 36px;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .platform-skeleton-mobile-mark {
@@ -188,7 +189,7 @@
     width: 36px;
     height: 36px;
     flex: 0 0 36px;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .platform-skeleton-mobile-nav {
@@ -226,4 +227,6 @@
     height: 8px;
     border-radius: 3px;
   }
+}
+
 }

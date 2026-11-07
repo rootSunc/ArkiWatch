@@ -57,20 +57,13 @@ export function DayPlanTimeline({
     recommendationMode === "historical"
       ? tKey("shell.historicalEvidence")
       : recommendationMode === "out_of_scope"
-        ? tKey("shell.localSignalMoments")
+        ? tKey("shell.localSignals")
         : tKey("shell.todayPlan");
-  const lead =
-    recommendationMode === "historical"
-      ? tKey("shell.historicalEvidenceLead")
-      : recommendationMode === "out_of_scope"
-        ? tKey("shell.localSignalsOnlyLead")
-        : tKey("shell.todayPlanLead");
 
   return (
     <section className="day-plan-timeline" aria-label={title}>
       <header className="day-plan-timeline-header">
-        <span className="today-section-kicker">{title}</span>
-        <h2>{lead}</h2>
+        <h2>{title}</h2>
       </header>
       {items.length > 0 ? (
         <ol className="day-plan-timeline-list">

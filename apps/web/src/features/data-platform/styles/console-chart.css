@@ -1,0 +1,31 @@
+@layer features {
+.trend-chart-x-label { fill: var(--muted); font-size: 11px; }
+.trend-panel { min-width: 0; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-sm); }
+.trend-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.trend-panel > header > div > span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 2px; }
+.trend-panel h2 { font-size: 16px; font-weight: 600; line-height: 24px; }
+.trend-panel > header > strong { color: var(--ink); font-size: 20px; font-weight: 600; line-height: 28px; }
+.home-trend .trend-panel > header > strong, .workspace-main-chart .trend-panel > header > strong { margin-top: 48px; font-size: 14px; }
+.trend-chart-frame { position: relative; padding: 0; max-width: 760px; margin-inline: auto; }
+.trend-chart-svg { display: block; width: 100%; height: auto; max-height: none; overflow: visible; }
+.trend-chart-grid { stroke: var(--line); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.trend-chart-line { fill: none; stroke: var(--trend-color, var(--accent)); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.trend-chart-area { fill: var(--trend-color, var(--accent)); opacity: .12; }
+.trend-chart-dot { fill: var(--surface); stroke: var(--trend-color, var(--accent)); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.trend-chart-y-label { fill: var(--muted); font-family: var(--font-ui); font-size: 11px; dominant-baseline: middle; }
+.trend-chart-axis { display: flex; justify-content: space-between; padding-left: 6.875%; padding-right: 4.375%; color: var(--muted); font-size: 11px; line-height: 16px; }
+.trend-chart-stats { display: flex; gap: 24px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--line); }
+.trend-chart-stats > span { display: grid; gap: 2px; color: var(--muted); font-size: 12px; flex: 1; }
+.trend-chart-stats strong { color: var(--body); font-weight: 500; }
+.trend-chart-stats small { font-size: 11px; }
+.trend-chart-insufficient { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 40px; font-size: 13px; line-height: 20px; color: var(--muted); }
+.trend-chart-insufficient small { font-size: 12px; }
+.trend-crosshair { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.trend-tooltip { position: absolute; left: 50%; top: 0; transform: translateX(-50%); z-index: 5; display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--surface); color: var(--body); box-shadow: var(--shadow-md); font-size: 12px; pointer-events: none; }
+@media (max-width: 768px) {
+  .trend-panel { padding: 16px; }
+  .home-trend .trend-panel > header > strong, .workspace-main-chart .trend-panel > header > strong { margin-top: 0; }
+  .trend-chart-stats { gap: 12px; }
+}
+
+}

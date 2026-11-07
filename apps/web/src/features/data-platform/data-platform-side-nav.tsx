@@ -25,6 +25,7 @@ import type { PlatformCategory } from "./types";
 
 type DataPlatformSideNavProps = {
   categories: PlatformCategory[];
+  showPlan?: boolean;
   className: string;
   currentUserLabel: string;
   city?: string;
@@ -51,13 +52,14 @@ type DataPlatformSideNavProps = {
 
 function navRowLabelKey(item: NavItem): string {
   if (item.key === FALLBACK_NAV_KEY) {
-    return "shell.signalObservatory";
+    return "shell.navHome";
   }
   return `shell.${item.labelKey}`;
 }
 
 export function DataPlatformSideNav({
   categories,
+  showPlan = false,
   className,
   city,
   date = null,
@@ -120,19 +122,10 @@ export function DataPlatformSideNav({
   }
 
   const workspaceItems = PRIMARY_NAV_ITEMS.filter((item) =>
-    navItemAvailable(item, categories),
+    navItemAvailable(item, categories) && (item.key !== TODAY_NAV_KEY || showPlan),
   );
-  const orderedWorkspaceItems = isMobileMenuOpen
-    ? [...workspaceItems].sort((left, right) => {
-        if (left.key === TODAY_NAV_KEY) {
-          return -1;
-        }
-        if (right.key === TODAY_NAV_KEY) {
-          return 1;
-        }
-        return 0;
-      })
-    : workspaceItems;
+  const topItems = workspaceItems.filter((item) => [FALLBACK_NAV_KEY, TODAY_NAV_KEY, "events"].includes(item.key));
+  const domainItems = workspaceItems.filter((item) => ![FALLBACK_NAV_KEY, TODAY_NAV_KEY, "events"].includes(item.key));
   const catalogItems = CATALOG_NAV_ITEMS.filter((item) =>
     navItemAvailable(item, categories),
   );
@@ -167,7 +160,6 @@ export function DataPlatformSideNav({
               {tKey("shell.navigation")}
             </span>
           </div>
-          <p className="brand-title-subtitle">{tKey("shell.publicData")}</p>
         </div>
         <button
           className="icon-button side-nav-collapse-button"
@@ -183,14 +175,17 @@ export function DataPlatformSideNav({
       </div>
 
       <nav className="side-nav-list" aria-label={tKey("shell.signalNavigation")}>
-        <span className="side-nav-group-label">{tKey("shell.workspaceMode")}</span>
-        {orderedWorkspaceItems.map(renderNavRow)}
+        <button className="nav-row side-nav-search" type="button" onClick={() => { if (isMobileMenuOpen) onHide(); window.setTimeout(() => window.dispatchEvent(new Event("arkiwatch:search")), 0); }}><MaterialIcon name="search" /><span>{tKey("shell.search")}</span><kbd>⌘K</kbd></button>
+        {topItems.map(renderNavRow)}
+        <span className="side-nav-catalog-label">{tKey("shell.domains")}</span>
+        {domainItems.map(renderNavRow)}
       </nav>
 
       {catalogItems.length > 0 ? (
         <nav className="side-nav-catalog" aria-label={tKey("shell.dataCatalogNavigation")}>
-          <span className="side-nav-catalog-label">{tKey("shell.dataCatalog")}</span>
+          <span className="side-nav-catalog-label">{tKey("shell.reference")}</span>
           {catalogItems.map(renderNavRow)}
+          {renderNavRow({ key: "sources", labelKey: "navSources", icon: "monitor_heart" })}
         </nav>
       ) : null}
 
@@ -207,7 +202,7 @@ export function DataPlatformSideNav({
             </span>
             <span>{tKey("shell.aboutArkiWatch")}</span>
           </Link>
-          {isAuthenticated ? (
+          {true ? (
             <Link
               aria-label={tKey("shell.personalSettingsTitle")}
               className="nav-row side-nav-utility-row"
@@ -254,7 +249,7 @@ export function DataPlatformSideNav({
             ) : null}
           </div>
         ) : null}
-        {isMobileMenuOpen && language && onLanguageChange ? (
+        {language && onLanguageChange ? (
           <div className="side-nav-mobile-preferences">
             <LanguageSwitchButton language={language} onLanguageChange={onLanguageChange} />
             <ThemeToggleButton language={language} themeMode={themeMode} onToggle={onToggleTheme} />

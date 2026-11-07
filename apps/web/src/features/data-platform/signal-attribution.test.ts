@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { formatSignalAttributionLine } from "./signal-attribution";
+import { demoFixtureForScope } from "./demo/demo-data";
+import { categorySignalAttribution, formatSignalAttributionLine } from "./signal-attribution";
 
 describe("signal attribution", () => {
   it("does not turn historical source timestamps into relative live ages", () => {
@@ -23,4 +24,12 @@ describe("signal attribution", () => {
     expect(line).toContain("31 May 2026");
     expect(line).not.toContain("ago");
   });
+});
+
+it("attributes the price reading to its provider rather than all Energy providers", () => {
+  const { overview, energy, householdEnergy } = demoFixtureForScope();
+  const category = overview.categories.find((c) => c.key === "energy")!;
+  const attribution = categorySignalAttribution(category, null, null, energy, householdEnergy, null, null);
+  expect(attribution.sources).toBe(householdEnergy.source_code.toUpperCase());
+  expect(attribution.updatedAt).toBe(householdEnergy.observed_at);
 });

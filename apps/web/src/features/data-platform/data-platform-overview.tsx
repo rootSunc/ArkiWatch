@@ -1,325 +1,278 @@
 "use client";
 
-import { useEffect, useRef, type ChangeEvent, type ReactNode } from "react";
-
-import { formatTimestamp } from "@/features/shared/format";
-
-import { scopedDataTimestamp } from "./data-time-scope";
+import { useState, type ReactNode } from "react";
+import { Card, EmptyState, StatusBadge } from "@/features/shared/ui/console";
+import { formatTimestamp, severityTone } from "@/features/shared/format";
 import { useI18n } from "./i18n";
+import { localizedContent } from "./content-localization";
 import type { SignalSystemTile } from "./signals-console";
 import type { TodayBrief } from "./today/today-brief";
-import { TodayDigestStrip } from "./today/today-digest-strip";
-import type { PlatformOverviewResponse } from "./types";
+import type { PlatformEvent, PlatformOverviewResponse } from "./types";
+import type { PersonalDashboardRead } from "./personal-dashboard";
+import { TrendChart, type TrendChartPoint } from "./trend-chart";
+import { DayPlanTimeline } from "./today/day-plan-timeline";
+import { SnapshotDownloadButton } from "./snapshot-download-button";
+import { ShareViewLinkButton } from "./share-view-link-button";
+import { eventStateAt } from "./event-time-state";
+import { scopedReferenceTime } from "./data-time-scope";
 
-function snapshotClock(value: string | null, timeZone: string): string {
-  if (!value) {
-    return "";
-  }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-  try {
-    return new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone,
-    }).format(parsed);
-  } catch {
-    return new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(parsed);
-  }
-}
-
-type DataPlatformOverviewProps = {
+export type DataPlatformOverviewProps = {
   checkedAt: string;
-  catalogSignalCards: ReactNode;
-  catalogSignalCount: number;
+  catalogSignalCards?: ReactNode;
+  catalogSignalCount?: number;
   coreSignalCards: ReactNode;
   coreSignalCount: number;
-  isCatalogExpanded: boolean;
-  isHistorical: boolean;
-  onCatalogToggle: (isOpen: boolean) => void;
+  isCatalogExpanded?: boolean;
+  onCatalogToggle?: (isOpen: boolean) => void;
   onOpenToday: () => void;
-  onSearchChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   overview: PlatformOverviewResponse;
   platformTimezone: string;
-  searchValue: string;
+  searchValue?: string;
   signalSystemTiles: SignalSystemTile[];
   todayBrief: TodayBrief | null;
-  sourceHealth: ReactNode;
+  sourceHealth?: ReactNode;
   secondaryContent?: ReactNode;
+  events?: PlatformEvent[];
+  onOpenEvent?: (event: PlatformEvent) => void;
+  onSelectNav?: (key: string) => void;
+  onOpenScenario?: (key: string) => void;
+  onOpenAssistant?: (question?: string) => void;
+  trendSeries?: {
+    key: string;
+    label: string;
+    unit?: string | null;
+    points: TrendChartPoint[];
+  }[];
+  onEditContext?: () => void;
+  personalDashboard?: PersonalDashboardRead | null;
 };
 
-function OverviewSearch({
-  onChange,
-  value,
-}: {
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  const { tKey } = useI18n();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  function handleChange(event: ChangeEvent<HTMLInputElement>): void {
-    onChange(event.currentTarget.value);
-  }
-
-  return (
-    <div
-      aria-label={tKey("shell.searchSignalsPlaceholder")}
-      className="overview-search"
-      role="search"
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        search
-      </span>
-      <label className="sr-only" htmlFor="overview-signal-search">
-        {tKey("shell.searchSignalsPlaceholder")}
-      </label>
-      <input
-        id="overview-signal-search"
-        onChange={handleChange}
-        placeholder={tKey("shell.searchSignalsPlaceholder")}
-        ref={inputRef}
-        value={value}
-      />
-      {value ? (
-        <button
-          aria-label={tKey("shell.clearSearch")}
-          className="overview-search-clear"
-          onClick={() => {
-            onChange("");
-            inputRef.current?.focus();
-          }}
-          type="button"
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            close
-          </span>
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function OverviewStatusBar({
-  overview,
-  platformTimezone,
-  tiles,
-}: {
-  overview: PlatformOverviewResponse;
-  platformTimezone: string;
-  tiles: SignalSystemTile[];
-}) {
-  const { language, tKey } = useI18n();
-  const snapshotDate = formatTimestamp(
-    overview.checked_at,
-    "date",
-    language,
-    platformTimezone,
-  );
-  const snapshotTime = snapshotClock(overview.checked_at, platformTimezone);
-
-  return (
-    <section className="overview-status-bar" aria-label={tKey("shell.signalSystemSummary")}>
-      <div className="overview-status-items">
-        {tiles.map((tile) => (
-          <article className={`overview-status-item overview-status-item-${tile.tone}`} key={tile.key}>
-            <span className="material-symbols-outlined" aria-hidden="true">
-              {tile.icon}
-            </span>
-            <div>
-              <span>{tile.label}</span>
-              <strong>
-                {tile.value.includes("/") ? (
-                  <>
-                    {tile.value.slice(0, tile.value.indexOf("/"))}
-                    <span className="quiet-value">
-                      {tile.value.slice(tile.value.indexOf("/"))}
-                    </span>
-                  </>
-                ) : (
-                  tile.value
-                )}
-              </strong>
-              <small>{tile.detail}</small>
-            </div>
-          </article>
-        ))}
-        <article className="overview-status-item overview-status-item-neutral overview-status-item-snapshot">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            schedule
-          </span>
-          <div>
-            <span>{tKey("shell.snapshotChecked")}</span>
-            {/* The clock is what people scan this cell for, so it takes the
-              * readout weight and the date drops to the detail row. One line
-              * only: the strip shares a baseline with the three cells beside
-              * it. */}
-            <strong>{snapshotTime || snapshotDate}</strong>
-            <small>
-              {snapshotTime ? `${snapshotDate}, ${platformTimezone}` : platformTimezone}
-            </small>
-          </div>
-        </article>
-      </div>
-    </section>
-  );
-}
-
 export function DataPlatformOverview({
-  checkedAt,
-  catalogSignalCards,
-  catalogSignalCount,
   coreSignalCards,
   coreSignalCount,
-  isCatalogExpanded,
-  isHistorical,
-  onCatalogToggle,
   onOpenToday,
-  onSearchChange,
   overview,
   platformTimezone,
-  searchValue,
   signalSystemTiles,
   todayBrief,
-  sourceHealth,
   secondaryContent,
+  events = [],
+  onOpenEvent,
+  onSelectNav,
+  onOpenScenario,
+  onOpenAssistant,
+  trendSeries = [],
+  personalDashboard,
+  onEditContext,
 }: DataPlatformOverviewProps) {
-  const { language, tKey } = useI18n();
-  const hasSearch = Boolean(searchValue.trim());
-  const healthDisclosureRef = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 641px)");
-    const syncLayout = () => {
-      if (healthDisclosureRef.current) healthDisclosureRef.current.open = desktop.matches;
-    };
-    syncLayout();
-    desktop.addEventListener("change", syncLayout);
-    return () => desktop.removeEventListener("change", syncLayout);
-  }, []);
-
+  const { language, tKey, enumLabel } = useI18n();
+  const [trendKey, setTrendKey] = useState("weather");
+  const activeSeries =
+    trendSeries.find((s) => s.key === trendKey) ?? trendSeries[0];
+  const action = todayBrief?.topActions[0];
+  const hasPersonalContext = Boolean(personalDashboard?.today?.cards.length || (personalDashboard?.onboarding_completion_percent ?? 0) > 0);
+  const openEvents = events.filter(
+    (event) => eventStateAt(event, scopedReferenceTime(overview.time_scope, overview.checked_at)!) === "active",
+  );
+  const health = overview.source_health;
   return (
-    <div className="overview-page">
-      <header className="overview-hero">
-        <div className="overview-hero-copy">
-          <div className="overview-hero-kicker">
-            <span className="overview-hero-eyebrow">{tKey("shell.observatoryEyebrow")}</span>
-            <span className="overview-hero-updated">
-              {tKey("shell.updated")} {scopedDataTimestamp(
-                checkedAt,
-                overview.time_scope,
-                language,
-                tKey,
-                "shell.notCollected",
-                platformTimezone,
-              )}
-            </span>
+    <div className="console-home overview-page">
+      <div className="home-page-tools">
+        <h1 className="sr-only">{tKey("shell.navHome")}</h1>
+        <details className="page-actions">
+          <summary aria-label={tKey("shell.pageActions")}>•••</summary>
+          <div>
+            <ShareViewLinkButton language={language} />
+            <SnapshotDownloadButton overview={overview} />
           </div>
-          <h1>{tKey("shell.signalObservatory")}</h1>
-          <p>{tKey("shell.dataPlatformLead")}</p>
-        </div>
-        <div className="overview-hero-tools">
-          <OverviewSearch onChange={onSearchChange} value={searchValue} />
-        </div>
-      </header>
-
-      {hasSearch ? (
-        <p className="overview-search-status" role="status">
-          {tKey("shell.searchResultsSummary").replace(
-            "{count}",
-            String(coreSignalCount + catalogSignalCount),
-          )}
-        </p>
-      ) : null}
-
-      <div
-        className={`overview-briefing${
-          hasSearch || !todayBrief?.hasScopedData
-            ? " overview-briefing-summary-only"
-            : ""
-        }`}
-      >
-        {!hasSearch ? (
-          <TodayDigestStrip onOpenToday={onOpenToday} todayBrief={todayBrief} />
-        ) : null}
-        <details className="overview-health-disclosure" ref={healthDisclosureRef}>
-          <summary><span>{tKey("shell.dataHealthDetails")}</span><span className="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>
-        <OverviewStatusBar
-          overview={overview}
-          platformTimezone={platformTimezone}
-          tiles={signalSystemTiles}
-        />
         </details>
       </div>
-
-      <section className="overview-core-section" aria-label={tKey("shell.signalStatusArray")}>
-        <div className="overview-section-heading">
-          <div>
-            <h2>{tKey("shell.coreSignals")}</h2>
-            <p>
-              {isHistorical
-                ? tKey("shell.historicalCoreSignalsLead")
-                : tKey("shell.coreSignalsLead")}
-            </p>
+      <div
+        className={`home-lead-grid${hasPersonalContext ? " home-with-day" : ""}`}
+      >
+        <section
+          className="home-decision"
+          aria-label={tKey("shell.recommendation")}
+        >
+          <span className="home-decision-label">
+            {tKey(
+              todayBrief?.recommendationMode === "live"
+                ? "shell.recommendation"
+                : "shell.snapshotBrief",
+            )}
+            {action ? ` · ${action.scenario_key}` : ""}
+          </span>
+          <h2>
+            {todayBrief?.headline ?? tKey("shell.noCurrentRecommendation")}
+          </h2>
+          {action ? (
+            <p>{localizedContent(language, action.body, action.body_zh)}</p>
+          ) : null}
+          <div className="home-decision-actions">
+            <button
+              className="console-button console-button-primary"
+              onClick={() =>
+                action
+                  ? onOpenScenario?.(action.scenario_key)
+                  : onSelectNav?.("sources")
+              }
+              type="button"
+            >
+              {tKey("shell.viewEvidence")} →
+            </button>
+            <button
+              className="console-button"
+              onClick={() => onOpenAssistant?.(todayBrief?.headline)}
+              type="button"
+            >
+              {tKey("shell.askAboutThis")}
+            </button>
           </div>
-          <span className="overview-section-count">
+          <div className="home-decision-foot">
+            {action?.evidence.slice(0, 2).join(" · ") ||
+              tKey("shell.addContext")}
+            <button
+              className="console-text-button"
+              type="button"
+              aria-label={tKey("shell.editContext")}
+              onClick={onEditContext}
+            >
+              {tKey("shell.editContext")} →
+            </button>
+          </div>
+        </section>
+        {hasPersonalContext ? (
+          <Card
+            title={tKey("shell.navPlan")}
+            action={
+              <button
+                className="console-text-button"
+                onClick={onOpenToday}
+                type="button"
+              >
+                {tKey("shell.all")} →
+              </button>
+            }
+            footer={tKey("shell.savedContext")}
+          >
+            <DayPlanTimeline
+              items={todayBrief?.planItems.slice(0, 3) ?? []}
+              language={language}
+              timezone={platformTimezone}
+              onOpenEvent={onOpenEvent}
+              onOpenScenario={onOpenScenario}
+            />
+          </Card>
+        ) : null}
+      </div>
+      <section
+        className="home-signals"
+        aria-label={tKey("shell.signalStatusArray")}
+      >
+        <div className="console-section-heading">
+          <h2>{tKey("shell.coreSignals")}</h2>
+          <span>
             {coreSignalCount} {tKey("shell.tracked")}
           </span>
         </div>
-        <div className="overview-signal-grid">
-          {coreSignalCards ?? (
-            hasSearch ? (
-              <div className="dashboard-empty-state">
-                {tKey("shell.noSignalCardsMatchTheCurrentSearch")}
-              </div>
-            ) : (
-              <div className="dashboard-empty-state dashboard-empty-state-rich" role="status">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  database
-                </span>
-                <div className="dashboard-empty-state-copy">
-                  <strong>{tKey("shell.noSignalDataForScope")}</strong>
-                  <p>{tKey("shell.noSignalDataForScopeDetail")}</p>
-                </div>
-              </div>
-            )
+        <div className="home-metrics">
+          {coreSignalCards || (
+            <EmptyState title={tKey("shell.noSignalDataForScope")} />
           )}
         </div>
       </section>
-
-      {catalogSignalCount > 0 ? (
-        <details
-          className="overview-catalog"
-          open={isCatalogExpanded || hasSearch}
-          onToggle={(event) => onCatalogToggle(event.currentTarget.open)}
+      <div className="home-bottom-grid">
+        <Card
+          title={`${tKey("shell.openEvents")} (${openEvents.length})`}
+          action={
+            <button
+              className="console-text-button"
+              onClick={() => onSelectNav?.("events")}
+              type="button"
+            >
+              {tKey("shell.allEvents")} →
+            </button>
+          }
         >
-          <summary aria-label={tKey("shell.toggleCatalogSignals")}>
-            <span className="overview-catalog-copy">
-              <span className="material-symbols-outlined" aria-hidden="true">
-                database
-              </span>
-              <span>
-                <strong>{tKey("shell.catalogSignals")}</strong>
-                <small>{tKey("shell.catalogSignalsLead")}</small>
-              </span>
-            </span>
-            <span className="overview-catalog-meta">
-              {catalogSignalCount}
-              <span className="material-symbols-outlined" aria-hidden="true">
-                expand_more
-              </span>
-            </span>
-          </summary>
-          <div className="overview-signal-grid overview-signal-grid-catalog">
-            {catalogSignalCards}
+          {openEvents.length ? (
+            <ul className="home-event-list">
+              {openEvents.slice(0, 4).map((event) => (
+                <li key={event.id}>
+                  <button onClick={() => onOpenEvent?.(event)} type="button">
+                    <StatusBadge tone={severityTone(event.severity)}>
+                      {enumLabel(event.severity)}
+                    </StatusBadge>
+                    <span>
+                      {localizedContent(language, event.title, event.title_zh)}
+                    </span>
+                    <time dateTime={event.starts_at}>
+                      {formatTimestamp(
+                        event.starts_at,
+                        "time",
+                        language,
+                        platformTimezone,
+                      )}
+                    </time>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              title={tKey("shell.noOpenEvents")}
+              description={tKey("shell.noEventsRemedy")}
+            />
+          )}
+        </Card>
+        <section className="home-trend">
+          <div
+            className="console-chart-controls"
+            role="group"
+            aria-label={tKey("shell.trend24h")}
+          >
+            {trendSeries.map((series) => (
+              <button
+                type="button"
+                key={series.key}
+                aria-pressed={series.key === activeSeries?.key}
+                onClick={() => setTrendKey(series.key)}
+              >
+                {series.label}
+              </button>
+            ))}
           </div>
-        </details>
-      ) : null}
-
-      {sourceHealth}
-
-      <div className="overview-secondary-content">{secondaryContent}</div>
+          <TrendChart
+            eyebrow={tKey(
+              activeSeries?.key === "air"
+                ? "shell.availableHistory"
+                : "shell.trend24h",
+            )}
+            referenceAt={overview.checked_at}
+            title={activeSeries?.label ?? tKey("shell.trend24h")}
+            points={activeSeries?.points ?? []}
+            unit={activeSeries?.unit}
+          />
+        </section>
+      </div>
+      <footer className="home-source-footer">
+        <span>
+          {health
+            ? tKey("shell.sourceSummary")
+                .replace("{healthy}", String(health.healthy))
+                .replace("{tracked}", String(health.tracked))
+                .replace("{issues}", String(health.issues))
+            : signalSystemTiles.find((t) => t.key === "source_health")?.detail}
+        </span>
+        <button
+          className="console-text-button"
+          type="button"
+          onClick={() => onSelectNav?.("sources")}
+        >
+          {tKey("shell.navSources")} →
+        </button>
+      </footer>
+      {secondaryContent}
     </div>
   );
 }

@@ -71,12 +71,12 @@ export function MobilityWorkspace({
   const sourceLabel = [transit?.source_code, roadRail?.source_code]
     .filter((code): code is string => Boolean(code))
     .map((code) => code.toUpperCase())
-    .join(" · ");
+    .join(", ");
   const alertCount = transit && !isEmptyStatus(transit.status)
     ? (transit.quality.active_alert_count ?? 0)
     : 0;
   const mobilityStatus = alertCount > 0
-    ? `${tKey("mobility.watch")} · ${alertCount} ${tKey("mobility.activeNotices")}`
+    ? `${tKey("mobility.watch")}, ${alertCount} ${tKey("mobility.activeNotices")}`
     : evidence
       ? scopedStatusLabel(
           evidence.status,

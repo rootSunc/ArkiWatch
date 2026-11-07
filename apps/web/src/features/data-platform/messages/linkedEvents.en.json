@@ -82,7 +82,7 @@
     "today": "Today",
     "week7DayHorizon": "This week",
     "freeEvents": "Free",
-    "providerCoverage": "Linked Events endpoints are configured per city · Helsinki and Espoo",
+    "providerCoverage": "Linked Events endpoints are configured per city, Helsinki and Espoo",
     "eventsInScope": "{shown} of {total} events in scope",
     "coverageCities": "Coverage: Helsinki, Espoo",
     "categoryDescription": "Public events and activities.",

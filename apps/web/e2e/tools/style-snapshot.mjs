@@ -14,7 +14,9 @@ import { chromium } from "@playwright/test";
 const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:3100";
 const OUTPUT = process.argv[2] ?? "style-snapshot.json";
 
-const ROUTES = [
+const DEFAULT_ROUTES = [
+  "/plan",
+  "/?view=sources",
   "/?view=today",
   "/?view=overview",
   "/?view=weather",
@@ -33,6 +35,8 @@ const ROUTES = [
   "/settings",
   "/no-such-route",
 ];
+
+const ROUTES = process.env.SNAPSHOT_ROUTES ? JSON.parse(process.env.SNAPSHOT_ROUTES) : DEFAULT_ROUTES;
 
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 900 },

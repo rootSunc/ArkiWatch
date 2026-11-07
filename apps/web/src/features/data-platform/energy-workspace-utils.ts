@@ -449,7 +449,7 @@ export function energyHistoryPoints(
         label: formatHistoryDate(snapshot.date, language, timeZone),
         value: averageValue,
         detail: data.current_window
-          ? `${rangeDetail} · ${data.current_window.point_count} ${tKey("energy.windowPoints")}`
+          ? `${rangeDetail}, ${data.current_window.point_count} ${tKey("energy.windowPoints")}`
           : rangeDetail
       }
     ];
@@ -581,14 +581,14 @@ export function householdChromeTiles(options: {
       key: "best_price_today",
       label: tKey("energy.bestPriceToday"),
       value: bestValue == null ? noValue : formatPriceNumber(bestValue),
-      caption: bestValue == null ? unit : `${unit} · ${bestRange}`,
+      caption: bestValue == null ? unit : `${unit}, ${bestRange}`,
       tone: "good",
     },
     {
       key: "current_hour",
       label: tKey("energy.currentHour"),
       value: currentPoint == null ? noValue : formatPriceNumber(currentPoint.value),
-      caption: currentPoint == null ? unit : `${unit} · ${currentRange}`,
+      caption: currentPoint == null ? unit : `${unit}, ${currentRange}`,
     },
     {
       key: "cost_spread",

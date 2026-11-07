@@ -30,7 +30,7 @@
     "updated": "更新时间",
     "empty": "空",
     "stationsTitle": "站点",
-    "stationCoverageStatus": "静态演示快照 · HSY 站点覆盖",
+    "stationCoverageStatus": "静态演示快照，HSY 站点覆盖",
     "cityScoreNote": "城市评分取自 Open-Meteo 读数。HSY 站点覆盖仅含赫尔辛基、埃斯波和万塔。",
     "snapshotAge": "快照",
     "absoluteDemoTimestamp": "演示数据使用绝对时间",
