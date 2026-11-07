@@ -105,7 +105,7 @@ func EnrichDetail(c *Current) {
 		caution, severe float64
 		get             func(Station) *float64
 	}{
-		{"european_aqi", 50, 75, func(s Station) *float64 { return s.EuropeanAQI }},
+		{"european_aqi", 40, 60, func(s Station) *float64 { return s.EuropeanAQI }},
 		{"pm2_5", 10, 25, func(s Station) *float64 { return s.PM25 }},
 		{"pm10", 20, 50, func(s Station) *float64 { return s.PM10 }},
 		{"no2", 40, 100, func(s Station) *float64 { return s.NO2 }},

@@ -80,6 +80,7 @@ type Current struct {
 
 func Build(data observations.TransitData, scope timescope.Scope, now time.Time, location string) (result Current) {
 	defer func() { EnrichDetail(&result) }()
+	fetched := !data.Raw.ObservedAt.IsZero()
 	rawAlerts := rawAlerts(data.Raw.Payload["body"])
 	active, routes, stops := 0, 0, 0
 	alerts := make([]Alert, 0, len(data.Events))
@@ -87,13 +88,14 @@ func Build(data observations.TransitData, scope timescope.Scope, now time.Time, 
 		if !event.StartsAt.After(scope.ReferenceTime) && !event.EndsAt.Before(scope.ReferenceTime) {
 			active++
 		}
-		if len(stringList(event.Attributes["route_ids"])) > 0 {
+		alert := alertFromEvent(event, scope.ReferenceTime)
+		if len(alert.RouteIDs) > 0 {
 			routes++
 		}
-		if len(stringList(event.Attributes["stop_ids"])) > 0 {
+		if len(alert.StopIDs) > 0 {
 			stops++
 		}
-		alerts = append(alerts, alertFromEvent(event, scope.ReferenceTime))
+		alerts = append(alerts, alert)
 	}
 	sort.SliceStable(alerts, func(i, j int) bool {
 		if alerts[i].Active != alerts[j].Active {
@@ -105,27 +107,46 @@ func Build(data observations.TransitData, scope timescope.Scope, now time.Time, 
 		return alerts[i].StartsAt < alerts[j].StartsAt
 	})
 	missing := []string{}
-	if len(rawAlerts) == 0 {
-		missing = []string{"alert id", "header", "description", "effect", "time window"}
-	}
 	coverage := 0.0
-	if len(rawAlerts) > 0 {
+	if len(rawAlerts) == 0 {
+		if fetched {
+			coverage = 100
+		} else {
+			missing = []string{"alert id", "header", "description", "effect", "time window"}
+		}
+	} else {
+		fields := []struct {
+			label string
+			keys  []string
+		}{
+			{"alert id", []string{"id", "alertId", "gtfsId"}},
+			{"header", []string{"alertHeaderText", "headerText", "title"}},
+			{"description", []string{"alertDescriptionText", "descriptionText", "description"}},
+			{"effect", []string{"alertEffect", "effect"}},
+			{"time window", []string{"effectiveStartDate", "startTime", "startsAt"}},
+		}
 		present := 0
-		for _, key := range []string{"id", "alertHeaderText", "alertDescriptionText", "effect", "effectiveStartDate"} {
+		for _, check := range fields {
+			found := false
 			for _, item := range rawAlerts {
-				if item[key] != nil && firstText(item[key]) != "" {
-					present++
+				if anyFieldPresent(item, check.keys...) {
+					found = true
 					break
 				}
 			}
+			if found {
+				present++
+			} else {
+				missing = append(missing, check.label)
+			}
 		}
-		coverage = float64(present) / 5 * 100
+		coverage = float64(present) / float64(len(fields)) * 100
 	}
 	status := "empty"
-	if len(rawAlerts) > 0 || len(alerts) > 0 {
+	if fetched || len(rawAlerts) > 0 || len(alerts) > 0 {
 		status = "ready"
 	}
-	if !data.Raw.ObservedAt.IsZero() && scope.Mode == "live" && data.Raw.ObservedAt.Before(scope.ReferenceTime.Add(-20*time.Minute)) && status == "ready" {
+	if fetched && scope.Mode == "live" && data.Raw.ObservedAt.Before(scope.ReferenceTime.Add(-20*time.Minute)) && status == "ready" {
 		status = "stale"
 	}
 	if location == "" {
@@ -134,7 +155,7 @@ func Build(data observations.TransitData, scope timescope.Scope, now time.Time, 
 	locationPtr := &location
 	quality := Quality{RawAlertCount: len(rawAlerts), NormalizedEventCount: len(alerts), ActiveAlertCount: active, RouteAlertCount: routes, StopAlertCount: stops, FieldCoveragePct: coverage, MissingFields: missing, Notes: []string{"HSL service alerts are read from the configured Digitransit feed."}}
 	summary := fmt.Sprintf("%d HSL service alerts decoded. %d alerts are active now; %d include route scope and %d include stop scope.", len(rawAlerts), active, routes, stops)
-	return Current{CheckedAt: timescope.Format(now), TimeScope: scope.Payload(), Status: status, Location: locationPtr, SourceCode: "digitransit", ObservedAt: optionalTime(data.Raw.ObservedAt), Summary: &summary, Metrics: []Metric{metric("raw_alerts", "Raw alerts", len(rawAlerts)), metric("active_alerts", "Active alerts", active), metric("disruptions", "Disruptions", countEvents(data.Events, "transit_disruption")), metric("delays", "Delays", countEvents(data.Events, "transit_delay")), metric("high_severity", "High severity", countSeverity(data.Events, "HIGH")), metric("route_scoped", "Route scoped", routes), metric("stop_scoped", "Stop scoped", stops)}, Alerts: alerts, SourceRequests: []SourceRequest{{Key: "service_alerts", Label: "HSL service alerts", Status: map[bool]string{true: "fetched", false: "missing"}[!data.Raw.ObservedAt.IsZero()], Endpoint: textPointer(data.Raw.Payload["request_url"]), ContentType: textPointer(data.Raw.Payload["content_type"]), FetchedAt: optionalTime(data.Raw.ObservedAt)}}, DataPipeline: pipeline(len(rawAlerts), len(alerts)), Quality: quality}
+	return Current{CheckedAt: timescope.Format(now), TimeScope: scope.Payload(), Status: status, Location: locationPtr, SourceCode: "digitransit", ObservedAt: optionalTime(data.Raw.ObservedAt), Summary: &summary, Metrics: []Metric{metric("raw_alerts", "Raw alerts", len(rawAlerts)), metric("active_alerts", "Active alerts", active), metric("disruptions", "Disruptions", countEvents(data.Events, "transit_disruption")), metric("delays", "Delays", countEvents(data.Events, "transit_delay")), metric("high_severity", "High severity", countSeverity(data.Events, "HIGH")), metric("route_scoped", "Route scoped", routes), metric("stop_scoped", "Stop scoped", stops)}, Alerts: alerts, SourceRequests: []SourceRequest{{Key: "service_alerts", Label: "HSL service alerts", Status: map[bool]string{true: "fetched", false: "missing"}[fetched], Endpoint: textPointer(data.Raw.Payload["request_url"]), ContentType: textPointer(data.Raw.Payload["content_type"]), FetchedAt: optionalTime(data.Raw.ObservedAt)}}, DataPipeline: pipeline(fetched, len(rawAlerts), len(alerts)), Quality: quality}
 }
 
 func Unavailable(scope timescope.Scope, now time.Time) (result Current) {
@@ -165,14 +186,85 @@ func alertFromEvent(event observations.NormalizedEvent, now time.Time) Alert {
 	if id == "" {
 		id = event.ID
 	}
-	return Alert{ID: id, Title: event.Title, Description: event.Summary, Severity: event.Severity, EventType: event.EventType, StartsAt: timescope.Format(event.StartsAt), EndsAt: timescope.Format(event.EndsAt), Active: !event.StartsAt.After(now) && !event.EndsAt.Before(now), Cause: textPointer(event.Attributes["cause"]), Effect: textPointer(event.Attributes["effect"]), RouteIDs: stringList(event.Attributes["route_ids"]), StopIDs: stringList(event.Attributes["stop_ids"]), TripIDs: stringList(event.Attributes["trip_ids"])}
+	return Alert{
+		ID:          id,
+		Title:       event.Title,
+		Description: event.Summary,
+		Severity:    event.Severity,
+		EventType:   event.EventType,
+		StartsAt:    timescope.Format(event.StartsAt),
+		EndsAt:      timescope.Format(event.EndsAt),
+		Active:      !event.StartsAt.After(now) && !event.EndsAt.Before(now),
+		Cause:       textPointer(event.Attributes["cause"]),
+		Effect:      textPointer(event.Attributes["effect"]),
+		RouteIDs:    entityValues(event.Attributes, "routes", "route_ids"),
+		StopIDs:     entityValues(event.Attributes, "stops", "stop_ids"),
+		TripIDs:     stringList(event.Attributes["trip_ids"]),
+	}
 }
 func metric(key, label string, value int) Metric {
 	return Metric{Key: key, Label: label, LabelKey: key, Value: fmt.Sprint(value)}
 }
-func pipeline(raw, events int) []DataStage {
+func pipeline(fetched bool, raw, events int) []DataStage {
 	rawCount, eventCount, total := raw, events, raw+events
-	return []DataStage{{Key: "source_acquisition", Label: "Source acquisition", Status: map[bool]string{true: "ready", false: "missing"}[raw > 0], Detail: "Configured HSL service alert feed", RecordCount: &rawCount}, {Key: "cleaning_normalization", Label: "Cleaning & normalization", Status: map[bool]string{true: "ready", false: "empty"}[events > 0], Detail: fmt.Sprintf("%d normalized transit alert events available.", events), RecordCount: &eventCount}, {Key: "visualization_ready", Label: "Visualization-ready data", Status: map[bool]string{true: "ready", false: "empty"}[total > 0], Detail: fmt.Sprintf("%d raw alerts and %d timeline events prepared.", raw, events), RecordCount: &total}}
+	acquired := fetched || raw > 0 || events > 0
+	return []DataStage{
+		{Key: "source_acquisition", Label: "Source acquisition", Status: map[bool]string{true: "ready", false: "missing"}[acquired], Detail: "Configured HSL service alert feed", RecordCount: &rawCount},
+		{Key: "cleaning_normalization", Label: "Cleaning & normalization", Status: map[bool]string{true: "ready", false: "empty"}[acquired], Detail: fmt.Sprintf("%d normalized transit alert events available.", events), RecordCount: &eventCount},
+		{Key: "visualization_ready", Label: "Visualization-ready data", Status: map[bool]string{true: "ready", false: "empty"}[acquired], Detail: fmt.Sprintf("%d raw alerts and %d timeline events prepared.", raw, events), RecordCount: &total},
+	}
+}
+func anyFieldPresent(item map[string]any, keys ...string) bool {
+	for _, key := range keys {
+		if value, ok := item[key]; ok && value != nil {
+			switch typed := value.(type) {
+			case string:
+				if strings.TrimSpace(typed) != "" {
+					return true
+				}
+			case float64, int, int64:
+				return true
+			default:
+				if firstText(typed) != "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+func entityValues(attributes map[string]any, structuredKey, legacyKey string) []string {
+	seen := map[string]struct{}{}
+	result := []string{}
+	add := func(value string) {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return
+		}
+		if _, exists := seen[value]; exists {
+			return
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	for _, id := range stringList(attributes[legacyKey]) {
+		add(id)
+	}
+	if structured, ok := attributes[structuredKey].([]any); ok {
+		for _, item := range structured {
+			switch typed := item.(type) {
+			case string:
+				add(typed)
+			case map[string]any:
+				label := firstText(typed["name"])
+				if label == "" {
+					label = firstText(typed["gtfs_id"])
+				}
+				add(label)
+			}
+		}
+	}
+	return result
 }
 func countEvents(events []observations.NormalizedEvent, kind string) int {
 	n := 0

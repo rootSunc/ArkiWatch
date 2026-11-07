@@ -38,6 +38,7 @@ func TestBuildCoverageSeparatesConfiguredSourcesFromCatalog(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.DefaultPlace = "Vaasa"
 	cfg.WeatherPlaces = []string{"vaasa=Vaasa"}
+	cfg.AirQualityPlaces = nil
 	cfg.OpenMeteoAirQualityLocations = nil
 	cfg.LinkedEventsCityAPIBaseURLs = nil
 	coverage := BuildCoverage(cfg)
@@ -45,5 +46,26 @@ func TestBuildCoverageSeparatesConfiguredSourcesFromCatalog(t *testing.T) {
 		if city.Configured {
 			t.Fatalf("unexpected configured catalog city: %s", city.CityRef)
 		}
+	}
+}
+
+func TestBuildCoverageMarksAirQualityPlacesConsistentWithSupportedCityRefs(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.DefaultPlace = "Helsinki"
+	cfg.WeatherPlaces = nil
+	cfg.AirQualityPlaces = []string{"espoo=Espoo"}
+	cfg.OpenMeteoAirQualityLocations = nil
+	cfg.LinkedEventsCityAPIBaseURLs = nil
+
+	coverage := BuildCoverage(cfg)
+	byRef := make(map[string]CityPack, len(coverage.Cities))
+	for _, city := range coverage.Cities {
+		byRef[city.CityRef] = city
+	}
+	if !byRef["espoo"].Configured {
+		t.Fatal("expected Espoo to be marked Configured when present in AirQualityPlaces")
+	}
+	if byRef["vantaa"].Configured {
+		t.Fatal("expected Vantaa to remain unconfigured when absent from all place lists")
 	}
 }

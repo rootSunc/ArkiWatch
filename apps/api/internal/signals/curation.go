@@ -130,7 +130,7 @@ func usefulness(e platform.Event, now time.Time) int {
 		}
 	}
 	concrete := e.Attributes["is_free"] == true
-	for _, key := range []string{"place_name", "location_description", "provider", "info_url", "route_ids", "stop_ids", "trip_ids"} {
+	for _, key := range []string{"place_name", "location_description", "provider", "info_url", "route_ids", "stop_ids", "trip_ids", "routes", "stops"} {
 		v := text(e.Attributes[key])
 		if v != "" && v != "[]" && v != "null" {
 			concrete = true

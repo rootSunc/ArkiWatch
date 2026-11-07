@@ -736,3 +736,53 @@ func TestDigitransitGraphQLURLFallsBackWhenTheEnvBlanksTheRoutingURL(t *testing.
 		t.Fatalf("url = %q", url)
 	}
 }
+
+func TestHSYCollectPartitionsRegionalStationsAcrossConfiguredAirQualityPlaces(t *testing.T) {
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"type":"FeatureCollection",
+			"features":[
+				{"properties":{"Mittausasema":"Kallio 2","kaupunki":"Helsinki","Ilmanlaatuindeksi":28}},
+				{"properties":{"Mittausasema":"Leppävaara","kaupunki":"Espoo","Ilmanlaatuindeksi":64}},
+				{"properties":{"Mittausasema":"Tikkurila","kaupunki":"Vantaa","Ilmanlaatuindeksi":41}}
+			]
+		}`))
+	}))
+	defer server.Close()
+
+	cfg := config.DefaultConfig()
+	cfg.HSYWFSURL = server.URL
+	cfg.AirQualityPlaces = []string{"helsinki=Helsinki", "espoo=Espoo", "vantaa=Vantaa"}
+
+	items, err := (hsyCollector{cfg: cfg}).Collect(context.Background())
+	if err != nil {
+		t.Fatalf("collect: %v", err)
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("expected one shared WFS request, made %d", calls.Load())
+	}
+	if len(items) != 3 {
+		t.Fatalf("expected 3 city-scoped observations, got %d: %#v", len(items), items)
+	}
+	byCity := map[string]Observation{}
+	for _, item := range items {
+		byCity[item.AreaCode] = item
+	}
+	for city, wantStation := range map[string]string{"helsinki": "Kallio 2", "espoo": "Leppävaara", "vantaa": "Tikkurila"} {
+		obs, ok := byCity[city]
+		if !ok {
+			t.Fatalf("missing observation for %s", city)
+		}
+		features, _ := obs.Payload["body"].(map[string]any)["features"].([]any)
+		if len(features) != 1 {
+			t.Fatalf("%s expected 1 station feature, got %#v", city, features)
+		}
+		got := features[0].(map[string]any)["properties"].(map[string]any)["Mittausasema"]
+		if got != wantStation {
+			t.Fatalf("%s station = %v, want %s", city, got, wantStation)
+		}
+	}
+}

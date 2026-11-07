@@ -85,7 +85,7 @@ func TestBuildMergesOpenMeteoWithHSYAndSortsByScoreDescending(t *testing.T) {
 	hsyRaw := observations.RawObservation{Dataset: "air_quality_current", ObservedAt: now, Payload: map[string]any{"body": hsyBody}}
 	openMeteoRaw := observations.RawObservation{
 		Dataset: "open_meteo_air_quality", ObservedAt: now, AreaCode: "vantaa",
-		Payload: map[string]any{"body": map[string]any{"current": map[string]any{"pm2_5": 5.0, "european_aqi": 120.0}}}, // score 4
+		Payload: map[string]any{"body": map[string]any{"current": map[string]any{"pm2_5": 5.0, "european_aqi": 70.0}}}, // EEA 60-80 => score 4 (poor)
 	}
 	event := &observations.NormalizedEvent{
 		LocationRef: "helsinki-uusimaa", StartsAt: now.Add(-time.Hour), EndsAt: now.Add(time.Hour),
@@ -134,6 +134,26 @@ func TestOpenMeteoStationDerivesPlaceFromAreaCodeAndReturnsNilWithoutSignal(t *t
 
 	if station := openMeteoStation(observations.RawObservation{Dataset: "open_meteo_air_quality", Payload: map[string]any{}}); station != nil {
 		t.Fatalf("expected nil when the payload has no body, got %#v", station)
+	}
+}
+
+func TestScoreSeparatesEuropeanAQIFromFinnishIlmanlaatuindeksi(t *testing.T) {
+	omModerate := openMeteoStation(observations.RawObservation{
+		Dataset: "open_meteo_air_quality", AreaCode: "tampere",
+		Payload: map[string]any{"body": map[string]any{"current": map[string]any{"european_aqi": 48.0}}},
+	})
+	if omModerate == nil || omModerate.Score == nil || *omModerate.Score != 3 {
+		t.Fatalf("expected EEA AQI 48 to score as 3 (moderate), got %#v", omModerate)
+	}
+
+	hsyGood := stationsFromRaw(observations.RawObservation{
+		Dataset: "air_quality_current",
+		Payload: map[string]any{"body": map[string]any{"features": []any{
+			map[string]any{"properties": map[string]any{"Mittausasema": "Kallio", "Ilmanlaatuindeksi": 48.0}},
+		}}},
+	})
+	if len(hsyGood) != 1 || hsyGood[0].Score == nil || *hsyGood[0].Score != 1 {
+		t.Fatalf("expected Finnish Ilmanlaatuindeksi 48 to score as 1 (good), got %#v", hsyGood)
 	}
 }
 

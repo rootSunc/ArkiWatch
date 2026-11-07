@@ -1,7 +1,10 @@
 package publicrules
 
 import (
+	"encoding/json"
+	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/observations"
@@ -25,7 +28,7 @@ func Build(events []observations.NormalizedEvent, sourceStatuses map[string]stri
 	base := []Draft{}
 	for _, event := range events {
 		scenario, ok := scenarios[event.EventType]
-		if !ok || event.EndsAt.Before(now) {
+		if !ok || event.EndsAt.Before(now) || !eventAppliesToUusimaa(event) {
 			continue
 		}
 		priority := map[string]int{"HIGH": 95, "MEDIUM": 70, "LOW": 45, "INFO": 25}[event.Severity]
@@ -79,3 +82,62 @@ func areaScope(scenario string) string {
 	return "HELSINKI_UUSIMAA"
 }
 func eventConfidence(event observations.NormalizedEvent) *float64 { return nil }
+
+var uusimaaRefs = map[string]bool{
+	"helsinki":         true,
+	"espoo":            true,
+	"vantaa":           true,
+	"kauniainen":       true,
+	"uusimaa":          true,
+	"helsinki_uusimaa": true,
+	"helsinki_metro":   true,
+}
+
+var uusimaaTrafficTerms = []string{
+	"helsinki", "espoo", "vantaa", "kauniainen", "kirkkonummi", "kerava", "tuusula", "sipoo", "uusimaa",
+	"kehä i", "keha i", "kehä iii", "keha iii", "ring i", "ring iii",
+	"länsiväylä", "lansivayla", "tuusulanväylä", "tuusulanvayla",
+	"lahdenväylä", "lahdenvayla", "turunväylä", "turunvayla",
+	"porvoonväylä", "porvoonvayla", "hämeenlinnanväylä", "hameenlinnanvayla",
+}
+
+// eventAppliesToUusimaa prevents city-scoped events from Tampere, Turku, Oulu,
+// or northern Finland road feeds from being stamped as HELSINKI_UUSIMAA public
+// recommendations and broadcasts.
+func eventAppliesToUusimaa(event observations.NormalizedEvent) bool {
+	if event.EventType == "cheap_energy_window" {
+		return true
+	}
+	ref := strings.ReplaceAll(strings.ToLower(strings.TrimSpace(event.LocationRef)), "-", "_")
+	if ref == "" || uusimaaRefs[ref] {
+		return true
+	}
+	if ref == "finland" {
+		return nationalRoadTouchesUusimaa(event)
+	}
+	return false
+}
+
+func nationalRoadTouchesUusimaa(event observations.NormalizedEvent) bool {
+	if raw, err := json.Marshal(event.Attributes["geometry_bbox"]); err == nil {
+		var bbox []float64
+		if json.Unmarshal(raw, &bbox) == nil && len(bbox) == 4 {
+			lat, lon := (bbox[1]+bbox[3])/2, (bbox[0]+bbox[2])/2
+			const centerLat, centerLon = 60.22, 24.88
+			rad := math.Pi / 180
+			dlat, dlon := (lat-centerLat)*rad, (lon-centerLon)*rad
+			h := math.Pow(math.Sin(dlat/2), 2) + math.Cos(centerLat*rad)*math.Cos(lat*rad)*math.Pow(math.Sin(dlon/2), 2)
+			return 2*6371*math.Asin(math.Min(1, math.Sqrt(h))) <= 45
+		}
+	}
+	haystack := strings.ToLower(event.Title + " " + event.Summary)
+	if attrs, err := json.Marshal(event.Attributes); err == nil {
+		haystack += " " + strings.ToLower(string(attrs))
+	}
+	for _, term := range uusimaaTrafficTerms {
+		if strings.Contains(haystack, term) {
+			return true
+		}
+	}
+	return false
+}

@@ -871,12 +871,163 @@ func graphQLError(body map[string]any) error {
 	return fmt.Errorf("digitransit GraphQL error: %s", strings.Join(messages, "; "))
 }
 
+type hsyCollector struct{ cfg config.Config }
+
+func (collector hsyCollector) SourceCode() string { return "hsy" }
+func (collector hsyCollector) Dataset() string    { return "air_quality_current" }
+
+func (collector hsyCollector) Collect(ctx context.Context) ([]Observation, error) {
+	now := observedNow()
+	endpoint := nonEmpty(collector.cfg.HSYWFSURL, collector.cfg.HSYAPIURL)
+	query := map[string]string{
+		"service":      "WFS",
+		"version":      "2.0.0",
+		"request":      "GetFeature",
+		"typeNames":    collector.cfg.HSYAirQualityLayer,
+		"outputFormat": "application/json",
+		"srsName":      "EPSG:4326",
+	}
+	body, headers, _, err := CollectJSON(ctx, client(collector.cfg.CollectorTimeoutSeconds), "GET", endpoint, nil, query)
+	if err != nil {
+		return nil, err
+	}
+	places := parseWeatherPlaces(collector.cfg.AirQualityPlaces, collector.cfg)
+	features, hasFeatures := body["features"].([]any)
+	requestURL := endpoint + "?" + encodeQuery(query)
+	contentType := headers.Get("Content-Type")
+
+	if !hasFeatures || len(features) == 0 {
+		area := strings.ToLower(collector.cfg.DefaultPlace)
+		payload := payloadForRequest(body, requestURL, contentType)
+		payload["fetched_at"], payload["area_code"], payload["place"] = now.Format(time.RFC3339Nano), area, collector.cfg.DefaultPlace
+		hash, err := BuildObservationHash(collector.SourceCode(), collector.Dataset(), area, now, payload)
+		if err != nil {
+			return nil, err
+		}
+		return []Observation{{Dataset: collector.Dataset(), AreaCode: area, ObservedAt: now, Payload: payload, Hash: hash}}, nil
+	}
+
+	result := make([]Observation, 0, len(places))
+	for _, place := range places {
+		matched := filterHSYFeaturesForCity(features, place.AreaCode)
+		if len(matched) == 0 {
+			continue
+		}
+		cityBody := make(map[string]any, len(body))
+		for key, value := range body {
+			cityBody[key] = value
+		}
+		cityBody["features"] = matched
+		payload := payloadForRequest(cityBody, requestURL, contentType)
+		payload["fetched_at"], payload["area_code"], payload["place"] = now.Format(time.RFC3339Nano), place.AreaCode, place.Place
+		hash, err := BuildObservationHash(collector.SourceCode(), collector.Dataset(), place.AreaCode, now, payload)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, Observation{Dataset: collector.Dataset(), AreaCode: place.AreaCode, ObservedAt: now, Payload: payload, Hash: hash})
+	}
+	if len(result) > 0 {
+		return result, nil
+	}
+
+	area := strings.ToLower(collector.cfg.DefaultPlace)
+	payload := payloadForRequest(body, requestURL, contentType)
+	payload["fetched_at"], payload["area_code"], payload["place"] = now.Format(time.RFC3339Nano), area, collector.cfg.DefaultPlace
+	hash, err := BuildObservationHash(collector.SourceCode(), collector.Dataset(), area, now, payload)
+	if err != nil {
+		return nil, err
+	}
+	return []Observation{{Dataset: collector.Dataset(), AreaCode: area, ObservedAt: now, Payload: payload, Hash: hash}}, nil
+}
+
+func filterHSYFeaturesForCity(features []any, cityRef string) []any {
+	wanted := strings.ToLower(strings.TrimSpace(cityRef))
+	matched := make([]any, 0, len(features))
+	for _, raw := range features {
+		feature, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		detected := hsyFeatureCity(feature)
+		if detected == "" || detected == wanted {
+			matched = append(matched, feature)
+		}
+	}
+	return matched
+}
+
+func hsyFeatureCity(feature map[string]any) string {
+	props, _ := feature["properties"].(map[string]any)
+	for _, key := range []string{"kaupunki", "kunta", "municipality", "city", "Kaupunki", "Kunta"} {
+		if raw, ok := props[key].(string); ok {
+			switch strings.ToLower(strings.TrimSpace(raw)) {
+			case "helsinki", "helsingfors":
+				return "helsinki"
+			case "espoo", "esbo", "kauniainen", "grankulla":
+				return "espoo"
+			case "vantaa", "vanda":
+				return "vantaa"
+			}
+		}
+	}
+	for _, key := range []string{"station", "station_name", "name", "nimi", "aseman_nimi", "mittausasema", "Mittausasema", "Nimi"} {
+		if raw, ok := props[key].(string); ok && strings.TrimSpace(raw) != "" {
+			lower := strings.ToLower(raw)
+			for _, token := range []string{"espoo", "leppävaara", "leppavaara", "luukki", "tapiola", "matinkylä", "matinkyla", "lintuvaara", "olari", "kauniainen"} {
+				if strings.Contains(lower, token) {
+					return "espoo"
+				}
+			}
+			for _, token := range []string{"vantaa", "tikkurila", "myyrmäki", "myyrmaki", "rekola", "lentoasema", "hämeenlinnanväylä", "hameenlinnanvayla", "ruskeasanta", "kivistö", "kivisto"} {
+				if strings.Contains(lower, token) {
+					return "vantaa"
+				}
+			}
+			for _, token := range []string{"helsinki", "kallio", "mannerheimintie", "mäkelänkatu", "makelankatu", "töölö", "toolo", "vallila", "vartiokylä", "vartiokyla", "vuosaari", "pirkkola", "länsisatama", "lansisatama", "katajanokka", "itäkeskus", "itakeskus"} {
+				if strings.Contains(lower, token) {
+					return "helsinki"
+				}
+			}
+		}
+	}
+	if geometry, ok := feature["geometry"].(map[string]any); ok {
+		if coords, ok := geometry["coordinates"].([]any); ok && len(coords) >= 2 {
+			lon, okLon := numberField(coords[0])
+			lat, okLat := numberField(coords[1])
+			if okLon && okLat && math.Abs(lat) <= 90 && math.Abs(lon) <= 180 {
+				return nearestCapitalCity(lat, lon)
+			}
+		}
+	}
+	return ""
+}
+
+func nearestCapitalCity(lat, lon float64) string {
+	centers := []struct {
+		city     string
+		lat, lon float64
+	}{
+		{city: "helsinki", lat: 60.1699, lon: 24.9384},
+		{city: "espoo", lat: 60.2055, lon: 24.6559},
+		{city: "vantaa", lat: 60.2934, lon: 25.0378},
+	}
+	best := centers[0].city
+	bestDist := haversineMeters(lat, lon, centers[0].lat, centers[0].lon)
+	for _, candidate := range centers[1:] {
+		if d := haversineMeters(lat, lon, candidate.lat, candidate.lon); d < bestDist {
+			best, bestDist = candidate.city, d
+		}
+	}
+	if bestDist > 40_000 {
+		return ""
+	}
+	return best
+}
+
 func Registry(cfg config.Config) map[string]Collector {
 	return map[string]Collector{
-		"fmi": fmiCollector{cfg: cfg},
-		"hsy": endpointCollector{cfg: cfg, source: "hsy", dataset: "air_quality_current", endpoint: nonEmpty(cfg.HSYWFSURL, cfg.HSYAPIURL), area: strings.ToLower(cfg.DefaultPlace), query: func() map[string]string {
-			return map[string]string{"service": "WFS", "version": "2.0.0", "request": "GetFeature", "typeNames": cfg.HSYAirQualityLayer, "outputFormat": "application/json", "srsName": "EPSG:4326"}
-		}},
+		"fmi":            fmiCollector{cfg: cfg},
+		"hsy":            hsyCollector{cfg: cfg},
 		"open_meteo_air": openMeteoCollector{cfg: cfg},
 		"porssisahko":    porssisahkoCollector{cfg: cfg},
 		"fingrid": endpointCollector{cfg: cfg, source: "fingrid", dataset: "energy_timeseries", endpoint: nonEmpty(cfg.FingridDatasetURL, strings.TrimRight(cfg.FingridAPIBaseURL, "/")+"/datasets/"+strconv.Itoa(cfg.FingridDatasetID)+"/data"), area: strings.ToLower(cfg.DefaultPlace), headers: map[string]string{"x-api-key": cfg.FingridAPIKey}, query: func() map[string]string {

@@ -788,24 +788,7 @@ func (s *Server) dataQuality(writer http.ResponseWriter, request *http.Request) 
 }
 
 func operationalStatus(source sources.Status, now time.Time) string {
-	if !source.IsActive {
-		return "inactive"
-	}
-	if source.LastRun == nil {
-		return "pending"
-	}
-	if source.LastRun.Status != "succeeded" {
-		return "failing"
-	}
-	reference := source.LastRun.FinishedAt
-	if reference == nil {
-		reference = &source.LastRun.StartedAt
-	}
-	observedAt, err := time.Parse(time.RFC3339Nano, *reference)
-	if err != nil || now.Sub(observedAt) > time.Duration(source.PollIntervalSeconds*2)*time.Second {
-		return "stale"
-	}
-	return "healthy"
+	return sources.DeriveOperationalStatus(source, now)
 }
 
 func (s *Server) sourceStatus(writer http.ResponseWriter, request *http.Request) {

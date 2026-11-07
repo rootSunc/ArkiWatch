@@ -65,6 +65,35 @@ func TestNormalizeHSYBandsHighNumericIndexAsPoorAir(t *testing.T) {
 	}
 }
 
+func TestNormalizeOpenMeteoUsesEuropeanAQIBands(t *testing.T) {
+	cases := []struct {
+		aqi       float64
+		wantScore int
+		wantLabel string
+		wantType  string
+		wantSev   string
+	}{
+		{aqi: 15, wantScore: 1, wantLabel: "good", wantType: "air_quality_status", wantSev: "INFO"},
+		{aqi: 32, wantScore: 2, wantLabel: "fair", wantType: "air_quality_status", wantSev: "INFO"},
+		{aqi: 48, wantScore: 3, wantLabel: "moderate", wantType: "air_quality_status", wantSev: "LOW"},
+		{aqi: 68, wantScore: 4, wantLabel: "poor", wantType: "air_quality_poor", wantSev: "MEDIUM"},
+		{aqi: 88, wantScore: 5, wantLabel: "very poor", wantType: "air_quality_poor", wantSev: "HIGH"},
+	}
+	for _, tc := range cases {
+		items := Normalize(observation("open_meteo_air", "air_quality_current", map[string]any{
+			"place": "Tampere",
+			"body":  map[string]any{"current": map[string]any{"european_aqi": tc.aqi, "pm2_5": 18.0}},
+		}), "open_meteo_air")
+		if len(items) != 1 {
+			t.Fatalf("aqi=%v items = %#v", tc.aqi, items)
+		}
+		got := items[0]
+		if got.EventType != tc.wantType || got.Severity != tc.wantSev || got.Attributes["worst_score"] != tc.wantScore || got.Attributes["worst_label"] != tc.wantLabel {
+			t.Fatalf("aqi=%v got type=%s sev=%s attrs=%#v", tc.aqi, got.EventType, got.Severity, got.Attributes)
+		}
+	}
+}
+
 func TestNormalizeFMIReadsXMLForecastAndRainRisk(t *testing.T) {
 	xml := `<root xmlns:xlink="http://www.w3.org/1999/xlink">
 <PointTimeSeriesObservation><observedProperty xlink:href="https://example.test?param=temperature"/><result><MeasurementTVP><time>2026-08-21T12:00:00Z</time><value>18</value></MeasurementTVP><MeasurementTVP><time>2026-08-21T13:00:00Z</time><value>19</value></MeasurementTVP></result></PointTimeSeriesObservation>

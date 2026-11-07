@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/energy"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/platform"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/readmodel"
 )
 
@@ -103,10 +104,11 @@ func (store *Store) LoadPlatformHistoryAvailability(ctx context.Context, city st
 		FROM raw_observations AS r
 		JOIN data_sources AS s ON s.id = r.source_id
 		WHERE r.observed_at >= $1 AND r.observed_at < $2
-		  AND ($3 = '' OR lower(r.area_code) = lower($3) OR lower(r.area_code) = 'finland')
+		  AND ($3 = '' OR lower(r.area_code) = lower($3) OR lower(r.area_code) = 'finland'
+		       OR ($4 AND s.source_code IN ('hsy', 'digitransit') AND lower(r.area_code) = 'helsinki'))
 		GROUP BY DATE(r.observed_at AT TIME ZONE 'UTC'), s.source_code, r.dataset
 		ORDER BY DATE(r.observed_at AT TIME ZONE 'UTC') ASC
-	`, startDate, anchor.AddDate(0, 0, 1), city)
+	`, startDate, anchor.AddDate(0, 0, 1), city, platform.IsCapitalRegionCity(city))
 	if err != nil {
 		return nil, err
 	}

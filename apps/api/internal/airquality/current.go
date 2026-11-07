@@ -107,7 +107,7 @@ var qualityWords = []struct {
 func Build(data Data, scope timescope.Scope, now time.Time, locationRef string) (result Current) {
 	defer func() { EnrichDetail(&result) }()
 	now = now.UTC()
-	stations := stationsFromRaw(data.HSYRaw)
+	stations := stationsFromRawForCity(data.HSYRaw, locationRef)
 	if station := openMeteoStation(data.OpenMeteoRaw); station != nil {
 		stations = append(stations, *station)
 	}
@@ -200,6 +200,62 @@ func Unavailable(scope timescope.Scope, now time.Time) (result Current) {
 	}
 }
 
+func stationsFromRawForCity(raw observations.RawObservation, locationRef string) []Station {
+	all := stationsFromRaw(raw)
+	if len(all) == 0 || raw.AreaCode == "" || locationRef == "" || strings.EqualFold(raw.AreaCode, locationRef) {
+		return all
+	}
+	wanted := strings.ToLower(strings.TrimSpace(locationRef))
+	filtered := make([]Station, 0, len(all))
+	for _, s := range all {
+		if detected := stationCity(s); detected == wanted {
+			filtered = append(filtered, s)
+		}
+	}
+	if len(filtered) > 0 {
+		return filtered
+	}
+	return all
+}
+
+func stationCity(s Station) string {
+	lower := strings.ToLower(s.Station)
+	for _, token := range []string{"espoo", "leppävaara", "leppavaara", "luukki", "tapiola", "matinkylä", "matinkyla", "lintuvaara", "olari", "kauniainen"} {
+		if strings.Contains(lower, token) {
+			return "espoo"
+		}
+	}
+	for _, token := range []string{"vantaa", "tikkurila", "myyrmäki", "myyrmaki", "rekola", "lentoasema", "hämeenlinnanväylä", "hameenlinnanvayla", "ruskeasanta", "kivistö", "kivisto"} {
+		if strings.Contains(lower, token) {
+			return "vantaa"
+		}
+	}
+	for _, token := range []string{"helsinki", "kallio", "mannerheimintie", "mäkelänkatu", "makelankatu", "töölö", "toolo", "vallila", "vartiokylä", "vartiokyla", "vuosaari", "pirkkola", "länsisatama", "lansisatama", "katajanokka", "itäkeskus", "itakeskus"} {
+		if strings.Contains(lower, token) {
+			return "helsinki"
+		}
+	}
+	if s.Lat != nil && s.Lon != nil {
+		centers := []struct {
+			city     string
+			lat, lon float64
+		}{
+			{city: "helsinki", lat: 60.1699, lon: 24.9384},
+			{city: "espoo", lat: 60.2055, lon: 24.6559},
+			{city: "vantaa", lat: 60.2934, lon: 25.0378},
+		}
+		best := centers[0].city
+		bestDist := math.Hypot(*s.Lat-centers[0].lat, (*s.Lon-centers[0].lon)*math.Cos(*s.Lat*math.Pi/180))
+		for _, c := range centers[1:] {
+			if d := math.Hypot(*s.Lat-c.lat, (*s.Lon-c.lon)*math.Cos(*s.Lat*math.Pi/180)); d < bestDist {
+				best, bestDist = c.city, d
+			}
+		}
+		return best
+	}
+	return ""
+}
+
 func stationsFromRaw(raw observations.RawObservation) []Station {
 	body, ok := raw.Payload["body"].(map[string]any)
 	if !ok {
@@ -255,7 +311,7 @@ func openMeteoStation(raw observations.RawObservation) *Station {
 	var score *int
 	var label string
 	if europeanAQI != nil {
-		scoreValue := scoreFromNumericIndex(int(math.Round(*europeanAQI)))
+		scoreValue := scoreFromEuropeanAQI(*europeanAQI)
 		score = &scoreValue
 		label = fmt.Sprintf("%d", int(math.Round(*europeanAQI)))
 	} else {
@@ -285,20 +341,22 @@ func scoreFromProperties(properties map[string]any) (*int, string) {
 			}
 		}
 	}
+	if value := number(propertyValue(properties, "european_aqi")); value != nil {
+		return intPointerValue(scoreFromEuropeanAQI(*value)), fmt.Sprintf("%d", int(math.Round(*value)))
+	}
 	for _, candidate := range []string{"index", "aqi", "aq_index", "overall_index", "ilmanlaatuindeksi"} {
 		value := asInt(propertyValue(properties, candidate))
 		if value != nil {
-			return intPointerValue(scoreFromNumericIndex(*value)), fmt.Sprint(*value)
+			return intPointerValue(scoreFromFinnishIndex(*value)), fmt.Sprint(*value)
 		}
 	}
 	return nil, ""
 }
 
-// scoreFromNumericIndex folds a numeric air-quality index into the shared 1-5
-// band. HSY's Ilmanlaatuindeksi and the European AQI are both open-ended point
-// scales whose cleanest readings are single digits, so a small value must not be
-// passed through as a band: an index of 4 is excellent air, band 4 is "poor".
-func scoreFromNumericIndex(value int) int {
+// scoreFromFinnishIndex maps HSY's Ilmanlaatuindeksi 2.0 point scale into the
+// shared 1-5 band. Clean readings are single digits, so a small value must not
+// be passed through as a band: an index of 4 is excellent air, band 4 is "poor".
+func scoreFromFinnishIndex(value int) int {
 	switch {
 	case value <= 50:
 		return 1
@@ -307,6 +365,23 @@ func scoreFromNumericIndex(value int) int {
 	case value <= 100:
 		return 3
 	case value <= 150:
+		return 4
+	default:
+		return 5
+	}
+}
+
+// scoreFromEuropeanAQI maps Open-Meteo's EEA European AQI (0-20 good, 20-40
+// fair, 40-60 moderate, 60-80 poor, >80 very poor) into the shared 1-5 band.
+func scoreFromEuropeanAQI(aqi float64) int {
+	switch {
+	case aqi <= 20:
+		return 1
+	case aqi <= 40:
+		return 2
+	case aqi <= 60:
+		return 3
+	case aqi <= 80:
 		return 4
 	default:
 		return 5

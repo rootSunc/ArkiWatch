@@ -576,14 +576,16 @@ func (store *Store) RunRules(ctx context.Context, now time.Time) (RulesResult, e
 }
 
 func (store *Store) SyncPublicRecommendations(ctx context.Context, now time.Time) (PublicRulesResult, error) {
+	uusimaaLocations := []string{"helsinki", "espoo", "vantaa", "kauniainen", "uusimaa", "helsinki_uusimaa", "helsinki_metro", "finland"}
 	rows, err := store.pool.Query(ctx, `
 		SELECT e.id, e.event_type, s.source_code, e.severity::text, e.location_ref,
 		       e.starts_at, e.ends_at, e.title, e.summary, e.attributes, e.created_at
 		FROM normalized_events AS e
 		JOIN data_sources AS s ON s.id = e.source_id
 		WHERE e.ends_at >= $1
+		  AND (e.event_type = 'cheap_energy_window' OR e.location_ref = '' OR LOWER(e.location_ref) = ANY($2::text[]))
 		ORDER BY e.starts_at ASC
-	`, now.UTC())
+	`, now.UTC(), uusimaaLocations)
 	if err != nil {
 		return PublicRulesResult{}, err
 	}
@@ -609,46 +611,14 @@ func (store *Store) SyncPublicRecommendations(ctx context.Context, now time.Time
 		return PublicRulesResult{}, err
 	}
 	rows.Close()
-	statuses := map[string]string{}
-	statusRows, err := store.pool.Query(ctx, `
-		SELECT s.source_code, s.is_active, s.poll_interval_seconds,
-		       r.status, COALESCE(r.finished_at, r.started_at)
-		FROM data_sources AS s
-		LEFT JOIN LATERAL (
-			SELECT status, started_at, finished_at FROM collector_runs
-			WHERE source_id = s.id ORDER BY started_at DESC LIMIT 1
-		) AS r ON TRUE
-	`)
+	statusItems, err := store.ListSourceStatusAt(ctx, now.UTC())
 	if err != nil {
 		return PublicRulesResult{}, err
 	}
-	for statusRows.Next() {
-		var code string
-		var runStatus sql.NullString
-		var active bool
-		var poll int
-		var reference sql.NullTime
-		if err := statusRows.Scan(&code, &active, &poll, &runStatus, &reference); err != nil {
-			statusRows.Close()
-			return PublicRulesResult{}, err
-		}
-		if !active {
-			statuses[code] = "inactive"
-		} else if !reference.Valid {
-			statuses[code] = "pending"
-		} else if !runStatus.Valid || runStatus.String != "succeeded" {
-			statuses[code] = "failing"
-		} else if now.UTC().Sub(reference.Time.UTC()) > time.Duration(poll*2)*time.Second {
-			statuses[code] = "stale"
-		} else {
-			statuses[code] = "healthy"
-		}
+	statuses := make(map[string]string, len(statusItems))
+	for _, item := range statusItems {
+		statuses[item.SourceCode] = sources.DeriveOperationalStatus(item, now.UTC())
 	}
-	if err := statusRows.Err(); err != nil {
-		statusRows.Close()
-		return PublicRulesResult{}, err
-	}
-	statusRows.Close()
 	drafts := publicrules.Build(events, statuses, now.UTC())
 	result := PublicRulesResult{Events: len(events), Recommendations: len(drafts)}
 	activeKeys := map[string]struct{}{}
@@ -1510,6 +1480,19 @@ func (store *Store) LoadTraffic(ctx context.Context, query traffic.Query) (traff
 	return traffic.Data{Raw: raw, Events: events}, nil
 }
 
+func transitAreaRefs(locationRef string) []string {
+	if platform.IsCapitalRegionCity(locationRef) {
+		if strings.EqualFold(locationRef, "helsinki") {
+			return []string{"helsinki"}
+		}
+		return []string{strings.ToLower(strings.TrimSpace(locationRef)), "helsinki"}
+	}
+	if strings.TrimSpace(locationRef) == "" {
+		return nil
+	}
+	return []string{strings.ToLower(strings.TrimSpace(locationRef))}
+}
+
 func (store *Store) LoadTransit(ctx context.Context, query observations.TransitQuery) (observations.TransitData, error) {
 	args := []any{"digitransit", "service_alerts"}
 	statement := `
@@ -1517,9 +1500,10 @@ func (store *Store) LoadTransit(ctx context.Context, query observations.TransitQ
 		FROM raw_observations AS r
 		JOIN data_sources AS s ON s.id = r.source_id
 		WHERE s.source_code = $1 AND r.dataset = $2`
-	if query.LocationRef != "" {
-		statement += " AND r.area_code = $3"
-		args = append(args, query.LocationRef)
+	areaRefs := transitAreaRefs(query.LocationRef)
+	if len(areaRefs) > 0 {
+		statement += " AND LOWER(r.area_code) = ANY($3::text[])"
+		args = append(args, areaRefs)
 	}
 	if query.WindowStart != nil && query.WindowEnd != nil {
 		startArg, endArg := len(args)+1, len(args)+2
@@ -1543,9 +1527,9 @@ func (store *Store) LoadTransit(ctx context.Context, query observations.TransitQ
 		WHERE s.source_code = 'digitransit'
 		  AND e.event_type = ANY($3::text[])
 		  AND e.ends_at >= $1 AND e.starts_at <= $2
-		  AND ($4 = '' OR e.location_ref = $4)
+		  AND (cardinality($4::text[]) = 0 OR LOWER(e.location_ref) = ANY($4::text[]))
 		ORDER BY e.starts_at DESC
-	`, start, end, []string{"transit_delay", "transit_disruption"}, query.LocationRef)
+	`, start, end, []string{"transit_delay", "transit_disruption"}, areaRefs)
 	if err != nil {
 		return observations.TransitData{}, err
 	}
@@ -1573,9 +1557,10 @@ func (store *Store) LoadTransit(ctx context.Context, query observations.TransitQ
 
 func (store *Store) LoadPlatform(ctx context.Context, query platform.PlatformQuery) (platform.PlatformData, error) {
 	start, end := query.Now.Add(-6*time.Hour), query.Now.Add(48*time.Hour)
-	args := []any{start, end, query.LocationRef}
+	capitalMetro := platform.IsCapitalRegionCity(query.LocationRef)
+	args := []any{start, end, query.LocationRef, capitalMetro}
 	if query.Historical && query.WindowStart != nil && query.WindowEnd != nil {
-		args = []any{*query.WindowStart, *query.WindowEnd, query.LocationRef}
+		args = []any{*query.WindowStart, *query.WindowEnd, query.LocationRef, capitalMetro}
 	}
 	rows, err := store.pool.Query(ctx, `
 		SELECT e.id, e.event_type, s.source_code, e.severity::text, e.location_ref,
@@ -1584,7 +1569,7 @@ func (store *Store) LoadPlatform(ctx context.Context, query platform.PlatformQue
 		JOIN data_sources AS s ON s.id = e.source_id
 		WHERE e.ends_at >= $1
 		  AND e.starts_at <= $2
-		  AND ($3 = '' OR e.location_ref = $3 OR e.location_ref = 'finland')
+		  AND ($3 = '' OR e.location_ref = $3 OR e.location_ref = 'finland' OR ($4 AND s.source_code = 'digitransit' AND e.location_ref = 'helsinki'))
 		ORDER BY e.starts_at ASC
 		LIMIT 120
 	`, args...)
@@ -1825,20 +1810,24 @@ func (store *Store) loadAirQualityEvent(ctx context.Context, query airquality.Qu
 }
 
 func (store *Store) loadAirQualityRaw(ctx context.Context, sourceCode string, query airquality.Query) (observations.RawObservation, error) {
+	areaRefs := []string{strings.ToLower(strings.TrimSpace(query.LocationRef))}
+	if sourceCode == "hsy" && platform.IsCapitalRegionCity(query.LocationRef) && !strings.EqualFold(query.LocationRef, "helsinki") {
+		areaRefs = append(areaRefs, "helsinki")
+	}
 	statement := `
 		SELECT r.dataset, r.area_code, r.observed_at, r.payload
 		FROM raw_observations AS r
 		JOIN data_sources AS s ON s.id = r.source_id
 		WHERE s.source_code = $1
 		  AND r.dataset = 'air_quality_current'
-		  AND r.area_code = $2
+		  AND LOWER(r.area_code) = ANY($2::text[])
 	`
-	args := []any{sourceCode, query.LocationRef}
+	args := []any{sourceCode, areaRefs, strings.ToLower(strings.TrimSpace(query.LocationRef))}
 	if query.WindowStart != nil && query.WindowEnd != nil {
-		statement += " AND r.observed_at >= $3 AND r.observed_at < $4"
+		statement += " AND r.observed_at >= $4 AND r.observed_at < $5"
 		args = append(args, *query.WindowStart, *query.WindowEnd)
 	}
-	statement += " ORDER BY r.observed_at DESC LIMIT 1"
+	statement += " ORDER BY (LOWER(r.area_code) = $3) DESC, r.observed_at DESC LIMIT 1"
 	return store.scanRawObservation(store.pool.QueryRow(ctx, statement, args...))
 }
 

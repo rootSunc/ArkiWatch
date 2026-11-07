@@ -93,6 +93,21 @@ func NormalizeCityRef(value, fallback string) string {
 	return normalizeCityRef(value, fallback)
 }
 
+// CapitalRegionCityRefs returns the Helsinki metropolitan municipalities shared
+// by regional HSY air-quality and HSL Digitransit feeds.
+func CapitalRegionCityRefs() []string {
+	return []string{"helsinki", "espoo", "vantaa"}
+}
+
+func IsCapitalRegionCity(cityRef string) bool {
+	switch normalizeCityRef(cityRef, "") {
+	case "helsinki", "espoo", "vantaa":
+		return true
+	default:
+		return false
+	}
+}
+
 func SupportedCityRefs(cfg config.Config) []string {
 	items := []string{cfg.DefaultPlace}
 	items = append(items, cfg.WeatherPlaces...)
@@ -101,7 +116,9 @@ func SupportedCityRefs(cfg config.Config) []string {
 	items = append(items, cfg.LinkedEventsCityAPIBaseURLs...)
 	set := make(map[string]struct{}, len(items))
 	for _, item := range items {
-		set[normalizeCityRef(entryKey(item), cfg.DefaultPlace)] = struct{}{}
+		if ref := normalizeCityRef(entryKey(item), cfg.DefaultPlace); ref != "" {
+			set[ref] = struct{}{}
+		}
 	}
 	refs := make([]string, 0, len(set))
 	for ref := range set {
@@ -115,10 +132,13 @@ func configuredCityRefs(cfg config.Config) map[string]bool {
 	configured := make(map[string]bool)
 	items := []string{cfg.DefaultPlace}
 	items = append(items, cfg.WeatherPlaces...)
+	items = append(items, cfg.AirQualityPlaces...)
 	items = append(items, cfg.OpenMeteoAirQualityLocations...)
 	items = append(items, cfg.LinkedEventsCityAPIBaseURLs...)
 	for _, item := range items {
-		configured[normalizeCityRef(entryKey(item), cfg.DefaultPlace)] = true
+		if ref := normalizeCityRef(entryKey(item), cfg.DefaultPlace); ref != "" {
+			configured[ref] = true
+		}
 	}
 	return configured
 }

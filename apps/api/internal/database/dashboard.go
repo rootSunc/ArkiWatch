@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/profile"
+	"github.com/rootSunc/ArkiWatch/apps/api/internal/sources"
 )
 
 type TodayReader interface {
@@ -370,23 +371,7 @@ func (store *Store) publicDashboardSources(ctx context.Context, now time.Time) (
 	}
 	result := make([]map[string]any, 0, len(items))
 	for _, item := range items {
-		operational := "pending"
-		if !item.IsActive {
-			operational = "inactive"
-		} else if item.LastRun != nil && item.LastRun.Status != "succeeded" {
-			operational = "failing"
-		} else if item.LastRun != nil {
-			reference := item.LastRun.FinishedAt
-			if reference == nil {
-				reference = &item.LastRun.StartedAt
-			}
-			parsed, parseErr := time.Parse(time.RFC3339Nano, *reference)
-			if parseErr != nil || now.Sub(parsed) > time.Duration(item.PollIntervalSeconds*2)*time.Second {
-				operational = "stale"
-			} else {
-				operational = "healthy"
-			}
-		}
+		operational := sources.DeriveOperationalStatus(item, now)
 		read := map[string]any{"id": item.ID, "source_code": item.SourceCode, "source_name": item.SourceName, "auth_type": item.AuthType, "poll_interval_seconds": item.PollIntervalSeconds, "operational_status": operational, "stage": "connected", "categories": []string{}, "datasets": []string{}, "key_data_items": []string{}, "data_structures": []any{}, "normalized_event_structures": []any{}, "license_label": nil, "documentation_url": nil, "last_run_status": nil, "last_run_started_at": nil, "last_run_finished_at": nil, "records_ingested": nil, "error_message": nil}
 		if item.LastRun != nil {
 			read["last_run_status"] = item.LastRun.Status

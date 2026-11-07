@@ -203,9 +203,12 @@ func airScore(properties map[string]any) (int, string) {
 			}
 		}
 	}
+	if number, ok := floatValue(value(properties, "european_aqi")); ok {
+		return europeanAQIBand(number), strconv.FormatFloat(number, 'f', -1, 64)
+	}
 	for _, key := range []string{"index", "aqi", "aq_index", "overall_index", "ilmanlaatuindeksi"} {
 		if number, ok := floatValue(value(properties, key)); ok {
-			return airIndexBand(number), strconv.FormatFloat(number, 'f', -1, 64)
+			return finnishAQIBand(number), strconv.FormatFloat(number, 'f', -1, 64)
 		}
 	}
 	return 0, ""
@@ -215,20 +218,37 @@ func airScore(properties map[string]any) (int, string) {
 // source, so station-based and index-based readings describe themselves alike.
 var airQualityLabels = map[int]string{1: "good", 2: "fair", 3: "moderate", 4: "poor", 5: "very poor"}
 
-// airIndexBand folds a numeric air-quality index into the shared 1-5 band. Every
-// numeric index we read — HSY's Ilmanlaatuindeksi and the European AQI alike — is
-// an open-ended point scale whose cleanest readings are single digits, so a small
-// number must never be passed through as if it were already a band: an index of 4
-// is excellent air, while band 4 is "poor" and raises a health warning.
-func airIndexBand(aqi float64) int {
+// finnishAQIBand maps Finland's Ilmanlaatuindeksi 2.0 (HSY / FMI / THL) point
+// scale into the shared 1-5 band. Clean readings are single digits, so a small
+// index must never be passed through as if it were already a 1-5 band.
+func finnishAQIBand(index float64) int {
 	switch {
-	case aqi <= 50:
+	case index <= 50:
 		return 1
-	case aqi <= 75:
+	case index <= 75:
 		return 2
-	case aqi <= 100:
+	case index <= 100:
 		return 3
-	case aqi <= 150:
+	case index <= 150:
+		return 4
+	default:
+		return 5
+	}
+}
+
+// europeanAQIBand maps the EEA European Air Quality Index (Open-Meteo
+// european_aqi: 0-20 good, 20-40 fair, 40-60 moderate, 60-80 poor, >80 very
+// poor) into the shared 1-5 band. Using Finnish 50/75/100/150 thresholds here
+// would under-report moderate/poor air by one to two bands.
+func europeanAQIBand(aqi float64) int {
+	switch {
+	case aqi <= 20:
+		return 1
+	case aqi <= 40:
+		return 2
+	case aqi <= 60:
+		return 3
+	case aqi <= 80:
 		return 4
 	default:
 		return 5
@@ -286,9 +306,9 @@ func openMeteoAir(item collectors.Observation) []Draft {
 	if !ok {
 		return nil
 	}
-	// Open-Meteo reports a city-wide index rather than named stations, so the
-	// place itself stands in for the station the advice copy refers to.
-	score := airIndexBand(aqi)
+	// Open-Meteo reports a city-wide EEA index rather than named stations, so
+	// the place itself stands in for the station the advice copy refers to.
+	score := europeanAQIBand(aqi)
 	label, station := airQualityLabels[score], labelFor(item)
 	eventType, severity := airQualityEvent(score)
 	return []Draft{{EventType: eventType, Severity: severity, LocationType: "CITY", LocationRef: item.AreaCode, StartsAt: item.ObservedAt, EndsAt: item.ObservedAt.Add(3 * time.Hour), Confidence: confidence(.580), Title: "Air quality update for " + station, Summary: fmt.Sprintf("European air quality index is %.0f (%s).", aqi, label), Attributes: map[string]any{"european_aqi": aqi, "pm10": current["pm10"], "pm2_5": current["pm2_5"], "nitrogen_dioxide": current["nitrogen_dioxide"], "worst_label": label, "worst_station": station, "worst_score": score}, DedupeKey: item.Hash + ":air_quality_status"}}

@@ -13,10 +13,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -773,10 +773,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -1533,10 +1533,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -2293,10 +2293,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -2418,10 +2418,10 @@
               "pollutants": {
                 "european_aqi": {
                   "average": 1,
-                  "caution": 50,
+                  "caution": 40,
                   "peak": 1.2,
                   "reporting": 2,
-                  "severe": 75,
+                  "severe": 60,
                   "station_order": [
                     "kallio",
                     "leppavaara"
@@ -4571,10 +4571,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -4696,10 +4696,10 @@
               "pollutants": {
                 "european_aqi": {
                   "average": 1,
-                  "caution": 50,
+                  "caution": 40,
                   "peak": 1.2,
                   "reporting": 2,
-                  "severe": 75,
+                  "severe": 60,
                   "station_order": [
                     "kallio",
                     "leppavaara"
@@ -6849,10 +6849,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -7609,10 +7609,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -8369,10 +8369,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -9129,10 +9129,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -9889,10 +9889,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -10649,10 +10649,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -11409,10 +11409,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -12169,10 +12169,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -12929,10 +12929,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -13689,10 +13689,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -14449,10 +14449,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -15209,10 +15209,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"
@@ -15969,10 +15969,10 @@
         "pollutants": {
           "european_aqi": {
             "average": 1,
-            "caution": 50,
+            "caution": 40,
             "peak": 1.2,
             "reporting": 2,
-            "severe": 75,
+            "severe": 60,
             "station_order": [
               "kallio",
               "leppavaara"

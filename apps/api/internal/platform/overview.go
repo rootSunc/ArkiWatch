@@ -190,7 +190,9 @@ func BuildOverview(data PlatformData, scope timescope.Scope, cfg config.Config, 
 				continue
 			}
 			if cityScoped(definition.Key) && event.LocationRef != "" && event.LocationRef != locationRef {
-				continue
+				if !(definition.Key == "transit" && IsCapitalRegionCity(locationRef) && event.LocationRef == "helsinki") {
+					continue
+				}
 			}
 			rawEvents = append(rawEvents, event)
 		}
@@ -242,31 +244,7 @@ func buildSources(cfg config.Config, statuses []sources.Status, now time.Time) [
 }
 
 func sourceStatus(item sources.Status, now time.Time) string {
-	if !item.IsActive {
-		return "inactive"
-	}
-	if item.LastRun == nil {
-		return "pending"
-	}
-	if item.LastRun.Status == "running" {
-		started, err := time.Parse(time.RFC3339Nano, item.LastRun.StartedAt)
-		if err == nil && now.Sub(started) > time.Duration(item.PollIntervalSeconds*2)*time.Second {
-			return "stale"
-		}
-		return "pending"
-	}
-	if item.LastRun.Status != "succeeded" {
-		return "failing"
-	}
-	reference := item.LastRun.FinishedAt
-	if reference == nil {
-		reference = &item.LastRun.StartedAt
-	}
-	parsed, err := time.Parse(time.RFC3339Nano, *reference)
-	if err != nil || now.Sub(parsed) > time.Duration(item.PollIntervalSeconds*2)*time.Second {
-		return "stale"
-	}
-	return "healthy"
+	return sources.DeriveOperationalStatus(item, now)
 }
 
 func categoryStatus(def categoryDefinition, events []Event, categorySources []Source, rawCount int) string {
