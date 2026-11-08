@@ -1,5 +1,5 @@
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
-import type { PlatformTone } from "../types";
+import type { PlatformCategory, PlatformMetric, PlatformTone } from "../types";
 
 export function formatNumber(value: number | null | undefined, maximumFractionDigits = 1): string {
   return value == null || !Number.isFinite(value) ? UNAVAILABLE_DATA_VALUE : new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
@@ -27,4 +27,60 @@ export function severityRows(counts: Record<string, number> = {}) {
 }
 export function filterEvents<T extends { filters?: string[] }>(events: T[], filter: string): T[] {
   return filter === "all" ? events : events.filter((event) => event.filters?.includes(filter));
+}
+
+/** A category's summary metric by key, or null when the read model omits it. */
+export function categoryMetric(category: PlatformCategory, key: string): PlatformMetric | null {
+  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
+}
+
+/** Tone for a category, stage, or source status in catalog-style workspaces. */
+export function categoryStatusTone(status: string | null | undefined): PlatformTone {
+  switch (status) {
+    case "healthy":
+    case "ready":
+    case "fetched":
+    case "connected":
+      return "good";
+    case "pending":
+    case "planned":
+    case "stale":
+    case "watch":
+      return "warn";
+    case "alert":
+    case "failing":
+    case "failed":
+    case "inactive":
+      return "bad";
+    default:
+      return "neutral";
+  }
+}
+
+/** "value unit", or `missingLabel` when the metric is absent. */
+export function metricDisplayValue(
+  metric: { value: string; unit?: string | null } | null,
+  missingLabel: string,
+  dataLabel?: (value: string | null | undefined) => string,
+): string {
+  if (!metric) {
+    return missingLabel;
+  }
+  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+}
+
+/** Host of a provider endpoint; the raw string if it is not a URL. */
+export function endpointHost(endpoint: string | null | undefined, missingLabel: string): string {
+  if (!endpoint) {
+    return missingLabel;
+  }
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return endpoint;
+  }
+}
+
+export function isPresent<T>(value: T | null | undefined): value is T {
+  return value != null;
 }

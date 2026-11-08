@@ -44,13 +44,13 @@ import {
   metricValue,
   pointThreeHoursEarlier,
   pointThreeHoursLater,
-  sourceRequestHost,
   sourceTone,
   stageProgress,
   weatherHistoryPoints,
 } from "./weather-detail-utils";
 import { UNAVAILABLE_DATA_VALUE } from "../../model/data-value";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { endpointHost } from "../../model/workspace-format";
 
 function formatPercent(value: number | null | undefined, tKey: (key: string) => string): string {
   const formatted = formatNumber(value, 0);
@@ -473,7 +473,7 @@ export function WeatherDetailView({
                   </div>
                   <p>{localizedPlatformCopy(layer.detail, language) ?? layer.detail}</p>
                   <small>
-                    {request ? `${sourceRequestHost(request.endpoint, tKey)}, ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
+                    {request ? `${endpointHost(request.endpoint, tKey("weather.endpointNotRecorded"))}, ${request.content_type ?? tKey("weather.unknownContent")}` : tKey("weather.requestMetadataUnavailable")}
                   </small>
                 </article>
               );

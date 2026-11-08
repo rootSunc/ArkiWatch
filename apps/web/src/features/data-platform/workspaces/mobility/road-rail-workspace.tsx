@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPercent, severityTone, statusTone, uniqueJoined, clampPercent, severityRows as buildSeverityRows, filterEvents } from "../../model/workspace-format";
+import { clampPercent, endpointHost, filterEvents, formatPercent, severityRows as buildSeverityRows, severityTone, statusTone, uniqueJoined } from "../../model/workspace-format";
 
 import { MobilityEventStatus, MobilityEventLiveLayer } from "./mobility-event-status";
 import type { CSSProperties } from "react";
@@ -230,18 +230,6 @@ function roadRailReferenceTimestamp(roadRail: RoadRailCurrentResponse): number {
 
   const observedAt = new Date(roadRail.observed_at ?? "").getTime();
   return Number.isFinite(observedAt) ? observedAt : 0;
-}
-
-function sourceRequestHost(endpoint: string | null, tKey: (key: string) => string): string {
-  if (!endpoint) {
-    return tKey("roadRail.endpointNotRecorded");
-  }
-
-  try {
-    return new URL(endpoint).host;
-  } catch {
-    return endpoint;
-  }
 }
 
 function stageProgress(stage: RoadRailDataStage): number {
@@ -1181,7 +1169,7 @@ export function RoadRailWorkspace({
                     <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
-                    {sourceRequestHost(request.endpoint, tKey)}
+                    {endpointHost(request.endpoint, tKey("roadRail.endpointNotRecorded"))}
                     {request.fetched_at ? ` - ${tKey("roadRail.fetched")} ${scopedDataAge(request.fetched_at, roadRail.time_scope, language, tKey, "roadRail.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>

@@ -22,6 +22,7 @@ import { resolveDataTimezone } from "../../model/data-timezone";
 import { hasObservedSourceRecords } from "../catalog/catalog-workspace-state";
 import { isHistoricalTimeScope, scopedDataAge, scopedDataTimestamp, scopedReferenceTime } from "../../model/data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { categoryMetric, categoryStatusTone, isPresent, metricDisplayValue } from "../../model/workspace-format";
 
 type CityServicesWorkspaceProps = {
   category: PlatformCategory | null;
@@ -72,46 +73,8 @@ const CITY_SERVICE_FIELDS: ServiceField[] = [
   }
 ];
 
-function metricByKey(category: PlatformCategory, key: string): PlatformMetric | null {
-  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
-}
-
-function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetric {
-  return metric !== null;
-}
-
-function formatMetricValue(metric: PlatformMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
-  if (!metric) {
-    return tKey("cityServices.missing");
-  }
-
-  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
-}
-
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-GB").format(value);
-}
-
-function toneFromStatus(status: string | null | undefined): CityTone {
-  switch (status) {
-    case "healthy":
-    case "ready":
-    case "connected":
-    case "fetched":
-      return "good";
-    case "pending":
-    case "planned":
-    case "stale":
-    case "watch":
-      return "warn";
-    case "alert":
-    case "failed":
-    case "failing":
-    case "inactive":
-      return "bad";
-    default:
-      return "neutral";
-  }
 }
 
 function metricTone(metric: PlatformMetric | null): CityTone {
@@ -132,11 +95,11 @@ function progressFromTone(tone: CityTone): number {
 }
 
 function sourceProgress(status: string | null | undefined): number {
-  return progressFromTone(toneFromStatus(status));
+  return progressFromTone(categoryStatusTone(status));
 }
 
 function visibleSummaryMetrics(category: PlatformCategory): PlatformMetric[] {
-  const preferred = SUMMARY_KEYS.map((key) => metricByKey(category, key)).filter(isPlatformMetric);
+  const preferred = SUMMARY_KEYS.map((key) => categoryMetric(category, key)).filter(isPresent);
   const fallback = category.summary_metrics.filter((metric) => !SUMMARY_KEYS.includes(metric.key));
 
   return [...preferred, ...fallback].slice(0, 5);
@@ -196,16 +159,16 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
 
   const summaryMetrics = visibleSummaryMetrics(category);
   const latest = latestEvent(category);
-  const activeEventsMetric = metricByKey(category, "active_events");
-  const recordsMetric = metricByKey(category, "records_ingested");
-  const sourceStatusMetric = metricByKey(category, "source_status");
+  const activeEventsMetric = categoryMetric(category, "active_events");
+  const recordsMetric = categoryMetric(category, "records_ingested");
+  const sourceStatusMetric = categoryMetric(category, "source_status");
   const datasetCount = totalDatasets(category);
   const recordCount = totalRecords(category);
   const hasObservedRecords = hasObservedSourceRecords(category.sources);
   const fieldCount = category.key_data_items?.length ?? 0;
-  const cityTone = latest ? (severityTone(latest.severity) as CityTone) : toneFromStatus(category.status);
+  const cityTone = latest ? (severityTone(latest.severity) as CityTone) : categoryStatusTone(category.status);
   const latestRun = latestSourceRun(category);
-  const readySources = category.sources.filter((source) => toneFromStatus(source.operational_status) === "good").length;
+  const readySources = category.sources.filter((source) => categoryStatusTone(source.operational_status) === "good").length;
   const eventModels = category.sources.flatMap((source) =>
     (source.normalized_event_structures ?? []).map((model) => ({
       ...model,
@@ -218,8 +181,8 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
   const recordsDisplay =
     !hasObservedRecords
       ? tKey("cityServices.notCollected")
-      : formatMetricValue(recordsMetric, tKey, dataLabel) !== missingMetricLabel
-      ? formatMetricValue(recordsMetric, tKey, dataLabel)
+      : metricDisplayValue(recordsMetric, tKey("cityServices.missing"), dataLabel) !== missingMetricLabel
+      ? metricDisplayValue(recordsMetric, tKey("cityServices.missing"), dataLabel)
       : formatNumber(recordCount);
 
   return (
@@ -261,7 +224,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
             <strong>
               {metric.key === "records_ingested" && !hasObservedRecords
                 ? tKey("cityServices.notCollected")
-                : formatMetricValue(metric, tKey, dataLabel)}
+                : metricDisplayValue(metric, tKey("cityServices.missing"), dataLabel)}
             </strong>
           </article>
         ))}
@@ -311,7 +274,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
           </header>
           <div className="city-readiness-stack">
             {category.sources.map((source) => {
-              const tone = toneFromStatus(source.operational_status);
+              const tone = categoryStatusTone(source.operational_status);
               return (
                 <article className={`city-readiness-row city-readiness-row-${tone}`} key={source.id}>
                   <div>
@@ -397,7 +360,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
             ) : (
               category.sources.map((source) => (
                 <article
-                  className={`city-service-row city-service-row-${toneFromStatus(source.operational_status)}`}
+                  className={`city-service-row city-service-row-${categoryStatusTone(source.operational_status)}`}
                   key={source.id}
                 >
                   <span className="city-service-dot" aria-hidden="true" />
@@ -439,7 +402,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
             </header>
             <div className="city-source-stack">
               {category.sources.map((source) => (
-                <article className={`city-source-row city-source-row-${toneFromStatus(source.operational_status)}`} key={source.id}>
+                <article className={`city-source-row city-source-row-${categoryStatusTone(source.operational_status)}`} key={source.id}>
                   <div>
                     <strong>{source.source_name}</strong>
                     <span>{source.source_code}</span>
@@ -507,7 +470,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
                     status: visualization.status
                   }))
               ).slice(0, 4).map((model) => (
-                <article className={`city-model-row city-model-row-${toneFromStatus(model.status)}`} key={model.key}>
+                <article className={`city-model-row city-model-row-${categoryStatusTone(model.status)}`} key={model.key}>
                   <div>
                     <strong>{model.title}</strong>
                     <span>{translateEnumLabel(language, model.status)}</span>
@@ -586,7 +549,7 @@ export function CityServicesWorkspace({ category, timeScope, timezone: requested
             {tKey("cityServices.recordsLabel")}: {recordsDisplay}
           </span>
           <i aria-hidden="true" />
-          <span>{tKey("cityServices.events")}: {formatMetricValue(activeEventsMetric, tKey, dataLabel)}</span>
+          <span>{tKey("cityServices.events")}: {metricDisplayValue(activeEventsMetric, tKey("cityServices.missing"), dataLabel)}</span>
           <i aria-hidden="true" />
           <span>{tKey("cityServices.sourceState")}: {sourceStatusMetric ? translateEnumLabel(language, sourceStatusMetric.value) : tKey("cityServices.missing")}</span>
         </div>

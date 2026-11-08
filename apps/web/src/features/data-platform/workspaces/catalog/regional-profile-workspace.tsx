@@ -2,10 +2,7 @@
 
 import { CITY_OPTIONS, cityLabel } from "../../model/city-scope";
 import { useI18n } from "../../i18n";
-import {
-  PlatformCategory,
-  PlatformMetric
-} from "../../types";
+import { PlatformCategory } from "../../types";
 import type { PlatformTimeScope } from "../../types";
 import { isEmptyStatus } from "../../model/platform-status";
 import {
@@ -13,48 +10,12 @@ import {
   scopedReferenceTime,
 } from "../../model/data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { categoryMetric, categoryStatusTone, metricDisplayValue } from "../../model/workspace-format";
 
 type RegionalProfileWorkspaceProps = {
   category: PlatformCategory | null;
   timeScope?: PlatformTimeScope | null;
 };
-
-type ProfileTone = "good" | "warn" | "bad" | "neutral";
-
-type PanelMetric = {
-  key: string;
-  label: string;
-  value: string;
-  unit: string | null;
-  tone?: string | null;
-  detail?: string | null;
-  updated_at?: string | null;
-};
-
-function metricByKey(category: PlatformCategory, key: string): PlatformMetric | null {
-  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
-}
-
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
-  if (!metric) {
-    return tKey("regionalProfile.catalog");
-  }
-
-  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
-}
-
-function statusTone(status: string | null | undefined): ProfileTone {
-  if (status === "healthy" || status === "ready" || status === "fetched" || status === "connected") {
-    return "good";
-  }
-  if (status === "pending" || status === "planned" || status === "stale" || status === "watch") {
-    return "warn";
-  }
-  if (status === "alert" || status === "failing" || status === "failed" || status === "inactive") {
-    return "bad";
-  }
-  return "neutral";
-}
 
 export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfileWorkspaceProps) {
   const { language, tKey, dataLabel } = useI18n();
@@ -70,9 +31,9 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
     );
   }
 
-  const sourceStatusMetric = metricByKey(category, "source_status");
+  const sourceStatusMetric = categoryMetric(category, "source_status");
 
-  const activeTone = statusTone(category.status);
+  const activeTone = categoryStatusTone(category.status);
   const historicalEvidence = isHistoricalEvidenceScope(category, timeScope);
 
   const sourceUpdatedAt =
@@ -107,13 +68,13 @@ export function RegionalProfileWorkspace({ category, timeScope }: RegionalProfil
           { key: "employment_rate", labelKey: "employmentRate", emptyDetailKey: "employmentEmpty" },
           { key: "health_index", labelKey: "healthIndex", emptyDetailKey: "healthEmpty" },
         ] as const).map((tile) => {
-          const metric = metricByKey(category, tile.key);
+          const metric = categoryMetric(category, tile.key);
           const hasValue = Boolean(metric?.value);
 
           return (
             <article className={`regional-glass-panel${hasValue ? "" : " geo-tile-text"}`} key={tile.key}>
               <span>{tKey(`regionalProfile.${tile.labelKey}`)}</span>
-              <strong>{hasValue ? formatMetricValue(metric, tKey, dataLabel) : tKey("regionalProfile.noValue")}</strong>
+              <strong>{hasValue ? metricDisplayValue(metric, tKey("regionalProfile.catalog"), dataLabel) : tKey("regionalProfile.noValue")}</strong>
               <small>{hasValue && metric?.detail ? metric.detail : tKey(`regionalProfile.${tile.emptyDetailKey}`)}</small>
             </article>
           );

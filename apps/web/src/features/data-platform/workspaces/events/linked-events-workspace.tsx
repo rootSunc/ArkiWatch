@@ -20,6 +20,7 @@ import { isHistoricalTimeScope, scopedReferenceTime } from "../../model/data-tim
 import { UNAVAILABLE_DATA_VALUE } from "../../model/data-value";
 import { isEmptyStatus } from "../../model/platform-status";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { categoryStatusTone } from "../../model/workspace-format";
 
 const LinkedEventsCoordinateMap = dynamic(
   () => import("./linked-events-coordinate-map").then((module) => module.LinkedEventsCoordinateMap),
@@ -264,28 +265,6 @@ function formatDuration(startsAt: string, endsAt: string, language: LanguageMode
   ]
     .filter(Boolean)
     .join(" ");
-}
-
-function toneFromStatus(status: string | null | undefined): EventTone {
-  switch (status) {
-    case "healthy":
-    case "ready":
-    case "connected":
-    case "fetched":
-      return "good";
-    case "pending":
-    case "planned":
-    case "stale":
-    case "watch":
-      return "warn";
-    case "alert":
-    case "failed":
-    case "failing":
-    case "inactive":
-      return "bad";
-    default:
-      return "neutral";
-  }
 }
 
 function sourceUpdatedAt(category: PlatformCategory): string | null {
@@ -746,7 +725,7 @@ export function LinkedEventsWorkspace({
   const source = category.sources.find((item) => item.source_code === "linkedevents") ?? category.sources[0] ?? null;
   const isHistorical = isHistoricalTimeScope(timeScope);
   const sourceRun = isHistorical ? scopedReferenceTime(timeScope) : sourceUpdatedAt(category);
-  const selectedTone = selectedEvent ? (severityTone(selectedEvent.severity) as EventTone) : toneFromStatus(category.status);
+  const selectedTone = selectedEvent ? (severityTone(selectedEvent.severity) as EventTone) : categoryStatusTone(category.status);
   const eventStatus = attributeText(selectedEvent, "event_status");
   const provider = attributeText(selectedEvent, "provider") ?? tKey("linkedEvents.providerUnavailable");
   const eventDetailLinks = eventLinks(selectedEvent, tKey);

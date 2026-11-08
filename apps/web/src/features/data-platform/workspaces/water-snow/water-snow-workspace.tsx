@@ -11,7 +11,6 @@ import { LanguageMode, translateEnumLabel, useI18n } from "../../i18n";
 import {
   PlatformCategory,
   PlatformEvent,
-  PlatformMetric,
   PlatformTone,
   PlatformVisualizationPoint,
   PlatformVisualizationTimelineItem,
@@ -27,6 +26,7 @@ import { hasObservedSourceRecords, isConnectedWorkspaceSource } from "../catalog
 import type { PlatformTimeScope } from "../../types";
 import { isHistoricalTimeScope, scopedDataAge, scopedReferenceTime } from "../../model/data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { categoryMetric, categoryStatusTone, isPresent, metricDisplayValue } from "../../model/workspace-format";
 
 type WaterSnowWorkspaceProps = {
   category: PlatformCategory | null;
@@ -110,35 +110,6 @@ const GUIDANCE_TYPES = [
 
 const MIN_TIMELINE_WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_TIMELINE_WINDOW_MS = 60 * 60 * 1000;
-
-function isPlatformMetric(metric: PlatformMetric | null): metric is PlatformMetric {
-  return metric !== null;
-}
-
-function metricByKey(category: PlatformCategory, key: string): PlatformMetric | null {
-  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
-}
-
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
-  if (!metric) {
-    return tKey("waterSnow.missing");
-  }
-
-  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
-}
-
-function statusTone(status: string | null | undefined): WaterTone {
-  if (status === "healthy" || status === "ready" || status === "fetched" || status === "connected") {
-    return "good";
-  }
-  if (status === "pending" || status === "planned" || status === "stale" || status === "watch") {
-    return "warn";
-  }
-  if (status === "alert" || status === "failing" || status === "failed" || status === "inactive") {
-    return "bad";
-  }
-  return "neutral";
-}
 
 function metricTone(metric: PanelMetric | null): WaterTone {
   return metric ? (metric.tone as WaterTone) : "neutral";
@@ -395,10 +366,10 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
 
   const source = category.sources[0] ?? null;
   const hasObservedRecords = hasObservedSourceRecords(category.sources);
-  const sourceStatusMetric = metricByKey(category, "source_status");
-  const recordsMetric = metricByKey(category, "records_ingested");
-  const activeEventsMetric = metricByKey(category, "active_events");
-  const catalogStageMetric = metricByKey(category, "catalog_stage");
+  const sourceStatusMetric = categoryMetric(category, "source_status");
+  const recordsMetric = categoryMetric(category, "records_ingested");
+  const activeEventsMetric = categoryMetric(category, "active_events");
+  const catalogStageMetric = categoryMetric(category, "catalog_stage");
   const keyDataItems = categoryKeyDataItems(category);
   const datasets = source?.data_structures ?? [];
   const eventSchemas = source?.normalized_event_structures ?? [];
@@ -417,7 +388,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
       : category.sources.map((item) => ({
           label: item.source_code,
           value: item.records_ingested ?? 0,
-          tone: statusTone(item.operational_status),
+          tone: categoryStatusTone(item.operational_status),
           detail: item.operational_status
         }));
   const activeTone =
@@ -425,7 +396,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
       ? "bad"
       : events.some((event) => event.severity === "MEDIUM")
         ? "warn"
-        : statusTone(source?.operational_status ?? category.status);
+        : categoryStatusTone(source?.operational_status ?? category.status);
   const fieldState = isHistorical ? tKey("shell.historicalEvidence") : fieldStateLabel(category, language);
   const providerName = source?.source_name ?? "Finnish Environment Institute";
   const datasetCount = source?.datasets?.length ?? datasets.length;
@@ -446,7 +417,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
     sourceStatusMetric,
     recordsMetric,
     catalogStageMetric
-  ].filter(isPlatformMetric);
+  ].filter(isPresent);
 
   return (
     <section className="water-detail-page water-snow-page" aria-label={tKey("waterSnow.detailAria")}>
@@ -497,12 +468,12 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
           </div>
           <div>
             <span>{tKey("waterSnow.activeEvents")}</span>
-            <strong>{formatMetricValue(activeEventsMetric, tKey)}</strong>
+            <strong>{metricDisplayValue(activeEventsMetric, tKey("waterSnow.missing"))}</strong>
           </div>
           <div>
             <span>{tKey("waterSnow.recordsIngested")}</span>
             <strong>
-              {hasObservedRecords ? formatMetricValue(recordsMetric, tKey, dataLabel) : tKey("waterSnow.notObserved")}
+              {hasObservedRecords ? metricDisplayValue(recordsMetric, tKey("waterSnow.missing"), dataLabel) : tKey("waterSnow.notObserved")}
             </strong>
           </div>
         </div>
@@ -512,12 +483,12 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
         {HYDROLOGY_TILES.map((tile) => {
           const metric = tile.key === "stations_configured"
             ? null
-            : metricByKey(category, tile.key);
+            : categoryMetric(category, tile.key);
           const hasValue = Boolean(metric?.value) && !isEmptyStatus(category.status);
           const value = tile.key === "stations_configured"
             ? String(category.sources.length)
             : hasValue
-              ? formatMetricValue(metric, tKey, dataLabel)
+              ? metricDisplayValue(metric, tKey("waterSnow.missing"), dataLabel)
               : tKey("waterSnow.noValue");
 
           return (
@@ -559,7 +530,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
           </header>
           <div className="water-coverage-list">
             {FIELD_COVERAGE_ROWS.map((row) => {
-              const metric = metricByKey(category, row.key);
+              const metric = categoryMetric(category, row.key);
               const count = numericValue(metric?.value) ?? (hasObservedRecords && metric ? 1 : 0);
 
               return (
@@ -731,7 +702,7 @@ export function WaterSnowWorkspace({ category, timeScope, timezone = DEFAULT_DAT
                       ? tKey("waterSnow.notObserved")
                       : metric
                         ? `${dataLabel(metric.value)}${metric.unit ? ` ${metric.unit}` : ""}`
-                        : formatMetricValue(metric, tKey)}
+                        : metricDisplayValue(metric, tKey("waterSnow.missing"))}
                   </span>
                 </div>
                 <p>{localizedPlatformCopy(metric.detail, language) ?? tKey("waterSnow.metricNotProduced")}</p>

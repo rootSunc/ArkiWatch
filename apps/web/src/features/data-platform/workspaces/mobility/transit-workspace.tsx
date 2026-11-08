@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPercent, severityTone, statusTone, uniqueJoined, clampPercent, severityRows as buildSeverityRows, filterEvents } from "../../model/workspace-format";
+import { clampPercent, endpointHost, filterEvents, formatPercent, severityRows as buildSeverityRows, severityTone, statusTone, uniqueJoined } from "../../model/workspace-format";
 
 import { MobilityEventStatus, MobilityEventLiveLayer } from "./mobility-event-status";
 import type { CSSProperties } from "react";
@@ -250,18 +250,6 @@ function transitScopeMetrics(detail: TransitCurrentResponse["detail"], tKey: (ke
     ...row,
     width: clampPercent((row.count / maxCount) * 100)
   }));
-}
-
-function sourceRequestHost(endpoint: string | null, tKey: (key: string) => string): string {
-  if (!endpoint) {
-    return tKey("transit.endpointNotRecorded");
-  }
-
-  try {
-    return new URL(endpoint).host;
-  } catch {
-    return endpoint;
-  }
 }
 
 function effectLabel(value: string | null, language: LanguageMode, tKey: (key: string) => string): string {
@@ -1126,7 +1114,7 @@ export function TransitWorkspace({
                     <span>{enumLabel(request.status)}</span>
                   </div>
                   <p>
-                    {sourceRequestHost(request.endpoint, tKey)}
+                    {endpointHost(request.endpoint, tKey("transit.endpointNotRecorded"))}
                     {request.fetched_at ? `, ${tKey("transit.fetched")} ${scopedDataAge(request.fetched_at, transit.time_scope, language, tKey, "transit.notObserved", dataTimezone)}` : ""}
                   </p>
                   <small>{request.content_type ?? tKey("transit.contentTypeUnavailable")}</small>

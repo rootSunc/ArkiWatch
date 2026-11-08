@@ -407,18 +407,6 @@ export function stageProgress(stage: WeatherDataStage): number {
   return 55;
 }
 
-export function sourceRequestHost(endpoint: string | null, tKey: (key: string) => string): string {
-  if (!endpoint) {
-    return tKey("weather.endpointNotRecorded");
-  }
-
-  try {
-    return new URL(endpoint).host;
-  } catch {
-    return endpoint;
-  }
-}
-
 export function currentMetricCards(
   current: WeatherForecastPoint | null,
   language: LanguageMode,

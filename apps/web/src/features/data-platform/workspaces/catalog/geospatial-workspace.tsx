@@ -5,8 +5,6 @@ import { MaterialIcon } from "@/features/shared/material-icon";
 import { translateEnumLabel, useI18n } from "../../i18n";
 import {
   PlatformCategory,
-  PlatformMetric,
-  PlatformTone,
   SourceDatasetStructure
 } from "../../types";
 import type { PlatformTimeScope } from "../../types";
@@ -17,22 +15,11 @@ import {
   scopedReferenceTime,
 } from "../../model/data-time-scope";
 import { WorkspaceEmptyState, WorkspaceEvidenceHeader } from "../workspace-ui";
+import { categoryMetric, categoryStatusTone, metricDisplayValue } from "../../model/workspace-format";
 
 type GeospatialWorkspaceProps = {
   category: PlatformCategory | null;
   timeScope?: PlatformTimeScope | null;
-};
-
-type GeoTone = PlatformTone | "good" | "warn" | "bad" | "neutral";
-
-type PanelMetric = {
-  key: string;
-  label: string;
-  value: string;
-  unit: string | null;
-  tone?: string | null;
-  detail?: string | null;
-  updated_at?: string | null;
 };
 
 const GEO_SHAPE_KINDS = [
@@ -76,31 +63,6 @@ function catalogShapeCounts(datasets: SourceDatasetStructure[]): Record<(typeof 
   return counts;
 }
 
-function metricByKey(category: PlatformCategory, key: string): PlatformMetric | null {
-  return category.summary_metrics.find((metric) => metric.key === key) ?? null;
-}
-
-function formatMetricValue(metric: PanelMetric | null, tKey: (key: string) => string, dataLabel?: (value: string | null | undefined) => string): string {
-  if (!metric) {
-    return tKey("geospatial.catalog");
-  }
-
-  return `${dataLabel ? dataLabel(metric.value) : metric.value}${metric.unit ? ` ${metric.unit}` : ""}`;
-}
-
-function statusTone(status: string | null | undefined): GeoTone {
-  if (status === "healthy" || status === "ready" || status === "fetched" || status === "connected") {
-    return "good";
-  }
-  if (status === "pending" || status === "planned" || status === "stale" || status === "watch") {
-    return "warn";
-  }
-  if (status === "alert" || status === "failing" || status === "failed" || status === "inactive") {
-    return "bad";
-  }
-  return "neutral";
-}
-
 export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspaceProps) {
   const { language, tKey, dataLabel } = useI18n();
   if (!category || isEmptyStatus(category.status)) {
@@ -115,14 +77,14 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
     );
   }
 
-  const sourceStatusMetric = metricByKey(category, "source_status");
-  const recordsMetric = metricByKey(category, "records_ingested");
-  const activeEventsMetric = metricByKey(category, "active_events");
+  const sourceStatusMetric = categoryMetric(category, "source_status");
+  const recordsMetric = categoryMetric(category, "records_ingested");
+  const activeEventsMetric = categoryMetric(category, "active_events");
   const datasets = category.sources.flatMap((s) => s.data_structures ?? []);
   const catalogOnly = isCatalogOnlyWorkspace(category);
   const shapeCounts = catalogShapeCounts(datasets);
   const shapeMax = Math.max(1, ...Object.values(shapeCounts));
-  const activeTone = statusTone(category.status);
+  const activeTone = categoryStatusTone(category.status);
   const historicalEvidence = isHistoricalEvidenceScope(category, timeScope);
   const hasObservedRecords = hasObservedSourceRecords(category.sources);
 
@@ -161,7 +123,7 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
           <span>{tKey("geospatial.sourceStatus")}</span>
           <strong>
             {sourceStatusMetric
-              ? formatMetricValue(sourceStatusMetric, tKey, dataLabel)
+              ? metricDisplayValue(sourceStatusMetric, tKey("geospatial.catalog"), dataLabel)
               : tKey("geospatial.noValue")}
           </strong>
           <small>{sourceStatusMetric?.detail ?? tKey("geospatial.sourceNotConfigured")}</small>
@@ -170,7 +132,7 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
           <span>{tKey("geospatial.recordsIngested")}</span>
           <strong>
             {hasObservedRecords
-              ? formatMetricValue(recordsMetric, tKey, dataLabel)
+              ? metricDisplayValue(recordsMetric, tKey("geospatial.catalog"), dataLabel)
               : tKey("geospatial.noValue")}
           </strong>
           <small>{tKey("geospatial.noGeometryRows")}</small>
@@ -179,7 +141,7 @@ export function GeospatialWorkspace({ category, timeScope }: GeospatialWorkspace
           <span>{tKey("geospatial.activeEvents")}</span>
           <strong>
             {activeEventsMetric
-              ? formatMetricValue(activeEventsMetric, tKey, dataLabel)
+              ? metricDisplayValue(activeEventsMetric, tKey("geospatial.catalog"), dataLabel)
               : String(category.events.length)}
           </strong>
           <small>{tKey("geospatial.referenceEmitsNone")}</small>
