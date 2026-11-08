@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useQueries } from "@tanstack/react-query";
+import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 
 import { resolveApiBaseUrl, unwrapApiResult } from "@/lib/api-client";
 
@@ -8,6 +8,8 @@ import {
   fetchAirQualityCurrent,
   fetchEnergyCurrent,
   fetchHouseholdEnergyCurrent,
+  AIR_TREND_CATEGORY,
+  AIR_TREND_DAY_COUNT,
   fetchPlatformHistory,
   fetchPlatformHistoryAvailability,
   fetchPlatformOverview,
@@ -28,6 +30,7 @@ import { briefingCacheRemaining } from "../queries/briefing-cache";
 import type { PublicDashboardRead } from "../types";
 import { appEnv } from "@/lib/env";
 import { normalizeCityValue } from "../city-scope";
+import { FALLBACK_NAV_KEY } from "../data-platform-nav-utils";
 import { normalizeSourceDateValue } from "../time-window";
 
 /**
@@ -196,6 +199,21 @@ export function usePlatformHome(
     historyAvailabilityQuery,
   ] = results;
 
+  const navKey = (options.activeNavKey ?? FALLBACK_NAV_KEY).trim() || FALLBACK_NAV_KEY;
+  const showAirTrend = !isHistoricalScope && navKey === FALLBACK_NAV_KEY && !needs.history;
+  const airTrendQuery = useQuery({
+    queryKey: platformKeys.airTrend(normalizedScope),
+    queryFn: async ({ signal }) =>
+      unwrapApiResult(
+        await fetchPlatformHistory(normalizedScope, signal, {
+          days: AIR_TREND_DAY_COUNT,
+          categories: [AIR_TREND_CATEGORY],
+        }),
+      ),
+    ...queryOptions,
+    enabled: showAirTrend && overviewQuery.data != null,
+  });
+
   const activeResults = [
     overviewQuery,
     publicDashboardQuery,
@@ -287,7 +305,7 @@ export function usePlatformHome(
       (needs.householdEnergy ? householdEnergyQuery.data : null) ??
       validBriefing?.signals?.householdEnergy ??
       null,
-    history: historyQuery.data ?? emptyHistory(),
+    history: historyQuery.data ?? airTrendQuery.data ?? emptyHistory(),
     historyAvailability: historyAvailabilityQuery.data ?? null,
     roadRail:
       (needs.roadRail ? roadRailQuery.data : null) ??

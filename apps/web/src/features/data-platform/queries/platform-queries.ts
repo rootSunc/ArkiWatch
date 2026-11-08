@@ -12,7 +12,6 @@ import { appEnv } from "@/lib/env";
 import { filterPlatformOverviewForCurrentUser } from "../category-access";
 import { DEFAULT_CITY, normalizeCityValue } from "../city-scope";
 import { normalizeSourceDateValue } from "../time-window";
-import { demoFixtureForScope } from "../demo/demo-data";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,
@@ -34,6 +33,8 @@ import {
 
 const HISTORY_DAY_COUNT = 30;
 const HISTORY_AVAILABILITY_DAY_COUNT = 90;
+export const AIR_TREND_DAY_COUNT = 7;
+export const AIR_TREND_CATEGORY = "air_quality";
 export {
   PLATFORM_QUERY_REFETCH_INTERVAL_MS,
   PLATFORM_QUERY_STALE_TIME_MS,
@@ -107,6 +108,11 @@ export const platformKeys = {
       normalizeCityValue(scope.city),
       normalizeSourceDateValue(scope.date),
     ), "history"] as const,
+  airTrend: (scope: PlatformQueryScope) =>
+    [...platformKeys.scope(
+      normalizeCityValue(scope.city),
+      normalizeSourceDateValue(scope.date),
+    ), "history", "air-trend"] as const,
   historyAvailability: (scope: PlatformQueryScope) =>
     [...platformKeys.scope(
       normalizeCityValue(scope.city),
@@ -139,6 +145,24 @@ function platformClient(
 function demoResult<T>(data: T): ApiJsonResult<T> {
   return { data, error: null, status: 200 };
 }
+
+function isDemoRequest(): boolean {
+  const value = (process.env.NEXT_PUBLIC_DEMO_MODE ?? "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes" || value === "on";
+}
+
+async function demoPayload(scope: PlatformQueryScope) {
+  if (!isDemoRequest()) {
+    return null;
+  }
+  const { demoFixtureForScope } = await import("../demo/demo-data");
+  return demoFixtureForScope(scope);
+}
+
+export type PlatformHistoryRequest = {
+  days?: number;
+  categories?: string[];
+};
 
 function withOptionalDate(
   date: string | null,
@@ -180,8 +204,9 @@ function normalizeHistoryResponse(
 }
 
 export async function fetchPlatformOverview(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).overview);
+  const demoOverview = await demoPayload(scope);
+  if (demoOverview) {
+    return demoResult(demoOverview.overview);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -198,8 +223,9 @@ export async function fetchPlatformOverview(scope: PlatformQueryScope, signal?: 
 }
 
 export async function fetchPublicDashboard(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).publicDashboard);
+  const demoDashboard = await demoPayload(scope);
+  if (demoDashboard) {
+    return demoResult(demoDashboard.publicDashboard);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -210,8 +236,9 @@ export async function fetchPublicDashboard(scope: PlatformQueryScope, signal?: A
 }
 
 export async function fetchWeatherForecast(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).weather);
+  const demoWeather = await demoPayload(scope);
+  if (demoWeather) {
+    return demoResult(demoWeather.weather);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -222,8 +249,9 @@ export async function fetchWeatherForecast(scope: PlatformQueryScope, signal?: A
 }
 
 export async function fetchAirQualityCurrent(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).airQuality);
+  const demoAir = await demoPayload(scope);
+  if (demoAir) {
+    return demoResult(demoAir.airQuality);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -234,8 +262,9 @@ export async function fetchAirQualityCurrent(scope: PlatformQueryScope, signal?:
 }
 
 export async function fetchEnergyCurrent(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).energy);
+  const demoEnergy = await demoPayload(scope);
+  if (demoEnergy) {
+    return demoResult(demoEnergy.energy);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -246,8 +275,9 @@ export async function fetchEnergyCurrent(scope: PlatformQueryScope, signal?: Abo
 }
 
 export async function fetchHouseholdEnergyCurrent(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).householdEnergy);
+  const demoHousehold = await demoPayload(scope);
+  if (demoHousehold) {
+    return demoResult(demoHousehold.householdEnergy);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -258,8 +288,9 @@ export async function fetchHouseholdEnergyCurrent(scope: PlatformQueryScope, sig
 }
 
 export async function fetchRoadRailCurrent(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).roadRail);
+  const demoRoadRail = await demoPayload(scope);
+  if (demoRoadRail) {
+    return demoResult(demoRoadRail.roadRail);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -270,8 +301,9 @@ export async function fetchRoadRailCurrent(scope: PlatformQueryScope, signal?: A
 }
 
 export async function fetchTransitCurrent(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).transit);
+  const demoTransit = await demoPayload(scope);
+  if (demoTransit) {
+    return demoResult(demoTransit.transit);
   }
 
   const resolved = resolvePlatformScope(scope);
@@ -281,9 +313,14 @@ export async function fetchTransitCurrent(scope: PlatformQueryScope, signal?: Ab
   );
 }
 
-export async function fetchPlatformHistory(scope: PlatformQueryScope, signal?: AbortSignal) {
-  if (appEnv.demoMode) {
-    const result = demoResult(demoFixtureForScope(scope).history);
+export async function fetchPlatformHistory(
+  scope: PlatformQueryScope,
+  signal?: AbortSignal,
+  request: PlatformHistoryRequest = {},
+) {
+  const demoHistory = await demoPayload(scope);
+  if (demoHistory) {
+    const result = demoResult(demoHistory.history);
     return {
       ...result,
       data: normalizeHistoryResponse(result.data),
@@ -295,7 +332,8 @@ export async function fetchPlatformHistory(scope: PlatformQueryScope, signal?: A
     "/platform/history",
     withOptionalDate(resolved.date, {
       city: resolved.city,
-      days: String(HISTORY_DAY_COUNT),
+      days: String(request.days ?? HISTORY_DAY_COUNT),
+      categories: request.categories?.join(","),
     }),
   );
   return {
@@ -308,8 +346,9 @@ export async function fetchPlatformHistoryAvailability(
   scope: PlatformQueryScope,
   signal?: AbortSignal,
 ) {
-  if (appEnv.demoMode) {
-    return demoResult(demoFixtureForScope(scope).historyAvailability);
+  const demoAvailability = await demoPayload(scope);
+  if (demoAvailability) {
+    return demoResult(demoAvailability.historyAvailability);
   }
 
   const resolved = resolvePlatformScope(scope);

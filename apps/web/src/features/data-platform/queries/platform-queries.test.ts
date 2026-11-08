@@ -15,6 +15,21 @@ describe("platform query scope forwarding", () => {
     expect(fetch).toHaveBeenCalledWith(new URL("http://127.0.0.1:8000/api/platform/history?city=helsinki&days=30&date=2026-08-09"), expect.objectContaining({ cache: "no-store" }));
   });
 
+  it("requests a short air-only history for the observatory trend", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "false");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ air_quality: [] }, { status: 200 })));
+    const { AIR_TREND_CATEGORY, AIR_TREND_DAY_COUNT, fetchPlatformHistory } = await import("./platform-queries");
+    await fetchPlatformHistory(
+      { city: "helsinki", date: null },
+      undefined,
+      { days: AIR_TREND_DAY_COUNT, categories: [AIR_TREND_CATEGORY] },
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      new URL("http://127.0.0.1:8000/api/platform/history?city=helsinki&days=7&categories=air_quality"),
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+
   it("forwards the selected date to the public dashboard endpoint", async () => {
     vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "false");
     vi.stubGlobal(

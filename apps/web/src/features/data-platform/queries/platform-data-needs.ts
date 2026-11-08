@@ -31,28 +31,11 @@ export type PlatformDataNeedsOptions = {
   needsHistoryAvailability?: boolean;
 };
 
-const DEMO_PLATFORM_DATA_NEEDS: PlatformDataNeeds = {
-  weather: true,
-  air: true,
-  energy: true,
-  householdEnergy: true,
-  roadRail: true,
-  transit: true,
-  history: false,
-  historyAvailability: false,
-};
-
 export function platformDataNeedsForDemo(
   navKey: string | null | undefined,
   options: PlatformDataNeedsOptions = {},
 ): PlatformDataNeeds {
-  const needs = platformDataNeedsForView(navKey, options);
-
-  return {
-    ...DEMO_PLATFORM_DATA_NEEDS,
-    history: needs.history,
-    historyAvailability: needs.historyAvailability,
-  };
+  return platformDataNeedsForView(navKey, options);
 }
 
 function emptyNeeds(historyAvailability: boolean): PlatformDataNeeds {
@@ -70,8 +53,9 @@ function emptyNeeds(historyAvailability: boolean): PlatformDataNeeds {
 
 /**
  * Decide which platform queries to run for the active nav view.
- * Home needs detail payloads for its readings and trends; the optional plan
- * stays on overview + public briefing unless historical.
+ * The observatory and Today read weather, air, and energy from the public
+ * briefing. Detail workspaces request their own payloads. A historical date
+ * still loads every signal.
  */
 export function platformDataNeedsForView(
   navKey: string | null | undefined,
@@ -95,18 +79,7 @@ export function platformDataNeedsForView(
     };
   }
 
-  if (key === FALLBACK_NAV_KEY) return {
-    weather: true,
-    air: true,
-    energy: true,
-    householdEnergy: true,
-    roadRail: true,
-    transit: true,
-    history: true,
-    historyAvailability: needsHistoryAvailability,
-  };
-
-  if (key === TODAY_NAV_KEY) {
+  if (key === FALLBACK_NAV_KEY || key === TODAY_NAV_KEY) {
     return emptyNeeds(needsHistoryAvailability);
   }
 

@@ -33,8 +33,12 @@ import {
 } from "./data-platform-topbars";
 import {
   I18nProvider,
+  installMessageCatalog,
   translateMessageKey,
+  type MessageCatalog,
 } from "./i18n";
+import type { LanguageMode } from "./language";
+import { useBrowserSession } from "@/features/auth/use-browser-session";
 import { usePlatformHome } from "./hooks/use-platform-home";
 import { usePlatformNavPrefetch } from "./hooks/use-platform-prefetch";
 import { usePersonalDashboard } from "./hooks/use-personal-dashboard";
@@ -67,18 +71,11 @@ import {
   resolveScenarioTarget,
 } from "./scenario-navigation";
 import { PlanWorkspace } from "./plan-workspace";
-import { SourcesWorkspace } from "./sources-workspace";
-import { ConsoleEvents } from "./console-events";
 import { signalTrend } from "./console-model";
 import { useMediaQuery } from "@/features/shared/use-media-query";
 import { Drawer } from "@/features/shared/ui/console";
-import { PersonalSettingsPage } from "./personal-settings";
-import { CommandPalette } from "./command-palette";
 import type { ScenarioLiveSignals } from "./scenario-live-hints";
-import {
-  DataPlatformWorkspaceRouter,
-  workspaceRouteForCategory,
-} from "./data-platform-workspace-router";
+import { workspaceRouteForCategory } from "./workspace-route";
 import { SignalCard } from "./signal-card";
 import {
   dashboardShellClassName,
@@ -87,7 +84,7 @@ import {
 import { DataPlatformOverview } from "./data-platform-overview";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { RecentEventsPanel } from "./recent-events-panel";
-import { DEMO_CITY } from "./demo/demo-data";
+import { DEMO_CITY } from "./demo/constants";
 import { platformErrorMessage } from "./platform-error";
 import {
   PlatformDataWarning,
@@ -107,6 +104,27 @@ import {
   MOBILITY_NAV_KEY,
   isMobilityCategoryKey,
 } from "./data-platform-view-model";
+const SourcesWorkspace = dynamic(
+  () => import("./sources-workspace").then((module) => module.SourcesWorkspace),
+  { loading: () => null },
+);
+const ConsoleEvents = dynamic(
+  () => import("./console-events").then((module) => module.ConsoleEvents),
+  { loading: () => null },
+);
+const PersonalSettingsPage = dynamic(
+  () => import("./personal-settings").then((module) => module.PersonalSettingsPage),
+  { ssr: false },
+);
+const CommandPalette = dynamic(
+  () => import("./command-palette").then((module) => module.CommandPalette),
+  { ssr: false },
+);
+const DataPlatformWorkspaceRouter = dynamic(
+  () => import("./data-platform-workspace-router").then((module) => module.DataPlatformWorkspaceRouter),
+  { loading: () => null },
+);
+
 // Floating overlay, never part of the first paint: keep it out of the route bundle.
 const AssistantWidget = dynamic(
   () =>
@@ -116,23 +134,31 @@ const AssistantWidget = dynamic(
   { ssr: false },
 );
 
+const OUTING_SIGNAL_ORDER = ["weather", "air", "mobility", "transit", "traffic", "energy"];
+
+function outingSignalRank(key: string) {
+  const index = OUTING_SIGNAL_ORDER.indexOf(key);
+  return index === -1 ? OUTING_SIGNAL_ORDER.length : index;
+}
+
 type DataPlatformHomeProps = {
-  currentUserLabel: string;
-  defaultUserId?: string;
+  hasSessionCookie: boolean;
   initialCity: string;
   initialDate: string | null;
+  initialLanguage: LanguageMode;
   initialView: string | null;
-  isAuthenticated: boolean;
+  messages: MessageCatalog;
 };
 
 export function DataPlatformHome({
-  currentUserLabel,
-  defaultUserId,
+  hasSessionCookie,
   initialCity,
   initialDate,
+  initialLanguage,
   initialView,
-  isAuthenticated,
+  messages,
 }: DataPlatformHomeProps) {
+  installMessageCatalog(initialLanguage, messages);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -171,6 +197,10 @@ export function DataPlatformHome({
   });
 
   const demoCitySupported = normalizeCityValue(selectedCity) === DEMO_CITY;
+  const session = useBrowserSession(hasSessionCookie);
+  const currentUserLabel = session.label;
+  const defaultUserId = session.userId;
+  const isAuthenticated = session.isAuthenticated;
 
   const [contextOpen, setContextOpen] = useState(false);
   const [assistantOpenRequest, setAssistantOpenRequest] = useState(0);
@@ -218,7 +248,7 @@ export function DataPlatformHome({
     selectLanguageMode,
     themeMode,
     toggleThemeMode,
-  } = useClientPreferences();
+  } = useClientPreferences(initialLanguage);
   const [searchValue, setSearchValue] = useState("");
   const [isEventsExpanded, setIsEventsExpanded] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -640,6 +670,7 @@ export function DataPlatformHome({
         history={history}
         key={category.key}
         language={languageMode}
+        date={historicalDate}
         onAsk={requestAssistant}
         onSelect={() => {
           if (["failed", "stale", "error"].includes(category.status)) {
@@ -707,7 +738,8 @@ export function DataPlatformHome({
     setIsSideNavHidden(hidden);
     try { localStorage.setItem("arkiwatch-sidebar-collapsed", String(hidden)); } catch { /* Optional preference. */ }
   };
-  const mobileNavItems = useMemo(() => mobileNavigationItems(categories, Boolean(personalDashboard?.today?.cards.length || (personalDashboard?.onboarding_completion_percent ?? 0) > 0) || selectedNavKey === TODAY_NAV_KEY), [categories, personalDashboard, selectedNavKey]);
+  const hasPersonalContext = Boolean(personalDashboard?.today?.cards.length || (personalDashboard?.onboarding_completion_percent ?? 0) > 0);
+  const mobileNavItems = useMemo(() => mobileNavigationItems(categories, hasPersonalContext || selectedNavKey === TODAY_NAV_KEY), [categories, hasPersonalContext, selectedNavKey]);
 
   // The overview streams in after the shell, so the first paint shows a
   // skeleton rather than empty workspaces. Only the first paint: once anything
@@ -715,14 +747,14 @@ export function DataPlatformHome({
   // button on screen and focused. Sits after every hook to fix hook order.
   if (isPending && !hasRenderedPlatformStateRef.current) {
     return (
-      <I18nProvider language={languageMode}>
+      <I18nProvider language={languageMode} messages={languageMode === initialLanguage ? messages : undefined}>
         <PlatformSkeleton loadingLabel={tKey("shell.loadingDashboard")} />
       </I18nProvider>
     );
   }
 
   return (
-    <I18nProvider language={languageMode}>
+    <I18nProvider language={languageMode} messages={languageMode === initialLanguage ? messages : undefined}>
       <a className="skip-link" href="#main-content">
         {tKey("shell.skipToMainContent")}
       </a>
@@ -854,7 +886,7 @@ export function DataPlatformHome({
             {selectedNavKey === TODAY_NAV_KEY ? (
               <PlanWorkspace onEditContext={() => setContextOpen(true)} brief={todayBrief} personal={personalDashboard} error={personalDashboardError} onRetry={retryPersonalDashboard} onOpenAssistant={requestAssistant} onOpenEvent={openRecentEvent} onOpenScenario={openScenario} />
             ) : visibleOverview ? (
-              selectedNavKey === "sources" ? <SourcesWorkspace overview={visibleOverview} /> : selectedNavKey === "events" ? <ConsoleEvents timeScope={visibleOverview.time_scope} categories={displayCategories} events={recentEvents} checkedAt={visibleOverview.checked_at} timezone={platformTimezone} highlightedEventId={highlightedEventId} onOpenEvent={openRecentEvent} /> : isDetailPage ? (
+              selectedNavKey === "sources" ? <SourcesWorkspace overview={visibleOverview} /> : selectedNavKey === "events" ? <ConsoleEvents timeScope={visibleOverview.time_scope} categories={displayCategories} events={recentEvents} checkedAt={visibleOverview.checked_at} timezone={platformTimezone} highlightedEventId={highlightedEventId} onOpenEvent={openRecentEvent} onAsk={requestAssistant} coverage={visibleOverview.coverage_area} /> : isDetailPage ? (
                 <DataPlatformWorkspaceRouter
                   airQuality={airQuality}
                   city={selectedCity}
@@ -883,7 +915,9 @@ export function DataPlatformHome({
                   checkedAt={visibleOverview.checked_at}
                   coreSignalCards={
                     primaryVisibleCategories.length > 0
-                      ? primaryVisibleCategories.map(renderSignalCard)
+                      ? [...primaryVisibleCategories]
+                          .sort((left, right) => outingSignalRank(left.key) - outingSignalRank(right.key))
+                          .map(renderSignalCard)
                       : null
                   }
                   coreSignalCount={primaryVisibleCategories.length}
@@ -951,7 +985,7 @@ export function DataPlatformHome({
             visibleEvents={recentEvents}
           />
         ) : null}
-        <Drawer open={contextOpen} title={tKey("shell.editContext")} onClose={() => setContextOpen(false)}>{isAuthenticated ? <PersonalSettingsPage compact onSaved={() => { void retryPersonalDashboard(); }} /> : <a className="console-button console-button-primary" href="/login">{tKey("shell.adminSignIn")}</a>}</Drawer>
+        <Drawer open={contextOpen} title={tKey(hasPersonalContext || selectedNavKey === TODAY_NAV_KEY ? "shell.editContext" : "shell.addContext")} onClose={() => setContextOpen(false)}>{isAuthenticated ? <PersonalSettingsPage compact onSaved={() => { void retryPersonalDashboard(); }} /> : <a className="console-button console-button-primary" href="/login">{tKey("shell.adminSignIn")}</a>}</Drawer>
         <CommandPalette categories={displayCategories} events={recentEvents} onSelectNav={selectNav} onSelectCity={selectCity} onOpenEvent={openRecentEvent} onAsk={requestAssistant} />
         <AssistantWidget
           city={selectedCity}

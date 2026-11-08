@@ -21,8 +21,8 @@ describe("platformDataNeedsForView", () => {
     });
   });
 
-  it("loads saved history for Home while keeping the plan on core queries", () => {
-    expect(platformDataNeedsForView("today")).toEqual({
+  it("keeps the observatory and Today on overview plus briefing", () => {
+    const core = {
       weather: false,
       air: false,
       energy: false,
@@ -31,11 +31,9 @@ describe("platformDataNeedsForView", () => {
       transit: false,
       history: false,
       historyAvailability: false,
-    });
-    expect(platformDataNeedsForView("overview")).toEqual({
-      weather: true, air: true, energy: true, householdEnergy: true,
-      roadRail: true, transit: true, history: true, historyAvailability: false,
-    });
+    };
+    expect(platformDataNeedsForView("today")).toEqual(core);
+    expect(platformDataNeedsForView("overview")).toEqual(core);
     expect(platformDataNeedsForView(null)).toEqual(platformDataNeedsForView("overview"));
   });
 

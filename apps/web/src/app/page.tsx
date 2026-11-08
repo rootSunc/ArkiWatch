@@ -1,10 +1,13 @@
+import { cookies } from "next/headers";
 import { dehydrate } from "@tanstack/react-query";
 
 import { DataPlatformHome } from "@/features/data-platform/data-platform-home";
 import { prefetchPlatformHome } from "@/features/data-platform/queries/platform-queries";
 import { normalizeCityValue } from "@/features/data-platform/city-scope";
+import { requestLanguage } from "@/features/data-platform/server-language";
+import { serverMessageCatalog } from "@/features/data-platform/messages/server-catalog";
 import { normalizeSourceDateValue } from "@/features/data-platform/time-window";
-import { getCurrentSession } from "@/features/auth/session";
+import { SESSION_COOKIE_NAME } from "@/features/auth/config";
 import { appEnv } from "@/lib/env";
 import { getQueryClient } from "@/lib/query-client";
 import { QueryProvider } from "@/providers/query-provider";
@@ -23,7 +26,8 @@ type PageProps = {
 
 export default async function Page({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
-  const session = await getCurrentSession();
+  const hasSessionCookie = Boolean((await cookies()).get(SESSION_COOKIE_NAME)?.value);
+  const language = await requestLanguage();
   const selectedCity = normalizeCityValue(resolvedSearchParams?.city);
   const selectedDate = normalizeSourceDateValue(resolvedSearchParams?.date);
   const queryClient = getQueryClient();
@@ -35,8 +39,6 @@ export default async function Page({ searchParams }: PageProps) {
     await prefetchPlatformHome(queryClient, {
       city: selectedCity,
       date: selectedDate,
-      authToken: session?.token,
-      userId: session?.user.id,
       activeNavKey: resolvedSearchParams?.view ?? "overview",
       isHistorical: Boolean(selectedDate),
     }).catch(() => undefined);
@@ -52,14 +54,12 @@ export default async function Page({ searchParams }: PageProps) {
       })}
     >
       <DataPlatformHome
-        currentUserLabel={
-          session ? session.user.name ?? session.user.email ?? session.user.id : "Demo view"
-        }
-        defaultUserId={session?.user.id}
+        hasSessionCookie={hasSessionCookie}
         initialCity={selectedCity}
         initialDate={selectedDate}
+        initialLanguage={language}
         initialView={resolvedSearchParams?.view ?? null}
-        isAuthenticated={Boolean(session)}
+        messages={serverMessageCatalog(language)}
       />
     </QueryProvider>
   );

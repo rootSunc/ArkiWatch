@@ -16,11 +16,12 @@ import {
   useIsomorphicLayoutEffect,
   type LanguageMode,
 } from "../i18n";
+import { ensureMessageCatalog } from "../messages/load-client-catalog";
 import { loadReadRecentEventIds, saveReadRecentEventIds } from "../data-platform-nav-utils";
 
-export function useClientPreferences() {
+export function useClientPreferences(initialLanguage: LanguageMode = "en") {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  const [languageMode, setLanguageMode] = useState<LanguageMode>("en");
+  const [languageMode, setLanguageMode] = useState<LanguageMode>(initialLanguage);
   const [readRecentEventIds, setReadRecentEventIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
@@ -35,8 +36,17 @@ export function useClientPreferences() {
 
   useIsomorphicLayoutEffect(() => {
     const nextLanguageMode = resolveClientLanguage();
-    setLanguageMode(nextLanguageMode);
-    applyLanguageMode(nextLanguageMode);
+    let cancelled = false;
+    void ensureMessageCatalog(nextLanguageMode).then(() => {
+      if (cancelled) {
+        return;
+      }
+      setLanguageMode(nextLanguageMode);
+      applyLanguageMode(nextLanguageMode);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const toggleThemeMode = useCallback((): void => {
@@ -49,9 +59,11 @@ export function useClientPreferences() {
   }, []);
 
   const selectLanguageMode = useCallback((nextLanguageMode: LanguageMode): void => {
-    setLanguageMode(nextLanguageMode);
-    applyLanguageMode(nextLanguageMode);
-    saveLanguageMode(nextLanguageMode);
+    void ensureMessageCatalog(nextLanguageMode).then(() => {
+      setLanguageMode(nextLanguageMode);
+      applyLanguageMode(nextLanguageMode);
+      saveLanguageMode(nextLanguageMode);
+    });
   }, []);
 
   const markRecentEventRead = useCallback((eventId: string): void => {

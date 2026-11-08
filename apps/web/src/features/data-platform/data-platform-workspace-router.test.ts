@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { workspaceRouteForCategory } from "./data-platform-workspace-router";
+import { workspaceRouteForCategory } from "./workspace-route";
 
 describe("workspaceRouteForCategory", () => {
   it("maps detail categories to one explicit route key", () => {

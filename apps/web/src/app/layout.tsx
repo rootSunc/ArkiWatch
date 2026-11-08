@@ -15,14 +15,13 @@ import "./minimal-global.css";
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
   variable: "--font-inter",
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap"
 });
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
-  weight: ["400", "500", "700"]
+  display: "swap"
 });
 
 export async function generateMetadata(): Promise<Metadata> {

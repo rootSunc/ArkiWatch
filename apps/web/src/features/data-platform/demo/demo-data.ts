@@ -1,3 +1,4 @@
+import { DEMO_CITY, DEMO_SNAPSHOT_DATE } from "./constants";
 import rawFixture from "./raw-fixture.json";
 import generatedDetails from "../generated/details.json";
 import rawEnergyCosts from "../generated/energy-costs.json";
@@ -22,8 +23,7 @@ import type {
 
 const generatedEnergyCosts = rawEnergyCosts as Record<"energy" | "householdEnergy", Partial<EnergyCurrentResponse["quality"]>>;
 
-export const DEMO_SNAPSHOT_DATE = "2026-08-08";
-export const DEMO_CITY = "helsinki";
+export { DEMO_CITY, DEMO_SNAPSHOT_DATE } from "./constants";
 export const DEMO_SNAPSHOT_LABEL = "Static Helsinki snapshot";
 
 const DEMO_CHECKED_AT = "2026-08-09T04:00:00.000Z";
@@ -277,6 +277,17 @@ export function demoFixtureForScope(scope: { city?: string | null; date?: string
       energy: withHistoryCosts(details.history.energy, "energy"),
       household_energy: withHistoryCosts(details.history.household_energy, "householdEnergy"),
     },
-    publicDashboard: { ...fixture.publicDashboard, decision },
+    publicDashboard: {
+      ...fixture.publicDashboard,
+      decision,
+      signals: {
+        weather: { ...fixture.weather, ...details.weather },
+        airQuality: { ...fixture.airQuality, ...details.airQuality },
+        transit: { ...fixture.transit, ...details.transit },
+        roadRail: { ...fixture.roadRail, ...details.roadRail },
+        energy: withEnergyCosts(fixture.energy, "energy"),
+        householdEnergy: withEnergyCosts(fixture.householdEnergy, "householdEnergy"),
+      },
+    },
   };
 }

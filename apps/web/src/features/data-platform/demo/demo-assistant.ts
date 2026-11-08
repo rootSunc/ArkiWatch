@@ -1,6 +1,6 @@
 import type { LanguageMode } from "../i18n";
 import { cityLabel, normalizeCityValue } from "../city-scope";
-import { DEMO_CITY, DEMO_SNAPSHOT_DATE } from "./demo-data";
+import { DEMO_CITY, DEMO_SNAPSHOT_DATE } from "./constants";
 
 export type DemoAssistantCitation = {
   source: string;

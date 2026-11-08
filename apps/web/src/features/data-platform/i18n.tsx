@@ -10,40 +10,7 @@ import {
 import { NextIntlClientProvider } from "next-intl";
 import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useMemo } from "react";
 
-import airQualityEnMessages from "./messages/airQuality.en.json";
-import airQualityZhMessages from "./messages/airQuality.zh.json";
-import assistantEnMessages from "./messages/assistant.en.json";
-import assistantZhMessages from "./messages/assistant.zh.json";
-import authEnMessages from "./messages/auth.en.json";
-import authZhMessages from "./messages/auth.zh.json";
-import geospatialEnMessages from "./messages/geospatial.en.json";
-import geospatialZhMessages from "./messages/geospatial.zh.json";
-import dataHelpEnMessages from "./messages/dataHelp.en.json";
-import dataHelpZhMessages from "./messages/dataHelp.zh.json";
-import cityServicesEnMessages from "./messages/cityServices.en.json";
-import cityServicesZhMessages from "./messages/cityServices.zh.json";
-import energyEnMessages from "./messages/energy.en.json";
-import energyZhMessages from "./messages/energy.zh.json";
-import enMessages from "./messages/en.json";
-import linkedEventsEnMessages from "./messages/linkedEvents.en.json";
-import linkedEventsZhMessages from "./messages/linkedEvents.zh.json";
 import labelsEnMessages from "./messages/labels.en.json";
-import labelsZhMessages from "./messages/labels.zh.json";
-import mobilityEnMessages from "./messages/mobility.en.json";
-import mobilityZhMessages from "./messages/mobility.zh.json";
-import regionalProfileEnMessages from "./messages/regionalProfile.en.json";
-import regionalProfileZhMessages from "./messages/regionalProfile.zh.json";
-import roadRailEnMessages from "./messages/roadRail.en.json";
-import roadRailZhMessages from "./messages/roadRail.zh.json";
-import shellEnMessages from "./messages/shell.en.json";
-import shellZhMessages from "./messages/shell.zh.json";
-import transitEnMessages from "./messages/transit.en.json";
-import transitZhMessages from "./messages/transit.zh.json";
-import waterSnowEnMessages from "./messages/waterSnow.en.json";
-import waterSnowZhMessages from "./messages/waterSnow.zh.json";
-import weatherEnMessages from "./messages/weather.en.json";
-import weatherZhMessages from "./messages/weather.zh.json";
-import zhMessages from "./messages/zh.json";
 
 export type { LanguageMode } from "./language";
 export const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -83,15 +50,22 @@ export type MetricLabelSource = {
   label_key?: string | null;
 };
 
-const LEGACY_MESSAGE_CATALOG: Record<LanguageMode, Record<string, string>> = {
-  en: enMessages,
-  zh: zhMessages,
+export type MessageCatalog = {
+  legacy: Record<string, string>;
+  structured: StructuredMessages;
 };
 
-const STRUCTURED_MESSAGE_CATALOG: Record<LanguageMode, StructuredMessages> = {
-  en: { ...shellEnMessages, ...weatherEnMessages, ...energyEnMessages, ...transitEnMessages, ...mobilityEnMessages, ...roadRailEnMessages, ...airQualityEnMessages, ...linkedEventsEnMessages, ...waterSnowEnMessages, ...regionalProfileEnMessages, ...geospatialEnMessages, ...cityServicesEnMessages, ...dataHelpEnMessages, ...authEnMessages, ...assistantEnMessages, ...labelsEnMessages },
-  zh: { ...shellZhMessages, ...weatherZhMessages, ...energyZhMessages, ...transitZhMessages, ...mobilityZhMessages, ...roadRailZhMessages, ...airQualityZhMessages, ...linkedEventsZhMessages, ...waterSnowZhMessages, ...regionalProfileZhMessages, ...geospatialZhMessages, ...cityServicesZhMessages, ...dataHelpZhMessages, ...authZhMessages, ...assistantZhMessages, ...labelsZhMessages },
-};
+const legacyCatalogs: Partial<Record<LanguageMode, Record<string, string>>> = {};
+const structuredCatalogs: Partial<Record<LanguageMode, StructuredMessages>> = {};
+
+export function installMessageCatalog(language: LanguageMode, catalog: MessageCatalog): void {
+  legacyCatalogs[language] = catalog.legacy;
+  structuredCatalogs[language] = catalog.structured;
+}
+
+export function hasMessageCatalog(language: LanguageMode): boolean {
+  return structuredCatalogs[language] != null;
+}
 
 const DEFAULT_CONTEXT: I18nContextValue = {
   language: "en",
@@ -283,7 +257,7 @@ function resolveStructuredMessage(
     return undefined;
   }
 
-  const namespaceMessages = STRUCTURED_MESSAGE_CATALOG[language][
+  const namespaceMessages = structuredCatalogs[language]?.[
     namespace as keyof StructuredMessages
   ];
   return namespaceMessages?.[messageKey];
@@ -367,7 +341,7 @@ function translateText(language: LanguageMode, value: string): string {
     return translateMessageKey(language, labelKey);
   }
 
-  return LEGACY_MESSAGE_CATALOG.zh[value] ?? value;
+  return legacyCatalogs.zh?.[value] ?? value;
 }
 
 export function translateEnumLabel(language: LanguageMode, value: string | null | undefined): string {
@@ -421,10 +395,15 @@ export function translateKeyDataItemLabel(
 export function I18nProvider({
   children,
   language,
+  messages,
 }: {
   children: ReactNode;
   language: LanguageMode;
+  messages?: MessageCatalog;
 }) {
+  if (messages) {
+    installMessageCatalog(language, messages);
+  }
   const value = useMemo<I18nContextValue>(
     () => ({
       language,
@@ -442,8 +421,8 @@ export function I18nProvider({
     <NextIntlClientProvider
       locale={language}
       messages={{
-        ...LEGACY_MESSAGE_CATALOG[language],
-        ...STRUCTURED_MESSAGE_CATALOG[language],
+        ...legacyCatalogs[language],
+        ...structuredCatalogs[language],
       }}
     >
       <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
