@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { metadataText } from "@/features/data-platform/server-metadata";
 import { requestLanguage } from "@/features/data-platform/server-language";
 import { requireSession } from "@/features/auth/session";
-import { PersonalSettingsPage } from "@/features/data-platform/personal-settings";
+import { PersonalSettingsPage } from "@/features/data-platform/personal/personal-settings";
 
 export const dynamic = "force-dynamic";
 

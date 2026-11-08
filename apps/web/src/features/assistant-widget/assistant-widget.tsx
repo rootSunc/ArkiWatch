@@ -32,7 +32,7 @@ import {
 import { firstAssistantCategoryLabel } from "@/features/assistant-widget/assistant-suggestions";
 import { AssistantRetryButton } from "@/features/assistant-widget/assistant-retry-button";
 import { demoAssistantReply } from "@/features/data-platform/demo/demo-assistant";
-import { cityLabel } from "@/features/data-platform/city-scope";
+import { cityLabel } from "@/features/data-platform/model/city-scope";
 import { PlatformOverviewResponse } from "@/features/data-platform/types";
 import { LanguageMode, translateMessageKey } from "@/features/data-platform/i18n";
 import { appEnv } from "@/lib/env";

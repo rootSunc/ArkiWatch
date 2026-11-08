@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { eventAnchorId } from "../recent-events";
+import { eventAnchorId } from "../model/recent-events";
 
 /** How long to keep waiting for a deep-linked event that may never render. */
 const WAIT_LIMIT_MS = 3000;

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../i18n";
-import type { PersonalDashboardRead } from "../personal-dashboard";
+import type { PersonalDashboardRead } from "../personal/personal-dashboard";
 import { PersonalTodayCards } from "./personal-today-cards";
 
 const dashboard: Pick<PersonalDashboardRead, "timezone" | "today"> = {

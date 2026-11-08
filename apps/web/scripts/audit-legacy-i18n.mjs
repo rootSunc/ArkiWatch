@@ -131,7 +131,7 @@ for (const pattern of [
 }
 
 for (const file of [
-  path.join(repoRoot, "apps/web/src/features/data-platform/category-metadata.ts"),
+  path.join(repoRoot, "apps/web/src/features/data-platform/model/category-metadata.ts"),
   path.join(repoRoot, "apps/api/internal/platform/overview.go"),
 ]) {
   const text = fs.readFileSync(file, "utf8");

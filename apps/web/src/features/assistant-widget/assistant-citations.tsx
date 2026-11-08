@@ -11,7 +11,7 @@ import {
   translateMessageKey,
   type LanguageMode,
 } from "@/features/data-platform/i18n";
-import { localizedPlatformCopy } from "@/features/data-platform/platform-copy";
+import { localizedPlatformCopy } from "@/features/data-platform/model/platform-copy";
 
 import type { AssistantApiCitation } from "./assistant-stream";
 

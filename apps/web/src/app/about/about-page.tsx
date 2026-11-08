@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import { PageLanguageToggle, usePageLanguage } from "@/features/shared/page-language";
-import { CITY_PACKS, type CitySignalKey, type CitySignalAvailability } from "@/features/data-platform/city-coverage";
+import { CITY_PACKS, type CitySignalKey, type CitySignalAvailability } from "@/features/data-platform/model/city-coverage";
 import {
   PROJECT_GITHUB_ISSUES_URL,
   PROJECT_GITHUB_URL,

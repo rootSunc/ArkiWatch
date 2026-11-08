@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
+import type { CrossDomainTimelineItem } from "../overview/cross-domain-timeline";
 import { I18nProvider } from "../i18n";
 import type { PlatformEvent } from "../types";
 import { DayPlanTimeline } from "./day-plan-timeline";

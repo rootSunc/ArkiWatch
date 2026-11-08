@@ -1,5 +1,5 @@
 import type { LanguageMode } from "../i18n";
-import { cityLabel, normalizeCityValue } from "../city-scope";
+import { cityLabel, normalizeCityValue } from "../model/city-scope";
 import { DEMO_CITY, DEMO_SNAPSHOT_DATE } from "./constants";
 
 export type DemoAssistantCitation = {

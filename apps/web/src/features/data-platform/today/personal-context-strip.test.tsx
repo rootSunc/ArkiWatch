@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../i18n";
-import type { PersonalDashboardRead } from "../personal-dashboard";
+import type { PersonalDashboardRead } from "../personal/personal-dashboard";
 import { PersonalContextStrip } from "./personal-context-strip";
 
 const dashboard = {

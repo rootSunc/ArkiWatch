@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../i18n";
-import type { ScenarioLiveSignals } from "../scenario-live-hints";
-import type { PersonalDashboardRead } from "../personal-dashboard";
+import type { ScenarioLiveSignals } from "../overview/scenario-live-hints";
+import type { PersonalDashboardRead } from "../personal/personal-dashboard";
 import type { TodayBrief } from "./today-brief";
 import { TodayOverview } from "./today-overview";
 

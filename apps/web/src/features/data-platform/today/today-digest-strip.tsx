@@ -1,6 +1,6 @@
 "use client";
 
-import { localizedContent } from "../content-localization";
+import { localizedContent } from "../model/content-localization";
 import { useI18n } from "../i18n";
 import type { TodayBrief } from "./today-brief";
 

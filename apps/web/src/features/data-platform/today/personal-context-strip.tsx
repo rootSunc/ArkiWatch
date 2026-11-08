@@ -9,7 +9,7 @@ import {
   nextPersonalWorkflowStep,
   personalContextTone,
   type PersonalDashboardRead,
-} from "../personal-dashboard";
+} from "../personal/personal-dashboard";
 
 const STEP_LABEL_KEYS: Record<string, string> = {
   user: "shell.personalStepUser",

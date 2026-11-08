@@ -1,9 +1,9 @@
-import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
-import { localizedContent } from "../content-localization";
+import type { CrossDomainTimelineItem } from "../overview/cross-domain-timeline";
+import { localizedContent } from "../model/content-localization";
 import type { LanguageMode } from "../i18n";
 import { translateMessageKey } from "../i18n";
 import type { PublicActionRead, PublicDashboardRead, PublicScenarioSectionRead } from "../types";
-import type { UserSummaryTile } from "../user-summary-stats";
+import type { UserSummaryTile } from "../overview/user-summary-stats";
 
 export type TodayRecommendationMode = "live" | "out_of_scope" | "historical" | "stale";
 

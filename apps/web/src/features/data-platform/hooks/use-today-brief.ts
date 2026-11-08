@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 
 import type { LanguageMode } from "../language";
-import { buildSignalSystemTiles } from "../signals-console";
+import { buildSignalSystemTiles } from "../overview/signals-console";
 import { buildTodayBrief } from "../today/today-brief";
-import { buildUserSummaryTiles } from "../user-summary-stats";
+import { buildUserSummaryTiles } from "../overview/user-summary-stats";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,

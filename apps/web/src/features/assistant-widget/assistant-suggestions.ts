@@ -1,4 +1,4 @@
-import { displayTitle } from "@/features/data-platform/data-platform-view-model";
+import { displayTitle } from "@/features/data-platform/model/data-platform-view-model";
 import { translateMessageKey, type LanguageMode } from "@/features/data-platform/i18n";
 import type { PlatformCategory, PlatformOverviewResponse } from "@/features/data-platform/types";
 

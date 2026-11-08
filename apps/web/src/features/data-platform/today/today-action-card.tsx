@@ -2,10 +2,10 @@
 
 import { formatTimestamp } from "@/features/shared/format";
 
-import { localizedContent } from "../content-localization";
+import { localizedContent } from "../model/content-localization";
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
-import type { ScenarioLiveSignals } from "../scenario-live-hints";
+import type { ScenarioLiveSignals } from "../overview/scenario-live-hints";
 import type { PublicScenarioSectionRead } from "../types";
 import { buildTodayActionCardView } from "./today-action-card-model";
 import type { TodayRecommendationMode } from "./today-brief";

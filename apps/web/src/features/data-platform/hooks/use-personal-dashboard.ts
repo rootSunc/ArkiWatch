@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { unwrapApiResult } from "@/lib/api-client";
 
-import { fetchPersonalDashboard } from "../personal-dashboard";
+import { fetchPersonalDashboard } from "../personal/personal-dashboard";
 
 const PERSONAL_DASHBOARD_STALE_TIME_MS = 60 * 1000;
 

@@ -1,5 +1,5 @@
-import { MOBILITY_NAV_KEY } from "../data-platform-view-model";
-import { FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "../data-platform-nav-utils";
+import { MOBILITY_NAV_KEY } from "../model/data-platform-view-model";
+import { FALLBACK_NAV_KEY, TODAY_NAV_KEY } from "../shell/data-platform-nav-utils";
 
 /** Matches the scheduler's five-minute cadence, so live cards track it. */
 export const PLATFORM_QUERY_STALE_TIME_MS = 2 * 60 * 1000;

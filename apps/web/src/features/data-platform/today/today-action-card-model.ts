@@ -4,13 +4,13 @@ import {
   buildScenarioLiveHint,
   formatScenarioHintAge,
   type ScenarioLiveSignals,
-} from "../scenario-live-hints";
-import { localizedContent } from "../content-localization";
+} from "../overview/scenario-live-hints";
+import { localizedContent } from "../model/content-localization";
 import type { PublicScenarioSectionRead } from "../types";
 import {
   type TodayRecommendationMode,
 } from "./today-brief";
-import { isEmptyStatus } from "../platform-status";
+import { isEmptyStatus } from "../model/platform-status";
 
 export type TodayActionTone = "good" | "warn" | "bad" | "neutral";
 

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { I18nProvider } from "../i18n";
-import type { ScenarioLiveSignals } from "../scenario-live-hints";
+import type { ScenarioLiveSignals } from "../overview/scenario-live-hints";
 import type { PublicScenarioSectionRead } from "../types";
 import { TodayActionCard } from "./today-action-card";
 

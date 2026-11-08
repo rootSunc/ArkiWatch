@@ -6,8 +6,8 @@ import { AssistantGlyph } from "@/features/assistant-widget/assistant-glyph";
 
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
-import type { PersonalDashboardRead } from "../personal-dashboard";
-import { localizedContent } from "../content-localization";
+import type { PersonalDashboardRead } from "../personal/personal-dashboard";
+import { localizedContent } from "../model/content-localization";
 
 const CARD_ICONS: Record<string, string> = {
   air: "air",

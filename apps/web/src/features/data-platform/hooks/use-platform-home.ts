@@ -29,9 +29,9 @@ import {
 import { briefingCacheRemaining } from "../queries/briefing-cache";
 import type { PublicDashboardRead } from "../types";
 import { appEnv } from "@/lib/env";
-import { normalizeCityValue } from "../city-scope";
-import { FALLBACK_NAV_KEY } from "../data-platform-nav-utils";
-import { normalizeSourceDateValue } from "../time-window";
+import { normalizeCityValue } from "../model/city-scope";
+import { FALLBACK_NAV_KEY } from "../shell/data-platform-nav-utils";
+import { normalizeSourceDateValue } from "../model/time-window";
 
 /**
  * Scope changes (city, date) mint a new query key. Without a placeholder the UI

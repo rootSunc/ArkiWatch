@@ -3,10 +3,10 @@ import { dehydrate } from "@tanstack/react-query";
 
 import { DataPlatformHome } from "@/features/data-platform/data-platform-home";
 import { prefetchPlatformHome } from "@/features/data-platform/queries/platform-queries";
-import { normalizeCityValue } from "@/features/data-platform/city-scope";
+import { normalizeCityValue } from "@/features/data-platform/model/city-scope";
 import { requestLanguage } from "@/features/data-platform/server-language";
 import { serverMessageCatalog } from "@/features/data-platform/messages/server-catalog";
-import { normalizeSourceDateValue } from "@/features/data-platform/time-window";
+import { normalizeSourceDateValue } from "@/features/data-platform/model/time-window";
 import { SESSION_COOKIE_NAME } from "@/features/auth/config";
 import { appEnv } from "@/lib/env";
 import { getQueryClient } from "@/lib/query-client";

@@ -4,8 +4,8 @@ import generatedDetails from "../generated/details.json";
 import rawEnergyCosts from "../generated/energy-costs.json";
 import generatedDecisions from "../generated/briefings.json";
 import type { BriefingDecision } from "../types";
-import { cityCoverageArea, cityLabel, normalizeCityValue } from "../city-scope";
-import { normalizeSourceDateValue } from "../time-window";
+import { cityCoverageArea, cityLabel, normalizeCityValue } from "../model/city-scope";
+import { normalizeSourceDateValue } from "../model/time-window";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,

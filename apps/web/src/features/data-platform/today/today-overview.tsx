@@ -3,20 +3,20 @@
 import { formatTimestamp, severityTone } from "@/features/shared/format";
 import { MaterialIcon } from "@/features/shared/material-icon";
 
-import { localizedContent } from "../content-localization";
+import { localizedContent } from "../model/content-localization";
 import type { LanguageMode } from "../i18n";
 import { useI18n } from "../i18n";
-import { platformErrorMessage } from "../platform-error";
-import type { ScenarioLiveSignals } from "../scenario-live-hints";
+import { platformErrorMessage } from "../model/platform-error";
+import type { ScenarioLiveSignals } from "../overview/scenario-live-hints";
 import type { PlatformEvent } from "../types";
 import { DayPlanTimeline } from "./day-plan-timeline";
 import { PersonalContextStrip } from "./personal-context-strip";
 import { PersonalTodayCards } from "./personal-today-cards";
 import { TodayActionCard } from "./today-action-card";
 import type { TodayBrief } from "./today-brief";
-import type { PersonalDashboardRead } from "../personal-dashboard";
+import type { PersonalDashboardRead } from "../personal/personal-dashboard";
 
-export { SCENARIO_NAV_KEYS } from "../scenario-navigation";
+export { SCENARIO_NAV_KEYS } from "../shell/scenario-navigation";
 
 type TodayOverviewProps = {
   todayBrief: TodayBrief | null;

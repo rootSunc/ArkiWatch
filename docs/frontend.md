@@ -23,6 +23,24 @@ Every domain page has the same skeleton: `PageHeader` → KPI row → chart →
 sortable `DataTable` → inspection disclosure (maps, pipelines) → source footer.
 Scope (city, date, view) lives in the URL.
 
+## Code layout
+
+`src/features/data-platform/` holds the app; `data-platform-home.tsx` is the entry.
+
+| Folder | Holds |
+| --- | --- |
+| `shell/` | Shell, nav, topbars, command palette, routing and URL params |
+| `overview/` | Home pieces: overview, signals, recent events, console model |
+| `today/` | Your day plan and briefing cards |
+| `workspaces/` | Shared workspace chrome (console, panels, charts, export) |
+| `workspaces/<domain>/` | One domain page plus its helpers and tests |
+| `personal/` | Settings, saved context, personal dashboard, `/plan` |
+| `model/` | Pure logic: view model, status, time scope, formatting, copy |
+| `hooks/`, `queries/` | React hooks and react-query fetchers |
+| `messages/`, `demo/`, `generated/` | Catalogs, demo data, Go-generated assets |
+
+Tests sit next to their source.
+
 ## Behavior rules
 
 - **Evidence:** values open `EvidencePopover`: provider, location,

@@ -2,8 +2,8 @@
 
 import { formatTimestamp, severityTone } from "@/features/shared/format";
 
-import type { CrossDomainTimelineItem } from "../cross-domain-timeline";
-import { localizedContent } from "../content-localization";
+import type { CrossDomainTimelineItem } from "../overview/cross-domain-timeline";
+import { localizedContent } from "../model/content-localization";
 import { LanguageMode, useI18n } from "../i18n";
 import type { PlatformEvent } from "../types";
 import type { TodayRecommendationMode } from "./today-brief";

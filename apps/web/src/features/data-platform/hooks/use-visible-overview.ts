@@ -2,10 +2,10 @@
 
 import { useMemo } from "react";
 
-import { categoryVisibleToCurrentUser } from "../category-access";
-import { categoryByKey } from "../data-platform-nav-utils";
-import { buildMobilityCategory, mergeMobilityCategories } from "../data-platform-view-model";
-import { scopedReferenceTime } from "../data-time-scope";
+import { categoryVisibleToCurrentUser } from "../model/category-access";
+import { categoryByKey } from "../shell/data-platform-nav-utils";
+import { buildMobilityCategory, mergeMobilityCategories } from "../model/data-platform-view-model";
+import { scopedReferenceTime } from "../model/data-time-scope";
 import type {
   AirQualityCurrentResponse,
   BriefingDecision,

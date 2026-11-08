@@ -8,7 +8,7 @@ import {
   saveThemeMode,
   storedThemeMode,
   ThemeMode,
-} from "../data-platform-shell";
+} from "../shell/data-platform-shell";
 import {
   applyLanguageMode,
   resolveClientLanguage,
@@ -17,7 +17,7 @@ import {
   type LanguageMode,
 } from "../i18n";
 import { ensureMessageCatalog } from "../messages/load-client-catalog";
-import { loadReadRecentEventIds, saveReadRecentEventIds } from "../data-platform-nav-utils";
+import { loadReadRecentEventIds, saveReadRecentEventIds } from "../shell/data-platform-nav-utils";
 
 export function useClientPreferences(initialLanguage: LanguageMode = "en") {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");

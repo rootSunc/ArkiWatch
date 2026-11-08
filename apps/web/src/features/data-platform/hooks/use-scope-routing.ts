@@ -3,8 +3,8 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 
-import { normalizeCityValue } from "../city-scope";
-import { saveCityValue, storedCityValue } from "../data-platform-shell";
+import { normalizeCityValue } from "../model/city-scope";
+import { saveCityValue, storedCityValue } from "../shell/data-platform-shell";
 import {
   buildNavigationQueryParams,
   currentSearchParams,
@@ -12,16 +12,16 @@ import {
   NAV_QUERY_KEY,
   pathWithParams,
   resolveNavKey,
-} from "../data-platform-nav-utils";
-import { MOBILITY_NAV_KEY } from "../data-platform-view-model";
-import type { MobilityTabKey } from "../mobility-workspace";
+} from "../shell/data-platform-nav-utils";
+import { MOBILITY_NAV_KEY } from "../model/data-platform-view-model";
+import type { MobilityTabKey } from "../workspaces/mobility/mobility-workspace";
 import {
   ENERGY_TAB_QUERY_KEY,
   MOBILITY_TAB_QUERY_KEY,
   resolveEnergyTabParam,
   resolveMobilityTabParam,
   type EnergyPanelKey,
-} from "../workspace-query-params";
+} from "../shell/workspace-query-params";
 
 type ScopeRoutingOptions = {
   initialCity: string;

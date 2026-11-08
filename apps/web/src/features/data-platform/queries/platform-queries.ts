@@ -9,9 +9,9 @@ import {
 } from "@/lib/api-client";
 import { appEnv } from "@/lib/env";
 
-import { filterPlatformOverviewForCurrentUser } from "../category-access";
-import { DEFAULT_CITY, normalizeCityValue } from "../city-scope";
-import { normalizeSourceDateValue } from "../time-window";
+import { filterPlatformOverviewForCurrentUser } from "../model/category-access";
+import { DEFAULT_CITY, normalizeCityValue } from "../model/city-scope";
+import { normalizeSourceDateValue } from "../model/time-window";
 import type {
   AirQualityCurrentResponse,
   EnergyCurrentResponse,

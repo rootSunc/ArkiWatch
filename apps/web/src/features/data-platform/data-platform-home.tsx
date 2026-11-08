@@ -19,18 +19,18 @@ import "./data-platform.css";
 
 import {
   normalizeCityValue,
-} from "./city-scope";
-import type { NavItem, WorkspaceMode } from "./data-platform-shell";
+} from "./model/city-scope";
+import type { NavItem, WorkspaceMode } from "./shell/data-platform-shell";
 import {
   DataPlatformSideNav,
   DataPlatformSideNavBackdrop,
-} from "./data-platform-side-nav";
+} from "./shell/data-platform-side-nav";
 import {
   DataPlatformDesktopHeader,
   DataPlatformMobileHeader,
   DataPlatformWorkspaceTopbar,
   SideNavRestoreButton,
-} from "./data-platform-topbars";
+} from "./shell/data-platform-topbars";
 import {
   I18nProvider,
   installMessageCatalog,
@@ -42,7 +42,7 @@ import { useBrowserSession } from "@/features/auth/use-browser-session";
 import { usePlatformHome } from "./hooks/use-platform-home";
 import { usePlatformNavPrefetch } from "./hooks/use-platform-prefetch";
 import { usePersonalDashboard } from "./hooks/use-personal-dashboard";
-import { PlatformSkeleton } from "./platform-skeleton";
+import { PlatformSkeleton } from "./shell/platform-skeleton";
 import { useClientPreferences } from "./hooks/use-client-preferences";
 import {
   EVENT_QUERY_KEY,
@@ -54,7 +54,7 @@ import {
   categoryByKey,
   mobileNavigationItems,
   resolveNavKey,
-} from "./data-platform-nav-utils";
+} from "./shell/data-platform-nav-utils";
 import { useEventAnchorScroll } from "./hooks/use-event-anchor-scroll";
 import { useScopeRouting } from "./hooks/use-scope-routing";
 import { useShellFocus } from "./hooks/use-shell-focus";
@@ -65,33 +65,33 @@ import type { PlatformCategory, PlatformEvent } from "./types";
 import {
   eventNavigationId,
   eventTarget,
-} from "./recent-events";
-import type { MobilityTabKey } from "./mobility-workspace";
+} from "./model/recent-events";
+import type { MobilityTabKey } from "./workspaces/mobility/mobility-workspace";
 import {
   resolveScenarioTarget,
-} from "./scenario-navigation";
-import { PlanWorkspace } from "./plan-workspace";
-import { signalTrend } from "./console-model";
+} from "./shell/scenario-navigation";
+import { PlanWorkspace } from "./personal/plan-workspace";
+import { signalTrend } from "./overview/console-model";
 import { useMediaQuery } from "@/features/shared/use-media-query";
 import { Drawer } from "@/features/shared/ui/console";
-import type { ScenarioLiveSignals } from "./scenario-live-hints";
-import { workspaceRouteForCategory } from "./workspace-route";
-import { SignalCard } from "./signal-card";
+import type { ScenarioLiveSignals } from "./overview/scenario-live-hints";
+import { workspaceRouteForCategory } from "./shell/workspace-route";
+import { SignalCard } from "./overview/signal-card";
 import {
   dashboardShellClassName,
   dashboardSideNavClassName,
-} from "./data-platform-layout";
-import { DataPlatformOverview } from "./data-platform-overview";
-import { MobileBottomNav } from "./mobile-bottom-nav";
-import { RecentEventsPanel } from "./recent-events-panel";
+} from "./shell/data-platform-layout";
+import { DataPlatformOverview } from "./overview/data-platform-overview";
+import { MobileBottomNav } from "./shell/mobile-bottom-nav";
+import { RecentEventsPanel } from "./overview/recent-events-panel";
 import { DEMO_CITY } from "./demo/constants";
-import { platformErrorMessage } from "./platform-error";
+import { platformErrorMessage } from "./model/platform-error";
 import {
   PlatformDataWarning,
   PlatformUnavailable,
   ShellNotices,
-} from "./shell-notices";
-import { buildSignalView } from "./signal-view";
+} from "./shell/shell-notices";
+import { buildSignalView } from "./overview/signal-view";
 import { useDocumentTitle } from "@/features/shared/use-document-title";
 import {
   ENERGY_TAB_QUERY_KEY,
@@ -99,29 +99,29 @@ import {
   resolveEnergyTabParam,
   resolveMobilityTabParam,
   type EnergyPanelKey,
-} from "./workspace-query-params";
+} from "./shell/workspace-query-params";
 import {
   MOBILITY_NAV_KEY,
   isMobilityCategoryKey,
-} from "./data-platform-view-model";
+} from "./model/data-platform-view-model";
 const SourcesWorkspace = dynamic(
-  () => import("./sources-workspace").then((module) => module.SourcesWorkspace),
+  () => import("./workspaces/sources/sources-workspace").then((module) => module.SourcesWorkspace),
   { loading: () => null },
 );
 const ConsoleEvents = dynamic(
-  () => import("./console-events").then((module) => module.ConsoleEvents),
+  () => import("./overview/console-events").then((module) => module.ConsoleEvents),
   { loading: () => null },
 );
 const PersonalSettingsPage = dynamic(
-  () => import("./personal-settings").then((module) => module.PersonalSettingsPage),
+  () => import("./personal/personal-settings").then((module) => module.PersonalSettingsPage),
   { ssr: false },
 );
 const CommandPalette = dynamic(
-  () => import("./command-palette").then((module) => module.CommandPalette),
+  () => import("./shell/command-palette").then((module) => module.CommandPalette),
   { ssr: false },
 );
 const DataPlatformWorkspaceRouter = dynamic(
-  () => import("./data-platform-workspace-router").then((module) => module.DataPlatformWorkspaceRouter),
+  () => import("./shell/data-platform-workspace-router").then((module) => module.DataPlatformWorkspaceRouter),
   { loading: () => null },
 );
 
