@@ -13,10 +13,10 @@ const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:3100";
 const OUT_DIR = "public/screenshots";
 
 const SHOTS = [
-  { file: "today-workspace-en.jpg", route: "/?view=today" },
-  { file: "data-platform-overview-en.jpg", route: "/?view=overview" },
-  { file: "weather-workspace-en.jpg", route: "/?view=weather" },
-  { file: "assistant-chat-en.jpg", route: "/?view=today", openAssistant: true },
+  { file: "home-en.jpg", route: "/" },
+  { file: "weather-en.jpg", route: "/?view=weather" },
+  { file: "events-en.jpg", route: "/?view=events" },
+  { file: "assistant-en.jpg", route: "/", askAbout: "Explain weather" },
 ];
 
 const browser = await chromium.launch();
@@ -37,13 +37,15 @@ for (const shot of SHOTS) {
   await page.goto(`${BASE_URL}${shot.route}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(900);
 
-  if (shot.openAssistant) {
-    await page.getByRole("button", { name: "Open ArkiWatch assistant" }).click();
-    await page.getByRole("dialog").waitFor();
-    // Ask something, so the shot shows an answer with its citation rather
+  if (shot.askAbout) {
+    // Contextual Ask, so the shot shows an answer with its citation rather
     // than an empty thread.
-    await page.getByRole("button", { name: "What should I pay attention to today?" }).click();
-    await page.waitForTimeout(2500);
+    await page.getByRole("button", { name: "Ask about this", exact: true }).first().click();
+    const input = page.locator(".assistant-panel input");
+    await input.fill(shot.askAbout);
+    await input.press("Enter");
+    await page.getByRole("button", { name: "Open Weather workspace" }).waitFor();
+    await page.waitForTimeout(600);
   }
 
   await page.screenshot({

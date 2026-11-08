@@ -1,89 +1,81 @@
 # Development
 
-This page covers the full local stack. If you only want to evaluate ArkiWatch, use the zero-credential [`pnpm demo`](../README.md#try-the-demo) first.
+To try the app without a backend, use `pnpm demo` (see the [README](../README.md#try-the-demo)).
 
-## Requirements
+## Live stack
 
-- Node.js 20+
-- Corepack with pnpm
-- Go 1.25+
-- PostgreSQL for live API flows
-
-## Live local setup
-
-From the repository root:
+Requires Node.js 20+, Corepack/pnpm, Go 1.25+, PostgreSQL.
 
 ```bash
-corepack enable
-pnpm install
-
-cp apps/api/.env.example apps/api/.env
+corepack enable && pnpm install
+cp apps/api/.env.example apps/api/.env          # set DATABASE_URL
 cp apps/web/.env.example apps/web/.env.local
-
-# Before continuing, edit apps/api/.env for your local PostgreSQL credentials.
-# Create the database with the same PostgreSQL role used by DATABASE_URL.
 createdb arkiwatch
-pnpm run migrate:api
-pnpm run bootstrap:api
-pnpm dev
+pnpm run migrate:api && pnpm run bootstrap:api
+pnpm dev                                        # API :8000 + web :3000
 ```
 
-The local surfaces are:
+Fill the pipeline once (provider calls are real):
 
-| Surface | URL |
+```bash
+scripts/go-command.sh ./cmd/collector all
+scripts/go-command.sh ./cmd/normalize -hours 24
+scripts/go-command.sh ./cmd/scheduler --once    # due jobs only; drop --once for the loop
+```
+
+Call `scripts/go-command.sh` directly when passing flags: `pnpm run x -- --flag`
+forwards the `--`, and Go's flag parser stops there, so the flag is ignored.
+
+| URL | What |
 | --- | --- |
-| Web app | [http://localhost:3000](http://localhost:3000) |
-| Product overview | [http://localhost:3000/about](http://localhost:3000/about) |
-| API root | [http://localhost:8000](http://localhost:8000) |
-| OpenAPI contract | [`contracts/openapi.json`](../contracts/openapi.json) (static contract source) |
-| Health | [http://localhost:8000/api/health](http://localhost:8000/api/health) |
+| `localhost:3000` | Web app (`/about`, `/privacy`, `/plan`, `/settings`) |
+| `localhost:8000/api/health` | API health |
+| `localhost:8000/api/health/data-quality` | Per-source freshness |
 
-Use `localhost` in the browser. The example files bind the API to `127.0.0.1:8000` and point the web app at `http://127.0.0.1:8000/api`; on a typical local machine that is the same loopback host.
+## Commands
 
-The example configuration uses `postgresql://postgres:postgres@localhost:5432/arkiwatch`. Change it in `apps/api/.env` if your local PostgreSQL setup differs.
+| Command | Runs in CI | Use when |
+| --- | :---: | --- |
+| `pnpm check` | ✓ | Always: Go vet/test, web lint/test/typecheck/audits |
+| `pnpm run contracts:check` | ✓ | API shape, Go rules, or demo fixtures changed |
+| `pnpm run build:web` | ✓ | Before shipping web changes |
+| `pnpm run test:e2e` | | UI flow changes (Playwright on the demo build) |
+| `pnpm run contracts:check:live` | | API response changed; needs a running API |
+| `pnpm run config:check` | | Env keys added or removed |
+| `pnpm run audit:api` | | Go dependency changes (govulncheck) |
+| `pnpm run version:check` | | Version bump |
 
-## Useful commands
+Focused: `pnpm run test:api`, `pnpm run test:web`. Schema changes go in the Go
+reconciler (`internal/schema`) with integration tests; contract and asset
+regeneration is in [Architecture](architecture.md#contracts-and-generated-assets).
+
+Tests use fixtures and mocks and never call real providers.
+
+## Troubleshooting
+
+- **Web can't reach API:** check `/api/health`, then `API_PUBLIC_BASE_URL` (what
+  the browser uses) and `NEXT_PUBLIC_API_BASE_URL` (fallback) in `.env.local`.
+- **A source is empty or stale:** check `/api/health/data-quality` and that
+  source's key/config before suspecting code. Digitransit and Fingrid need keys.
+- **Running `go run` directly:** export the env yourself; only the `pnpm`
+  wrappers load `apps/api/.env`.
+
+## Public vs. private
+
+| Goes in Git | Stays private |
+| --- | --- |
+| `.env.example` files with key names and safe defaults | Real `.env` values, tokens, DB passwords |
+| | `deploy/`: Dockerfiles, Compose, Ansible, runbook (git-ignored) |
+| Docs, contracts, fixtures with public city data | Personal addresses, commutes, dumps, logs |
+| | Deploy diary, restore evidence: `docs/private/` (git- and docker-ignored) |
+
+`NEXT_PUBLIC_*` and `API_PUBLIC_BASE_URL` are sent to the browser, so never put
+secrets there. A private key does not make a data flow private: enabled integrations
+still belong on the `/privacy` page
+([privacy-page.tsx](../apps/web/src/app/privacy/privacy-page.tsx), EN and 中文). Before sharing, scan history:
 
 ```bash
-pnpm demo                      # deterministic product tour
-pnpm dev                       # API and web together
-pnpm check                     # backend and frontend quality gates
-pnpm run build:web             # production web build
-pnpm run contracts:check       # OpenAPI and frontend contract drift
-pnpm run contracts:check:live  # live API vs. OpenAPI contract, recursively
-pnpm run audit:api             # govulncheck against the Go module graph
-pnpm run config:check          # environment example coverage, both directions
-pnpm run version:check         # package metadata consistency
-pnpm run test:e2e              # browser smoke tests using the deterministic demo
+gitleaks git --redact --no-banner --log-opts='--all'
 ```
 
-For focused work, use `pnpm run test:api` and `pnpm run test:web`. Database or model changes require an update to the Go schema reconciler and its integration checks; contract changes must update the static OpenAPI artifact at `contracts/openapi.json` and the generated frontend types together, then pass `pnpm run contracts:check:live` against a real response, not just the generated types.
-
-## Data pipeline
-
-The one-shot pipeline is intentionally explicit:
-
-```bash
-pnpm run dev:collector -- all
-pnpm run dev:normalize -- -hours 24
-pnpm run dev:scheduler -- --once
-```
-
-The durable scheduler persists job state in PostgreSQL. External providers are not part of the test contract: use fixtures and mocks so tests remain deterministic and do not depend on network availability.
-
-## Configuration and troubleshooting
-
-Start from `apps/api/.env.example` and `apps/web/.env.example`; do not commit `.env` files, tokens, provider credentials, or personal data. The live API needs PostgreSQL, while the demo does not.
-
-If the web app cannot reach the API, check the API health URL first and then compare `API_PUBLIC_BASE_URL` (browser runtime address) and `NEXT_PUBLIC_API_BASE_URL` (fallback) in `apps/web/.env.local` with the API address. If a provider is empty or stale, inspect `/api/health/data-quality` and the configured source scope before treating it as an application error.
-
-The [`deploy/`](../deploy/README.md) directory contains an optional single-VPS recipe. It is not needed for local development or for publishing the project source.
-
-See [Public and private records](publication-boundary.md) for configuration
-visibility and private notes. The example files are complete references; most
-provider, scheduler, and retention settings can keep their defaults.
-
-CI runs API checks with PostgreSQL, frontend checks, generated contract/asset
-checks, and a web build. E2E, live contract, configuration, version, and
-vulnerability checks are available commands but are not all run by the current
-workflow. Choose the checks needed for the behavior you changed.
+If a real credential leaked, rotate it first, then clean history.

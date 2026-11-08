@@ -12,18 +12,15 @@ apps/web/tsconfig.tsbuildinfo
 .env.*
 apps/*/.env
 apps/*/.env.*
-deploy/env/*.env
-deploy/ansible/group_vars/*.yml
 
 coverage
 htmlcov
 *.log
 logs
-deploy/runbooks/*.local.md
 
 # Personal tooling and operator records are not build inputs.
 .agents
 .claude
 skills-lock.json
 docs/private
-deploy/ansible/inventory.ini
+deploy

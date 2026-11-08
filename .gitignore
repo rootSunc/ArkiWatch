@@ -27,14 +27,10 @@ playwright-report/
 .env.*
 !.env.example
 !apps/**/.env.example
-!deploy/env/
-deploy/env/*.env
-!deploy/env/*.env.example
-deploy/ansible/group_vars/*.yml
-!deploy/ansible/group_vars/*.yml.example
-deploy/ansible/inventory.ini
-deploy/runbooks/*.local.md
 /docs/private/
+
+# Deployment recipe and operator records stay local
+/deploy/
 
 # Local runtime data
 *.db

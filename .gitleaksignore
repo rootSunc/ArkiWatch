@@ -1,13 +1,6 @@
 # Historical false-positive fingerprints. New scans also use .gitleaks.toml
 # allowlists so later commits do not keep adding fingerprints for the same
 # test fixtures and i18n keys.
-51ee2256e8979114980fc0f303f0a28b86b21118:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:750
-f97b97c96b929f23dc2fa03bbc8146f5cc41c685:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:750
-2d2f8b8f37f155e21b9a1e1798848dc768572637:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:750
-c6eb12f76af5b36c516d96be63f4a13be362bbd9:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:725
-140d08999f08d7719ba781d4dd450d2c70f201f4:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:725
-069d8b2e82dcdc13d941c03ad497de5b4d51e89a:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:750
-ca9da3ccad5fce63fe7b681adb2d8bc58686a5ed:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:725
 9d027796284ea265420ff6d826c8dad4f62e1ac9:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:750
 67859631d104151264d6b4187a7e605cceabfafc:apps/web/src/features/data-platform/linked-events-workspace.tsx:generic-api-key:725
 b562c77c6b9f73c1e61c013ad6785244ea62349f:apps/api/internal/httpapi/server_test.go:generic-api-key:279

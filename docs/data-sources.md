@@ -1,57 +1,65 @@
-# Data sources and provenance
+# Data sources
 
-ArkiWatch is a provider adapter and decision layer, not the authoritative source
-for any public feed. The UI keeps provider name, fetch time, validity, scope, and
-evidence links visible where a recommendation depends on them.
+ArkiWatch adapts public feeds; it is not the authority for any of them.
+Everything is fetched server-side except map tiles.
 
-## Providers configured in this repository
+## Providers
 
-| Area | Provider | Endpoint configured | Licence | Access |
+| Area | Provider | Endpoint | Licence | Key needed |
 | --- | --- | --- | --- | --- |
-| Weather | Finnish Meteorological Institute (FMI) | `opendata.fmi.fi` | CC BY 4.0 | Open, no key |
-| Air quality | HSY | `kartta.hsy.fi` WFS | CC BY 4.0 | Open, no key |
-| Air quality | Open-Meteo | `air-quality-api.open-meteo.com` | Data CC BY 4.0; the free API tier is for non-commercial use only | Open, no key |
-| Transit | Digitransit / HSL | `api.digitransit.fi` routing GraphQL | CC BY 4.0 (OSM-derived geometry and addresses are ODbL) | Free subscription key required |
-| Road and rail | Digitraffic (Fintraffic) | `tie.digitraffic.fi` | CC BY 4.0 | Open, no key |
-| Energy | Fingrid open data | `data.fingrid.fi/api` | CC BY 4.0 | API key required, throttled per key |
-| Energy | Pörssisähkö | `api.porssisahko.net` | No formal licence published — confirm with the provider before redistributing | Open, no key |
-| Hydrology | SYKE | `rajapinnat.ymparisto.fi` Hydrologiarajapinta | CC BY 4.0 | Open, no key |
-| City services | Helsinki Service Map | `hel.fi/palvelukarttaws` | CC BY 4.0 | Open, no key |
-| Events | Linked Events (Helsinki, Espoo) | `api.hel.fi`, `api.espoo.fi` | CC BY 4.0; individual event images may carry their own rights | Open, no key |
-| Map base layer | OpenStreetMap tiles | `tile.openstreetmap.org` | Map data ODbL; tiles subject to the OSMF tile usage policy | Loaded by the browser, no key |
+| Weather | FMI | `opendata.fmi.fi` | CC BY 4.0 | no |
+| Air quality | HSY | `kartta.hsy.fi` WFS | CC BY 4.0 | no |
+| Air quality | Open-Meteo | `air-quality-api.open-meteo.com` | CC BY 4.0; free tier **non-commercial** | no |
+| Transit | Digitransit / HSL | `api.digitransit.fi` | CC BY 4.0 (OSM parts ODbL) | yes |
+| Road & rail | Fintraffic Digitraffic | `tie.digitraffic.fi` | CC BY 4.0 | no |
+| Energy | Fingrid | `data.fingrid.fi/api` | CC BY 4.0 | yes, rate limited |
+| Energy price | Pörssisähkö | `api.porssisahko.net` | **no published licence** | no |
+| Water & snow | SYKE | `rajapinnat.ymparisto.fi` | CC BY 4.0 | no |
+| City services | Helsinki Service Map | `hel.fi/palvelukarttaws` | CC BY 4.0 | no |
+| Events | Linked Events (Helsinki, Espoo) | `api.hel.fi`, `api.espoo.fi` | CC BY 4.0 (images may differ) | no |
+| Map tiles | OpenStreetMap | `tile.openstreetmap.org` (browser) | ODbL; OSMF tile policy | no |
 
-Licence rows record what the providers published when this table was written.
-They are configuration, not guarantees: confirm each provider's current terms,
-rate limits, and attribution rules before deploying or redistributing a city
-pack, and re-check them when you add a city.
+Terms change. Re-check each provider before deploying or adding a city.
+Endpoints are set in [`apps/api/.env.example`](../apps/api/.env.example); the
+adapter list is [`collectors/registry.go`](../apps/api/internal/collectors/registry.go).
+
+## Coverage
+
+Each city has a static capability per signal in
+[`coverage.go`](../apps/api/internal/platform/coverage.go), served at
+`GET /api/platform/coverage`. `supported` means an adapter exists, not that a
+deployment has keys or fresh data; check `/api/health/data-quality` for that.
+
+- HSY air stations are regional; Open-Meteo is the city-level fallback.
+- Energy and road/rail are national: choosing a city doesn't make them local.
+- Tampere, Turku, and Oulu get regional-only recommendations.
+- Without a Digitransit key, the transit collector fails loudly instead of
+  reporting zero alerts.
 
 ## Attribution
 
-CC BY 4.0 requires crediting the source. A deployment that publishes these
-signals should carry the provider credits, for example:
+CC BY 4.0 requires credit. The UI shows provider and fetch time next to each
+reading; a public deployment should also carry:
 
-- Source: Finnish Meteorological Institute, licence CC BY 4.0
-- Source: Fintraffic / digitraffic.fi, licence CC 4.0 BY
-- Source: Fingrid / data.fingrid.fi, licence CC 4.0 BY
-- © Digitransit / HSL, licence CC BY 4.0
-- Source: HSY, SYKE, City of Helsinki, City of Espoo, licence CC BY 4.0
-- Weather and air-quality data by Open-Meteo, licence CC BY 4.0
-- © OpenStreetMap contributors, map data ODbL
+- Source: Finnish Meteorological Institute, CC BY 4.0
+- Source: Fintraffic / digitraffic.fi, CC BY 4.0
+- Source: Fingrid / data.fingrid.fi, CC BY 4.0
+- © Digitransit / HSL, CC BY 4.0
+- Source: HSY, SYKE, City of Helsinki, City of Espoo, CC BY 4.0
+- Weather and air-quality data by Open-Meteo, CC BY 4.0
+- © OpenStreetMap contributors, ODbL
 
-The workspaces already name the provider and fetch time next to each reading;
-the credits above are what a public deployment owes the providers on top of that.
+## Commercial use
 
-## Notes on scope
+The default configuration is not ready for commercial use. The AGPL code licence
+doesn't change provider terms.
 
-- City forecasts and air-quality city readings have different coverage semantics.
-- HSY station coverage is regional; Open-Meteo is a city-level fallback.
-- HSL service alerts need a free `digitransit-subscription-key`; without one the
-  collector fails its run rather than reporting zero alerts.
-- Digitraffic scope is national and provider-defined.
-- Forecast and price products have separate freshness and licensing assumptions.
-- SYKE station and observation windows are bounded by configuration.
-- The coordinate map is the only feed the browser fetches directly; everything
-  else is collected server-side. A public deployment with real traffic should
-  move to its own tile source rather than lean on the OSMF tile servers.
+| Provider | Fix before commercial use |
+| --- | --- |
+| Open-Meteo | Paid plan or another endpoint via `OPEN_METEO_AIR_QUALITY_URL` |
+| Pörssisähkö | Written permission or another source via `ELECTRICITY_PRICE_API_URL` |
+| OSM tiles | Own/commercial tile server (URL is hard-coded in `coordinate-map.tsx`) |
+| Digitransit, Fingrid | Confirm key terms cover your volume |
 
-The machine-readable coverage contract is available from `GET /api/platform/coverage`.
+There is no per-collector on/off flag: repoint the endpoint, drop the id from
+`INITIAL_BACKFILL_SOURCES`, or edit `registry.go`.

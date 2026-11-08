@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -22,7 +22,11 @@ function keysIn(path) {
 }
 
 const failures = [];
-for (const relativePath of ["apps/api/.env.example", "deploy/env/api.env.example"]) {
+// deploy/ is a local, untracked recipe; check its example only when present.
+const examples = ["apps/api/.env.example", "deploy/env/api.env.example"].filter((path) =>
+  existsSync(resolve(root, path)),
+);
+for (const relativePath of examples) {
   const documented = keysIn(resolve(root, relativePath));
 
   const missing = [...loadedKeys].filter((key) => !documented.has(key)).sort();

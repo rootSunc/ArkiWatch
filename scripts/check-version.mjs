@@ -2,9 +2,10 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const version = (await readFile(resolve(root, "VERSION"), "utf8")).trim();
+// The root package.json is the single source of the project version.
+const { version } = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"));
 
-const packageFiles = ["package.json", "apps/web/package.json"];
+const packageFiles = ["apps/web/package.json"];
 for (const relativePath of packageFiles) {
   const packageJson = JSON.parse(await readFile(resolve(root, relativePath), "utf8"));
   if (packageJson.version !== version) {

@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1080" width="1600" height="1080" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-label="ArkiWatch architecture: public providers flow through collector adapters, raw observations, normalized events and snapshots, and Go rules into the Go API, which serves the Home and domain workspaces, Your day, and the assistant; Telegram delivery is optional.">
+<title>How ArkiWatch works</title>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B5563"/></marker>
+<marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9CA3AF"/></marker></defs>
+<rect width="1600" height="1080" rx="24" fill="#FFFFFF"/>
+<text x="800.0" y="62" font-size="38" fill="#111827" font-weight="800" text-anchor="middle"><tspan x="800.0" dy="0">How ArkiWatch works</tspan></text>
+<text x="800.0" y="98" font-size="19" fill="#6B7280" font-weight="400" text-anchor="middle"><tspan x="800.0" dy="0">From public feeds to one next step, with the evidence kept visible</tspan></text>
+<rect x="36" y="180" width="176" height="300" rx="18" fill="#F7F8FC" stroke="#E2E6EF" stroke-width="2"/>
+<rect x="96.0" y="204.0" width="56" height="56" rx="14" fill="#EEF0FF"/>
+<g transform="translate(109.0,217.0) scale(1.25)" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></g>
+<text x="124.0" y="298" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="124.0" dy="0">1. Public</tspan><tspan x="124.0" dy="27">providers</tspan></text>
+<text x="124.0" y="364" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="124.0" dy="0">FMI, HSY, HSL,</tspan><tspan x="124.0" dy="22">Digitraffic, Fingrid,</tspan><tspan x="124.0" dy="22">SYKE, city APIs</tspan></text>
+<rect x="238" y="180" width="176" height="300" rx="18" fill="#F7F8FC" stroke="#E2E6EF" stroke-width="2"/>
+<rect x="298.0" y="204.0" width="56" height="56" rx="14" fill="#E7F6EC"/>
+<g transform="translate(311.0,217.0) scale(1.25)" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="326.0" y="298" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="326.0" dy="0">2. Collector</tspan><tspan x="326.0" dy="27">adapters</tspan></text>
+<text x="326.0" y="364" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="326.0" dy="0">One Go adapter</tspan><tspan x="326.0" dy="22">per API, each run</tspan><tspan x="326.0" dy="22">keeps fetch metadata</tspan></text>
+<rect x="440" y="180" width="176" height="300" rx="18" fill="#F7F8FC" stroke="#E2E6EF" stroke-width="2"/>
+<rect x="500.0" y="204.0" width="56" height="56" rx="14" fill="#FFF3E2"/>
+<g transform="translate(513.0,217.0) scale(1.25)" fill="none" stroke="#E07B00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/></g>
+<text x="528.0" y="298" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="528.0" dy="0">3. Raw</tspan><tspan x="528.0" dy="27">observations</tspan></text>
+<text x="528.0" y="364" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="528.0" dy="0">Stored as fetched</tspan><tspan x="528.0" dy="22">in PostgreSQL,</tspan><tspan x="528.0" dy="22">retention bounded</tspan></text>
+<rect x="642" y="180" width="176" height="300" rx="18" fill="#F7F8FC" stroke="#E2E6EF" stroke-width="2"/>
+<rect x="702.0" y="204.0" width="56" height="56" rx="14" fill="#E8F1FF"/>
+<g transform="translate(715.0,217.0) scale(1.25)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></g>
+<text x="730.0" y="298" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="730.0" dy="0">4. Events &amp;</tspan><tspan x="730.0" dy="27">snapshots</tspan></text>
+<text x="730.0" y="364" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="730.0" dy="0">Normalized,</tspan><tspan x="730.0" dy="22">deduplicated, with</tspan><tspan x="730.0" dy="22">validity windows</tspan></text>
+<rect x="844" y="180" width="176" height="300" rx="18" fill="#F7F8FC" stroke="#E2E6EF" stroke-width="2"/>
+<rect x="904.0" y="204.0" width="56" height="56" rx="14" fill="#F2ECFF"/>
+<g transform="translate(917.0,217.0) scale(1.25)" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/></g>
+<text x="932.0" y="298" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="932.0" dy="0">5. Rules &amp; read</tspan><tspan x="932.0" dy="27">models</tspan></text>
+<text x="932.0" y="364" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="932.0" dy="0">Deterministic Go;</tspan><tspan x="932.0" dy="22">no model in the</tspan><tspan x="932.0" dy="22">decision path</tspan></text>
+<path d="M216 330.0L232 330.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<path d="M418 330.0L434 330.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<path d="M620 330.0L636 330.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<path d="M822 330.0L838 330.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1024 330.0H1050" stroke="#4B5563" stroke-width="2.5"/>
+<path d="M1050 225V540" stroke="#4B5563" stroke-width="2.5"/>
+<path d="M1050 225L1068 225" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<path d="M1050 540L1068 540" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1074" y="130" width="190" height="250" rx="18" fill="#EEF8F2" stroke="#CBE7D5" stroke-width="2"/>
+<rect x="1141.0" y="154.0" width="56" height="56" rx="14" fill="#E3F6F5"/>
+<g transform="translate(1154.0,167.0) scale(1.25)" fill="none" stroke="#0F8F86" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></g>
+<text x="1169.0" y="248" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="1169.0" dy="0">6a. Go HTTP API</tspan></text>
+<text x="1169.0" y="287" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="1169.0" dy="0">REST behind a static</tspan><tspan x="1169.0" dy="22">OpenAPI contract that</tspan><tspan x="1169.0" dy="22">types the web client</tspan></text>
+<rect x="1074" y="420" width="190" height="230" rx="18" fill="#EEF8F2" stroke="#CBE7D5" stroke-width="2"/>
+<rect x="1141.0" y="444.0" width="56" height="56" rx="14" fill="#E8F1FF"/>
+<g transform="translate(1154.0,457.0) scale(1.25)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></g>
+<text x="1169.0" y="538" font-size="21" fill="#111827" font-weight="700" text-anchor="middle"><tspan x="1169.0" dy="0">6b. Telegram</tspan></text>
+<text x="1169.0" y="577" font-size="16" fill="#4B5563" font-weight="400" text-anchor="middle"><tspan x="1169.0" dy="0">Optional, off unless</tspan><tspan x="1169.0" dy="22">a bot token is set</tspan></text>
+<path d="M1268 255H1288" stroke="#4B5563" stroke-width="2.5"/>
+<path d="M1288 220.0V620.0" stroke="#4B5563" stroke-width="2.5"/>
+<path d="M1288 220.0L1318 220.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1324" y="130" width="240" height="180" rx="18" fill="#EEF8F2" stroke="#CBE7D5" stroke-width="2"/>
+<rect x="1344.0" y="154.0" width="48" height="48" rx="14" fill="#E7F6EC"/>
+<g transform="translate(1353.0,163.0) scale(1.25)" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></g>
+<text x="1404" y="172" font-size="20" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1404" dy="0">Home &amp; domain</tspan><tspan x="1404" dy="25">workspaces</tspan></text>
+<text x="1348" y="248" font-size="16" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1348" dy="0">Recommendation, signals,</tspan><tspan x="1348" dy="22">and evidence for each value</tspan></text>
+<path d="M1288 420.0L1318 420.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1324" y="330" width="240" height="180" rx="18" fill="#EEF8F2" stroke="#CBE7D5" stroke-width="2"/>
+<rect x="1344.0" y="354.0" width="48" height="48" rx="14" fill="#FFF3E2"/>
+<g transform="translate(1353.0,363.0) scale(1.25)" fill="none" stroke="#E07B00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></g>
+<text x="1404" y="372" font-size="20" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1404" dy="0">Your day</tspan></text>
+<text x="1348" y="442" font-size="16" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1348" dy="0">Optional plan from</tspan><tspan x="1348" dy="22">saved places &amp; commute</tspan></text>
+<path d="M1288 620.0L1318 620.0" stroke="#4B5563" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+<rect x="1324" y="530" width="240" height="180" rx="18" fill="#EEF8F2" stroke="#CBE7D5" stroke-width="2"/>
+<rect x="1344.0" y="554.0" width="48" height="48" rx="14" fill="#F2ECFF"/>
+<g transform="translate(1353.0,563.0) scale(1.25)" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></g>
+<text x="1404" y="572" font-size="20" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1404" dy="0">Assistant</tspan></text>
+<text x="1348" y="642" font-size="16" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1348" dy="0">Answers cite the</tspan><tspan x="1348" dy="22">workspace they came from</tspan></text>
+<rect x="36" y="530" width="984" height="120" rx="18" fill="#FFFFFF" stroke="#CBD2DE" stroke-width="2" stroke-dasharray="8 7"/>
+<rect x="65.0" y="565.0" width="50" height="50" rx="14" fill="#F1F3F6"/>
+<g transform="translate(75.0,575.0) scale(1.25)" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>
+<text x="130" y="582" font-size="20" fill="#111827" font-weight="700" text-anchor="start"><tspan x="130" dy="0">Scheduler</tspan></text>
+<text x="130" y="610" font-size="16" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="130" dy="0">Runs collect → normalize → rules →</tspan><tspan x="130" dy="22">snapshots → dispatch, with jobs in PostgreSQL</tspan></text>
+<path d="M538.0 550V630" stroke="#E5E7EB" stroke-width="2"/>
+<rect x="573.0" y="565.0" width="50" height="50" rx="14" fill="#FFF3E2"/>
+<g transform="translate(583.0,575.0) scale(1.25)" fill="none" stroke="#E07B00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4 20a1 1 0 0 0 .9 1.5h14.2a1 1 0 0 0 .9-1.5L14 9V3"/></g>
+<text x="638.0" y="582" font-size="20" fill="#111827" font-weight="700" text-anchor="start"><tspan x="638.0" dy="0">Demo path</tspan></text>
+<text x="638.0" y="610" font-size="16" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="638.0" dy="0">Fixtures run through the same Go rules at</tspan><tspan x="638.0" dy="22">build time, so pnpm demo needs no API</tspan></text>
+<rect x="36" y="730" width="560" height="300" rx="18" fill="#FFFFFF" stroke="#E2E6EF" stroke-width="2"/>
+<text x="64" y="776" font-size="22" fill="#111827" font-weight="700" text-anchor="start"><tspan x="64" dy="0">Key characteristics</tspan></text>
+<g transform="translate(46,807) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="822" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">One isolated adapter per external API</tspan></text>
+<g transform="translate(46,841) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="856" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">Raw records keep source and fetch time</tspan></text>
+<g transform="translate(46,875) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="890" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">Validity comes from Go, not the browser clock</tspan></text>
+<g transform="translate(46,909) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="924" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">Demo, past dates, and live stay labelled apart</tspan></text>
+<g transform="translate(46,943) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="958" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">Missing or stale data is shown, never hidden</tspan></text>
+<g transform="translate(46,977) scale(0.85)" fill="none" stroke="#16A34A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></g>
+<text x="78" y="992" font-size="17" fill="#374151" font-weight="400" text-anchor="start"><tspan x="78" dy="0">Assistant and Telegram are optional</tspan></text>
+<rect x="620" y="730" width="944" height="300" rx="18" fill="#FFFFFF" stroke="#E2E6EF" stroke-width="2"/>
+<text x="648" y="776" font-size="22" fill="#111827" font-weight="700" text-anchor="start"><tspan x="648" dy="0">Technology in this repository</tspan></text>
+<rect x="648.0" y="802.0" width="44" height="44" rx="14" fill="#E7F6EC"/>
+<g transform="translate(655.0,809.0) scale(1.25)" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5"/></g>
+<text x="704.0" y="818" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="704.0" dy="0">Collection</tspan></text>
+<text x="704.0" y="841" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="704.0" dy="0">Go 1.25, net/http, in-process scheduler</tspan></text>
+<rect x="1092.0" y="802.0" width="44" height="44" rx="14" fill="#E8F1FF"/>
+<g transform="translate(1099.0,809.0) scale(1.25)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></g>
+<text x="1148.0" y="818" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1148.0" dy="0">Storage</tspan></text>
+<text x="1148.0" y="841" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1148.0" dy="0">PostgreSQL, pgx, Go-owned schema</tspan></text>
+<rect x="648.0" y="874.0" width="44" height="44" rx="14" fill="#F2ECFF"/>
+<g transform="translate(655.0,881.0) scale(1.25)" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></g>
+<text x="704.0" y="890" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="704.0" dy="0">API</tspan></text>
+<text x="704.0" y="913" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="704.0" dy="0">Go REST, static OpenAPI 3 contract</tspan></text>
+<rect x="1092.0" y="874.0" width="44" height="44" rx="14" fill="#E3F6F5"/>
+<g transform="translate(1099.0,881.0) scale(1.25)" fill="none" stroke="#0F8F86" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></g>
+<text x="1148.0" y="890" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1148.0" dy="0">Frontend</tspan></text>
+<text x="1148.0" y="913" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1148.0" dy="0">Next.js App Router, React, TypeScript,</tspan><tspan x="1148.0" dy="19">next-intl</tspan></text>
+<rect x="648.0" y="946.0" width="44" height="44" rx="14" fill="#FFF3E2"/>
+<g transform="translate(655.0,953.0) scale(1.25)" fill="none" stroke="#E07B00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></g>
+<text x="704.0" y="962" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="704.0" dy="0">Delivery</tspan></text>
+<text x="704.0" y="985" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="704.0" dy="0">Telegram Bot API, optional</tspan></text>
+<rect x="1092.0" y="946.0" width="44" height="44" rx="14" fill="#EEF0FF"/>
+<g transform="translate(1099.0,953.0) scale(1.25)" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></g>
+<text x="1148.0" y="962" font-size="17.5" fill="#111827" font-weight="700" text-anchor="start"><tspan x="1148.0" dy="0">Assistant</tspan></text>
+<text x="1148.0" y="985" font-size="15" fill="#4B5563" font-weight="400" text-anchor="start"><tspan x="1148.0" dy="0">DeepSeek chat API, optional</tspan></text>
+</svg>

@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-scripts/go-command.sh ./cmd/migrate
+if [ -f apps/api/.env ]; then
+  set -a
+  . apps/api/.env
+  set +a
+fi
 
-scripts/go-command.sh ./cmd/server &
+mkdir -p apps/api/bin
+go -C apps/api build -o bin/migrate ./cmd/migrate
+go -C apps/api build -o bin/server ./cmd/server
+
+apps/api/bin/migrate
+
+apps/api/bin/server &
 api_pid=$!
 
 cleanup() {

@@ -4,7 +4,7 @@ import { appEnv } from "@/lib/env";
 
 // A daily-use assistant benefits from being installable, so a visitor who
 // wants to check it every morning can add it to their home screen instead of
-// re-opening a browser tab. See docs/frontend-ui-system.md for the surfaces
+// re-opening a browser tab. See docs/frontend.md for the surfaces
 // this launches into.
 export default function manifest(): MetadataRoute.Manifest {
   return {

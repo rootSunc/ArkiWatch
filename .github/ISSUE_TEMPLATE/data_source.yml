@@ -21,16 +21,12 @@ body:
     id: value
     attributes:
       label: What daily decision would it improve?
-      description: Explain who benefits and what action the data could support.
-    validations:
-      required: true
+      description: Optional. Who benefits and what action the data could support.
   - type: textarea
     id: terms
     attributes:
       label: License, terms, and limits
-      description: Include attribution rules, rate limits, authentication, and update cadence.
-    validations:
-      required: true
+      description: Optional. Attribution rules, rate limits, authentication, update cadence — whatever you know.
   - type: textarea
     id: coverage
     attributes:

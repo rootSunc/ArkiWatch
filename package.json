@@ -2,6 +2,7 @@
   "name": "arkiwatch",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "workspaces": [
     "apps/web"
   ],
@@ -36,9 +37,6 @@
     "check": "pnpm run check:api && pnpm run check:web",
     "check:api": "pnpm run lint:api && pnpm run test:api",
     "check:web": "pnpm --filter @arkiwatch/web run check",
-    "ops:bootstrap": "deploy/scripts/bootstrap-vps.sh",
-    "ops:deploy": "deploy/scripts/deploy.sh",
-    "ops:health": "deploy/scripts/healthcheck.sh",
     "audit:api": "go -C apps/api run golang.org/x/vuln/cmd/govulncheck@latest ./...",
     "fmt:api": "test -z \"$(gofmt -l apps/api)\" || (gofmt -l apps/api && echo \"Run gofmt -w apps/api\" && exit 1)",
     "contracts:check:live": "scripts/check-live-contract.sh",
