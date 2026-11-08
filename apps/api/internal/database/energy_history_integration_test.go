@@ -16,7 +16,7 @@ func TestLegacyEnergyHistoryCostsAreEnrichedWithoutRewritingSnapshot(t *testing.
 	if err := store.upsertHistorySnapshot(ctx, city, "household_energy", date, payload); err != nil {
 		t.Fatal(err)
 	}
-	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date)
+	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

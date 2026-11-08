@@ -79,7 +79,7 @@ func TestRefreshPlatformHistorySnapshotsWritesEveryCategory(t *testing.T) {
 		t.Fatalf("expected %d snapshots, wrote %d", expected, result.Snapshots)
 	}
 
-	history, err := store.LoadPlatformHistory(ctx, "helsinki", nil, 3, now)
+	history, err := store.LoadPlatformHistory(ctx, "helsinki", nil, 3, now, nil)
 	if err != nil {
 		t.Fatalf("read back failed: %v", err)
 	}

@@ -12,12 +12,12 @@ import (
 )
 
 type PlatformHistoryReader interface {
-	LoadPlatformHistory(context.Context, string, *time.Time, int, time.Time) (map[string]any, error)
+	LoadPlatformHistory(context.Context, string, *time.Time, int, time.Time, []string) (map[string]any, error)
 	LoadPlatformHistoryAvailability(context.Context, string, *time.Time, int, time.Time) (map[string]any, error)
 	LoadPlatformEvent(context.Context, string) (map[string]any, error)
 }
 
-func (store *Store) LoadPlatformHistory(ctx context.Context, city string, targetDate *time.Time, days int, now time.Time) (map[string]any, error) {
+func (store *Store) LoadPlatformHistory(ctx context.Context, city string, targetDate *time.Time, days int, now time.Time, selected []string) (map[string]any, error) {
 	if days < 1 {
 		days = 1
 	}
@@ -29,12 +29,17 @@ func (store *Store) LoadPlatformHistory(ctx context.Context, city string, target
 		anchor = targetDate.UTC().Truncate(24 * time.Hour)
 	}
 	startDate := anchor.AddDate(0, 0, -(days - 1))
-	rows, err := store.pool.Query(ctx, `
+	statement := `
 		SELECT snapshot_date, category, payload
 		FROM platform_history_snapshots
-		WHERE city = $1 AND version = 'v1' AND snapshot_date >= $2::date AND snapshot_date <= $3::date
-		ORDER BY snapshot_date ASC, category ASC
-	`, city, startDate.Format("2006-01-02"), anchor.Format("2006-01-02"))
+		WHERE city = $1 AND version = 'v1' AND snapshot_date >= $2::date AND snapshot_date <= $3::date`
+	args := []any{city, startDate.Format("2006-01-02"), anchor.Format("2006-01-02")}
+	if len(selected) > 0 {
+		statement += ` AND category = ANY($4::text[])`
+		args = append(args, selected)
+	}
+	statement += ` ORDER BY snapshot_date ASC, category ASC`
+	rows, err := store.pool.Query(ctx, statement, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +76,18 @@ func (store *Store) LoadPlatformHistory(ctx context.Context, city string, target
 	}
 	rows.Close()
 	categories := []string{"weather", "air_quality", "energy", "household_energy", "road_rail", "transit"}
+	wanted := map[string]struct{}{}
+	for _, category := range selected {
+		wanted[category] = struct{}{}
+	}
 	result := map[string]any{}
 	for _, category := range categories {
+		if len(wanted) > 0 {
+			if _, ok := wanted[category]; !ok {
+				result[category] = []map[string]any{}
+				continue
+			}
+		}
 		items := make([]map[string]any, 0, days)
 		for index := 0; index < days; index++ {
 			dateValue := startDate.AddDate(0, 0, index).Format("2006-01-02")

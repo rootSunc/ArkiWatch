@@ -3400,6 +3400,7 @@ export interface operations {
                 city?: string | null;
                 date?: string | null;
                 days?: number;
+                categories?: string;
             };
             header?: never;
             path?: never;

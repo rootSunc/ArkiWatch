@@ -34,6 +34,8 @@ import (
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/transit"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/users"
 	"github.com/rootSunc/ArkiWatch/apps/api/internal/weather"
+
+	"golang.org/x/sync/singleflight"
 )
 
 type Server struct {
@@ -60,6 +62,7 @@ type Server struct {
 	loginLimiter      *auth.SlidingWindowRateLimiter
 	metricsRegistry   *observability.Registry
 	readCache         *observability.ReadCache
+	overviewFlight    singleflight.Group
 	logger            *slog.Logger
 	now               func() time.Time
 	handler           http.Handler
@@ -518,29 +521,104 @@ func (s *Server) loadPlatformOverviewAt(request *http.Request, now time.Time) (s
 		}
 		targetDate = &parsed
 	}
+	dateKey := "live"
+	if targetDate != nil {
+		dateKey = targetDate.UTC().Format("2006-01-02")
+	}
+	cacheKey := fmt.Sprintf("platform_overview:%s:%s", cityRef, dateKey)
+	if overview, ok := s.cachedOverview(cacheKey); ok {
+		return cityRef, targetDate, overview, nil
+	}
+	// Overview and the public briefing both build this payload, and the browser
+	// asks for them together. Share one read for that pair, and keep the result
+	// for the short cache window.
+	ctx := context.WithoutCancel(request.Context())
+	value, err, _ := s.overviewFlight.Do(cacheKey, func() (any, error) {
+		if overview, ok := s.cachedOverview(cacheKey); ok {
+			return overview, nil
+		}
+		overview, err := s.readPlatformOverview(ctx, now, cityRef, targetDate)
+		if err != nil {
+			return nil, err
+		}
+		if s.readCache != nil {
+			s.readCache.Set(cacheKey, overview)
+		}
+		return overview, nil
+	})
+	if err != nil {
+		return "", nil, platform.Overview{}, err
+	}
+	overview, _ := value.(platform.Overview)
+	return cityRef, targetDate, overview, nil
+}
+
+func (s *Server) cachedOverview(key string) (platform.Overview, bool) {
+	if s.readCache == nil {
+		return platform.Overview{}, false
+	}
+	cached, ok := s.readCache.Get(key)
+	if !ok {
+		return platform.Overview{}, false
+	}
+	overview, ok := cached.(platform.Overview)
+	return overview, ok
+}
+
+func (s *Server) readPlatformOverview(ctx context.Context, now time.Time, cityRef string, targetDate *time.Time) (platform.Overview, error) {
 	scope, err := timescope.DefaultScope(targetDate, now, s.cfg)
 	if err != nil {
-		return "", nil, platform.Overview{}, fmt.Errorf("Configured timezone is invalid.")
+		return platform.Overview{}, fmt.Errorf("Configured timezone is invalid.")
 	}
 	statusItems := []sources.Status{}
 	if s.sources != nil {
 		if reader, ok := s.sources.(database.ScopedSourceStatusReader); ok && scope.Mode == "historical" {
-			statusItems, err = reader.ListSourceStatusAt(request.Context(), scope.ReferenceTime)
+			statusItems, err = reader.ListSourceStatusAt(ctx, scope.ReferenceTime)
 		} else {
-			statusItems, err = s.sources.ListSourceStatus(request.Context())
+			statusItems, err = s.sources.ListSourceStatus(ctx)
 		}
 		if err != nil {
-			return "", nil, platform.Overview{}, errPlatformReadUnavailable
+			return platform.Overview{}, errPlatformReadUnavailable
 		}
 	}
 	data := platform.PlatformData{}
 	if s.platformReader != nil {
-		data, err = s.platformReader.LoadPlatform(request.Context(), platform.PlatformQuery{Now: scope.ReferenceTime, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: scope.Mode == "historical"})
+		data, err = s.platformReader.LoadPlatform(ctx, platform.PlatformQuery{Now: scope.ReferenceTime, LocationRef: cityRef, WindowStart: scope.WindowStart, WindowEnd: scope.WindowEnd, Historical: scope.Mode == "historical"})
 		if err != nil {
-			return "", nil, platform.Overview{}, errPlatformReadUnavailable
+			return platform.Overview{}, errPlatformReadUnavailable
 		}
 	}
-	return cityRef, targetDate, platform.BuildOverview(data, scope, s.cfg, statusItems, cityRef), nil
+	return platform.BuildOverview(data, scope, s.cfg, statusItems, cityRef), nil
+}
+
+func parseHistoryCategories(request *http.Request) ([]string, error) {
+	raw := strings.TrimSpace(request.URL.Query().Get("categories"))
+	if raw == "" {
+		return nil, nil
+	}
+	allowed := map[string]struct{}{
+		"weather": {}, "air_quality": {}, "energy": {}, "household_energy": {}, "road_rail": {}, "transit": {},
+	}
+	seen := map[string]struct{}{}
+	categories := make([]string, 0)
+	for _, part := range strings.Split(raw, ",") {
+		category := strings.TrimSpace(part)
+		if category == "" {
+			continue
+		}
+		if _, ok := allowed[category]; !ok {
+			return nil, fmt.Errorf("categories must list weather, air_quality, energy, household_energy, road_rail, or transit.")
+		}
+		if _, ok := seen[category]; ok {
+			continue
+		}
+		seen[category] = struct{}{}
+		categories = append(categories, category)
+	}
+	if len(categories) == 0 {
+		return nil, fmt.Errorf("categories must list weather, air_quality, energy, household_energy, road_rail, or transit.")
+	}
+	return categories, nil
 }
 
 func (s *Server) platformOverviewExport(writer http.ResponseWriter, request *http.Request) {
@@ -600,8 +678,17 @@ func (s *Server) platformHistoryHandler(writer http.ResponseWriter, request *htt
 	if !ok {
 		return
 	}
-	result, err := s.cachedRead(fmt.Sprintf("platform_history:%s:%v:%d", city, targetDate, days), func() (map[string]any, error) {
-		return s.platformHistory.LoadPlatformHistory(request.Context(), city, targetDate, days, s.now().UTC())
+	categories, err := parseHistoryCategories(request)
+	if err != nil {
+		writeJSON(writer, http.StatusUnprocessableEntity, map[string]string{"detail": err.Error()})
+		return
+	}
+	categoryKey := "all"
+	if len(categories) > 0 {
+		categoryKey = strings.Join(categories, ",")
+	}
+	result, err := s.cachedRead(fmt.Sprintf("platform_history:%s:%v:%d:%s", city, targetDate, days, categoryKey), func() (map[string]any, error) {
+		return s.platformHistory.LoadPlatformHistory(request.Context(), city, targetDate, days, s.now().UTC(), categories)
 	})
 	if err != nil {
 		writeJSON(writer, http.StatusServiceUnavailable, map[string]string{"detail": "Historical data is temporarily unavailable; provider details are not exposed."})

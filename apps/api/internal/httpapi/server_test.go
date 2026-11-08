@@ -330,12 +330,14 @@ func (assistantGroundingDatabase) LoadPlatform(context.Context, platform.Platfor
 
 type platformHistoryDatabase struct {
 	sourceDatabase
-	historyCalls int
-	err          error
+	historyCalls   int
+	lastCategories []string
+	err            error
 }
 
-func (database *platformHistoryDatabase) LoadPlatformHistory(context.Context, string, *time.Time, int, time.Time) (map[string]any, error) {
+func (database *platformHistoryDatabase) LoadPlatformHistory(_ context.Context, _ string, _ *time.Time, _ int, _ time.Time, categories []string) (map[string]any, error) {
 	database.historyCalls++
+	database.lastCategories = append([]string(nil), categories...)
 	return map[string]any{"days": 1}, database.err
 }
 
@@ -635,6 +637,55 @@ func TestPlatformHistoryHandlerValidatesDaysRangeAndCaches(t *testing.T) {
 	server.Handler().ServeHTTP(unsupportedCity, httptest.NewRequest(http.MethodGet, "/api/platform/history?city=narnia", nil))
 	if unsupportedCity.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected an unsupported city to be rejected, got %d", unsupportedCity.Code)
+	}
+
+	filtered := httptest.NewRecorder()
+	server.Handler().ServeHTTP(filtered, httptest.NewRequest(http.MethodGet, "/api/platform/history?city=helsinki&days=7&categories=air_quality", nil))
+	if filtered.Code != http.StatusOK {
+		t.Fatalf("filtered status = %d; body = %s", filtered.Code, filtered.Body.String())
+	}
+	if len(database.lastCategories) != 1 || database.lastCategories[0] != "air_quality" {
+		t.Fatalf("categories = %#v", database.lastCategories)
+	}
+	if database.historyCalls != 2 {
+		t.Fatalf("expected the category filter to miss the unfiltered cache, got %d store calls", database.historyCalls)
+	}
+
+	unknownCategory := httptest.NewRecorder()
+	server.Handler().ServeHTTP(unknownCategory, httptest.NewRequest(http.MethodGet, "/api/platform/history?city=helsinki&categories=not_a_category", nil))
+	if unknownCategory.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected an unknown category to be rejected, got %d", unknownCategory.Code)
+	}
+}
+
+type countingPlatformDatabase struct {
+	sourceDatabase
+	loads int
+}
+
+func (database *countingPlatformDatabase) LoadPlatform(context.Context, platform.PlatformQuery) (platform.PlatformData, error) {
+	database.loads++
+	return platform.PlatformData{}, nil
+}
+
+func TestPlatformOverviewIsSharedWithBriefing(t *testing.T) {
+	cfg := config.DefaultConfig()
+	database := &countingPlatformDatabase{sourceDatabase: sourceDatabase{active: true}}
+	server := New(cfg, database)
+	server.now = func() time.Time { return time.Date(2026, 8, 21, 14, 0, 0, 0, time.UTC) }
+
+	overview := httptest.NewRecorder()
+	server.Handler().ServeHTTP(overview, httptest.NewRequest(http.MethodGet, "/api/platform/overview?city=helsinki", nil))
+	if overview.Code != http.StatusOK {
+		t.Fatalf("overview status = %d; body = %s", overview.Code, overview.Body.String())
+	}
+	briefing := httptest.NewRecorder()
+	server.Handler().ServeHTTP(briefing, httptest.NewRequest(http.MethodGet, "/api/public/briefing?city=helsinki", nil))
+	if briefing.Code != http.StatusOK {
+		t.Fatalf("briefing status = %d; body = %s", briefing.Code, briefing.Body.String())
+	}
+	if database.loads != 1 {
+		t.Fatalf("expected briefing to reuse the cached overview, got %d platform loads", database.loads)
 	}
 }
 

@@ -30,7 +30,7 @@ func TestLegacyDetailHistoryUsesRecordedTimeWithoutRewriting(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date.AddDate(10, 0, 0))
+	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date.AddDate(10, 0, 0), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestMalformedDetailSnapshotDoesNotHideOtherHistory(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date)
+	result, err := store.LoadPlatformHistory(ctx, city, &date, 1, date, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
