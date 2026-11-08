@@ -74,7 +74,7 @@ import { PlanWorkspace } from "./personal/plan-workspace";
 import { signalTrend } from "./overview/console-model";
 import { useMediaQuery } from "@/features/shared/use-media-query";
 import { Drawer } from "@/features/shared/ui/console";
-import type { ScenarioLiveSignals } from "./overview/scenario-live-hints";
+import type { ScenarioLiveSignals } from "./shell/scenario-navigation";
 import { workspaceRouteForCategory } from "./shell/workspace-route";
 import { SignalCard } from "./overview/signal-card";
 import {

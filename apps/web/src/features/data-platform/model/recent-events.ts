@@ -1,7 +1,6 @@
 import { formatTimestamp } from "@/features/shared/format";
 import type { LanguageMode } from "../i18n";
 import type { PlatformEvent } from "../types";
-export const RECENT_EVENT_LIMIT = 6;
 
 type RecentEventTarget = {
   mobilityTab?: "traffic" | "transit";

@@ -1,5 +1,11 @@
 import type { MobilityTabKey } from "../workspaces/mobility/mobility-workspace";
-import type { ScenarioLiveSignals } from "../overview/scenario-live-hints";
+import type {
+  AirQualityCurrentResponse,
+  EnergyCurrentResponse,
+  RoadRailCurrentResponse,
+  TransitCurrentResponse,
+  WeatherForecastResponse,
+} from "../types";
 import {
   defaultEnergyTabForScenario,
   type EnergyPanelKey,
@@ -13,11 +19,13 @@ export const SCENARIO_NAV_KEYS: Record<string, string> = {
   energy: "energy",
 };
 
-const SUMMARY_TILE_NAV_KEYS: Record<string, string> = {
-  outdoor: "weather",
-  air: "air",
-  commute: "mobility",
-  energy: "energy",
+export type ScenarioLiveSignals = {
+  weather: WeatherForecastResponse | null;
+  airQuality: AirQualityCurrentResponse | null;
+  transit: TransitCurrentResponse | null;
+  roadRail: RoadRailCurrentResponse | null;
+  householdEnergy: EnergyCurrentResponse | null;
+  systemEnergy: EnergyCurrentResponse | null;
 };
 
 export type ScenarioNavigationTarget = {
@@ -45,32 +53,6 @@ export function resolveScenarioTarget(
   signals?: ScenarioLiveSignals,
 ): ScenarioNavigationTarget | null {
   const navKey = SCENARIO_NAV_KEYS[scenarioKey];
-  if (!navKey) {
-    return null;
-  }
-
-  if (navKey === "mobility" && signals) {
-    return {
-      navKey,
-      mobilityTab: resolveMobilityTabForSignals(signals),
-    };
-  }
-
-  if (navKey === "energy") {
-    return {
-      navKey,
-      energyTab: defaultEnergyTabForScenario(),
-    };
-  }
-
-  return { navKey };
-}
-
-export function resolveSummaryTileTarget(
-  tileKey: string,
-  signals?: ScenarioLiveSignals,
-): ScenarioNavigationTarget | null {
-  const navKey = SUMMARY_TILE_NAV_KEYS[tileKey];
   if (!navKey) {
     return null;
   }

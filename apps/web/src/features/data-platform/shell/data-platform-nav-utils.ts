@@ -16,7 +16,6 @@ export const EVENT_QUERY_KEY = "event";
 export const TODAY_NAV_KEY = "today";
 export const FALLBACK_NAV_KEY = "overview";
 export const READ_RECENT_EVENTS_STORAGE_KEY = "arkiwatch-read-recent-events-v1";
-export const CROSS_TIMELINE_LIMIT = 10;
 
 export type NavigationQueryOptions = {
   mobilityTab?: MobilityTabKey;
