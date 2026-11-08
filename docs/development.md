@@ -36,7 +36,8 @@ forwards the `--`, and Go's flag parser stops there, so the flag is ignored.
 
 | Command | Runs in CI | Use when |
 | --- | :---: | --- |
-| `pnpm check` | ✓ | Always: Go vet/test, web lint/test/typecheck/audits |
+| `pnpm verify` | partly | Before committing: `check` + contracts, config, version, build |
+| `pnpm check` | ✓ | Fast loop: Go vet/test, web lint/test/typecheck/audits |
 | `pnpm run contracts:check` | ✓ | API shape, Go rules, or demo fixtures changed |
 | `pnpm run build:web` | ✓ | Before shipping web changes |
 | `pnpm run test:e2e` | | UI flow changes (Playwright on the demo build) |

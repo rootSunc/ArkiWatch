@@ -37,6 +37,7 @@
     "check": "pnpm run check:api && pnpm run check:web",
     "check:api": "pnpm run lint:api && pnpm run test:api",
     "check:web": "pnpm --filter @arkiwatch/web run check",
+    "verify": "pnpm run check && pnpm run contracts:check && pnpm run config:check && pnpm run version:check && pnpm run build:web",
     "audit:api": "go -C apps/api run golang.org/x/vuln/cmd/govulncheck@latest ./...",
     "fmt:api": "test -z \"$(gofmt -l apps/api)\" || (gofmt -l apps/api && echo \"Run gofmt -w apps/api\" && exit 1)",
     "contracts:check:live": "scripts/check-live-contract.sh",
