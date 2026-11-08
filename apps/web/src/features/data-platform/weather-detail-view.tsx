@@ -310,6 +310,12 @@ export function WeatherDetailView({
               {axis.bottom}
               {activeChartConfig.unit}
             </span>
+            {activeChartConfig.kind === "dual-line" ? (
+              <ul className="weather-chart-legend">
+                <li>{tKey(`weather.${activeChartConfig.fullLabelKey}`)}</li>
+                <li data-series="2">{tKey(`weather.${activeChartConfig.pairedLabelKey ?? "overlay"}`)}</li>
+              </ul>
+            ) : null}
             {chartData.length >= 3 ? renderForecastChart(chartData, secondaryChartData, activeChartConfig, tKey) : <p className="trend-chart-insufficient">{tKey("shell.notEnoughHistory").replace("{count}", String(chartData.length))}</p>}
             <div className="weather-chart-x-axis">
               {chartLabels.map((label, index) => (

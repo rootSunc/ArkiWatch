@@ -4,7 +4,7 @@
   font-family: "Material Symbols Outlined";
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/arkiwatch-material-symbols.ttf") format("truetype");
 }
 

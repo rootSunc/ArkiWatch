@@ -90,6 +90,7 @@
     "weatherProviderStatus": "Weather provider status",
     "weatherSummaryMetrics": "Weather summary metrics",
     "weatherWarningFromTheProviderFeed": "Weather warning from the provider feed.",
+    "gust": "Gust",
     "wind": "Wind",
     "windAdvisoryConditions": "Wind advisory conditions",
     "windAndGust": "Wind and Gust",

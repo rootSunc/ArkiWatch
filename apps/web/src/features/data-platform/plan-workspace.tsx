@@ -34,7 +34,7 @@ export function PlanWorkspace({
     <div className="console-plan">
       <PageHeader
         title={tKey("shell.navPlan")}
-        subtitle={tKey("shell.savedContext")}
+        subtitle={hasContext ? tKey("shell.savedContext") : undefined}
         actions={
           <button
             className="console-button"
@@ -53,30 +53,33 @@ export function PlanWorkspace({
           </button>
         </div>
       ) : null}
-      {!hasContext ? (
-        <EmptyState
-          title={tKey("shell.noPersonalContext")}
-          description={tKey("shell.noPersonalContextDetail")}
-        />
-      ) : (
-        <Card title={tKey("shell.todayPlan")}>
-          <DayPlanTimeline
-            items={brief?.planItems ?? []}
-            language={language}
-            recommendationMode={brief?.recommendationMode}
-            timezone={brief?.timezone}
-            onOpenEvent={onOpenEvent}
-            onOpenScenario={onOpenScenario}
+      <div className={hasContext && personal ? "console-plan-columns" : "console-plan-body"}>
+        {!hasContext ? (
+          <EmptyState
+            title={tKey("shell.noPersonalContext")}
+            description={tKey("shell.noPersonalContextDetail")}
           />
-        </Card>
-      )}
-      {personal ? (
-        <PersonalTodayCards
-          dashboard={personal}
-          language={language}
-          onOpenAssistant={onOpenAssistant}
-        />
-      ) : null}
+        ) : (
+          <Card title={tKey("shell.todayPlan")}>
+            <DayPlanTimeline
+              embedded
+              items={brief?.planItems ?? []}
+              language={language}
+              recommendationMode={brief?.recommendationMode}
+              timezone={brief?.timezone}
+              onOpenEvent={onOpenEvent}
+              onOpenScenario={onOpenScenario}
+            />
+          </Card>
+        )}
+        {personal ? (
+          <PersonalTodayCards
+            dashboard={personal}
+            language={language}
+            onOpenAssistant={onOpenAssistant}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

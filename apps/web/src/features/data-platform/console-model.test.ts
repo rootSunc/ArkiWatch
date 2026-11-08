@@ -144,7 +144,7 @@ it("filters 7 and 30 days by calendar dates, preserving missing days and excludi
     },
   };
   expect(signalHistoryTrend(category, signals, 7, "Europe/Helsinki")).toEqual([
-    { label: "2026-08-08", value: 21, detail: "FMI" },
+    { label: "2026-08-08", value: 21, source: "FMI" },
   ]);
   expect(
     signalHistoryTrend(category, signals, 30, "Europe/Helsinki").map(
@@ -208,6 +208,6 @@ it("keeps the selected energy provider and duration-weights daily values", () =>
       { ...signals, energyPanel: "fingrid" },
       7,
       "Europe/Helsinki",
-    )[0]?.detail,
+    )[0]?.source,
   ).toBe("FINGRID");
 });

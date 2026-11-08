@@ -63,6 +63,28 @@ export function SourcesWorkspace({
     `${day.date}: ${tKey("shell.runDaySummary").replace("{runs}", String(day.runs)).replace("{succeeded}", String(day.succeeded)).replace("{failed}", String(day.failed)).replace("{running}", String(day.running))}`;
   const health = overview.source_health;
   const timezone = overview.time_scope?.timezone ?? overview.timezone;
+  const latestSuccess = overview.sources
+    .map(lastSuccess)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
+  const toneFor = (status: string) => {
+    switch (sourceHealthTone(status)) {
+      case "healthy":
+        return "good";
+      case "watch":
+        return "warn";
+      case "failing":
+        return "bad";
+      default:
+        return "neutral";
+    }
+  };
+  const summary = health
+    ? tKey("shell.sourceSummary")
+        .replace("{healthy}", String(health.healthy))
+        .replace("{tracked}", String(health.tracked))
+        .replace("{issues}", String(health.issues))
+    : tKey("shell.noCollectorState");
   return (
     <div className="console-sources">
       <PageHeader
@@ -104,12 +126,9 @@ export function SourcesWorkspace({
           </details>
         }
         subtitle={
-          health
-            ? tKey("shell.sourceSummary")
-                .replace("{healthy}", String(health.healthy))
-                .replace("{tracked}", String(health.tracked))
-                .replace("{issues}", String(health.issues))
-            : tKey("shell.noCollectorState")
+          latestSuccess
+            ? `${summary} · ${tKey("shell.lastRunAt").replace("{time}", formatTimestamp(latestSuccess, "time", language, timezone))}`
+            : summary
         }
       />
       <Card
@@ -126,6 +145,7 @@ export function SourcesWorkspace({
           label={tKey("shell.navSources")}
           empty={tKey("shell.noCollectorState")}
           onRowClick={(s) => openSource(s.source_code)}
+          rowTone={(s) => toneFor(s.operational_status)}
           columns={[
             {
               key: "source",
@@ -149,16 +169,6 @@ export function SourcesWorkspace({
               sortValue: (s) => sourceDomains(s.source_code),
             },
             {
-              key: "status",
-              label: tKey("shell.status"),
-              sortValue: (s) => s.operational_status,
-              render: (s) => (
-                <StatusBadge tone={sourceHealthTone(s.operational_status)}>
-                  {enumLabel(s.operational_status)}
-                </StatusBadge>
-              ),
-            },
-            {
               key: "last",
               label: tKey("shell.lastSuccess"),
               sortValue: (s) => lastSuccess(s) ?? "",
@@ -171,6 +181,32 @@ export function SourcesWorkspace({
                       timezone,
                     )
                   : tKey("shell.notRecorded"),
+            },
+            {
+              key: "rows",
+              label: tKey("shell.rowsReturned"),
+              numeric: true,
+              sortValue: (s) => s.records_ingested ?? -1,
+              render: (s) => s.records_ingested ?? "—",
+            },
+            {
+              key: "duration",
+              label: tKey("shell.latency"),
+              numeric: true,
+              render: (s) =>
+                s.last_run_started_at && s.last_run_finished_at
+                  ? `${Math.max(0, Date.parse(s.last_run_finished_at) - Date.parse(s.last_run_started_at)) / 1000}s`
+                  : "—",
+            },
+            {
+              key: "status",
+              label: tKey("shell.status"),
+              sortValue: (s) => s.operational_status,
+              render: (s) => (
+                <StatusBadge tone={toneFor(s.operational_status)}>
+                  {enumLabel(s.operational_status)}
+                </StatusBadge>
+              ),
             },
             {
               key: "runs",
@@ -214,22 +250,6 @@ export function SourcesWorkspace({
                 ) : (
                   tKey("shell.notRecorded")
                 ),
-            },
-            {
-              key: "rows",
-              label: tKey("shell.rowsReturned"),
-              numeric: true,
-              sortValue: (s) => s.records_ingested ?? -1,
-              render: (s) => s.records_ingested ?? "—",
-            },
-            {
-              key: "duration",
-              label: tKey("shell.latency"),
-              numeric: true,
-              render: (s) =>
-                s.last_run_started_at && s.last_run_finished_at
-                  ? `${Math.max(0, Date.parse(s.last_run_finished_at) - Date.parse(s.last_run_started_at)) / 1000}s`
-                  : "—",
             },
           ]}
         />

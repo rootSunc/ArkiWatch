@@ -94,6 +94,19 @@ export const CATEGORY_ICONS: Record<string, string> = {
  * Route breadcrumb for the top bar (README §Breadcrumbs per route). Returns
  * message keys plus the nav key the clickable root should navigate to.
  */
+export function sourcesViewHref(options: {
+  city?: string | null;
+  date?: string | null;
+  source?: string | null;
+} = {}): string {
+  const params = new URLSearchParams();
+  params.set("view", "sources");
+  if (options.city) params.set("city", options.city);
+  if (options.date) params.set("date", options.date);
+  if (options.source) params.set("source", options.source);
+  return `/?${params.toString()}`;
+}
+
 export function breadcrumbForNav(navKey: string): {
   rootKey: string;
   leafKey: string;

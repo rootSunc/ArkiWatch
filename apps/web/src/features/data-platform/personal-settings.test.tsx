@@ -612,7 +612,11 @@ describe("PersonalSettingsPage", () => {
       ],
       channels: [],
     };
-    const fetchMock = vi.fn(async () => Response.json(context, { status: 200 }));
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      void input;
+      void init;
+      return Response.json(context, { status: 200 });
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<PersonalSettingsPage />);

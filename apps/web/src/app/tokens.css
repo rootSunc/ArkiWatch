@@ -52,6 +52,7 @@
   --ui-refresh-radius-sm: var(--r-filter);
 
   --dur: 240ms;
+  --dur-mid: 180ms;
   --dur-fast: 120ms;
   --ease-out: cubic-bezier(.2, 0, 0, 1);
 
@@ -165,6 +166,11 @@
   --outline-variant: var(--slate-7);
   --divider-fill: var(--slate-8);
   --chart-grid-border: var(--slate-6);
+  --chart-1: var(--accent);
+  --chart-2: #0E9F6E;
+  --chart-3: #B54708;
+  --chart-4: #7A5AF8;
+  --chart-5: #0E7490;
   --score-track: var(--slate-6);
   --detail-panel-border: var(--slate-7);
   --detail-panel-border-medium: var(--slate-7);
@@ -261,13 +267,13 @@
   --slate-1: #F6F7F9;
   --slate-2: #F2F4F7;
   --slate-3: #EDEFF3;
-  --slate-4: #e8e8ec;
-  --slate-5: #e0e1e6;
+  --slate-4: #E9ECF1;
+  --slate-5: #E6E9EE;
   --slate-6: #E4E7EC;
   --slate-7: #E4E7EC;
   --slate-8: #D0D5DD;
-  --slate-9: #8b8d98;
-  --slate-10: #80838d;
+  --slate-9: #98A2B3;
+  --slate-10: #80889A;
   --slate-11: #667085;
   --slate-12: #0F172A;
 
@@ -350,28 +356,28 @@
   --console-surface: #12161F;
   --console-body: #AEB7C6;
   --solid-label: #0B1220;
-  --accent: #83ACFA;
-  --accent-hover: #A5C4FC;
+  --accent: #5B8DEF;
+  --accent-hover: #7AA5F8;
   --accent-soft: var(--violet-3);
   --surface-sunken: var(--slate-3);
   --brand-900: #0B1220;
-  --info: #83ACFA;
-  --shadow-sm: 0 1px 2px rgba(16,24,40,.06);
-  --shadow-md: 0 4px 12px rgba(16,24,40,.08);
-  --shadow-lg: 0 16px 40px rgba(16,24,40,.14);
+  --info: #5B8DEF;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
 
 
   --slate-1: #0B0E14;
   --slate-2: #12161F;
   --slate-3: #1A1F2B;
-  --slate-4: #272a2d;
-  --slate-5: #2e3135;
+  --slate-4: #1E2532;
+  --slate-5: #212836;
   --slate-6: #232A36;
   --slate-7: #232A36;
   --slate-8: #3B4556;
-  --slate-9: #696e77;
-  --slate-10: #777b84;
-  --slate-11: #8995A8;
+  --slate-9: #5C677A;
+  --slate-10: #6E788C;
+  --slate-11: #7A8598;
   --slate-12: #E6EAF2;
 
   --violet-1: #0B1220;
@@ -384,7 +390,7 @@
   --violet-8: #4878BC;
   --violet-9: #5B8DEF;
   --violet-10: #7AA5F8;
-  --violet-11: #83ACFA;
+  --violet-11: #5B8DEF;
   --violet-12: #CDDEFF;
 
   --green-1: #0e1512;

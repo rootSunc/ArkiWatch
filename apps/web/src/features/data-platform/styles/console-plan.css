@@ -9,8 +9,12 @@
 .day-plan-dot-bad { background: var(--red); }
 .day-plan-timeline-button { display: flex; align-items: flex-start; gap: 16px; width: 100%; min-height: 64px; padding: 12px 0; background: transparent; color: var(--body); text-align: left; }
 .day-plan-timeline-button:hover { color: var(--accent); }
-.day-plan-timeline-button > span { display: grid; gap: 4px; font-size: 13px; }
-.day-plan-timeline-button time { color: var(--muted); font-size: 12px; }
+.day-plan-timeline-button > span { display: grid; gap: 4px; font-size: 13px; flex: 1; min-width: 0; }
+.day-plan-timeline-button time { order: -1; flex: 0 0 52px; color: var(--muted); font-size: 12px; line-height: 16px; text-align: right; }
+.console-plan-columns { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) {
+  .console-plan-columns { grid-template-columns: minmax(0, 1fr); }
+}
 .day-plan-timeline-button small { color: var(--muted); font-size: 12px; }
 .today-personal-recommendations { display: grid; gap: 16px; }
 .today-personal-recommendations-header { display: flex; align-items: center; gap: 12px; }

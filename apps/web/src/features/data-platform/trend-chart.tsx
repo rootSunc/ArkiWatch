@@ -8,6 +8,7 @@ export type TrendChartPoint = {
   label: string;
   value: number;
   detail?: string;
+  source?: string;
   timestamp?: string;
 };
 
@@ -35,6 +36,12 @@ const CHART_TOP = 20;
 const CHART_BOTTOM = 178;
 const CHART_LEFT = 44;
 const CHART_RIGHT = 612;
+
+function tooltipLeft(x: number): string {
+  if (!Number.isFinite(x)) return "50%";
+  const percent = (x / CHART_WIDTH) * 100;
+  return `${Math.min(88, Math.max(12, percent))}%`;
+}
 
 function finitePoints(points: TrendChartPoint[]): TrendChartPoint[] {
   return points.filter((point) => Number.isFinite(point.value));
@@ -212,11 +219,23 @@ export function TrendChart({
           <span>{eyebrow}</span>
           <h2>{title}</h2>
         </div>
-        <strong>
-          {latestPoint
-            ? formatValue(latestPoint.value, unit, maximumFractionDigits)
-            : resolvedStatLabels.unavailable}
-        </strong>
+        {chartPoints.length >= 3 && range ? (
+          <strong>
+            {latestPoint
+              ? formatValue(latestPoint.value, unit, maximumFractionDigits)
+              : resolvedStatLabels.unavailable}
+          </strong>
+        ) : (
+          <p className="trend-chart-insufficient" role="status">
+            {tKey("shell.notEnoughHistory").replace(
+              "{count}",
+              String(chartPoints.length),
+            )}
+            {chartPoints.length === 0 ? (
+              <small>{resolvedEmptyMessage}</small>
+            ) : null}
+          </p>
+        )}
       </header>
 
       {chartPoints.length >= 3 && range ? (
@@ -266,15 +285,27 @@ export function TrendChart({
               />
             ) : null}
             {nowX != null ? (
-              <line
-                className="trend-crosshair"
-                x1={nowX}
-                x2={nowX}
-                y1={CHART_TOP}
-                y2={CHART_BOTTOM}
-              >
-                <title>{tKey("shell.viewChecked")}</title>
-              </line>
+              <g className="trend-now">
+                <line
+                  x1={nowX}
+                  x2={nowX}
+                  y1={CHART_TOP}
+                  y2={CHART_BOTTOM}
+                />
+                <text
+                  x={nowX}
+                  y={12}
+                  textAnchor={
+                    nowX > CHART_RIGHT - 36
+                      ? "end"
+                      : nowX < CHART_LEFT + 36
+                        ? "start"
+                        : "middle"
+                  }
+                >
+                  {tKey("shell.chartNow")}
+                </text>
+              </g>
             ) : null}
             <path
               className="trend-chart-area"
@@ -295,7 +326,7 @@ export function TrendChart({
                 key={`${point.label}-${index}`}
                 r={index === chartPoints.length - 1 ? 4 : 3}
               >
-                <title>{`${point.label} · ${formatValue(point.value, unit, maximumFractionDigits)}${point.detail ? ` · ${point.detail}` : ""}`}</title>
+                <title>{[point.label, formatValue(point.value, unit, maximumFractionDigits), point.source, point.detail].filter(Boolean).join(" · ")}</title>
               </circle>
             ))}
             {[0, 1, 2, 3].map((i) => (
@@ -332,32 +363,26 @@ export function TrendChart({
             ))}
           </svg>
           {hoveredIndex != null && chartPoints[hoveredIndex] ? (
-            <div className="trend-tooltip" role="status">
+            <div
+              className="trend-tooltip"
+              role="status"
+              style={{ left: tooltipLeft(chartX(hoveredIndex, chartPoints)) }}
+            >
               <strong>
-                {formatValue(
-                  chartPoints[hoveredIndex].value,
-                  unit,
-                  maximumFractionDigits,
-                )}
+                {formatNumber(chartPoints[hoveredIndex].value, maximumFractionDigits)}
+                {unit ? <small>{unit}</small> : null}
               </strong>
               <span>{chartPoints[hoveredIndex].label}</span>
+              {chartPoints[hoveredIndex].source ? (
+                <span>{chartPoints[hoveredIndex].source}</span>
+              ) : null}
               {chartPoints[hoveredIndex].detail ? (
                 <span>{chartPoints[hoveredIndex].detail}</span>
               ) : null}
             </div>
           ) : null}
         </div>
-      ) : (
-        <p className="trend-chart-insufficient" role="status">
-          {tKey("shell.notEnoughHistory").replace(
-            "{count}",
-            String(chartPoints.length),
-          )}
-          {chartPoints.length === 0 ? (
-            <small>{resolvedEmptyMessage}</small>
-          ) : null}
-        </p>
-      )}
+      ) : null}
 
       {chartPoints.length >= 3 ? (
         <div className="trend-chart-stats">

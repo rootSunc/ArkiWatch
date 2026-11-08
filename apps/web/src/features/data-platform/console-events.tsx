@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import "./styles/console-inspection.css";
 import { InspectionContext } from "@/features/shared/ui/inspection-context";
 import {
   Card,
@@ -11,7 +13,7 @@ import {
   StatusBadge,
   Toast,
 } from "@/features/shared/ui/console";
-import { formatTimestamp, severityTone } from "@/features/shared/format";
+import { formatScopedClock, formatTimestamp, severityTone } from "@/features/shared/format";
 import { localizedContent } from "./content-localization";
 import { useI18n } from "./i18n";
 import { eventAnchorId, recentEventDetails } from "./recent-events";
@@ -35,6 +37,8 @@ export function ConsoleEvents({
   timeScope,
   highlightedEventId,
   onOpenEvent,
+  onAsk,
+  coverage,
 }: {
   categories: PlatformCategory[];
   events: PlatformEvent[];
@@ -43,6 +47,8 @@ export function ConsoleEvents({
   timeScope?: PlatformTimeScope | null;
   highlightedEventId?: string | null;
   onOpenEvent: (event: PlatformEvent) => void;
+  onAsk?: (question: string) => void;
+  coverage?: string | null;
 }) {
   const { language, tKey, enumLabel } = useI18n();
   const [query, setQuery] = useState("");
@@ -75,6 +81,10 @@ export function ConsoleEvents({
   const selected = allEvents.find((e) => e.id === selectedId);
   const stateLabel = (event: PlatformEvent) =>
     tKey(`shell.eventState${eventStateAt(event, referenceAt)}`);
+  const askQuestion = (event: PlatformEvent) =>
+    `${localizedContent(language, event.title, event.title_zh)}: ${localizedContent(language, event.body, event.body_zh)}`;
+  const stateCount = (state: string) =>
+    allEvents.filter((event) => eventStateAt(event, referenceAt) === state).length;
   const rows = allEvents.filter(
     (e) =>
       (lifecycle === "all" || eventStateAt(e, referenceAt) === lifecycle) &&
@@ -99,8 +109,18 @@ export function ConsoleEvents({
     <div className="console-events">
       <PageHeader
         title={tKey("shell.navLinkedEvents")}
-        subtitle={`${allEvents.length} ${tKey("shell.recentEvents")}`}
+        subtitle={[
+          coverage,
+          tKey("shell.eventFeeds"),
+          formatTimestamp(checkedAt, "dateTime", language, timezone),
+        ].filter(Boolean).join(" · ")}
         actions={
+          <div className="events-header-actions">
+            <span className="events-header-counts">
+              {tKey(timeScope?.date ? "shell.eventHeaderDated" : "shell.eventHeaderLive")
+                .replace("{open}", String(stateCount("active")))
+                .replace("{count}", String(allEvents.length))}
+            </span>
           <details className="page-actions">
             <summary aria-label={tKey("shell.pageActions")}>•••</summary>
             <div>
@@ -135,6 +155,7 @@ export function ConsoleEvents({
               </button>
             </div>
           </details>
+          </div>
         }
       />
       <div className="console-filter-bar">
@@ -143,18 +164,22 @@ export function ConsoleEvents({
           role="group"
           aria-label={tKey("shell.eventLifecycle")}
         >
-          {[
-            ["all", "all"],
-            ["active", "eventStateactive"],
-            ["ended", "eventStateended"],
-          ].map(([value, key]) => (
+          {(
+            [
+              ["all", "all", allEvents.length],
+              ["active", "eventStateactive", stateCount("active")],
+              ["ended", "eventStateended", stateCount("ended")],
+            ] as const
+          ).map(([value, key, count]) => (
             <button
               type="button"
               aria-pressed={lifecycle === value}
+              aria-label={tKey(`shell.${key}`)}
               onClick={() => setLifecycle(value)}
               key={value}
             >
-              {tKey(`shell.${key}`)}
+              {tKey(`shell.${key}`)}{" "}
+              <span aria-hidden="true">{count}</span>
             </button>
           ))}
         </div>
@@ -165,27 +190,6 @@ export function ConsoleEvents({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={tKey("shell.eventSearch")}
         />
-        <select
-          aria-label={tKey("shell.eventKind")}
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-        >
-          <option value="all">{tKey("shell.allEventTypes")}</option>
-          <option value="incidents">{tKey("shell.incidents")}</option>
-          <option value="public">{tKey("shell.publicEvents")}</option>
-        </select>
-        <select
-          aria-label={tKey("shell.category")}
-          value={domain}
-          onChange={(e) => setDomain(e.target.value)}
-        >
-          <option value="all">{tKey("shell.allDomains")}</option>
-          {categories.map((c) => (
-            <option value={c.key} key={c.key}>
-              {displayTitle(c, language)}
-            </option>
-          ))}
-        </select>
         <select
           aria-label={tKey("shell.severity")}
           value={severity}
@@ -210,6 +214,30 @@ export function ConsoleEvents({
             </option>
           ))}
         </select>
+        <select
+          aria-label={tKey("shell.eventKind")}
+          value={kind}
+          onChange={(e) => setKind(e.target.value)}
+        >
+          <option value="all">{tKey("shell.allEventTypes")}</option>
+          <option value="incidents">{tKey("shell.incidents")}</option>
+          <option value="public">{tKey("shell.publicEvents")}</option>
+        </select>
+        <details className="console-filter-more">
+          <summary>{tKey("shell.moreFilters")}</summary>
+        <select
+          aria-label={tKey("shell.category")}
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+        >
+          <option value="all">{tKey("shell.allDomains")}</option>
+          {categories.map((c) => (
+            <option value={c.key} key={c.key}>
+              {displayTitle(c, language)}
+            </option>
+          ))}
+        </select>
+        </details>
       </div>
       <Card title={`${tKey("shell.navLinkedEvents")} (${rows.length})`}>
         <DataTable
@@ -218,6 +246,7 @@ export function ConsoleEvents({
           label={tKey("shell.navLinkedEvents")}
           empty={tKey("shell.noMatchingRows")}
           onRowClick={(e) => setSelectedId(e.id)}
+          rowTone={(e) => severityTone(e.severity)}
           columns={[
             {
               key: "title",
@@ -258,16 +287,55 @@ export function ConsoleEvents({
               ),
             },
             {
+              key: "domain",
+              label: tKey("shell.category"),
+              sortValue: (e) => e.category_key,
+              render: (e) => {
+                const match = categories.find((category) => category.key === e.category_key);
+                return match ? displayTitle(match, language) : enumLabel(e.category_key);
+              },
+            },
+            {
               key: "time",
               label: tKey("shell.startsAt"),
-              render: (e) =>
-                formatTimestamp(e.starts_at, "dateTime", language, timezone),
+              render: (e) => (
+                <time dateTime={e.starts_at} title={formatTimestamp(e.starts_at, "dateTime", language, timezone)}>
+                  {formatScopedClock(e.starts_at, referenceAt, language, timezone)}
+                </time>
+              ),
               sortValue: (e) => e.starts_at,
             },
             {
               key: "source",
               label: tKey("shell.provider"),
               render: (e) => e.source_codes.join(", ").toUpperCase(),
+            },
+            ...(onAsk
+              ? [
+                  {
+                    key: "ask",
+                    label: tKey("shell.ask"),
+                    render: (event: PlatformEvent) => (
+                      <button
+                        className="console-text-button"
+                        type="button"
+                        aria-label={`${tKey("shell.askAboutThis")}: ${localizedContent(language, event.title, event.title_zh)}`}
+                        onClick={(click) => {
+                          click.stopPropagation();
+                          onAsk(askQuestion(event));
+                        }}
+                      >
+                        {tKey("shell.ask")}
+                      </button>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              key: "more",
+              label: tKey("shell.rowOpens"),
+              hideLabel: true,
+              render: () => <span className="row-chevron" aria-hidden="true">›</span>,
             },
           ]}
         />
@@ -351,6 +419,15 @@ export function ConsoleEvents({
             >
               {tKey("shell.openWorkspace")} →
             </button>
+            {onAsk ? (
+              <button
+                className="console-button"
+                type="button"
+                onClick={() => onAsk(askQuestion(selected))}
+              >
+                {tKey("shell.askAboutThis")}
+              </button>
+            ) : null}
           </article>
         </Drawer>
       ) : null}

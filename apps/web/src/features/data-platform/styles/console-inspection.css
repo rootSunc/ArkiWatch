@@ -8,6 +8,7 @@
 .workspace-inspection-content h2 { font-size: 16px; line-height: 24px; font-weight: 600; }
 .workspace-inspection-content h3 { font-size: 14px; line-height: 20px; font-weight: 600; }
 .workspace-inspection-content :is(p, small) { color: var(--muted); font-size: 12px; line-height: 18px; }
+.workspace-inspection-content :is(.transit-command-status, .road-rail-command-status) p { display: grid; gap: 4px; }
 .workspace-inspection-content small { display: block; }
 .workspace-inspection-content :is([class$="-main-grid"], [class$="-lower-grid"], [class$="-ops-grid"], [class$="-insight-grid"], [class$="-bento-grid"], [class$="-visual-grid"]) { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px),1fr)); gap: 16px; min-width: 0; align-items: start; }
 .workspace-inspection-content :is([class$="-side-grid"], [class$="-stack"], [class$="-event-list"], [class$="-field-grid"], [class$="-quality-facts"], [class$="-detail-metrics"], [class$="-source-facts"]) { display: grid; gap: 12px; }
@@ -55,10 +56,18 @@
 .workspace-inspection-content :is([class$="-line-chart"], .energy-price-chart) svg { width: 100%; height: auto; max-height: 280px; }
 .workspace-inspection-content :is(.weather-axis, .energy-chart-axis-label) { color: var(--muted); font-size: 11px; }
 .workspace-inspection-content :is([class$="-chart-x-axis"], .energy-price-axis) { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
-.workspace-inspection-content :is(.weather-forecast-line, .weather-line-path, .energy-price-line, .energy-chart-line) { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
-.workspace-inspection-content :is(.weather-chart-area, .weather-forecast-area, .energy-price-area) { fill: var(--accent); opacity: .12; }
-.workspace-inspection-content :is(.weather-forecast-bar, .energy-volume-bar) { fill: var(--accent); }
-.workspace-inspection-content :is(.weather-chart-grid, .energy-chart-grid) { stroke: var(--line); fill: none; }
+.workspace-inspection-content :is(.weather-chart-line, .weather-forecast-line, .weather-line-path, .energy-price-line, .energy-chart-line) { fill: none; stroke: var(--chart-1); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.workspace-inspection-content .weather-chart-line-secondary { fill: none; stroke: var(--chart-2); stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.workspace-inspection-content .weather-chart-point { fill: var(--surface); stroke: var(--chart-1); stroke-width: 1.5; }
+.workspace-inspection-content .weather-chart-point-secondary { fill: var(--surface); stroke: var(--chart-2); stroke-width: 1.5; }
+.workspace-inspection-content :is(.weather-chart-area, .weather-forecast-area, .energy-price-area, .weather-chart-band) { fill: var(--chart-1); opacity: .12; }
+.workspace-inspection-content :is(.weather-chart-bar, .weather-forecast-bar, .energy-volume-bar) { fill: var(--chart-1); }
+.workspace-inspection-content :is(.weather-chart-grid, .weather-chart-grid-line, .energy-chart-grid) { stroke: var(--line); fill: none; }
+.workspace-inspection-content .weather-chart-zero-line { stroke: var(--line-strong); stroke-dasharray: 2 3; fill: none; }
+.workspace-inspection-content .weather-chart-legend { display: flex; gap: 16px; margin: 0 0 8px; padding: 0; list-style: none; color: var(--muted); font-size: 12px; }
+.workspace-inspection-content .weather-chart-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.workspace-inspection-content .weather-chart-legend li::before { content: ""; width: 18px; border-top: 2px solid var(--chart-1); }
+.workspace-inspection-content .weather-chart-legend li[data-series="2"]::before { border-top-color: var(--chart-2); border-top-style: dashed; }
 .air-map-frame { position: relative; height: 300px; border-radius: var(--r-control); background: var(--surface-sunken); overflow: hidden; isolation: isolate; }
 .air-map-frame > .air-map-leaflet, .air-map-frame > .air-map-canvas, .air-map-frame > .leaflet-container { height: 100%; width: 100%; }
 .air-map-loading-label { display: grid; height: 100%; place-items: center; color: var(--muted); }

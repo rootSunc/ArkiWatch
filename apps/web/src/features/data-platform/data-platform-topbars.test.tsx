@@ -92,4 +92,80 @@ describe("DataPlatformWorkspaceTopbar", () => {
     expect(screen.getByText("Live", { exact: true })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "City" })).toBeInTheDocument();
   });
+
+  it("offers to change the city until one has been saved", () => {
+    localStorage.clear();
+
+    const { unmount } = render(
+      <I18nProvider language="en">
+        <DataPlatformWorkspaceTopbar
+          availability={[]}
+          city="Helsinki"
+          date={null}
+          isDemo={false}
+          isAuthenticated={false}
+          isCityPending={false}
+          isDatePending={false}
+          isDetailPage={false}
+          isEventsExpanded={false}
+          isHistorical={false}
+          isRefreshing={false}
+          language="en"
+          notificationCount={0}
+          notificationTone="neutral"
+          onToggleTheme={vi.fn()}
+          onCityChange={vi.fn()}
+          onDateChange={vi.fn()}
+          onLanguageChange={vi.fn()}
+          onNotificationsClick={vi.fn()}
+          onRefresh={vi.fn()}
+          onSelectNav={vi.fn()}
+          renderAuthActionButton={() => null}
+          restoreSideNavButton={null}
+          selectedNavKey="overview"
+          themeMode="light"
+          workspaceMode="data"
+        />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Change" })).toBeInTheDocument();
+    unmount();
+    localStorage.setItem("arkiwatch-city", "tampere");
+
+    render(
+      <I18nProvider language="en">
+        <DataPlatformWorkspaceTopbar
+          availability={[]}
+          city="Tampere"
+          date={null}
+          isDemo={false}
+          isAuthenticated={false}
+          isCityPending={false}
+          isDatePending={false}
+          isDetailPage={false}
+          isEventsExpanded={false}
+          isHistorical={false}
+          isRefreshing={false}
+          language="en"
+          notificationCount={0}
+          notificationTone="neutral"
+          onToggleTheme={vi.fn()}
+          onCityChange={vi.fn()}
+          onDateChange={vi.fn()}
+          onLanguageChange={vi.fn()}
+          onNotificationsClick={vi.fn()}
+          onRefresh={vi.fn()}
+          onSelectNav={vi.fn()}
+          renderAuthActionButton={() => null}
+          restoreSideNavButton={null}
+          selectedNavKey="overview"
+          themeMode="light"
+          workspaceMode="data"
+        />
+      </I18nProvider>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Change" })).not.toBeInTheDocument();
+  });
 });

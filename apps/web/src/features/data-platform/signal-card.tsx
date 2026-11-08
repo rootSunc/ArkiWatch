@@ -1,8 +1,10 @@
+import { formatReadingDelta, labeledCompactAge } from "@/features/shared/format";
 import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { categorySignalAttribution } from "./signal-attribution";
 import { MetricTile } from "@/features/shared/ui/console";
 import { signalTrend, weatherReferencePoint } from "./console-model";
 import { categorySupportsCityScope, cityLabel } from "./city-scope";
+import { sourcesViewHref } from "./data-platform-nav-utils";
 import {
   displayTitle,
   signalReadout,
@@ -28,6 +30,7 @@ type SignalCardProps = {
   language: LanguageMode;
   onSelect: () => void;
   onAsk?: (question: string) => void;
+  date?: string | null;
   platformTimezone?: string;
   regionalScopeLabel: string;
   roadRail: RoadRailCurrentResponse | null;
@@ -45,6 +48,7 @@ export function SignalCard({
   language,
   onSelect,
   onAsk,
+  date = null,
   platformTimezone,
   regionalScopeLabel,
   roadRail,
@@ -101,13 +105,23 @@ export function SignalCard({
     last = points.at(-1)?.value;
   const delta =
     points.length >= 3 && first != null && last != null
-      ? `${last - first > 0 ? "+" : ""}${(last - first).toFixed(1)}`
+      ? formatReadingDelta(first, last, category.key === "weather" ? "°" : null)
       : undefined;
   const invalid = ["stale", "failed", "error"].includes(category.status);
+  const failingSource =
+    category.sources.find((source) =>
+      ["failed", "failing", "stale", "degraded"].includes(source.operational_status),
+    ) ?? category.sources[0];
+  const invalidValue = labeledCompactAge(
+    statusLabel(category, language),
+    failingSource?.last_successful_run_at ??
+      failingSource?.last_run_finished_at ??
+      attribution.updatedAt,
+  );
   return (
     <MetricTile
       label={displayTitle(category, language)}
-      value={invalid ? statusLabel(category, language) : readout.value}
+      value={invalid ? invalidValue : readout.value}
       trend={points.map((p) => p.value)}
       trendLabel={translateMessageKey(
         language,
@@ -117,7 +131,7 @@ export function SignalCard({
             ? "shell.forecast24h"
             : "shell.trend24h",
       )}
-      delta={delta}
+      delta={invalid ? undefined : delta}
       tone={
         invalid ? (category.status === "stale" ? "warn" : "bad") : readout.tone
       }
@@ -154,7 +168,11 @@ export function SignalCard({
           .filter(Boolean)
           .join("; "),
         method: null,
-        href: `/?view=sources${primarySource ? `&source=${encodeURIComponent(primarySource.source_code)}` : ""}`,
+        href: sourcesViewHref({
+          city: selectedCity,
+          date,
+          source: primarySource?.source_code,
+        }),
       }}
     />
   );

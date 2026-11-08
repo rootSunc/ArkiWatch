@@ -57,6 +57,61 @@ export function formatTimestamp(
   }
 }
 
+export function formatScopedClock(
+  value: string | null,
+  scope: string | null | undefined,
+  language: "en" | "zh" = "en",
+  timeZone?: string,
+): string {
+  const eventDay = formatTimestamp(value, "date", language, timeZone);
+  const scopeDay = scope ? formatTimestamp(scope, "date", language, timeZone) : eventDay;
+  return eventDay === scopeDay
+    ? formatTimestamp(value, "time", language, timeZone)
+    : formatTimestamp(value, "dateTime", language, timeZone);
+}
+
+export function formatCompactAge(value: string | null | undefined, now = Date.now()): string | null {
+  if (!value) {
+    return null;
+  }
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+  const minutes = Math.max(0, Math.round((now - timestamp) / 60000));
+  if (minutes < 60) {
+    return `${Math.max(1, minutes)}m`;
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) {
+    return `${hours}h`;
+  }
+  return `${Math.round(hours / 24)}d`;
+}
+
+export function formatReadingDelta(
+  first: number,
+  last: number,
+  unit?: string | null,
+): string {
+  const change = Math.round((last - first) * 10) / 10;
+  const body =
+    change === 0
+      ? "±0"
+      : `${change > 0 ? "+" : "−"}${Number.isInteger(Math.abs(change)) ? String(Math.abs(change)) : Math.abs(change).toFixed(1)}`;
+  const shown = unit === "%" ? "pt" : unit === "°C" ? "°" : unit;
+  return shown ? `${body} ${shown}` : body;
+}
+
+export function labeledCompactAge(
+  label: string,
+  value: string | null | undefined,
+  now = Date.now(),
+): string {
+  const age = formatCompactAge(value, now);
+  return age ? `${label} · ${age}` : label;
+}
+
 export function formatRelativeAge(value: string | null, language: "en" | "zh" = "en"): string {
   if (!value) {
     return language === "zh" ? "从未" : "Never";
@@ -115,6 +170,8 @@ export function statusTone(status: string): string {
 
 export function severityTone(severity: string): string {
   switch (severity) {
+    case "critical":
+    case "CRITICAL":
     case "high":
     case "HIGH":
       return "bad";

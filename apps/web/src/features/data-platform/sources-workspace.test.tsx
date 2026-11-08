@@ -30,6 +30,16 @@ describe("source execution evidence", () => {
     expect(
       within(row as HTMLElement).getByText(/08 Aug, 07:15/),
     ).toBeInTheDocument();
+    expect(screen.getByText(/last run 07:15/)).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader").map((header) => header.textContent?.replace("↕", ""))).toEqual([
+      "Provider",
+      "Domain",
+      "Last successful run",
+      "Rows returned",
+      "Run duration",
+      "Status",
+      "7-day runs",
+    ]);
     expect(
       screen.getByRole("img", {
         name: /2026-08-08: 2 runs · 1 succeeded · 1 failed/,

@@ -165,7 +165,7 @@
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .navItem {
@@ -241,7 +241,7 @@
 .segmented {
   display: flex;
   width: fit-content;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: 7px;
 }
@@ -258,8 +258,20 @@
   font-size: 14px;
 }
 
+.segmented button:first-child {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
 .segmented button:last-child {
   border-right: 0;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.segmented button:focus-visible {
+  position: relative;
+  z-index: 1;
 }
 
 .segmentedActive {
@@ -469,7 +481,7 @@
 
 .input:focus-visible,
 .select:focus-visible {
-  outline: 3px solid var(--blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

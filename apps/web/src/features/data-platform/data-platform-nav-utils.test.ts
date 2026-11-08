@@ -7,8 +7,19 @@ import {
   mobileNavigationItems,
   READ_RECENT_EVENTS_STORAGE_KEY,
   resolveNavKey,
+  sourcesViewHref,
 } from "./data-platform-nav-utils";
 import type { PlatformCategory } from "./types";
+
+describe("sourcesViewHref", () => {
+  it("keeps the current city, date, and provider on the sources page", () => {
+    expect(sourcesViewHref({
+      city: "helsinki",
+      date: "2026-08-08",
+      source: "fmi",
+    })).toBe("/?view=sources&city=helsinki&date=2026-08-08&source=fmi");
+  });
+});
 
 describe("isCatalogCategoryKey", () => {
   it("keeps reference catalog domains out of the core signal group", () => {

@@ -183,8 +183,8 @@
 .privacy-brand:focus-visible,
 .privacy-language button:focus-visible,
 .privacy-footer a:focus-visible {
-  outline: 3px solid var(--blue);
-  outline-offset: 3px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {

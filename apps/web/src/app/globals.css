@@ -49,7 +49,7 @@ button {
   cursor: pointer;
 }
 
-:where(button, a, input, select, textarea):focus-visible {
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -75,9 +75,38 @@ button {
   transform: translateY(0);
 }
 
+@keyframes enter-x {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes enter-y {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes exit-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skip-link {
+    transform: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
 
+  .skip-link:focus-visible {
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { I18nProvider } from "./i18n";
@@ -49,8 +49,63 @@ describe("TrendChart", () => {
     );
 
     expect(screen.getByRole("status")).toHaveTextContent("历史记录不足——当前范围有 1 个观测点，至少需要 3 个。");
+    expect(screen.getByRole("status").parentElement?.tagName).toBe("HEADER");
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
+});
+
+it("marks the checked time with a dashed now rule, not the hover crosshair", () => {
+  const { container } = render(
+    <I18nProvider language="en">
+      <TrendChart
+        eyebrow="History"
+        title="Temperature"
+        referenceAt="2026-08-08T12:00:00Z"
+        points={[
+          { label: "2026-08-07", value: 1, timestamp: "2026-08-07T00:00:00Z" },
+          { label: "2026-08-08", value: 2, timestamp: "2026-08-08T00:00:00Z" },
+          { label: "2026-08-09", value: 3, timestamp: "2026-08-09T00:00:00Z" },
+        ]}
+      />
+    </I18nProvider>,
+  );
+
+  expect(container.querySelector(".trend-now line")).toBeInTheDocument();
+  expect(screen.getByText("now")).toBeInTheDocument();
+  expect(container.querySelector(".trend-crosshair")).not.toBeInTheDocument();
+});
+
+it("anchors the hover tooltip to the point under the crosshair", () => {
+  const { container } = render(
+    <I18nProvider language="en">
+      <TrendChart
+        eyebrow="History"
+        title="Temperature"
+        points={[
+          { label: "2026-08-07", value: 1, timestamp: "2026-08-07T00:00:00Z" },
+          { label: "2026-08-08", value: 2, timestamp: "2026-08-08T00:00:00Z" },
+          { label: "2026-08-09", value: 3, timestamp: "2026-08-09T00:00:00Z" },
+        ]}
+      />
+    </I18nProvider>,
+  );
+  const svg = container.querySelector("svg");
+  expect(svg).not.toBeNull();
+  svg!.getBoundingClientRect = () => ({
+    x: 0,
+    y: 0,
+    left: 0,
+    top: 0,
+    right: 640,
+    bottom: 220,
+    width: 640,
+    height: 220,
+    toJSON() {
+      return {};
+    },
+  });
+  fireEvent.mouseMove(svg!, { clientX: 612, clientY: 40 });
+  expect(container.querySelector(".trend-tooltip")).toHaveStyle({ left: "88%" });
 });
 
 describe("observation threshold", () => {

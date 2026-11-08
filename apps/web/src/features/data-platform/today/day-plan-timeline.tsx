@@ -26,6 +26,7 @@ type DayPlanTimelineProps = {
   timezone?: string;
   onOpenEvent?: (event: PlatformEvent) => void;
   onOpenScenario?: (scenarioKey: string) => void;
+  embedded?: boolean;
 };
 
 function timelineDotClass(severity: string): string {
@@ -51,6 +52,7 @@ export function DayPlanTimeline({
   timezone,
   onOpenEvent,
   onOpenScenario,
+  embedded = false,
 }: DayPlanTimelineProps) {
   const { tKey, enumLabel } = useI18n();
   const title =
@@ -62,9 +64,11 @@ export function DayPlanTimeline({
 
   return (
     <section className="day-plan-timeline" aria-label={title}>
-      <header className="day-plan-timeline-header">
-        <h2>{title}</h2>
-      </header>
+      {embedded ? null : (
+        <header className="day-plan-timeline-header">
+          <h2>{title}</h2>
+        </header>
+      )}
       {items.length > 0 ? (
         <ol className="day-plan-timeline-list">
           {items.map((item) => {
@@ -99,6 +103,9 @@ export function DayPlanTimeline({
                   </span>
                   <span className="day-plan-timeline-detail">
                     {localizedContent(language, item.detail, item.detail_zh)}
+                    {item.event?.source_codes.length ? (
+                      <small>{item.event.source_codes.join(", ").toUpperCase()}</small>
+                    ) : null}
                   </span>
                   <time>
                     {formatTimestamp(item.startsAt, "time", language, timezone)}

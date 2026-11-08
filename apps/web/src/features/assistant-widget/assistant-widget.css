@@ -1,8 +1,7 @@
 @layer features {
 /*
- * Assistant slide-over (README §12). A right-side panel over a dismissable
- * scrim; replaces the floating mascot bubble. A soft edge shadow separates the panel
- * from the active workspace.
+ * Assistant slide-over: a right-side panel over a dismissable scrim. A soft
+ * edge shadow separates the panel from the active workspace.
  */
 
 
@@ -44,7 +43,10 @@
   background: var(--canvas);
   border-left: 1px solid var(--line);
   box-shadow: none;
+}
 
+.assistant-widget-open:not(.assistant-widget-docked) .assistant-panel {
+  animation: enter-x var(--dur) var(--ease-out);
 }
 
 /* Keep the scrollable content behind the modal from moving. */
@@ -79,13 +81,6 @@ body:has(.assistant-widget-open:not(.assistant-widget-docked)) .dashboard-conten
   justify-content: center;
   border-radius: var(--r-panel);
   background: var(--nav-active);
-}
-
-.assistant-avatar-mascot {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  display: block;
 }
 
 .assistant-avatar-status {
@@ -533,6 +528,8 @@ body:has(.assistant-widget-open:not(.assistant-widget-docked)) .dashboard-conten
 
 .assistant-composer-field:focus-within {
   border-color: var(--blue);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .assistant-composer-field input {
@@ -595,7 +592,7 @@ body:has(.assistant-widget-open:not(.assistant-widget-docked)) .dashboard-conten
 /* -------------------------------------------------------------------------- */
 
 .assistant-panel :where(button, a, input, [tabindex]):focus-visible {
-  outline: 3px solid var(--blue);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -684,5 +681,8 @@ body:has(.assistant-widget-open:not(.assistant-widget-docked)) .dashboard-conten
 .assistant-resize-handle { position: absolute; z-index: 5; width: 6px; top: 0; bottom: 0; left: -3px; cursor: col-resize; touch-action: none; }
 .assistant-resize-handle:hover { background: var(--accent); }
 @media (max-width: 768px) { .assistant-panel { width: 100%; height: 100dvh; border: 0; } }
-@media (prefers-reduced-motion: reduce) { .assistant-panel { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .assistant-panel { transition: none; }
+  .assistant-widget-open:not(.assistant-widget-docked) .assistant-panel { animation-name: enter-fade; }
+}
 }

@@ -2,6 +2,8 @@
 
 import { InspectionContext } from "@/features/shared/ui/inspection-context";
 
+import "./styles/console-inspection.css";
+
 import { useState, type ReactNode } from "react";
 import {
   Card,
@@ -32,11 +34,13 @@ import {
 import { TrendChart } from "./trend-chart";
 import { ShareViewLinkButton } from "./share-view-link-button";
 import { ExportSnapshotButton } from "./export-snapshot-button";
-import { formatTimestamp } from "@/features/shared/format";
-import { currentMetricCards } from "./weather-detail-utils";
+import { formatReadingDelta, formatScopedClock, formatTimestamp, labeledCompactAge, severityTone } from "@/features/shared/format";
+import { apparentTemperature, compassDirection, currentMetricCards, formatNumber, hasNumber } from "./weather-detail-utils";
+import { UNAVAILABLE_DATA_VALUE } from "./data-value";
 import { isEmptyStatus, liveStatusTone } from "./platform-status";
 import { SnapshotDownloadButton } from "./snapshot-download-button";
 import { appEnv } from "@/lib/env";
+import { sourcesViewHref } from "./data-platform-nav-utils";
 import { eventAnchorId } from "./recent-events";
 import { scopedReferenceTime } from "./data-time-scope";
 import { eventStateAt } from "./event-time-state";
@@ -50,9 +54,7 @@ export function WorkspaceConsole({
   const { language, tKey, metricLabel, enumLabel } = useI18n();
   const [query, setQuery] = useState("");
   const [range, setRange] = useState<"24h" | "7d" | "30d">("24h");
-  const [showDetails, setShowDetails] = useState(
-    Boolean(props.highlightedEventId),
-  );
+  const [showDetails, setShowDetails] = useState(false);
   const [toast, setToast] = useState("");
   const category = props.selectedCategory;
   if (!category)
@@ -164,44 +166,72 @@ export function WorkspaceConsole({
       .filter(Boolean)
       .join("; "),
     method: null,
-    href: `/?view=sources${source ? `&source=${encodeURIComponent(source.source_code)}` : ""}`,
+    href: sourcesViewHref({
+      city: props.city,
+      date: props.overview.time_scope?.date,
+      source: source?.source_code,
+    }),
+  };
+  const breakdownTone = (state: string | null | undefined): Tone => {
+    switch (state?.toLowerCase()) {
+      case "good":
+      case "ready":
+      case "healthy":
+      case "connected":
+      case "fetched":
+        return "good";
+      case "watch":
+      case "stale":
+      case "degraded":
+      case "partial":
+        return "warn";
+      case "failed":
+      case "failing":
+      case "error":
+        return "bad";
+      default: {
+        const live = liveStatusTone(state);
+        if (live === "ready") return "good";
+        if (live === "stale") return "warn";
+        if (live === "failed") return "bad";
+        return "neutral";
+      }
+    }
   };
   const rows =
     category.key === "air" && props.airQuality
-      ? props.airQuality.stations.map((s, index) => ({
-          id: `${s.station}-${index}`,
-          label: s.station,
-          value: s.score == null ? "—" : `${s.score}/5`,
-          status: enumLabel(
-            s.score != null && s.score <= 2
-              ? "good"
-              : s.score != null
-                ? "watch"
-                : "empty",
-          ),
-          updated: props.airQuality?.observed_at,
-          source: props.airQuality!.source_code.toUpperCase(),
-        }))
+      ? props.airQuality.stations.map((s, index) => {
+          const stationState =
+            s.score == null ? "empty" : s.score <= 2 ? "good" : "watch";
+          return {
+            id: `${s.station}-${index}`,
+            label: s.station,
+            value: s.score == null ? "—" : `${s.score}/5`,
+            status: enumLabel(stationState),
+            tone: invalid ? invalidTone : breakdownTone(stationState),
+            updated: props.airQuality?.observed_at,
+            source: props.airQuality!.source_code.toUpperCase(),
+          };
+        })
       : category.key === "weather" && props.weather
         ? props.weather.points.slice(0, 48).map((p) => ({
             id: p.timestamp,
-            label: formatTimestamp(p.timestamp, "dateTime", language, timezone),
+            label: formatScopedClock(p.timestamp, referenceAt, language, timezone),
             value: p.temperature_c == null ? "—" : `${p.temperature_c} °C`,
             status,
+            tone: invalid ? invalidTone : breakdownTone(category.status),
             updated: props.weather?.generated_at,
             source: props.weather!.source_code.toUpperCase(),
           }))
         : category.key === "energy" && activeEnergy
           ? activeEnergy!.points.map((p) => ({
               id: p.starts_at,
-              label: formatTimestamp(
-                p.starts_at,
-                "dateTime",
-                language,
-                timezone,
-              ),
+              label: formatScopedClock(p.starts_at, referenceAt, language, timezone),
               value: `${p.value} ${p.unit ?? activeEnergy.unit ?? ""}`,
               status,
+              tone: invalid
+                ? invalidTone
+                : breakdownTone(activeEnergy.status ?? category.status),
               updated: activeEnergy?.observed_at,
               source: activeEnergy.source_code.toUpperCase(),
             }))
@@ -213,6 +243,9 @@ export function WorkspaceConsole({
                 status: tKey(
                   `shell.eventState${eventStateAt(event, referenceAt)}`,
                 ),
+                tone: (invalid
+                  ? invalidTone
+                  : severityTone(event.severity)) as Tone,
                 updated: event.starts_at,
                 source: event.source_codes.join(", ").toUpperCase(),
               }))
@@ -221,6 +254,7 @@ export function WorkspaceConsole({
                 label: metricLabel(m),
                 value: `${m.value} ${m.unit ?? ""}`,
                 status,
+                tone: invalid ? invalidTone : breakdownTone(category.status),
                 updated: m.updated_at,
                 source: m.source_codes.join(", ").toUpperCase(),
               }));
@@ -229,27 +263,81 @@ export function WorkspaceConsole({
       .toLocaleLowerCase()
       .includes(query.toLocaleLowerCase()),
   );
+  const weatherSeries = (key: string) => {
+    if (key === "feels") {
+      return (props.weather?.points ?? [])
+        .map((point) => apparentTemperature(point))
+        .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    }
+    const field = {
+      wind: "wind_speed_ms",
+      gust: "wind_gust_ms",
+      humidity: "humidity_pct",
+      pressure: "pressure_hpa",
+    }[key] as "wind_speed_ms" | "wind_gust_ms" | "humidity_pct" | "pressure_hpa" | undefined;
+    if (!field) return [];
+    return (props.weather?.points ?? [])
+      .map((point) => point[field])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  };
+  const seriesDelta = (values: number[], unit?: string | null) => {
+    const first = values[0];
+    const last = values.at(-1);
+    return values.length >= 3 && first != null && last != null
+      ? formatReadingDelta(first, last, unit)
+      : undefined;
+  };
+  const feelsLike = apparentTemperature(current);
+  const feelsTrend = feelsLike == null ? [] : weatherSeries("feels");
   const metrics = current
-    ? currentMetricCards(current, language, tKey, timezone)
-        .filter((m) => ["wind", "gust", "humidity", "pressure"].includes(m.key))
-        .map((m) => ({
-          key: m.key,
-          label: m.label,
-          value: m.value,
-          unit: m.unit,
-          tone: "neutral",
-          observed: current.timestamp,
-          detail: m.detail,
-        }))
+    ? [
+        ...(feelsLike == null
+          ? []
+          : [{
+              key: "feels",
+              label: tKey("weather.feelsLike"),
+              value: formatNumber(feelsLike, 1),
+              unit: "°C",
+              tone: "neutral" as const,
+              observed: current.timestamp,
+              detail: null,
+              trend: feelsTrend,
+              delta: seriesDelta(feelsTrend, "°"),
+            }]),
+        ...currentMetricCards(current, language, tKey, timezone)
+          .filter((m) => ["wind", "humidity", "pressure"].includes(m.key))
+          .map((m) => {
+            const direction = compassDirection(current.wind_direction_deg);
+            const gust = hasNumber(current.wind_gust_ms) ? formatNumber(current.wind_gust_ms, 1) : null;
+            const windNote = [
+              direction === UNAVAILABLE_DATA_VALUE ? null : direction,
+              gust,
+            ].filter(Boolean).join(" · ");
+            const trend = m.key === "wind" ? [] : weatherSeries(m.key);
+            return {
+              key: m.key,
+              label: m.label,
+              value: m.value,
+              unit: m.unit,
+              tone: "neutral" as const,
+              observed: current.timestamp,
+              detail: m.key === "wind" ? windNote || m.detail : m.detail,
+              trend,
+              delta: m.key === "wind" ? undefined : seriesDelta(trend, m.unit),
+            };
+          }),
+      ]
     : category.key === "energy" && activeEnergy
       ? activeEnergy.metrics.map((m) => ({
           key: m.key,
           label: metricLabel(m),
           value: m.value,
           unit: m.unit,
-          tone: "neutral",
+          tone: "neutral" as const,
           observed: activeEnergy.observed_at,
           detail: null,
+          trend: [] as number[],
+          delta: undefined,
         }))
       : category.summary_metrics
           .filter((m) => m.key !== "source_status" && m.value !== readout.value)
@@ -261,13 +349,62 @@ export function WorkspaceConsole({
             tone: m.tone,
             observed: m.updated_at,
             detail: m.detail,
+            trend: [] as number[],
+            delta: undefined,
           }));
+  const primaryDelta = seriesDelta(
+    points.map((point) => point.value),
+    category.key === "weather"
+      ? "°"
+      : category.key === "energy"
+        ? activeEnergy?.unit ?? activeEnergy?.points[0]?.unit
+        : null,
+  );
   const title = displayTitle(category, language);
+  const providerLabel = attribution.sources || source?.source_code?.toUpperCase();
+  const scopeLine = [
+    props.overview.coverage_area,
+    providerLabel
+      ? tKey("shell.providerObservation").replace("{provider}", providerLabel)
+      : null,
+    attribution.updatedAt
+      ? formatTimestamp(attribution.updatedAt, "dateTime", language, timezone)
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const exportBreakdown = () => {
+    exportCsv(
+      `${category.key}.csv`,
+      [
+        tKey("shell.station"),
+        tKey("shell.value"),
+        tKey("shell.status"),
+        tKey("shell.observationTime"),
+        tKey("shell.provider"),
+      ],
+      filteredRows.map((row) => [
+        row.label,
+        invalid ? null : row.value,
+        invalid ? status : row.status,
+        row.updated,
+        row.source,
+      ]),
+    );
+    setToast(tKey("shell.downloaded"));
+    window.setTimeout(() => setToast(""), 3000);
+  };
+  const invalidReading = labeledCompactAge(
+    status,
+    source?.last_successful_run_at ??
+      source?.last_run_finished_at ??
+      attribution.updatedAt,
+  );
   return (
     <div className="console-workspace" data-domain={category.key}>
       <PageHeader
         title={title}
-        subtitle={props.overview.coverage_area}
+        subtitle={scopeLine}
         status={
           <StatusBadge
             tone={liveStatusTone(
@@ -297,27 +434,7 @@ export function WorkspaceConsole({
               <button
                 type="button"
                 className="console-button"
-                onClick={() => {
-                  exportCsv(
-                    `${category.key}.csv`,
-                    [
-                      tKey("shell.station"),
-                      tKey("shell.value"),
-                      tKey("shell.status"),
-                      tKey("shell.observationTime"),
-                      tKey("shell.provider"),
-                    ],
-                    filteredRows.map((r) => [
-                      r.label,
-                      invalid ? null : r.value,
-                      invalid ? status : r.status,
-                      r.updated,
-                      r.source,
-                    ]),
-                  );
-                  setToast(tKey("shell.downloaded"));
-                  window.setTimeout(() => setToast(""), 3000);
-                }}
+                onClick={exportBreakdown}
               >
                 {tKey("shell.exportCsv")}
               </button>
@@ -352,9 +469,10 @@ export function WorkspaceConsole({
                   props.onAsk?.(`${title}: ${invalid ? status : readout.value}`)
               : undefined
           }
-          value={invalid ? status : readout.value}
+          value={invalid ? invalidReading : readout.value}
           tone={invalid ? invalidTone : readout.tone}
-          trend={points.map((p) => p.value)}
+          delta={invalid ? undefined : primaryDelta}
+          trend={invalid ? [] : points.map((p) => p.value)}
           trendLabel={tKey(
             ["air", "mobility"].includes(category.key)
               ? "shell.availableHistory"
@@ -379,6 +497,9 @@ export function WorkspaceConsole({
             label={metric.label}
             value={invalid ? status : metric.value}
             unit={invalid ? null : metric.unit}
+            trend={invalid ? [] : metric.trend}
+            delta={invalid ? undefined : metric.delta}
+            note={invalid ? null : metric.detail}
             tone={
               (invalid
                 ? invalidTone
@@ -441,15 +562,20 @@ export function WorkspaceConsole({
       <Card
         title={tKey("shell.breakdown")}
         action={
-          <label className="console-search">
-            <span className="sr-only">{tKey("shell.search")}</span>
-            <input
-              type="search"
-              placeholder={tKey("shell.search")}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
+          <div className="breakdown-actions">
+            <label className="console-search">
+              <span className="sr-only">{tKey("shell.search")}</span>
+              <input
+                type="search"
+                placeholder={tKey("shell.search")}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
+            <button type="button" className="console-button" onClick={exportBreakdown}>
+              {tKey("shell.exportCsv")}
+            </button>
+          </div>
         }
       >
         <DataTable
@@ -457,10 +583,19 @@ export function WorkspaceConsole({
           rowKey={(r) => r.id}
           label={tKey("shell.breakdown")}
           empty={tKey("shell.noMatchingRows")}
+          rowTone={(row) => row.tone}
           columns={[
             {
               key: "label",
-              label: tKey("shell.station"),
+              label: tKey(
+                category.key === "weather" || category.key === "energy"
+                  ? "shell.breakdownTime"
+                  : category.key === "mobility"
+                    ? "shell.navLinkedEvents"
+                    : category.key === "air"
+                      ? "shell.station"
+                      : "shell.breakdownItem",
+              ),
               sortValue: (r) => r.label,
               render: (r) => r.label,
             },
@@ -490,13 +625,7 @@ export function WorkspaceConsole({
               key: "status",
               label: tKey("shell.status"),
               render: (r) => (
-                <StatusBadge
-                  tone={liveStatusTone(
-                    category.key === "energy"
-                      ? activeEnergy?.status
-                      : category.status,
-                  )}
-                >
+                <StatusBadge tone={r.tone}>
                   {invalid ? status : r.status}
                 </StatusBadge>
               ),
@@ -542,13 +671,9 @@ export function WorkspaceConsole({
         onToggle={(event) => setShowDetails(event.currentTarget.open)}
       >
         <summary>{tKey("shell.moreDetails")}</summary>
-        {showDetails ? (
-          <div className="workspace-inspection-content">
-            <InspectionContext.Provider value>
-              {children}
-            </InspectionContext.Provider>
-          </div>
-        ) : null}
+        <div className="workspace-inspection-content">
+          <InspectionContext.Provider value>{children}</InspectionContext.Provider>
+        </div>
       </details>
       {category.events.length ? (
         <section
@@ -576,7 +701,10 @@ export function WorkspaceConsole({
           {attribution.sources} ·{" "}
           {source?.license_label ?? tKey("shell.notRecorded")}
         </span>
-        <a href="/?view=sources">{tKey("shell.navSources")} →</a>
+        <a href={sourcesViewHref({
+          city: props.city,
+          date: props.overview.time_scope?.date,
+        })}>{tKey("shell.navSources")} →</a>
       </footer>
       <Toast>{toast}</Toast>
     </div>

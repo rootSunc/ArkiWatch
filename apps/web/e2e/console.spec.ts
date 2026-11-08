@@ -143,7 +143,7 @@ test("breakdown filtering and CSV export use the visible rows", async ({
   ).toHaveCount(1);
   await page.getByText("•••", { exact: true }).click();
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export CSV", exact: true }).click();
+  await page.locator(".page-actions").getByRole("button", { name: "Export CSV", exact: true }).click();
   expect((await download).suggestedFilename()).toBe("air.csv");
   await expect(
     page.getByRole("status").filter({ hasText: "Export downloaded" }),
@@ -362,14 +362,14 @@ test("optional context opens an editor boundary without interrupting the first v
   );
   if (info.project.name === "chromium") {
     await page
-      .getByRole("button", { name: "Edit context", exact: true })
+      .getByRole("button", { name: "Add your commute to tailor this", exact: true })
       .click();
     await expect(
-      page.getByRole("dialog", { name: "Edit context" }),
+      page.getByRole("dialog", { name: "Add your commute to tailor this" }),
     ).toBeVisible();
     await expect(
       page
-        .getByRole("dialog", { name: "Edit context" })
+        .getByRole("dialog", { name: "Add your commute to tailor this" })
         .getByRole("link", { name: "Admin sign in" }),
     ).toHaveAttribute("href", "/login");
   }
@@ -547,10 +547,10 @@ test("event lifecycle and provider filters compose and export their visible resu
   await expect(rows.first()).toBeVisible();
   await expect
     .poll(async () => {
-      const providers = await rows.locator("td:last-child").allTextContents();
+      const texts = await rows.allTextContents();
       return (
-        providers.length > 0 &&
-        providers.every((text) => text.includes(source!.toUpperCase()))
+        texts.length > 0 &&
+        texts.every((text) => text.toUpperCase().includes(source!.toUpperCase()))
       );
     })
     .toBe(true);

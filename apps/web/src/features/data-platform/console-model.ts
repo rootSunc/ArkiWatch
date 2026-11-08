@@ -130,7 +130,7 @@ export function signalHistoryTrend(
         samples.push({
           label: snapshot.date,
           value,
-          detail: snapshot.data.source_code.toUpperCase(),
+          source: snapshot.data.source_code.toUpperCase(),
         });
     }
   } else if (category.key === "energy") {
@@ -166,7 +166,7 @@ export function signalHistoryTrend(
         samples.push({
           label: snapshot.date,
           value: weighted / duration,
-          detail: snapshot.data.source_code.toUpperCase(),
+          source: snapshot.data.source_code.toUpperCase(),
         });
     }
   } else if (category.key === "air") {
@@ -181,7 +181,7 @@ export function signalHistoryTrend(
         samples.push({
           label: snapshot.date,
           value,
-          detail: snapshot.data.source_code.toUpperCase(),
+          source: snapshot.data.source_code.toUpperCase(),
         });
     }
   } else if (category.key === "mobility") {
@@ -200,7 +200,7 @@ export function signalHistoryTrend(
           value:
             snapshot.data.quality.active_alert_count +
             road.quality.active_event_count,
-          detail: "DIGITRANSIT, DIGITRAFFIC",
+          source: "DIGITRANSIT, DIGITRAFFIC",
         });
     }
   }
@@ -234,7 +234,7 @@ export function signalTrend(
         timestamp: p.timestamp,
         label: formatTimestamp(p.timestamp, "time", language, timezone),
         value: p.temperature_c!,
-        detail: signals.weather!.source_code.toUpperCase(),
+        source: signals.weather!.source_code.toUpperCase(),
       }))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   }
@@ -247,7 +247,7 @@ export function signalTrend(
         timestamp: p.starts_at,
         label: formatTimestamp(p.starts_at, "time", language, timezone),
         value: p.value,
-        detail: energy.source_code.toUpperCase(),
+        source: energy.source_code.toUpperCase(),
       }))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   }

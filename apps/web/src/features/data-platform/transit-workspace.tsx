@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { parseValidDate } from "@/features/shared/format";
 
+import { countPhrase } from "./count-phrase";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -182,13 +183,19 @@ function localizedTransitSummary(
     );
   }
 
-  return tKey(
-    historical ? "transit.summaryDecodedAtSnapshot" : "transit.summaryDecoded",
-  )
-    .replace("{raw}", String(transit.quality.raw_alert_count))
-    .replace("{active}", String(transit.quality.active_alert_count))
-    .replace("{routes}", String(transit.quality.route_alert_count))
-    .replace("{stops}", String(transit.quality.stop_alert_count));
+  const say = (count: number, one: string, many: string, none?: string) =>
+    countPhrase(count, tKey(one), tKey(many), none ? tKey(none) : undefined);
+
+  return [
+    say(transit.quality.raw_alert_count, "transit.summaryRawOne", "transit.summaryRawMany"),
+    say(
+      transit.quality.active_alert_count,
+      historical ? "transit.summaryActiveSnapshotOne" : "transit.summaryActiveOne",
+      historical ? "transit.summaryActiveSnapshotMany" : "transit.summaryActiveMany",
+    ),
+    say(transit.quality.route_alert_count, "transit.summaryRouteOne", "transit.summaryRouteMany", "transit.summaryRouteNone"),
+    say(transit.quality.stop_alert_count, "transit.summaryStopOne", "transit.summaryStopMany", "transit.summaryStopNone"),
+  ].join(" ");
 }
 
 function transitReferenceTimestamp(transit: TransitCurrentResponse): number {
@@ -345,13 +352,14 @@ function nextActiveEndLabel(value: string | null | undefined, language: Language
 function transitRiskState(detail: TransitCurrentResponse["detail"], total: number, tKey: (key: string) => string, historical = false) {
  const highActive = detail?.high_active ?? 0;
  const highUpcoming = detail?.high_upcoming ?? 0;
+ const counted = (count: number, one: string, many: string) => countPhrase(count, tKey(one), tKey(many));
   if (detail?.risk === "high_active") {
     return {
-      detail: tKey(
-        historical
-          ? "transit.highSeverityAlertsAtSnapshotDetail"
-          : "transit.highSeverityAlertsActiveDetail",
-      ).replace("{count}", String(highActive)),
+      detail: counted(
+        highActive,
+        historical ? "transit.highSeverityAlertAtSnapshotDetail" : "transit.highSeverityAlertActiveDetail",
+        historical ? "transit.highSeverityAlertsAtSnapshotDetail" : "transit.highSeverityAlertsActiveDetail",
+      ),
       icon: "warning",
       title: tKey(historical ? "transit.highImpactAtSnapshot" : "transit.highImpactActive")
     };
@@ -371,7 +379,7 @@ function transitRiskState(detail: TransitCurrentResponse["detail"], total: numbe
 
   if (detail?.risk === "high_upcoming") {
     return {
-      detail: tKey("transit.highSeverityAlertsUpcomingDetail").replace("{count}", String(highUpcoming)),
+      detail: counted(highUpcoming, "transit.highSeverityAlertUpcomingDetail", "transit.highSeverityAlertsUpcomingDetail"),
       icon: "schedule",
       title: tKey("transit.highImpactUpcoming")
     };
@@ -613,7 +621,7 @@ export function TransitWorkspace({
     <section className="transit-detail-page" aria-label={tKey("transit.transitDetail")}>
       <WorkspaceEvidenceHeader
         className="transit-detail-header"
-        eyebrow={tKey("mobility.mobilityWorkspace")}
+        eyebrow={tKey("transit.transit")}
         fallbackKey="transit.notObserved"
         headingLevel={2}
         language={language}

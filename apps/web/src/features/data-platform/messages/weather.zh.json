@@ -90,6 +90,7 @@
     "weatherProviderStatus": "天气数据源状态",
     "weatherSummaryMetrics": "天气摘要指标",
     "weatherWarningFromTheProviderFeed": "来自数据源的天气预警。",
+    "gust": "阵风",
     "wind": "风速/风力",
     "windAdvisoryConditions": "大风预警条件",
     "windAndGust": "风速与阵风",

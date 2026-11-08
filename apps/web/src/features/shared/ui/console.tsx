@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/features/data-platform/i18n";
+import { formatTimestamp } from "@/features/shared/format";
 import { useMediaQuery } from "../use-media-query";
 import { MaterialIcon } from "../material-icon";
 import styles from "./console.module.css";
@@ -114,6 +115,20 @@ export function PageHeader({
   );
 }
 
+function readableEvidenceTime(
+  value: string | null | undefined,
+  language: "en" | "zh",
+  empty: string,
+) {
+  if (!value?.trim()) {
+    return empty;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    return value;
+  }
+  return formatTimestamp(value, "dateTime", language, "Europe/Helsinki");
+}
+
 export function EvidencePopover({
   evidence,
   children,
@@ -121,7 +136,7 @@ export function EvidencePopover({
   evidence: Evidence;
   children?: ReactNode;
 }) {
-  const { tKey } = useI18n();
+  const { language, tKey } = useI18n();
   const id = useId();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -226,7 +241,11 @@ export function EvidencePopover({
             ].map(([label, value]) => (
               <div key={label}>
                 <dt>{tKey(`shell.${label}`)}</dt>
-                <dd>{value || tKey("shell.notRecorded")}</dd>
+                <dd>
+                  {label === "observationTime" || label === "validAt"
+                    ? readableEvidenceTime(value, language, tKey("shell.notRecorded"))
+                    : value || tKey("shell.notRecorded")}
+                </dd>
               </div>
             ))}
           </dl>
@@ -286,6 +305,41 @@ export function Sparkline({
   );
 }
 
+function CrossFadeText({ children }: { children: ReactNode }) {
+  const id =
+    typeof children === "string" || typeof children === "number"
+      ? String(children)
+      : null;
+  const current = useRef(children);
+  const [outgoing, setOutgoing] = useState<ReactNode>(null);
+
+  useEffect(() => {
+    if (id == null || Object.is(current.current, children)) return;
+    setOutgoing(current.current);
+    current.current = children;
+  }, [children, id]);
+
+  useEffect(() => {
+    if (outgoing == null) return;
+    const timer = window.setTimeout(() => setOutgoing(null), 120);
+    return () => window.clearTimeout(timer);
+  }, [outgoing]);
+
+  if (id == null) return children;
+  return (
+    <span className={styles.crossfade}>
+      {outgoing != null ? (
+        <span aria-hidden="true" className={styles.crossfadeOut}>
+          {outgoing}
+        </span>
+      ) : null}
+      <span className={outgoing != null ? styles.crossfadeIn : undefined}>
+        {children}
+      </span>
+    </span>
+  );
+}
+
 export function MetricTile({
   label,
   value,
@@ -298,6 +352,7 @@ export function MetricTile({
   onAsk,
   source,
   delta,
+  note,
   trendLabel,
 }: {
   label: string;
@@ -311,6 +366,7 @@ export function MetricTile({
   onAsk?: () => void;
   source?: string;
   delta?: string;
+  note?: string | null;
   trendLabel?: string;
 }) {
   const { tKey } = useI18n();
@@ -322,6 +378,7 @@ export function MetricTile({
     typeof value === "string" ? value.match(/\((\d\/\d)\)/) : null;
   const displayValue = numeric?.[1] ?? quality?.[1] ?? value;
   const displayUnit = unit ?? numeric?.[2];
+  const reading = <CrossFadeText>{displayValue}</CrossFadeText>;
   return (
     <article className={styles.metric} data-tone={tone}>
       <div className={styles.metricLabel}>
@@ -337,12 +394,12 @@ export function MetricTile({
       <div className={styles.metricValue}>
         {evidence ? (
           <EvidencePopover evidence={evidence}>
-            <strong>{displayValue}</strong>
+            <strong>{reading}</strong>
             {displayUnit ? <small>{displayUnit}</small> : null}
           </EvidencePopover>
         ) : (
           <>
-            <strong>{displayValue}</strong>
+            <strong>{reading}</strong>
             {displayUnit ? <small>{displayUnit}</small> : null}
           </>
         )}
@@ -354,7 +411,7 @@ export function MetricTile({
             label={`${label} ${trendLabel ?? tKey("shell.trend24h")}`}
           />
         ) : (
-          <span className={styles.noTrend}>{tKey("shell.noTrend")}</span>
+          <span className={styles.noTrend}>{note || tKey("shell.noTrend")}</span>
         )}
         {delta ? (
           <small title={tKey("shell.versusFirst")}>{delta}</small>
@@ -400,6 +457,7 @@ export function EmptyState({
 export type Column<T> = {
   key: string;
   label: string;
+  hideLabel?: boolean;
   numeric?: boolean;
   render: (row: T) => ReactNode;
   sortValue?: (row: T) => string | number;
@@ -411,6 +469,7 @@ export function DataTable<T>({
   label,
   empty,
   onRowClick,
+  rowTone,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -418,6 +477,7 @@ export function DataTable<T>({
   label: string;
   empty: string;
   onRowClick?: (row: T) => void;
+  rowTone?: (row: T) => string | undefined;
 }) {
   const [sort, setSort] = useState<{ key: string; desc: boolean } | null>(null);
   const column = columns.find((c) => c.key === sort?.key);
@@ -460,9 +520,11 @@ export function DataTable<T>({
                       })
                     }
                   >
-                    {c.label}
+                    {c.hideLabel ? <span className={styles.srOnly}>{c.label}</span> : c.label}
                     <span aria-hidden="true">↕</span>
                   </button>
+                ) : c.hideLabel ? (
+                  <span className={styles.srOnly}>{c.label}</span>
                 ) : (
                   c.label
                 )}
@@ -474,6 +536,7 @@ export function DataTable<T>({
           {sorted.map((row) => (
             <tr
               key={rowKey(row)}
+              data-tone={rowTone?.(row)}
               tabIndex={0}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={(event) => {

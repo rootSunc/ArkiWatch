@@ -12,6 +12,7 @@ import {
   DateScopeSelector,
   NotificationButton,
   RefreshDataButton,
+  storedCityValue,
   type DashboardTone,
   type ThemeMode,
   type WorkspaceMode,
@@ -64,6 +65,36 @@ type WorkspaceTopbarProps = ScopeControlProps & {
   selectedNavKey: string;
 };
 
+function useDefaultCityHint(city: string): boolean {
+  const initialCity = useRef(city);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(storedCityValue() === null);
+  }, []);
+
+  useEffect(() => {
+    if (city !== initialCity.current || storedCityValue() !== null) {
+      setVisible(false);
+    }
+  }, [city]);
+
+  return visible;
+}
+
+function CityDefaultHint({ onChange }: { onChange: () => void }) {
+  const { tKey } = useI18n();
+
+  return (
+    <span className="city-default-hint">
+      <span>{tKey("shell.notYourCity")}</span>
+      <button type="button" onClick={onChange}>
+        {tKey("shell.changeCity")}
+      </button>
+    </span>
+  );
+}
+
 function ScopeSelectors(props: ScopeControlProps) {
   return (
     <>
@@ -90,6 +121,7 @@ export function DataPlatformWorkspaceTopbar(props: WorkspaceTopbarProps) {
   const { tKey } = useI18n();
   const crumb = breadcrumbForNav(props.selectedNavKey);
   const pending = props.isCityPending || props.isDatePending;
+  const suggestCityChange = useDefaultCityHint(props.city);
   return (
     <header className="detail-topbar" aria-busy={pending}>
       {props.restoreSideNavButton}
@@ -110,6 +142,15 @@ export function DataPlatformWorkspaceTopbar(props: WorkspaceTopbarProps) {
       </nav>
       <div className="context-scope">
         <ScopeSelectors {...props} />
+        {suggestCityChange ? (
+          <CityDefaultHint
+            onChange={() => {
+              document
+                .querySelector<HTMLSelectElement>(".detail-topbar .city-scope-control select")
+                ?.focus();
+            }}
+          />
+        ) : null}
         <ModePill
           demo={props.isDemo}
           date={props.date}
@@ -181,6 +222,7 @@ type MobileHeaderProps = ScopeControlProps & {
 export function DataPlatformMobileHeader(props: MobileHeaderProps) {
   const { tKey } = useI18n();
   const [scopeOpen, setScopeOpen] = useState(false);
+  const suggestCityChange = useDefaultCityHint(props.city);
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (scopeOpen) dialogRef.current?.showModal();
@@ -224,6 +266,9 @@ export function DataPlatformMobileHeader(props: MobileHeaderProps) {
           date={props.date}
           warning={props.sourceWarning}
         />
+        {suggestCityChange ? (
+          <CityDefaultHint onChange={() => setScopeOpen(true)} />
+        ) : null}
         <span>{tKey(breadcrumbForNav(props.selectedNavKey).leafKey)}</span>
         {props.checkedAt ? (
           <time

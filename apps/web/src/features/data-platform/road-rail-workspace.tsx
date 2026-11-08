@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { parseValidDate } from "@/features/shared/format";
 
+import { countPhrase } from "./count-phrase";
 import { DataLabelWithHelp, dataHelpText } from "./data-help";
 import { LanguageMode, translateDataLabel, translateEnumLabel, useI18n } from "./i18n";
 import {
@@ -201,13 +202,19 @@ function localizedRoadRailSummary(
     );
   }
 
-  return tKey(
-    historical ? "roadRail.summaryDecodedAtSnapshot" : "roadRail.summaryDecoded",
-  )
-    .replace("{raw}", String(roadRail.quality.raw_message_count))
-    .replace("{active}", String(roadRail.quality.active_event_count))
-    .replace("{corridors}", String(roadRail.quality.corridor_count))
-    .replace("{weather}", String(roadRail.quality.weather_risk_count));
+  const say = (count: number, one: string, many: string, none?: string) =>
+    countPhrase(count, tKey(one), tKey(many), none ? tKey(none) : undefined);
+
+  return [
+    say(roadRail.quality.raw_message_count, "roadRail.summaryRawOne", "roadRail.summaryRawMany"),
+    say(
+      roadRail.quality.active_event_count,
+      historical ? "roadRail.summaryActiveSnapshotOne" : "roadRail.summaryActiveOne",
+      historical ? "roadRail.summaryActiveSnapshotMany" : "roadRail.summaryActiveMany",
+    ),
+    say(roadRail.quality.corridor_count, "roadRail.summaryCorridorOne", "roadRail.summaryCorridorMany"),
+    say(roadRail.quality.weather_risk_count, "roadRail.summaryWeatherOne", "roadRail.summaryWeatherMany", "roadRail.summaryWeatherNone"),
+  ].join(" ");
 }
 
 function roadRailReferenceTimestamp(roadRail: RoadRailCurrentResponse): number {
@@ -255,13 +262,14 @@ function roadRailRiskState(detail: RoadRailCurrentResponse["detail"], total: num
  const highActive = detail?.high_active ?? 0;
  const highUpcoming = detail?.high_upcoming ?? 0;
  const weatherActive = detail?.weather_active ?? 0;
+ const counted = (count: number, one: string, many: string) => countPhrase(count, tKey(one), tKey(many));
   if (detail?.risk === "high_active") {
     return {
-      detail: tKey(
-        historical
-          ? "roadRail.highSeverityIncidentsAtSnapshotDetail"
-          : "roadRail.highSeverityIncidentsActiveDetail",
-      ).replace("{count}", String(highActive)),
+      detail: counted(
+        highActive,
+        historical ? "roadRail.highSeverityIncidentAtSnapshotDetail" : "roadRail.highSeverityIncidentActiveDetail",
+        historical ? "roadRail.highSeverityIncidentsAtSnapshotDetail" : "roadRail.highSeverityIncidentsActiveDetail",
+      ),
       icon: "warning",
       title: tKey(historical ? "roadRail.highImpactAtSnapshot" : "roadRail.highImpactActive")
     };
@@ -293,7 +301,7 @@ function roadRailRiskState(detail: RoadRailCurrentResponse["detail"], total: num
 
   if (detail?.risk === "high_upcoming") {
     return {
-      detail: tKey("roadRail.highSeverityIncidentsUpcomingDetail").replace("{count}", String(highUpcoming)),
+      detail: counted(highUpcoming, "roadRail.highSeverityIncidentUpcomingDetail", "roadRail.highSeverityIncidentsUpcomingDetail"),
       icon: "schedule",
       title: tKey("roadRail.highImpactUpcoming")
     };
@@ -644,7 +652,7 @@ export function RoadRailWorkspace({
     <section className="road-rail-detail-page" aria-label={tKey("roadRail.roadAndRailDetail")}>
       <WorkspaceEvidenceHeader
         className="road-rail-detail-header"
-        eyebrow={tKey("mobility.mobilityWorkspace")}
+        eyebrow={tKey("mobility.roadRail")}
         fallbackKey="roadRail.notObserved"
         headingLevel={2}
         language={language}
