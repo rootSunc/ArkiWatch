@@ -204,7 +204,9 @@ export function EvidencePopover({
       <button
         aria-label={tKey("shell.viewEvidence")}
         aria-expanded={open}
-        aria-controls={id}
+        // The popover exists only while open. Referencing it only then also keeps
+        // useId out of server HTML, where it drifts under the lazily loaded router.
+        aria-controls={open ? id : undefined}
         className={styles.evidenceTrigger}
         onClick={() => setOpen(true)}
         onFocus={() => setOpen(true)}

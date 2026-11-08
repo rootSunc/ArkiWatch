@@ -3,7 +3,7 @@ import { useState } from "react";
 import { describe, expect, it } from "vitest";
 
 import { I18nProvider } from "@/features/data-platform/i18n";
-import { MetricTile } from "./console";
+import { EvidencePopover, MetricTile } from "./console";
 
 function Reading() {
   const [value, setValue] = useState("16");
@@ -46,5 +46,23 @@ describe("metric readings", () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 140)));
     expect(screen.queryByText("16")).not.toBeInTheDocument();
     expect(screen.getByText("18")).toBeInTheDocument();
+  });
+});
+
+describe("evidence popover", () => {
+  it("references the popover only while it exists", () => {
+    render(
+      <I18nProvider language="en">
+        <EvidencePopover evidence={{ provider: "FMI" }}>16</EvidencePopover>
+      </I18nProvider>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "View evidence" });
+    expect(trigger).not.toHaveAttribute("aria-controls");
+
+    fireEvent.click(trigger);
+    const controls = trigger.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    expect(document.getElementById(controls!)).toBeInTheDocument();
   });
 });
