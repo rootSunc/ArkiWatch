@@ -145,6 +145,9 @@ type rowScanner interface {
 	Scan(...any) error
 }
 
+// formatTime emits UTC. pgx decodes timestamptz with time.Unix, which lands in
+// the process zone: Europe/Helsinki on a developer machine and UTC in CI. The
+// offset would otherwise change the same instant's API string.
 func formatTime(value time.Time) string {
-	return value.Format(time.RFC3339Nano)
+	return value.UTC().Format(time.RFC3339Nano)
 }
